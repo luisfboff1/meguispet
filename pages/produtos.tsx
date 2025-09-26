@@ -194,7 +194,7 @@ export default function ProdutosPage() {
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Preço:</span>
-                    <span className="font-semibold text-lg">{formatCurrency(produto.preco_venda)}</span>
+                    <span className="font-semibold text-lg">{formatCurrency(produto.preco)}</span>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -207,12 +207,6 @@ export default function ProdutosPage() {
                     </div>
                   </div>
 
-                  {produto.preco_custo && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Custo:</span>
-                      <span className="text-sm">{formatCurrency(produto.preco_custo)}</span>
-                    </div>
-                  )}
 
                   <div className="pt-2">
                     <Button 

@@ -218,27 +218,12 @@ export default function RelatoriosPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-meguispet-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium">Relatório #{item}</div>
-                    <div className="text-sm text-gray-500">Gerado em {new Date().toLocaleDateString('pt-BR')}</div>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button variant="ghost" size="sm">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+            {/* Relatórios serão carregados do banco de dados */}
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum relatório gerado</h3>
+              <p className="text-gray-600">Os relatórios aparecerão aqui quando forem gerados</p>
+            </div>
           </div>
         </CardContent>
       </Card>

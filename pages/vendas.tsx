@@ -59,9 +59,9 @@ export default function VendasPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'aprovada': return 'bg-green-100 text-green-800'
+      case 'pago': return 'bg-green-100 text-green-800'
       case 'pendente': return 'bg-yellow-100 text-yellow-800'
-      case 'cancelada': return 'bg-red-100 text-red-800'
+      case 'cancelado': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -107,7 +107,7 @@ export default function VendasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(vendas.reduce((sum, venda) => sum + venda.total, 0))}
+              {formatCurrency(vendas.reduce((sum, venda) => sum + venda.valor_final, 0))}
             </div>
             <p className="text-xs text-muted-foreground">Este mês</p>
           </CardContent>
@@ -120,7 +120,7 @@ export default function VendasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {vendas.length > 0 ? formatCurrency(vendas.reduce((sum, venda) => sum + venda.total, 0) / vendas.length) : 'R$ 0,00'}
+              {vendas.length > 0 ? formatCurrency(vendas.reduce((sum, venda) => sum + venda.valor_final, 0) / vendas.length) : 'R$ 0,00'}
             </div>
             <p className="text-xs text-muted-foreground">Por venda</p>
           </CardContent>
@@ -200,7 +200,7 @@ export default function VendasPage() {
                       <td className="py-3 px-4 text-sm text-gray-900">{venda.cliente?.nome || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm text-gray-900">{venda.vendedor?.nome || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                        {formatCurrency(venda.total)}
+                        {formatCurrency(venda.valor_final)}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(venda.status)}`}>

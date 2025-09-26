@@ -5,7 +5,9 @@ export interface Usuario {
   id: number
   nome: string
   email: string
-  tipo: 'admin' | 'vendedor' | 'usuario'
+  password_hash: string
+  role: 'admin' | 'convidado'
+  permissoes: any // JSON
   ativo: boolean
   created_at: string
   updated_at: string
@@ -14,12 +16,16 @@ export interface Usuario {
 export interface Cliente {
   id: number
   nome: string
-  email: string
-  telefone: string
+  tipo: 'cliente' | 'fornecedor' | 'ambos'
+  email?: string
+  telefone?: string
   endereco?: string
   cidade?: string
   estado?: string
   cep?: string
+  documento?: string // CPF/CNPJ
+  observacoes?: string
+  ativo: boolean
   created_at: string
   updated_at: string
 }
@@ -29,10 +35,10 @@ export interface Produto {
   nome: string
   descricao?: string
   preco: number
-  preco_custo: number
-  categoria: string
   estoque: number
   estoque_minimo: number
+  categoria?: string
+  codigo_barras?: string
   ativo: boolean
   created_at: string
   updated_at: string
@@ -41,10 +47,10 @@ export interface Produto {
 export interface Vendedor {
   id: number
   nome: string
-  email: string
-  telefone: string
+  email?: string
+  telefone?: string
+  cpf?: string
   comissao: number
-  meta_vendas?: number
   ativo: boolean
   created_at: string
   updated_at: string
@@ -52,12 +58,16 @@ export interface Vendedor {
 
 export interface Venda {
   id: number
-  cliente_id: number
-  vendedor_id: number
-  total: number
-  desconto?: number
-  forma_pagamento: string
-  status: 'pendente' | 'aprovada' | 'cancelada'
+  numero_venda: string
+  cliente_id?: number
+  vendedor_id?: number
+  data_venda: string
+  valor_total: number
+  desconto: number
+  valor_final: number
+  status: 'pendente' | 'pago' | 'cancelado'
+  forma_pagamento: 'dinheiro' | 'cartao' | 'pix' | 'transferencia'
+  origem_venda: 'loja_fisica' | 'mercado_livre' | 'shopee' | 'magazine_luiza' | 'americanas' | 'outros'
   observacoes?: string
   created_at: string
   updated_at: string

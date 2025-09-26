@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
+import { authService } from '@/services/api'
 import type { LoginForm } from '@/types'
 
 // 🔐 PÁGINA DE LOGIN - SEM LAYOUT AUTOMÁTICO
@@ -24,16 +25,22 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Simular login (depois conectar com API real)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // 🔐 LOGIN REAL COM API
+      const response = await authService.login(formData.email, formData.password)
       
-      // Salvar token fictício
-      localStorage.setItem('token', 'fake-jwt-token')
-      
-      // Redirecionar para dashboard
-      router.push('/dashboard')
+      if (response.success && response.data) {
+        // Salvar token real do banco
+        localStorage.setItem('token', response.data.token)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+        
+        // Redirecionar para dashboard
+        router.push('/dashboard')
+      } else {
+        alert('Credenciais inválidas!')
+      }
     } catch (error) {
       console.error('Erro no login:', error)
+      alert('Erro ao fazer login. Tente novamente.')
     } finally {
       setLoading(false)
     }

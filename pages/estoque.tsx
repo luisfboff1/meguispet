@@ -84,7 +84,7 @@ export default function EstoquePage() {
     return matchesSearch
   })
 
-  const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco_venda * produto.estoque), 0)
+  const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco * produto.estoque), 0)
   const lowStockCount = produtos.filter(produto => produto.estoque > 0 && produto.estoque <= 5).length
   const outOfStockCount = produtos.filter(produto => produto.estoque === 0).length
   const inStockCount = produtos.filter(produto => produto.estoque > 5).length
@@ -258,10 +258,10 @@ export default function EstoquePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-900">
-                          {formatCurrency(produto.preco_venda)}
+                          {formatCurrency(produto.preco)}
                         </td>
                         <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                          {formatCurrency(totalValue)}
+                          {formatCurrency(produto.preco * produto.estoque)}
                         </td>
                         <td className="py-3 px-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${stockStatus.bgColor} ${stockStatus.color}`}>
