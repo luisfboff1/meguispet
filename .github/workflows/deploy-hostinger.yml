@@ -1,0 +1,53 @@
+name: Deploy to Hostinger
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "18"
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Build Next.js (SSG)
+              run: npm run build
+              env:
+                  # Variáveis de ambiente para o frontend
+                  NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }} # https://gestao.meguispet.com/api
+                  NEXT_PUBLIC_JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+                  # Estas variáveis são usadas apenas no build para gerar o conteúdo estático
+                  NEXT_PUBLIC_DB_HOST: ${{ secrets.DB_HOST }}
+                  NEXT_PUBLIC_DB_NAME: ${{ secrets.DB_NAME }}
+                  NEXT_PUBLIC_DB_USER: ${{ secrets.DB_USER }}
+                  NEXT_PUBLIC_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+                  # Configurações de email (se necessário no frontend)
+                  NEXT_PUBLIC_SMTP_HOST: ${{ secrets.SMTP_HOST }}
+                  NEXT_PUBLIC_SMTP_PORT: ${{ secrets.SMTP_PORT }}
+                  NEXT_PUBLIC_SMTP_USER: ${{ secrets.SMTP_USER }}
+                  NEXT_PUBLIC_SMTP_PASS: ${{ secrets.SMTP_PASS }}
+                  NEXT_PUBLIC_SMTP_FROM_NAME: ${{ secrets.SMTP_FROM_NAME }}
+                  NEXT_PUBLIC_SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+
+                  # Configurações da IA
+                  NEXT_PUBLIC_GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+                  NEXT_PUBLIC_GROQ_MODEL: ${{ secrets.GROQ_MODEL }}
+
+            - name: Deploy to Hostinger
+              uses: SamKirkland/FTP-Deploy-Action@v4
+              with:
+                  server: ${{ secrets.HOSTINGER_SERVER }}
+                  username: ${{ secrets.HOSTINGER_USERNAME }}
+                  password: ${{ secrets.HOSTINGER_PASSWORD }}
+                  local-dir: ./out/
