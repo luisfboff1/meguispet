@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 
 interface MenuItem {
-  icon: React.ComponentType<{ size?: number }>
+  icon: React.ComponentType<any>
   label: string
   href: string
   badge?: number

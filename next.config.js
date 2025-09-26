@@ -13,10 +13,7 @@ const nextConfig = {
   distDir: 'out',
   generateEtags: false,
   
-  // Desabilitar recursos que não funcionam no Hostinger
-  experimental: {
-    appDir: false
-  },
+  // Configurações experimentais removidas para compatibilidade
   
   // Configurações de ambiente
   env: {
@@ -26,20 +23,7 @@ const nextConfig = {
   // Configurações de assets
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
   
-  // Headers para CORS (não funciona com export, mas mantemos para referência)
-  async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization' },
-        ]
-      }
-    ];
-  }
+  // Headers removidos para compatibilidade com export estático
 }
 
 module.exports = nextConfig
