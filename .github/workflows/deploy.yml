@@ -114,24 +114,25 @@ jobs:
           EOF
           echo "✅ .htaccess da API criado!"
 
-      - name: 🔍 Verificar pasta out antes do deploy
-        run: |
-          echo "🔍 Verificando conteúdo da pasta out..."
-          ls -la out/
-          echo "📊 Tamanho da pasta out:"
-          du -sh out/
-          echo "📁 Conteúdo da pasta out:"
-          find out/ -type f | head -20
-
-      - name: 🚀 Deploy para Hostinger
+      - name: 🚀 Deploy Frontend para Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
+          protocol: ftps
           local-dir: ./out/
           server-dir: /
+
+      - name: 🚀 Deploy APIs para Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./out/api/
+          server-dir: /api/
           exclude: |
             **/.git*
             **/.git*/**
