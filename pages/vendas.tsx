@@ -113,6 +113,41 @@ export default function VendasPage() {
     setEditingVenda(null)
   }
 
+  const handleExportar = () => {
+    // Gerar CSV das vendas
+    const csvContent = generateCSV(vendas)
+    downloadCSV(csvContent, 'vendas.csv')
+  }
+
+  const generateCSV = (data: Venda[]) => {
+    const headers = ['ID', 'Cliente', 'Vendedor', 'Total', 'Status', 'Data', 'Forma Pagamento']
+    const rows = data.map(venda => [
+      venda.id,
+      venda.cliente?.nome || 'N/A',
+      venda.vendedor?.nome || 'N/A',
+      venda.valor_final,
+      venda.status,
+      new Date(venda.created_at).toLocaleDateString('pt-BR'),
+      venda.forma_pagamento
+    ])
+    
+    return [headers, ...rows].map(row => 
+      row.map(field => `"${field}"`).join(',')
+    ).join('\n')
+  }
+
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', filename)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -130,7 +165,10 @@ export default function VendasPage() {
             <Plus className="mr-2 h-4 w-4" />
             Nova Venda
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={handleExportar}
+          >
             <Download className="mr-2 h-4 w-4" />
             Exportar
           </Button>

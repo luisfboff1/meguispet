@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
-import { Bell, Search, User, ChevronDown } from 'lucide-react'
+import { Bell, Search, User, ChevronDown, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -53,12 +53,57 @@ const pageTitles: Record<string, { title: string; description: string }> = {
 
 export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
   const router = useRouter()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+  const notificationsRef = useRef<HTMLDivElement>(null)
   
   // Pegar título e descrição automaticamente baseado na rota
   const pageInfo = pageTitles[router.pathname] || { 
     title: title || 'MeguisPet', 
     description: description || 'Sistema de gestão' 
   }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchTerm.trim()) {
+      // Implementar busca global
+      console.log('Buscando:', searchTerm)
+      // Aqui você pode implementar uma busca global ou redirecionar para uma página de resultados
+    }
+  }
+
+  const handleLogout = () => {
+    // Implementar logout
+    localStorage.removeItem('token')
+    router.push('/login')
+  }
+
+  const handleNotifications = () => {
+    setShowNotifications(!showNotifications)
+  }
+
+  const handleUserMenu = () => {
+    setShowUserMenu(!showUserMenu)
+  }
+
+  // Fechar dropdowns quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -75,37 +120,119 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
 
         {/* Barra de busca */}
         <div className="flex-1 max-w-md mx-8">
-          <div className="relative">
+          <form onSubmit={handleSearch} className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             <Input 
-              placeholder="Buscar..." 
+              placeholder="Buscar vendas, clientes, produtos..." 
               className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
+          </form>
         </div>
 
         {/* Actions */}
         <div className="flex items-center space-x-4">
           {/* Notificações */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell size={20} />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              3
-            </span>
-          </Button>
+          <div className="relative" ref={notificationsRef}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="relative"
+              onClick={handleNotifications}
+            >
+              <Bell size={20} />
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                3
+              </span>
+            </Button>
+            
+            {/* Dropdown de notificações */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                <div className="p-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Notificações</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Estoque baixo</p>
+                        <p className="text-xs text-gray-600">Produto "Ração Premium" com estoque baixo</p>
+                        <p className="text-xs text-gray-400">Há 2 horas</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Nova venda</p>
+                        <p className="text-xs text-gray-600">Venda #1234 realizada com sucesso</p>
+                        <p className="text-xs text-gray-400">Há 4 horas</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Novo cliente</p>
+                        <p className="text-xs text-gray-600">Cliente "João Silva" cadastrado</p>
+                        <p className="text-xs text-gray-400">Ontem</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <Button variant="ghost" size="sm" className="w-full">
+                      Ver todas as notificações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Avatar do usuário */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-meguispet-primary rounded-full flex items-center justify-center">
-              <User size={16} className="text-white" />
+          <div className="relative" ref={userMenuRef}>
+            <div 
+              className="flex items-center space-x-2 cursor-pointer"
+              onClick={handleUserMenu}
+            >
+              <div className="w-8 h-8 bg-meguispet-primary rounded-full flex items-center justify-center">
+                <User size={16} className="text-white" />
+              </div>
+              <div className={cn(
+                "flex items-center space-x-1 transition-all duration-300",
+                sidebarCollapsed ? "opacity-100" : "opacity-100"
+              )}>
+                <span className="text-sm font-medium text-gray-700">Admin</span>
+                <ChevronDown size={16} className="text-gray-400" />
+              </div>
             </div>
-            <div className={cn(
-              "flex items-center space-x-1 transition-all duration-300",
-              sidebarCollapsed ? "opacity-100" : "opacity-100"
-            )}>
-              <span className="text-sm font-medium text-gray-700">Admin</span>
-              <ChevronDown size={16} className="text-gray-400" />
-            </div>
+            
+            {/* Dropdown do usuário */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                <div className="py-1">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900">Admin</p>
+                    <p className="text-xs text-gray-500">admin@meguispet.com</p>
+                  </div>
+                  <button className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <User className="mr-3 h-4 w-4" />
+                    Perfil
+                  </button>
+                  <button className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <Settings className="mr-3 h-4 w-4" />
+                    Configurações
+                  </button>
+                  <div className="border-t border-gray-100"></div>
+                  <button 
+                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-3 h-4 w-4" />
+                    Sair
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
