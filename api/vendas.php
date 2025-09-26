@@ -1,4 +1,16 @@
 <?php
+// Headers CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Content-Type: application/json');
+
+// Responder a requisições OPTIONS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/jwt_helper.php';
 
@@ -73,9 +85,36 @@ try {
             
             $vendas = $stmt->fetchAll();
             
+            // Transformar dados para estrutura esperada pelo frontend
+            $vendasFormatted = array_map(function($venda) {
+                return [
+                    'id' => $venda['id'],
+                    'numero_venda' => $venda['numero_venda'],
+                    'valor_total' => $venda['valor_total'],
+                    'valor_final' => $venda['valor_final'],
+                    'desconto' => $venda['desconto'],
+                    'status' => $venda['status'],
+                    'forma_pagamento' => $venda['forma_pagamento'],
+                    'origem_venda' => $venda['origem_venda'],
+                    'observacoes' => $venda['observacoes'],
+                    'created_at' => $venda['data_venda'],
+                    'updated_at' => $venda['updated_at'],
+                    'cliente' => $venda['cliente_nome'] ? [
+                        'id' => $venda['cliente_id'],
+                        'nome' => $venda['cliente_nome'],
+                        'email' => $venda['cliente_email']
+                    ] : null,
+                    'vendedor' => $venda['vendedor_nome'] ? [
+                        'id' => $venda['vendedor_id'],
+                        'nome' => $venda['vendedor_nome'],
+                        'email' => $venda['vendedor_email']
+                    ] : null
+                ];
+            }, $vendas);
+            
             echo json_encode([
                 'success' => true,
-                'data' => $vendas,
+                'data' => $vendasFormatted,
                 'pagination' => [
                     'page' => $page,
                     'limit' => $limit,

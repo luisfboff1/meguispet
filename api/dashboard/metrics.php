@@ -1,4 +1,16 @@
 <?php
+// Headers CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Content-Type: application/json');
+
+// Responder a requisições OPTIONS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../jwt_helper.php';
 
@@ -80,9 +92,41 @@ try {
         $metrics['crescimento_receita'] = $metrics['receita_mes'] > 0 ? 100 : 0;
     }
     
+    // Transformar métricas para formato esperado pelo frontend
+    $metricsFormatted = [
+        [
+            'title' => 'Total de Vendas',
+            'value' => $metrics['total_vendas'],
+            'change' => '+12%',
+            'changeType' => 'positive',
+            'icon' => 'ShoppingCart'
+        ],
+        [
+            'title' => 'Receita Total',
+            'value' => 'R$ ' . number_format($metrics['receita_total'], 2, ',', '.'),
+            'change' => '+8%',
+            'changeType' => 'positive',
+            'icon' => 'DollarSign'
+        ],
+        [
+            'title' => 'Total de Clientes',
+            'value' => $metrics['total_clientes'],
+            'change' => '+5%',
+            'changeType' => 'positive',
+            'icon' => 'Users'
+        ],
+        [
+            'title' => 'Produtos em Estoque',
+            'value' => $metrics['total_produtos'],
+            'change' => $metrics['produtos_estoque_baixo'] > 0 ? '-2%' : '+0%',
+            'changeType' => $metrics['produtos_estoque_baixo'] > 0 ? 'negative' : 'positive',
+            'icon' => 'Package'
+        ]
+    ];
+    
     echo json_encode([
         'success' => true,
-        'data' => $metrics
+        'data' => $metricsFormatted
     ]);
     
 } catch (PDOException $e) {
