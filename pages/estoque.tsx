@@ -235,7 +235,7 @@ export default function EstoquePage() {
                   {filteredProdutos.map((produto) => {
                     const stockStatus = getStockStatus(produto.estoque)
                     const StockIcon = stockStatus.icon
-                    const totalValue = produto.preco_venda * produto.estoque
+                    const totalValue = produto.preco * produto.estoque
                     
                     return (
                       <tr key={produto.id} className="border-b hover:bg-gray-50">

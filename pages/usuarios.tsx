@@ -201,12 +201,6 @@ export default function UsuariosPage() {
                   <span className="text-sm text-gray-600">{usuario.email}</span>
                 </div>
                 
-                {usuario.telefone && (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{usuario.telefone}</span>
-                  </div>
-                )}
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Função:</span>

@@ -60,7 +60,7 @@ export default function ProdutosPage() {
     return { color: 'text-green-600', icon: Package, text: 'Em estoque' }
   }
 
-  const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco_venda * produto.estoque), 0)
+  const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco * produto.estoque), 0)
   const lowStockProducts = produtos.filter(produto => produto.estoque <= 5).length
 
   return (
