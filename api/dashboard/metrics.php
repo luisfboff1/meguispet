@@ -39,13 +39,13 @@ try {
     $metrics['vendas_mes'] = $stmt->fetch()['total'];
     
     // Receita total
-    $sql = "SELECT COALESCE(SUM(valor_final), 0) as total FROM vendas WHERE status = 'pago'";
+    $sql = "SELECT COALESCE(SUM(CAST(valor_final AS DECIMAL(10,2))), 0) as total FROM vendas WHERE status = 'pago'";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $metrics['receita_total'] = (float)$stmt->fetch()['total'];
     
     // Receita do mês
-    $sql = "SELECT COALESCE(SUM(valor_final), 0) as total FROM vendas 
+    $sql = "SELECT COALESCE(SUM(CAST(valor_final AS DECIMAL(10,2))), 0) as total FROM vendas 
             WHERE status = 'pago' 
             AND MONTH(data_venda) = MONTH(CURRENT_DATE()) 
             AND YEAR(data_venda) = YEAR(CURRENT_DATE())";
