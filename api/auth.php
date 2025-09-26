@@ -35,7 +35,7 @@ function handleLogin() {
     }
     
     try {
-        $pdo = getDatabaseConnection();
+        $pdo = getDbConnection();
         
         // Buscar usuário no banco
         $stmt = $pdo->prepare("SELECT id, nome, email, password_hash, role, permissoes, ativo FROM usuarios WHERE email = ? AND ativo = 1");
@@ -88,7 +88,7 @@ function handleGetProfile() {
     }
     
     try {
-        $pdo = getDatabaseConnection();
+        $pdo = getDbConnection();
         
         // Buscar dados do usuário
         $stmt = $pdo->prepare("SELECT id, nome, email, role, permissoes, ativo FROM usuarios WHERE id = ?");

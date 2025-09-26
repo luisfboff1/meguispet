@@ -7,6 +7,12 @@
  */
 function generate_jwt($payload) {
     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+    
+    // Adicionar expiração se não existir
+    if (!isset($payload['exp'])) {
+        $payload['exp'] = time() + (24 * 60 * 60); // 24 horas
+    }
+    
     $payload = json_encode($payload);
     
     $base64Header = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));

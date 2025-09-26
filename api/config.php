@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Função para conectar ao banco
-function getDatabaseConnection() {
+function getDbConnection() {
     global $host, $dbname, $username, $password;
     
     try {

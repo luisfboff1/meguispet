@@ -6,7 +6,7 @@ require_once 'config.php';
 
 try {
     // Testar conexão com banco
-    $pdo = getDatabaseConnection();
+    $pdo = getDbConnection();
     
     // Testar query simples
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM usuarios");
