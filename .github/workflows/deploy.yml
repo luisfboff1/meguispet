@@ -34,19 +34,19 @@ jobs:
           npm run build
           echo "✅ Build Next.js concluído!"
 
-      - name: 🔧 Configurar APIs PHP (compatibilidade)
-        run: |
-          echo "🔧 Copiando APIs PHP existentes..."
-          mkdir -p out/api
-          # Copiar da pasta raiz do projeto original
-          if [ -d "../api" ]; then
-            cp -r ../api/* out/api/
-          elif [ -d "../../api" ]; then
-            cp -r ../../api/* out/api/
-          else
-            echo "⚠️ Pasta api não encontrada - será criada estrutura básica"
-            echo "<?php echo 'API funcionando!'; ?>" > out/api/test.php
-          fi
+          - name: 🔧 Configurar APIs PHP (compatibilidade)
+            run: |
+              echo "🔧 Copiando APIs PHP existentes..."
+              mkdir -p out/api
+              # Copiar da pasta api do projeto original (estrutura correta)
+              if [ -d "../api" ]; then
+                cp -r ../api/* out/api/
+              elif [ -d "../../api" ]; then
+                cp -r ../../api/* out/api/
+              else
+                echo "⚠️ Pasta api não encontrada - será criada estrutura básica"
+                echo "<?php echo 'API funcionando!'; ?>" > out/api/test.php
+              fi
 
           echo "🔧 Configurando variáveis de ambiente PHP..."
           echo "DB_HOST=${{ secrets.DB_HOST }}" > out/api/.env
@@ -71,7 +71,8 @@ jobs:
           # Next.js Export Configuration
           RewriteEngine On
 
-          # Handle Angular and AngularJS requests
+          # Excluir API do redirecionamento para SPA
+          RewriteCond %{REQUEST_URI} !^/api/
           RewriteCond %{REQUEST_FILENAME} !-f
           RewriteCond %{REQUEST_FILENAME} !-d
           RewriteRule ^(.*)$ /index.html [L]
@@ -92,6 +93,26 @@ jobs:
           </FilesMatch>
           EOF
           echo "✅ .htaccess criado!"
+
+          # Criar .htaccess específico para API
+          cat > out/api/.htaccess << 'EOF'
+          # API Configuration
+          RewriteEngine On
+
+          # Permitir acesso direto aos arquivos PHP
+          RewriteCond %{REQUEST_FILENAME} -f
+          RewriteRule ^(.*)$ - [L]
+
+          # CORS Headers para API
+          Header always set Access-Control-Allow-Origin "*"
+          Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+          Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+
+          # Handle preflight requests
+          RewriteCond %{REQUEST_METHOD} OPTIONS
+          RewriteRule ^(.*)$ $1 [R=200,L]
+          EOF
+          echo "✅ .htaccess da API criado!"
 
       - name: 🚀 Deploy para Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
