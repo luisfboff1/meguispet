@@ -125,19 +125,4 @@ function verifyJWT($token) {
     }
 }
 
-// Função para gerar token JWT
-function generateJWT($payload) {
-    global $jwt_secret;
-    
-    $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
-    $payload['exp'] = time() + (24 * 60 * 60); // 24 horas
-    $payload = json_encode($payload);
-    
-    $headerEncoded = base64_encode($header);
-    $payloadEncoded = base64_encode($payload);
-    
-    $signature = base64_encode(hash_hmac('sha256', $headerEncoded . '.' . $payloadEncoded, $jwt_secret, true));
-    
-    return $headerEncoded . '.' . $payloadEncoded . '.' . $signature;
-}
 ?>

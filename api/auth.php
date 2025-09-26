@@ -51,7 +51,7 @@ function handleLogin() {
         }
         
         // Gerar token JWT
-        $token = generateJWT([
+        $token = generate_jwt([
             'id' => $user['id'],
             'email' => $user['email'],
             'role' => $user['role']
