@@ -16,12 +16,15 @@ import {
 } from 'lucide-react'
 import { produtosService } from '@/services/api'
 import type { Produto } from '@/types'
+import AjusteEstoqueForm from '@/components/forms/AjusteEstoqueForm'
 
 export default function EstoquePage() {
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'low' | 'out' | 'ok'>('all')
+  const [showAjusteForm, setShowAjusteForm] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
     loadProdutos()
@@ -46,6 +49,32 @@ export default function EstoquePage() {
       style: 'currency',
       currency: 'BRL'
     }).format(value)
+  }
+
+  const handleAjustarEstoque = () => {
+    setShowAjusteForm(true)
+  }
+
+  const handleSalvarAjuste = async (ajusteData: any) => {
+    try {
+      setFormLoading(true)
+      
+      // Aqui você implementaria a lógica de ajuste de estoque
+      // Por enquanto, vamos simular um ajuste
+      console.log('Ajuste de estoque:', ajusteData)
+      
+      // Recarregar produtos após ajuste
+      await loadProdutos()
+      setShowAjusteForm(false)
+    } catch (error) {
+      console.error('Erro ao ajustar estoque:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleCancelarAjuste = () => {
+    setShowAjusteForm(false)
   }
 
   const getStockStatus = (estoque: number) => {
@@ -99,7 +128,10 @@ export default function EstoquePage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button className="bg-meguispet-primary hover:bg-meguispet-primary/90">
+          <Button 
+            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+            onClick={handleAjustarEstoque}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Ajustar Estoque
           </Button>
@@ -298,6 +330,17 @@ export default function EstoquePage() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Formulário de Ajuste de Estoque */}
+      {showAjusteForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <AjusteEstoqueForm
+            onSubmit={handleSalvarAjuste}
+            onCancel={handleCancelarAjuste}
+            loading={formLoading}
+          />
+        </div>
       )}
     </div>
   )

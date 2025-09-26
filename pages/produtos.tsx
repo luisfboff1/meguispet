@@ -17,12 +17,16 @@ import {
 } from 'lucide-react'
 import { produtosService } from '@/services/api'
 import type { Produto } from '@/types'
+import ProdutoForm from '@/components/forms/ProdutoForm'
 
 export default function ProdutosPage() {
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showForm, setShowForm] = useState(false)
+  const [editingProduto, setEditingProduto] = useState<Produto | null>(null)
+  const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
     loadProdutos()
@@ -60,6 +64,48 @@ export default function ProdutosPage() {
     return { color: 'text-green-600', icon: Package, text: 'Em estoque' }
   }
 
+  const handleNovoProduto = () => {
+    setEditingProduto(null)
+    setShowForm(true)
+  }
+
+  const handleEditarProduto = (produto: Produto) => {
+    setEditingProduto(produto)
+    setShowForm(true)
+  }
+
+  const handleSalvarProduto = async (produtoData: Partial<Produto>) => {
+    try {
+      setFormLoading(true)
+      
+      if (editingProduto) {
+        // Editar produto existente
+        const response = await produtosService.update(editingProduto.id, produtoData)
+        if (response.success) {
+          await loadProdutos()
+          setShowForm(false)
+          setEditingProduto(null)
+        }
+      } else {
+        // Criar novo produto
+        const response = await produtosService.create(produtoData as Omit<Produto, 'id' | 'created_at' | 'updated_at'>)
+        if (response.success) {
+          await loadProdutos()
+          setShowForm(false)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao salvar produto:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleCancelarForm = () => {
+    setShowForm(false)
+    setEditingProduto(null)
+  }
+
   const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco * produto.estoque), 0)
   const lowStockProducts = produtos.filter(produto => produto.estoque <= 5).length
 
@@ -73,7 +119,10 @@ export default function ProdutosPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button className="bg-meguispet-primary hover:bg-meguispet-primary/90">
+          <Button 
+            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+            onClick={handleNovoProduto}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Novo Produto
           </Button>
@@ -234,6 +283,18 @@ export default function ProdutosPage() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Formulário de Produto */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <ProdutoForm
+            produto={editingProduto || undefined}
+            onSubmit={handleSalvarProduto}
+            onCancel={handleCancelarForm}
+            loading={formLoading}
+          />
+        </div>
       )}
     </div>
   )

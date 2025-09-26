@@ -53,9 +53,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
         produtosService.getAll(1, 100)
       ])
 
-      if (clientesRes.success) setClientes(clientesRes.data)
-      if (vendedoresRes.success) setVendedores(vendedoresRes.data)
-      if (produtosRes.success) setProdutos(produtosRes.data)
+      if (clientesRes.success && clientesRes.data) setClientes(clientesRes.data)
+      if (vendedoresRes.success && vendedoresRes.data) setVendedores(vendedoresRes.data)
+      if (produtosRes.success && produtosRes.data) setProdutos(produtosRes.data)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
     } finally {
