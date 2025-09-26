@@ -14,9 +14,29 @@ import {
   Calendar,
   PieChart
 } from 'lucide-react'
+import { dashboardService } from '@/services/api'
 
 export default function FinanceiroPage() {
   const [loading, setLoading] = useState(false)
+  const [metrics, setMetrics] = useState<any>(null)
+
+  useEffect(() => {
+    loadFinancialData()
+  }, [])
+
+  const loadFinancialData = async () => {
+    try {
+      setLoading(true)
+      const response = await dashboardService.getMetrics()
+      if (response.success && response.data) {
+        setMetrics(response.data)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados financeiros:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -54,7 +74,9 @@ export default function FinanceiroPage() {
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">R$ 0,00</div>
+            <div className="text-2xl font-bold text-green-600">
+              {loading ? '...' : metrics ? metrics[1]?.value || 'R$ 0,00' : 'R$ 0,00'}
+            </div>
             <p className="text-xs text-muted-foreground">Este mês</p>
           </CardContent>
         </Card>
