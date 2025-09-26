@@ -16,7 +16,7 @@ import {
   Phone,
   Calendar
 } from 'lucide-react'
-import { authService } from '@/services/api'
+import { usuariosService } from '@/services/api'
 import type { Usuario } from '@/types'
 
 export default function UsuariosPage() {
@@ -32,9 +32,10 @@ export default function UsuariosPage() {
   const loadUsuarios = async () => {
     try {
       setLoading(true)
-      // Simulando carregamento de usuários
-      // Em produção, isso viria de uma API real
-      setUsuarios([])
+      const response = await usuariosService.getAll(currentPage, 10)
+      if (response.success && response.data) {
+        setUsuarios(response.data)
+      }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error)
     } finally {

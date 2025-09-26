@@ -16,12 +16,16 @@ import {
 } from 'lucide-react'
 import { vendasService } from '@/services/api'
 import type { Venda } from '@/types'
+import VendaForm from '@/components/forms/VendaForm'
 
 export default function VendasPage() {
   const [vendas, setVendas] = useState<Venda[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showForm, setShowForm] = useState(false)
+  const [editingVenda, setEditingVenda] = useState<Venda | null>(null)
+  const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
     loadVendas()
@@ -67,6 +71,48 @@ export default function VendasPage() {
     }
   }
 
+  const handleNovaVenda = () => {
+    setEditingVenda(null)
+    setShowForm(true)
+  }
+
+  const handleEditarVenda = (venda: Venda) => {
+    setEditingVenda(venda)
+    setShowForm(true)
+  }
+
+  const handleSalvarVenda = async (vendaData: any) => {
+    try {
+      setFormLoading(true)
+      
+      if (editingVenda) {
+        // Editar venda existente
+        const response = await vendasService.update(editingVenda.id, vendaData)
+        if (response.success) {
+          await loadVendas()
+          setShowForm(false)
+          setEditingVenda(null)
+        }
+      } else {
+        // Criar nova venda
+        const response = await vendasService.create(vendaData)
+        if (response.success) {
+          await loadVendas()
+          setShowForm(false)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao salvar venda:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleCancelarForm = () => {
+    setShowForm(false)
+    setEditingVenda(null)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -77,7 +123,10 @@ export default function VendasPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button className="bg-meguispet-primary hover:bg-meguispet-primary/90">
+          <Button 
+            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+            onClick={handleNovaVenda}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Nova Venda
           </Button>
@@ -232,6 +281,18 @@ export default function VendasPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Formulário de Venda */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <VendaForm
+            venda={editingVenda || undefined}
+            onSubmit={handleSalvarVenda}
+            onCancel={handleCancelarForm}
+            loading={formLoading}
+          />
+        </div>
+      )}
     </div>
   )
 }

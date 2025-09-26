@@ -166,6 +166,34 @@ export const vendedoresService = {
   }
 }
 
+// 👥 USUÁRIOS
+export const usuariosService = {
+  async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Usuario>> {
+    const response = await api.get(`/usuarios.php?page=${page}&limit=${limit}`)
+    return response.data
+  },
+
+  async getById(id: number): Promise<ApiResponse<Usuario>> {
+    const response = await api.get(`/usuarios.php?id=${id}`)
+    return response.data
+  },
+
+  async create(usuario: Omit<Usuario, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Usuario>> {
+    const response = await api.post('/usuarios.php', usuario)
+    return response.data
+  },
+
+  async update(id: number, usuario: Partial<Usuario>): Promise<ApiResponse<Usuario>> {
+    const response = await api.put(`/usuarios.php?id=${id}`, usuario)
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/usuarios.php?id=${id}`)
+    return response.data
+  }
+}
+
 // 🔐 AUTENTICAÇÃO
 export const authService = {
   async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: Usuario }>> {

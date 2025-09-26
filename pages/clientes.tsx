@@ -18,12 +18,16 @@ import {
 } from 'lucide-react'
 import { clientesService } from '@/services/api'
 import type { Cliente } from '@/types'
+import ClienteForm from '@/components/forms/ClienteForm'
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showForm, setShowForm] = useState(false)
+  const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
+  const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
     loadClientes()
@@ -53,6 +57,48 @@ export default function ClientesPage() {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
+  const handleNovoCliente = () => {
+    setEditingCliente(null)
+    setShowForm(true)
+  }
+
+  const handleEditarCliente = (cliente: Cliente) => {
+    setEditingCliente(cliente)
+    setShowForm(true)
+  }
+
+  const handleSalvarCliente = async (clienteData: Partial<Cliente>) => {
+    try {
+      setFormLoading(true)
+      
+      if (editingCliente) {
+        // Editar cliente existente
+        const response = await clientesService.update(editingCliente.id, clienteData)
+        if (response.success) {
+          await loadClientes()
+          setShowForm(false)
+          setEditingCliente(null)
+        }
+      } else {
+        // Criar novo cliente
+        const response = await clientesService.create(clienteData as Omit<Cliente, 'id' | 'created_at' | 'updated_at'>)
+        if (response.success) {
+          await loadClientes()
+          setShowForm(false)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao salvar cliente:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleCancelarForm = () => {
+    setShowForm(false)
+    setEditingCliente(null)
+  }
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
@@ -67,7 +113,10 @@ export default function ClientesPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button className="bg-meguispet-primary hover:bg-meguispet-primary/90">
+          <Button 
+            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+            onClick={handleNovoCliente}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Novo Cliente
           </Button>
@@ -189,7 +238,11 @@ export default function ClientesPage() {
                     <Button variant="ghost" size="sm">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditarCliente(cliente)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                   </div>
@@ -242,6 +295,18 @@ export default function ClientesPage() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Formulário de Cliente */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <ClienteForm
+            cliente={editingCliente || undefined}
+            onSubmit={handleSalvarCliente}
+            onCancel={handleCancelarForm}
+            loading={formLoading}
+          />
+        </div>
       )}
     </div>
   )
