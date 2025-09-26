@@ -2,6 +2,20 @@
 // 🔧 CONFIGURAÇÃO DO BANCO DE DADOS - MEGUISPET
 // Configurações centralizadas para todas as APIs
 
+// Carregar variáveis de ambiente
+if (file_exists(__DIR__ . '/.env')) {
+    $env_content = file_get_contents(__DIR__ . '/.env');
+    $env_lines = explode("\n", $env_content);
+    
+    foreach ($env_lines as $line) {
+        $line = trim($line);
+        if (!empty($line) && strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+            list($key, $value) = explode('=', $line, 2);
+            $_ENV[trim($key)] = trim($value);
+        }
+    }
+}
+
 // Configurações do banco de dados (apenas variáveis de ambiente)
 $host = $_ENV['DB_HOST'] ?? '';
 $dbname = $_ENV['DB_NAME'] ?? '';
