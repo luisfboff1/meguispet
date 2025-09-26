@@ -187,7 +187,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
               <select
                 id="forma_pagamento"
                 value={formData.forma_pagamento}
-                onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value as 'dinheiro' | 'cartao' | 'pix' | 'transferencia' }))}
                 className="w-full p-2 border rounded-md"
               >
                 <option value="dinheiro">Dinheiro</option>
@@ -202,7 +202,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
               <select
                 id="origem_venda"
                 value={formData.origem_venda}
-                onChange={(e) => setFormData(prev => ({ ...prev, origem_venda: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, origem_venda: e.target.value as 'loja_fisica' | 'mercado_livre' | 'shopee' | 'magazine_luiza' | 'americanas' | 'outros' }))}
                 className="w-full p-2 border rounded-md"
               >
                 <option value="loja_fisica">Loja Física</option>
