@@ -12,11 +12,10 @@ try {
     
     switch ($method) {
         case 'GET':
-            // Listar clientes
+            // Listar vendedores
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
             $search = isset($_GET['search']) ? $_GET['search'] : '';
-            $tipo = isset($_GET['tipo']) ? $_GET['tipo'] : '';
             
             $offset = ($page - 1) * $limit;
             
@@ -24,23 +23,18 @@ try {
             $params = [];
             
             if (!empty($search)) {
-                $where .= " AND (nome LIKE :search OR email LIKE :search OR documento LIKE :search)";
+                $where .= " AND (nome LIKE :search OR email LIKE :search OR cpf LIKE :search)";
                 $params[':search'] = "%$search%";
             }
             
-            if (!empty($tipo)) {
-                $where .= " AND tipo = :tipo";
-                $params[':tipo'] = $tipo;
-            }
-            
             // Contar total
-            $countSql = "SELECT COUNT(*) as total FROM clientes_fornecedores $where";
+            $countSql = "SELECT COUNT(*) as total FROM vendedores $where";
             $countStmt = $conn->prepare($countSql);
             $countStmt->execute($params);
             $total = $countStmt->fetch()['total'];
             
-            // Buscar clientes
-            $sql = "SELECT * FROM clientes_fornecedores $where ORDER BY nome ASC LIMIT :limit OFFSET :offset";
+            // Buscar vendedores
+            $sql = "SELECT * FROM vendedores $where ORDER BY nome ASC LIMIT :limit OFFSET :offset";
             $stmt = $conn->prepare($sql);
             
             foreach ($params as $key => $value) {
@@ -50,11 +44,11 @@ try {
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
             
-            $clientes = $stmt->fetchAll();
+            $vendedores = $stmt->fetchAll();
             
             echo json_encode([
                 'success' => true,
-                'data' => $clientes,
+                'data' => $vendedores,
                 'pagination' => [
                     'page' => $page,
                     'limit' => $limit,
@@ -65,10 +59,10 @@ try {
             break;
             
         case 'POST':
-            // Criar cliente
+            // Criar vendedor
             $data = json_decode(file_get_contents('php://input'), true);
             
-            $required = ['nome', 'tipo'];
+            $required = ['nome'];
             foreach ($required as $field) {
                 if (empty($data[$field])) {
                     http_response_code(400);
@@ -77,97 +71,124 @@ try {
                 }
             }
             
-            $sql = "INSERT INTO clientes_fornecedores (nome, tipo, email, telefone, endereco, cidade, estado, cep, documento, observacoes) 
-                    VALUES (:nome, :tipo, :email, :telefone, :endereco, :cidade, :estado, :cep, :documento, :observacoes)";
+            // Verificar se CPF já existe
+            if (!empty($data['cpf'])) {
+                $checkSql = "SELECT id FROM vendedores WHERE cpf = :cpf AND ativo = TRUE";
+                $checkStmt = $conn->prepare($checkSql);
+                $checkStmt->execute([':cpf' => $data['cpf']]);
+                if ($checkStmt->fetch()) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'CPF já cadastrado']);
+                    exit();
+                }
+            }
+            
+            $sql = "INSERT INTO vendedores (nome, email, telefone, cpf, comissao) 
+                    VALUES (:nome, :email, :telefone, :cpf, :comissao)";
             
             $stmt = $conn->prepare($sql);
             $stmt->execute([
                 ':nome' => $data['nome'],
-                ':tipo' => $data['tipo'],
                 ':email' => $data['email'] ?? null,
                 ':telefone' => $data['telefone'] ?? null,
-                ':endereco' => $data['endereco'] ?? null,
-                ':cidade' => $data['cidade'] ?? null,
-                ':estado' => $data['estado'] ?? null,
-                ':cep' => $data['cep'] ?? null,
-                ':documento' => $data['documento'] ?? null,
-                ':observacoes' => $data['observacoes'] ?? null
+                ':cpf' => $data['cpf'] ?? null,
+                ':comissao' => $data['comissao'] ?? 0.00
             ]);
             
-            $cliente_id = $conn->lastInsertId();
+            $vendedor_id = $conn->lastInsertId();
             
             echo json_encode([
                 'success' => true,
-                'message' => 'Cliente criado com sucesso',
-                'data' => ['id' => $cliente_id]
+                'message' => 'Vendedor criado com sucesso',
+                'data' => ['id' => $vendedor_id]
             ]);
             break;
             
         case 'PUT':
-            // Atualizar cliente
+            // Atualizar vendedor
             $data = json_decode(file_get_contents('php://input'), true);
             
             if (empty($data['id'])) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'ID do cliente é obrigatório']);
+                echo json_encode(['success' => false, 'message' => 'ID do vendedor é obrigatório']);
                 exit();
             }
             
-            $sql = "UPDATE clientes_fornecedores SET 
-                    nome = :nome, tipo = :tipo, email = :email, telefone = :telefone, 
-                    endereco = :endereco, cidade = :cidade, estado = :estado, 
-                    cep = :cep, documento = :documento, observacoes = :observacoes,
-                    updated_at = CURRENT_TIMESTAMP
+            // Verificar se CPF já existe (excluindo o próprio vendedor)
+            if (!empty($data['cpf'])) {
+                $checkSql = "SELECT id FROM vendedores WHERE cpf = :cpf AND id != :id AND ativo = TRUE";
+                $checkStmt = $conn->prepare($checkSql);
+                $checkStmt->execute([':cpf' => $data['cpf'], ':id' => $data['id']]);
+                if ($checkStmt->fetch()) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'CPF já cadastrado']);
+                    exit();
+                }
+            }
+            
+            $sql = "UPDATE vendedores SET 
+                    nome = :nome, email = :email, telefone = :telefone, 
+                    cpf = :cpf, comissao = :comissao, updated_at = CURRENT_TIMESTAMP
                     WHERE id = :id";
             
             $stmt = $conn->prepare($sql);
             $result = $stmt->execute([
                 ':id' => $data['id'],
                 ':nome' => $data['nome'],
-                ':tipo' => $data['tipo'],
                 ':email' => $data['email'] ?? null,
                 ':telefone' => $data['telefone'] ?? null,
-                ':endereco' => $data['endereco'] ?? null,
-                ':cidade' => $data['cidade'] ?? null,
-                ':estado' => $data['estado'] ?? null,
-                ':cep' => $data['cep'] ?? null,
-                ':documento' => $data['documento'] ?? null,
-                ':observacoes' => $data['observacoes'] ?? null
+                ':cpf' => $data['cpf'] ?? null,
+                ':comissao' => $data['comissao'] ?? 0.00
             ]);
             
             if ($result && $stmt->rowCount() > 0) {
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Cliente atualizado com sucesso'
+                    'message' => 'Vendedor atualizado com sucesso'
                 ]);
             } else {
                 http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Cliente não encontrado']);
+                echo json_encode(['success' => false, 'message' => 'Vendedor não encontrado']);
             }
             break;
             
         case 'DELETE':
-            // Deletar cliente (soft delete)
+            // Deletar vendedor (soft delete)
             $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
             
             if (!$id) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'ID do cliente é obrigatório']);
+                echo json_encode(['success' => false, 'message' => 'ID do vendedor é obrigatório']);
                 exit();
             }
             
-            $sql = "UPDATE clientes_fornecedores SET ativo = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = :id";
+            // Verificar se vendedor tem vendas
+            $checkSql = "SELECT COUNT(*) as total FROM vendas WHERE vendedor_id = :id";
+            $checkStmt = $conn->prepare($checkSql);
+            $checkStmt->execute([':id' => $id]);
+            $hasVendas = $checkStmt->fetch()['total'] > 0;
+            
+            if ($hasVendas) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Não é possível remover vendedor que possui vendas associadas'
+                ]);
+                exit();
+            }
+            
+            $sql = "UPDATE vendedores SET ativo = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = :id";
             $stmt = $conn->prepare($sql);
             $result = $stmt->execute([':id' => $id]);
             
             if ($result && $stmt->rowCount() > 0) {
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Cliente removido com sucesso'
+                    'message' => 'Vendedor removido com sucesso'
                 ]);
             } else {
                 http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Cliente não encontrado']);
+                echo json_encode(['success' => false, 'message' => 'Vendedor não encontrado']);
             }
             break;
             

@@ -1,6 +1,6 @@
 <?php
-require_once 'config.php';
-require_once 'jwt_helper.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/jwt_helper.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
