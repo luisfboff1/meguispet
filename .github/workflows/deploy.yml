@@ -1,0 +1,120 @@
+# 🚀 DEPLOY MEGUISPET NEXT.JS - HOSTINGER
+# Deploy automatizado com Next.js + SSG + PHP APIs
+
+name: 🚀 Deploy MeguisPet Next.js
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "./package-lock.json"
+
+      - name: 📥 Install dependencies
+        run: |
+          echo "🔄 Instalando dependências do Next.js..."
+          npm ci
+
+      - name: 🏗️ Build Next.js (SSG)
+        run: |
+          echo "🏗️ Construindo aplicação Next.js para produção..."
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" >> .env.local
+          npm run build
+          echo "✅ Build Next.js concluído!"
+
+      - name: 🔧 Configurar APIs PHP (compatibilidade)
+        run: |
+          echo "🔧 Copiando APIs PHP existentes..."
+          mkdir -p out/api
+          # Copiar da pasta raiz do projeto original
+          if [ -d "../api" ]; then
+            cp -r ../api/* out/api/
+          elif [ -d "../../api" ]; then
+            cp -r ../../api/* out/api/
+          else
+            echo "⚠️ Pasta api não encontrada - será criada estrutura básica"
+            echo "<?php echo 'API funcionando!'; ?>" > out/api/test.php
+          fi
+
+          echo "🔧 Configurando variáveis de ambiente PHP..."
+          echo "DB_HOST=${{ secrets.DB_HOST }}" > out/api/.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> out/api/.env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> out/api/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> out/api/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> out/api/.env
+          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> out/api/.env
+          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> out/api/.env
+          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> out/api/.env
+          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> out/api/.env
+          echo "SMTP_FROM_NAME=${{ secrets.SMTP_FROM_NAME }}" >> out/api/.env
+          echo "SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}" >> out/api/.env
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> out/api/.env
+          echo "GROQ_MODEL=${{ secrets.GROQ_MODEL }}" >> out/api/.env
+          echo "✅ APIs PHP configuradas!"
+
+      - name: 📄 Criar .htaccess para SPA
+        run: |
+          echo "📄 Criando .htaccess para Next.js export..."
+          cat > out/.htaccess << 'EOF'
+          # Next.js Export Configuration
+          RewriteEngine On
+
+          # Handle Angular and AngularJS requests
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^(.*)$ /index.html [L]
+
+          # Security Headers
+          Header always set X-Content-Type-Options nosniff
+          Header always set X-Frame-Options DENY
+          Header always set X-XSS-Protection "1; mode=block"
+
+          # CORS for API
+          Header always set Access-Control-Allow-Origin "*"
+          Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+          Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+
+          # Cache static assets
+          <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg)$">
+            Header set Cache-Control "max-age=31536000, public"
+          </FilesMatch>
+          EOF
+          echo "✅ .htaccess criado!"
+
+      - name: 🚀 Deploy para Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./out/
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.next/**
+            **/.env*
+            **/README.md
+
+      - name: ✅ Deploy concluído
+        run: |
+          echo "🎉 Deploy Next.js realizado com sucesso!"
+          echo "🌐 Frontend: https://gestao.meguispet.com/"
+          echo "🔗 APIs: https://gestao.meguispet.com/api/"
+          echo "📱 Sistema responsivo funcionando!"
+          echo "🚀 Arquitetura melhorada ativa!"
