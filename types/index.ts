@@ -106,10 +106,10 @@ export interface ProdutoForm {
   nome: string
   descricao?: string
   preco: number
-  preco_custo: number
-  categoria: string
   estoque: number
   estoque_minimo: number
+  categoria?: string
+  codigo_barras?: string
   ativo: boolean
 }
 

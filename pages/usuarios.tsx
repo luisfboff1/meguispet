@@ -113,9 +113,9 @@ export default function UsuariosPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {usuarios.filter(u => u.role === 'vendedor').length}
+              {usuarios.filter(u => u.ativo).length}
             </div>
-            <p className="text-xs text-muted-foreground">Usuários</p>
+            <p className="text-xs text-muted-foreground">Usuários Ativos</p>
           </CardContent>
         </Card>
 
