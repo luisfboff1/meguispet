@@ -49,12 +49,12 @@ try {
     $produtos_formatados = [];
     foreach ($produtos as $produto) {
         $produtos_formatados[] = [
-            'id' => $produto['id'],
+            'id' => (int)$produto['id'],
             'nome' => $produto['nome'],
             'preco' => (float)$produto['preco'],
             'estoque' => (int)$produto['estoque'],
-            'total_vendido' => (int)$produto['total_vendido'],
-            'receita_total' => (float)$produto['receita_total'],
+            'vendas' => (int)$produto['total_vendido'],
+            'receita' => (float)$produto['receita_total'],
             'total_vendas' => (int)$produto['total_vendas']
         ];
     }

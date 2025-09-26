@@ -32,6 +32,7 @@ export default function VendasPage() {
       setLoading(true)
       const response = await vendasService.getAll(currentPage, 10)
       if (response.success && response.data) {
+        console.log('Vendas carregadas:', response.data)
         setVendas(response.data)
       }
     } catch (error) {
@@ -107,7 +108,7 @@ export default function VendasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(vendas.reduce((sum, venda) => sum + venda.valor_final, 0))}
+              {formatCurrency(vendas.reduce((sum, venda) => sum + (parseFloat(venda.valor_final) || 0), 0))}
             </div>
             <p className="text-xs text-muted-foreground">Este mês</p>
           </CardContent>
@@ -120,7 +121,7 @@ export default function VendasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {vendas.length > 0 ? formatCurrency(vendas.reduce((sum, venda) => sum + venda.valor_final, 0) / vendas.length) : 'R$ 0,00'}
+              {vendas.length > 0 ? formatCurrency(vendas.reduce((sum, venda) => sum + (parseFloat(venda.valor_final) || 0), 0) / vendas.length) : 'R$ 0,00'}
             </div>
             <p className="text-xs text-muted-foreground">Por venda</p>
           </CardContent>

@@ -103,7 +103,7 @@ try {
         ],
         [
             'title' => 'Receita Total',
-            'value' => 'R$ ' . number_format($metrics['receita_total'], 2, ',', '.'),
+            'value' => 'R$ ' . number_format((float)$metrics['receita_total'], 2, ',', '.'),
             'change' => '+8%',
             'changeType' => 'positive',
             'icon' => 'DollarSign'
