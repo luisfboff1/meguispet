@@ -36,17 +36,17 @@ jobs:
 
       - name: 🔧 Configurar APIs PHP (compatibilidade)
         run: |
-              echo "🔧 Copiando APIs PHP existentes..."
-              mkdir -p out/api
-              # Copiar da pasta api do projeto original (estrutura correta)
-              if [ -d "../api" ]; then
-                cp -r ../api/* out/api/
-              elif [ -d "../../api" ]; then
-                cp -r ../../api/* out/api/
-              else
-                echo "⚠️ Pasta api não encontrada - será criada estrutura básica"
-                echo "<?php echo 'API funcionando!'; ?>" > out/api/test.php
-              fi
+          echo "🔧 Copiando APIs PHP existentes..."
+          mkdir -p out/api
+          # Copiar da pasta api do projeto original (estrutura correta)
+          if [ -d "../api" ]; then
+            cp -r ../api/* out/api/
+          elif [ -d "../../api" ]; then
+            cp -r ../../api/* out/api/
+          else
+            echo "⚠️ Pasta api não encontrada - será criada estrutura básica"
+            echo "<?php echo 'API funcionando!'; ?>" > out/api/test.php
+          fi
 
           echo "🔧 Configurando variáveis de ambiente PHP..."
           echo "DB_HOST=\"${{ secrets.DB_HOST }}\"" > out/api/.env
