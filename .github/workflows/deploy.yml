@@ -34,8 +34,8 @@ jobs:
           npm run build
           echo "✅ Build Next.js concluído!"
 
-          - name: 🔧 Configurar APIs PHP (compatibilidade)
-            run: |
+      - name: 🔧 Configurar APIs PHP (compatibilidade)
+        run: |
               echo "🔧 Copiando APIs PHP existentes..."
               mkdir -p out/api
               # Copiar da pasta api do projeto original (estrutura correta)
@@ -49,19 +49,19 @@ jobs:
               fi
 
           echo "🔧 Configurando variáveis de ambiente PHP..."
-          echo "DB_HOST=${{ secrets.DB_HOST }}" > out/api/.env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> out/api/.env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> out/api/.env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> out/api/.env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> out/api/.env
-          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> out/api/.env
-          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> out/api/.env
-          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> out/api/.env
-          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> out/api/.env
-          echo "SMTP_FROM_NAME=${{ secrets.SMTP_FROM_NAME }}" >> out/api/.env
-          echo "SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}" >> out/api/.env
-          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> out/api/.env
-          echo "GROQ_MODEL=${{ secrets.GROQ_MODEL }}" >> out/api/.env
+          echo "DB_HOST=\"${{ secrets.DB_HOST }}\"" > out/api/.env
+          echo "DB_NAME=\"${{ secrets.DB_NAME }}\"" >> out/api/.env
+          echo "DB_USER=\"${{ secrets.DB_USER }}\"" >> out/api/.env
+          echo "DB_PASSWORD=\"${{ secrets.DB_PASSWORD }}\"" >> out/api/.env
+          echo "JWT_SECRET=\"${{ secrets.JWT_SECRET }}\"" >> out/api/.env
+          echo "SMTP_HOST=\"${{ secrets.SMTP_HOST }}\"" >> out/api/.env
+          echo "SMTP_PORT=\"${{ secrets.SMTP_PORT }}\"" >> out/api/.env
+          echo "SMTP_USER=\"${{ secrets.SMTP_USER }}\"" >> out/api/.env
+          echo "SMTP_PASS=\"${{ secrets.SMTP_PASS }}\"" >> out/api/.env
+          echo "SMTP_FROM_NAME=\"${{ secrets.SMTP_FROM_NAME }}\"" >> out/api/.env
+          echo "SMTP_FROM_EMAIL=\"${{ secrets.SMTP_FROM_EMAIL }}\"" >> out/api/.env
+          echo "GROQ_API_KEY=\"${{ secrets.GROQ_API_KEY }}\"" >> out/api/.env
+          echo "GROQ_MODEL=\"${{ secrets.GROQ_MODEL }}\"" >> out/api/.env
           echo "✅ APIs PHP configuradas!"
 
       - name: 📄 Criar .htaccess para SPA
@@ -75,7 +75,7 @@ jobs:
           RewriteCond %{REQUEST_URI} !^/api/
           RewriteCond %{REQUEST_FILENAME} !-f
           RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteRule ^(.*)$ /index.html [L]
+          RewriteRule .* /index.html [L]
 
           # Security Headers
           Header always set X-Content-Type-Options nosniff
