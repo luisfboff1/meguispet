@@ -24,6 +24,7 @@ $password = $_ENV['DB_PASSWORD'] ?? '';
 
 // Configurações JWT
 $jwt_secret = $_ENV['JWT_SECRET'] ?? '';
+define('JWT_SECRET', $jwt_secret);
 
 // Verificar se as variáveis de ambiente estão configuradas
 if (empty($host) || empty($dbname) || empty($username) || empty($password) || empty($jwt_secret)) {
