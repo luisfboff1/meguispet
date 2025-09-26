@@ -101,7 +101,7 @@ jobs:
 
           # Permitir acesso direto aos arquivos PHP
           RewriteCond %{REQUEST_FILENAME} -f
-          RewriteRule ^(.*)$ - [L]
+          RewriteRule .* - [L]
 
           # CORS Headers para API
           Header always set Access-Control-Allow-Origin "*"
@@ -110,7 +110,7 @@ jobs:
 
           # Handle preflight requests
           RewriteCond %{REQUEST_METHOD} OPTIONS
-          RewriteRule ^(.*)$ $1 [R=200,L]
+          RewriteRule .* - [R=200,L]
           EOF
           echo "✅ .htaccess da API criado!"
 
