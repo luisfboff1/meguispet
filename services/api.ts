@@ -46,6 +46,11 @@ export const dashboardService = {
   async getTopProducts(): Promise<ApiResponse> {
     const response = await api.get('/dashboard/top-products.php')
     return response.data
+  },
+
+  async getVendas7Dias(): Promise<ApiResponse> {
+    const response = await api.get('/dashboard/vendas-7-dias.php')
+    return response.data
   }
 }
 

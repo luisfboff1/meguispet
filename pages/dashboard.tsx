@@ -11,6 +11,10 @@ import {
   Eye
 } from 'lucide-react'
 import { dashboardService } from '@/services/api'
+import VendaForm from '@/components/forms/VendaForm'
+import ProdutoForm from '@/components/forms/ProdutoForm'
+import ClienteForm from '@/components/forms/ClienteForm'
+import VendasChart from '@/components/charts/VendasChart'
 
 // 📊 PÁGINA DASHBOARD - DADOS REAIS DO BANCO
 // Esta página não precisa configurar layout - é automático!
@@ -27,7 +31,14 @@ interface MetricCard {
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<MetricCard[]>([])
   const [topProducts, setTopProducts] = useState<any[]>([])
+  const [vendas7Dias, setVendas7Dias] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Estados para formulários
+  const [showVendaForm, setShowVendaForm] = useState(false)
+  const [showProdutoForm, setShowProdutoForm] = useState(false)
+  const [showClienteForm, setShowClienteForm] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
     loadDashboardData()
@@ -48,6 +59,12 @@ export default function DashboardPage() {
       if (productsResponse.success && productsResponse.data) {
         setTopProducts(productsResponse.data)
       }
+      
+      // 📊 CARREGAR VENDAS DOS ÚLTIMOS 7 DIAS
+      const vendasResponse = await dashboardService.getVendas7Dias()
+      if (vendasResponse.success && vendasResponse.data) {
+        setVendas7Dias(vendasResponse.data)
+      }
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error)
       // Fallback para dados vazios se API falhar
@@ -56,6 +73,75 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Funções para formulários
+  const handleNovaVenda = () => {
+    setShowVendaForm(true)
+  }
+
+  const handleNovoProduto = () => {
+    setShowProdutoForm(true)
+  }
+
+  const handleNovoCliente = () => {
+    setShowClienteForm(true)
+  }
+
+  const handleVerRelatorios = () => {
+    // Redirecionar para página de relatórios
+    window.location.href = '/relatorios'
+  }
+
+  const handleSalvarVenda = async (vendaData: any) => {
+    try {
+      setFormLoading(true)
+      // Aqui você implementaria a lógica de salvar venda
+      console.log('Salvando venda:', vendaData)
+      setShowVendaForm(false)
+      // Recarregar dados do dashboard
+      await loadDashboardData()
+    } catch (error) {
+      console.error('Erro ao salvar venda:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleSalvarProduto = async (produtoData: any) => {
+    try {
+      setFormLoading(true)
+      // Aqui você implementaria a lógica de salvar produto
+      console.log('Salvando produto:', produtoData)
+      setShowProdutoForm(false)
+      // Recarregar dados do dashboard
+      await loadDashboardData()
+    } catch (error) {
+      console.error('Erro ao salvar produto:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleSalvarCliente = async (clienteData: any) => {
+    try {
+      setFormLoading(true)
+      // Aqui você implementaria a lógica de salvar cliente
+      console.log('Salvando cliente:', clienteData)
+      setShowClienteForm(false)
+      // Recarregar dados do dashboard
+      await loadDashboardData()
+    } catch (error) {
+      console.error('Erro ao salvar cliente:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleCancelarForm = () => {
+    setShowVendaForm(false)
+    setShowProdutoForm(false)
+    setShowClienteForm(false)
   }
 
   const formatCurrency = (value: number) => {
@@ -151,9 +237,7 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Gráfico de Vendas (Em desenvolvimento)</p>
-            </div>
+            <VendasChart data={vendas7Dias} loading={loading} />
           </CardContent>
         </Card>
 
@@ -203,23 +287,66 @@ export default function DashboardPage() {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-4">
-        <Button className="bg-meguispet-primary hover:bg-meguispet-primary/90">
+        <Button 
+          className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+          onClick={handleNovaVenda}
+        >
           <ShoppingCart className="mr-2 h-4 w-4" />
           Nova Venda
         </Button>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={handleNovoProduto}
+        >
           <Package className="mr-2 h-4 w-4" />
           Cadastrar Produto
         </Button>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={handleNovoCliente}
+        >
           <Users className="mr-2 h-4 w-4" />
           Novo Cliente
         </Button>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={handleVerRelatorios}
+        >
           <Eye className="mr-2 h-4 w-4" />
           Ver Relatórios
         </Button>
       </div>
+
+      {/* Formulários Modais */}
+      {showVendaForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <VendaForm
+            onSubmit={handleSalvarVenda}
+            onCancel={handleCancelarForm}
+            loading={formLoading}
+          />
+        </div>
+      )}
+
+      {showProdutoForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <ProdutoForm
+            onSubmit={handleSalvarProduto}
+            onCancel={handleCancelarForm}
+            loading={formLoading}
+          />
+        </div>
+      )}
+
+      {showClienteForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <ClienteForm
+            onSubmit={handleSalvarCliente}
+            onCancel={handleCancelarForm}
+            loading={formLoading}
+          />
+        </div>
+      )}
     </div>
   )
 }
