@@ -79,10 +79,15 @@ jobs:
           RewriteCond %{REQUEST_FILENAME} !-d
           RewriteRule .* /index.html [L]
 
+          # Force HTTPS
+          RewriteCond %{HTTPS} off
+          RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
           # Security Headers
           Header always set X-Content-Type-Options nosniff
           Header always set X-Frame-Options DENY
           Header always set X-XSS-Protection "1; mode=block"
+          Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 
           # CORS for API
           Header always set Access-Control-Allow-Origin "*"

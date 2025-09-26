@@ -51,14 +51,22 @@ function validate_jwt($token) {
  * Extrai o token do header Authorization
  */
 function get_token_from_header() {
-    $headers = getallheaders();
-    
-    if (!isset($headers['Authorization'])) {
-        return null;
+    // Tentar getallheaders() primeiro
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        if (isset($headers['Authorization'])) {
+            $auth = $headers['Authorization'];
+        } elseif (isset($headers['authorization'])) {
+            $auth = $headers['authorization'];
+        } else {
+            $auth = null;
+        }
+    } else {
+        // Fallback para $_SERVER
+        $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null;
     }
     
-    $auth = $headers['Authorization'];
-    if (strpos($auth, 'Bearer ') !== 0) {
+    if (!$auth || strpos($auth, 'Bearer ') !== 0) {
         return null;
     }
     
