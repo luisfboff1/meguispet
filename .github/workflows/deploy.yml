@@ -38,16 +38,13 @@ jobs:
         run: |
           echo "🔧 Copiando APIs PHP existentes..."
           mkdir -p out/api
-          # Copiar da pasta api do projeto original (estrutura correta)
-          if [ -d "../MeguisPet/api" ]; then
+          # Copiar APIs do próprio projeto (estrutura correta)
+          if [ -d "./api" ]; then
+            cp -r ./api/* out/api/
+            echo "✅ APIs copiadas de ./api/"
+          elif [ -d "../MeguisPet/api" ]; then
             cp -r ../MeguisPet/api/* out/api/
             echo "✅ APIs copiadas de ../MeguisPet/api/"
-          elif [ -d "../api" ]; then
-            cp -r ../api/* out/api/
-            echo "✅ APIs copiadas de ../api/"
-          elif [ -d "../../api" ]; then
-            cp -r ../../api/* out/api/
-            echo "✅ APIs copiadas de ../../api/"
           else
             echo "⚠️ Pasta api não encontrada - será criada estrutura básica"
             echo "<?php echo 'API funcionando!'; ?>" > out/api/test.php
