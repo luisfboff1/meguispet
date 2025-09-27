@@ -105,7 +105,7 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
     ))
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length
+  const unreadCount = notifications.filter((n: any) => !n.read).length
 
   const handleUserMenu = () => {
     setShowUserMenu(!showUserMenu)
