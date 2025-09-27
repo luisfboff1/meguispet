@@ -9,6 +9,7 @@ export default function Document() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="Sistema de gestão MeguisPet - Controle vendas, estoque e clientes" />
         <meta name="author" content="MeguisPet" />
+        <title>Megui'sPet Gestão</title>
         
         {/* Favicon */}
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />

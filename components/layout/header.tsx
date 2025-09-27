@@ -56,11 +56,19 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Estoque baixo', message: 'Produto "Ração Premium" com estoque baixo', time: 'Há 2 horas', read: false, type: 'warning' },
-    { id: 2, title: 'Nova venda', message: 'Venda #1234 realizada com sucesso', time: 'Há 4 horas', read: false, type: 'success' },
-    { id: 3, title: 'Novo cliente', message: 'Cliente "João Silva" cadastrado', time: 'Ontem', read: false, type: 'info' }
-  ])
+  const [notifications, setNotifications] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('meguispet-notifications')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+    }
+    return [
+      { id: 1, title: 'Estoque baixo', message: 'Produto "Ração Premium" com estoque baixo', time: 'Há 2 horas', read: false, type: 'warning' },
+      { id: 2, title: 'Nova venda', message: 'Venda #1234 realizada com sucesso', time: 'Há 4 horas', read: false, type: 'success' },
+      { id: 3, title: 'Novo cliente', message: 'Cliente "João Silva" cadastrado', time: 'Ontem', read: false, type: 'info' }
+    ]
+  })
   const userMenuRef = useRef<HTMLDivElement>(null)
   const notificationsRef = useRef<HTMLDivElement>(null)
   
@@ -102,6 +110,18 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
   const handleUserMenu = () => {
     setShowUserMenu(!showUserMenu)
   }
+
+  const handleVerTodasNotificacoes = () => {
+    setShowNotifications(false)
+    router.push('/notificacoes')
+  }
+
+  // Salvar notificações no localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('meguispet-notifications', JSON.stringify(notifications))
+    }
+  }, [notifications])
 
   // Fechar dropdowns quando clicar fora
   useEffect(() => {
@@ -197,7 +217,12 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
                     ))}
                   </div>
                   <div className="mt-4 pt-3 border-t border-gray-200">
-                    <Button variant="ghost" size="sm" className="w-full">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={handleVerTodasNotificacoes}
+                    >
                       Ver todas as notificações
                     </Button>
                   </div>

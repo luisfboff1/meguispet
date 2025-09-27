@@ -1,5 +1,6 @@
 import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
+import Head from 'next/head'
 import { MainLayout } from '@/components/layout/main-layout'
 
 // 🏗️ LAYOUT GLOBAL AUTOMÁTICO
@@ -8,8 +9,14 @@ import { MainLayout } from '@/components/layout/main-layout'
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <MainLayout>
-      <Component {...pageProps} />
-    </MainLayout>
+    <>
+      <Head>
+        <title>Megui'sPet Gestão</title>
+        <meta name="description" content="Sistema de gestão completo para pet shops" />
+      </Head>
+      <MainLayout>
+        <Component {...pageProps} />
+      </MainLayout>
+    </>
   )
 }

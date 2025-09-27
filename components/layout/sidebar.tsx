@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { cn } from "@/lib/utils"
 import {
@@ -61,10 +62,27 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-meguispet-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">M</span>
+              <div className="w-8 h-8 rounded-lg overflow-hidden">
+                <Image
+                  src="/Meguis-pet-1280x1147.png"
+                  alt="MeguisPet Logo"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="font-semibold text-gray-900">MeguisPet</span>
+            </div>
+          )}
+          {isCollapsed && (
+            <div className="w-8 h-8 rounded-lg overflow-hidden">
+              <Image
+                src="/Meguis-pet-1280x1147.png"
+                alt="MeguisPet Logo"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
           <button

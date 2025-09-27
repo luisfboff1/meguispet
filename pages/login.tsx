@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/router'
+import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -60,8 +61,14 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-meguispet-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">M</span>
+          <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-4">
+            <Image
+              src="/Meguis-pet-1280x1147.png"
+              alt="MeguisPet Logo"
+              width={64}
+              height={64}
+              className="w-full h-full object-cover"
+            />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">MeguisPet</h1>
           <p className="text-gray-600">Sistema de Gestão</p>
