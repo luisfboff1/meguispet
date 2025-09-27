@@ -95,12 +95,12 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
     setShowNotifications(!showNotifications)
     // Marcar todas as notificações como lidas quando abrir
     if (!showNotifications) {
-      setNotifications(prev => prev.map(notif => ({ ...notif, read: true })))
+      setNotifications((prev: any[]) => prev.map(notif => ({ ...notif, read: true })))
     }
   }
 
   const markNotificationAsRead = (id: number) => {
-    setNotifications(prev => prev.map(notif => 
+    setNotifications((prev: any[]) => prev.map(notif => 
       notif.id === id ? { ...notif, read: true } : notif
     ))
   }
