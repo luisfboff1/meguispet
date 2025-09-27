@@ -190,7 +190,7 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
                 <div className="p-4">
                   <h3 className="text-lg font-medium text-gray-900 mb-3">Notificações</h3>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {notifications.map((notification) => (
+                    {notifications.map((notification: any) => (
                       <div 
                         key={notification.id}
                         className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 ${
