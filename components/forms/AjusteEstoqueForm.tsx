@@ -4,8 +4,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Package, TrendingUp, TrendingDown } from 'lucide-react'
-import { produtosService } from '@/services/api'
-import type { Produto } from '@/types'
+import { produtosService, vendedoresService } from '@/services/api'
+import type { Produto, Vendedor } from '@/types'
 
 interface AjusteEstoqueFormProps {
   produto?: Produto
@@ -16,17 +16,21 @@ interface AjusteEstoqueFormProps {
 
 export default function AjusteEstoqueForm({ produto, onSubmit, onCancel, loading = false }: AjusteEstoqueFormProps) {
   const [produtos, setProdutos] = useState<Produto[]>([])
+  const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [loadingProdutos, setLoadingProdutos] = useState(false)
+  const [loadingVendedores, setLoadingVendedores] = useState(false)
   const [formData, setFormData] = useState({
     produto_id: produto?.id || '',
     tipo_ajuste: 'entrada' as 'entrada' | 'saida' | 'inventario',
     quantidade: 0,
     motivo: '',
-    observacoes: ''
+    observacoes: '',
+    vendedor_id: '' // Novo campo para vendedor
   })
 
   useEffect(() => {
     loadProdutos()
+    loadVendedores()
   }, [])
 
   const loadProdutos = async () => {
@@ -40,6 +44,20 @@ export default function AjusteEstoqueForm({ produto, onSubmit, onCancel, loading
       console.error('Erro ao carregar produtos:', error)
     } finally {
       setLoadingProdutos(false)
+    }
+  }
+
+  const loadVendedores = async () => {
+    try {
+      setLoadingVendedores(true)
+      const response = await vendedoresService.getAll(1, 100)
+      if (response.success && response.data) {
+        setVendedores(response.data)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar vendedores:', error)
+    } finally {
+      setLoadingVendedores(false)
     }
   }
 
@@ -138,6 +156,26 @@ export default function AjusteEstoqueForm({ produto, onSubmit, onCancel, loading
               <option value="outros">Outros</option>
             </select>
           </div>
+
+          {/* Vendedor - só aparece para saída */}
+          {formData.tipo_ajuste === 'saida' && (
+            <div>
+              <Label htmlFor="vendedor_id">Vendedor Responsável</Label>
+              <select
+                id="vendedor_id"
+                value={formData.vendedor_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, vendedor_id: e.target.value }))}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="">Selecione um vendedor (opcional)</option>
+                {vendedores.map(vendedor => (
+                  <option key={vendedor.id} value={vendedor.id}>
+                    {vendedor.nome} - {vendedor.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Observações */}
           <div>

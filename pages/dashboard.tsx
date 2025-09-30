@@ -8,12 +8,14 @@ import {
   Package,
   TrendingUp,
   TrendingDown,
-  Eye
+  Eye,
+  Package2
 } from 'lucide-react'
 import { dashboardService } from '@/services/api'
 import VendaForm from '@/components/forms/VendaForm'
 import ProdutoForm from '@/components/forms/ProdutoForm'
 import ClienteForm from '@/components/forms/ClienteForm'
+import AjusteEstoqueForm from '@/components/forms/AjusteEstoqueForm'
 import VendasChart from '@/components/charts/VendasChart'
 
 // 📊 PÁGINA DASHBOARD - DADOS REAIS DO BANCO
@@ -38,6 +40,7 @@ export default function DashboardPage() {
   const [showVendaForm, setShowVendaForm] = useState(false)
   const [showProdutoForm, setShowProdutoForm] = useState(false)
   const [showClienteForm, setShowClienteForm] = useState(false)
+  const [showAjusteEstoqueForm, setShowAjusteEstoqueForm] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
@@ -86,6 +89,10 @@ export default function DashboardPage() {
 
   const handleNovoCliente = () => {
     setShowClienteForm(true)
+  }
+
+  const handleNovaMovimentacao = () => {
+    setShowAjusteEstoqueForm(true)
   }
 
   const handleVerRelatorios = () => {
@@ -138,10 +145,26 @@ export default function DashboardPage() {
     }
   }
 
+  const handleSalvarAjusteEstoque = async (ajusteData: any) => {
+    try {
+      setFormLoading(true)
+      // Aqui você implementaria a lógica de salvar ajuste de estoque
+      console.log('Salvando ajuste de estoque:', ajusteData)
+      setShowAjusteEstoqueForm(false)
+      // Recarregar dados do dashboard
+      await loadDashboardData()
+    } catch (error) {
+      console.error('Erro ao salvar ajuste de estoque:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
   const handleCancelarForm = () => {
     setShowVendaForm(false)
     setShowProdutoForm(false)
     setShowClienteForm(false)
+    setShowAjusteEstoqueForm(false)
   }
 
   const formatCurrency = (value: number) => {
@@ -312,11 +335,11 @@ export default function DashboardPage() {
             </Button>
             <Button 
               variant="outline"
-              onClick={handleNovoCliente}
+              onClick={handleNovaMovimentacao}
               className="h-20 flex-col"
             >
-              <Users className="h-6 w-6 mb-2" />
-              <span className="text-sm">Novo Cliente</span>
+              <Package2 className="h-6 w-6 mb-2" />
+              <span className="text-sm">Nova Movimentação</span>
             </Button>
             <Button 
               variant="outline"
@@ -355,6 +378,16 @@ export default function DashboardPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <ClienteForm
             onSubmit={handleSalvarCliente}
+            onCancel={handleCancelarForm}
+            loading={formLoading}
+          />
+        </div>
+      )}
+
+      {showAjusteEstoqueForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <AjusteEstoqueForm
+            onSubmit={handleSalvarAjusteEstoque}
             onCancel={handleCancelarForm}
             loading={formLoading}
           />
