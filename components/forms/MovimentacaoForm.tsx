@@ -12,9 +12,10 @@ interface MovimentacaoFormProps {
   onSubmit: (movimentacao: any) => void
   onCancel: () => void
   loading?: boolean
+  editingData?: any // Dados para edição (opcional)
 }
 
-export default function MovimentacaoForm({ produto, onSubmit, onCancel, loading = false }: MovimentacaoFormProps) {
+export default function MovimentacaoForm({ produto, onSubmit, onCancel, loading = false, editingData }: MovimentacaoFormProps) {
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
@@ -23,15 +24,15 @@ export default function MovimentacaoForm({ produto, onSubmit, onCancel, loading 
   const [loadingVendedores, setLoadingVendedores] = useState(false)
   
   const [formData, setFormData] = useState({
-    produto_id: produto?.id || '',
-    tipo_movimentacao: 'entrada' as 'entrada' | 'saida',
-    quantidade: 0,
-    preco_unitario: 0,
-    valor_total: 0,
-    cliente_id: '', // Para saída
-    fornecedor_nome: '', // Para entrada
-    vendedor_id: '', // Para saída
-    observacoes: ''
+    produto_id: editingData?.produto_id || produto?.id || '',
+    tipo_movimentacao: (editingData?.tipo_movimentacao || 'entrada') as 'entrada' | 'saida',
+    quantidade: editingData?.quantidade || 0,
+    preco_unitario: editingData?.preco_unitario || 0,
+    valor_total: editingData?.valor_total || 0,
+    cliente_id: editingData?.cliente_id || '', // Para saída
+    fornecedor_nome: editingData?.fornecedor_nome || '', // Para entrada
+    vendedor_id: editingData?.vendedor_id || '', // Para saída
+    observacoes: editingData?.observacoes || ''
   })
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export default function MovimentacaoForm({ produto, onSubmit, onCancel, loading 
           ) : (
             <TrendingDown className="mr-2 h-5 w-5 text-red-600" />
           )}
-          Nova Movimentação - {formData.tipo_movimentacao === 'entrada' ? 'Entrada' : 'Saída'}
+          {editingData ? 'Editar' : 'Nova'} Movimentação - {formData.tipo_movimentacao === 'entrada' ? 'Entrada' : 'Saída'}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -331,7 +332,7 @@ export default function MovimentacaoForm({ produto, onSubmit, onCancel, loading 
                   Salvando...
                 </>
               ) : (
-                `Salvar ${formData.tipo_movimentacao === 'entrada' ? 'Entrada' : 'Saída'}`
+                `${editingData ? 'Atualizar' : 'Salvar'} ${formData.tipo_movimentacao === 'entrada' ? 'Entrada' : 'Saída'}`
               )}
             </Button>
           </div>
