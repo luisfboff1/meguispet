@@ -92,7 +92,7 @@ export const produtosService = {
   },
 
   async getById(id: number): Promise<ApiResponse<Produto>> {
-    const response = await api.get(`/produtos.php?id=${id}`)
+    const response = await api.get(`/produtos.php/${id}`)
     return response.data
   },
 

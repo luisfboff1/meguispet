@@ -1,18 +1,79 @@
 <?php
+// Headers CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Content-Type: application/json');
+
+// Responder a requisições OPTIONS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/jwt_helper.php';
-
-$method = $_SERVER['REQUEST_METHOD'];
 
 // Middleware de autenticação
 $auth = require_auth();
 
 try {
     $conn = getDbConnection();
+    $method = $_SERVER['REQUEST_METHOD'];
     
     switch ($method) {
         case 'GET':
-            // Listar produtos
+            // Verificar se é busca por ID (PATH_INFO ou query parameter)
+            $id = null;
+            
+            // Tentar PATH_INFO primeiro
+            $path = $_SERVER['PATH_INFO'] ?? '';
+            $pathParts = explode('/', trim($path, '/'));
+            if (!empty($pathParts[0]) && is_numeric($pathParts[0])) {
+                $id = (int)$pathParts[0];
+            }
+            
+            // Se não encontrou no PATH_INFO, tentar query parameter
+            if (!$id && isset($_GET['id']) && is_numeric($_GET['id'])) {
+                $id = (int)$_GET['id'];
+            }
+            
+            // Se encontrou um ID, buscar produto específico
+            if ($id) {
+                $sql = "SELECT * FROM produtos WHERE id = :id";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([':id' => $id]);
+                $produto = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($produto) {
+                    echo json_encode([
+                        'success' => true,
+                        'data' => [
+                            'id' => (int)$produto['id'],
+                            'nome' => $produto['nome'],
+                            'descricao' => $produto['descricao'],
+                            'preco_venda' => (float)$produto['preco_venda'],
+                            'preco_custo' => (float)$produto['preco_custo'],
+                            'estoque' => (int)$produto['estoque'],
+                            'estoque_minimo' => (int)$produto['estoque_minimo'],
+                            'categoria' => $produto['categoria'],
+                            'codigo_barras' => $produto['codigo_barras'],
+                            'ativo' => (bool)$produto['ativo'],
+                            'created_at' => $produto['created_at'],
+                            'updated_at' => $produto['updated_at']
+                        ]
+                    ]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Produto não encontrado'
+                    ]);
+                }
+                exit();
+            }
+            
+            // Se não é busca por ID, listar produtos
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
             $search = isset($_GET['search']) ? $_GET['search'] : '';
@@ -47,12 +108,13 @@ try {
             // Buscar produtos
             $sql = "SELECT * FROM produtos $where ORDER BY nome ASC LIMIT :limit OFFSET :offset";
             $stmt = $conn->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value);
             }
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            
             $stmt->execute();
             
             $produtos = $stmt->fetchAll();
