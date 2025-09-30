@@ -131,6 +131,18 @@ export interface ItemMovimentacao {
   produto?: Produto
 }
 
+export interface TransacaoFinanceira {
+  id: number
+  tipo: 'receita' | 'despesa'
+  valor: number
+  descricao: string
+  categoria: string
+  data_transacao: string
+  observacoes?: string
+  created_at: string
+  updated_at: string
+}
+
 // Tipos para formulários
 export interface LoginForm {
   email: string
@@ -199,6 +211,15 @@ export interface MovimentacaoForm {
     quantidade: number
     preco_unitario: number
   }[]
+}
+
+export interface TransacaoForm {
+  tipo: 'receita' | 'despesa'
+  valor: number
+  descricao: string
+  categoria: string
+  data_transacao: string
+  observacoes?: string
 }
 
 // Tipos para API

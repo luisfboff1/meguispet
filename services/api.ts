@@ -7,6 +7,7 @@ import type {
   Venda, 
   Fornecedor,
   MovimentacaoEstoque,
+  TransacaoFinanceira,
   ApiResponse, 
   PaginatedResponse 
 } from '@/types'
@@ -291,6 +292,44 @@ export const movimentacoesService = {
 
   async updateStatus(id: number, status: string): Promise<ApiResponse> {
     const response = await api.put(`/movimentacoes.php/${id}/status`, { id, status })
+    return response.data
+  }
+}
+
+// 💰 TRANSAÇÕES FINANCEIRAS
+export const transacoesService = {
+  async getAll(page = 1, limit = 10, tipo?: string, dataInicio?: string, dataFim?: string): Promise<PaginatedResponse<TransacaoFinanceira>> {
+    let url = `/transacoes.php?page=${page}&limit=${limit}`
+    if (tipo) url += `&tipo=${tipo}`
+    if (dataInicio) url += `&data_inicio=${dataInicio}`
+    if (dataFim) url += `&data_fim=${dataFim}`
+    
+    const response = await api.get(url)
+    return response.data
+  },
+
+  async getById(id: number): Promise<ApiResponse<TransacaoFinanceira>> {
+    const response = await api.get(`/transacoes.php/${id}`)
+    return response.data
+  },
+
+  async create(transacao: Omit<TransacaoFinanceira, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<TransacaoFinanceira>> {
+    const response = await api.post('/transacoes.php', transacao)
+    return response.data
+  },
+
+  async update(id: number, transacao: Partial<TransacaoFinanceira>): Promise<ApiResponse<TransacaoFinanceira>> {
+    const response = await api.put(`/transacoes.php/${id}`, transacao)
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/transacoes.php/${id}`)
+    return response.data
+  },
+
+  async getMetricas(): Promise<ApiResponse> {
+    const response = await api.get('/transacoes.php/metricas')
     return response.data
   }
 }
