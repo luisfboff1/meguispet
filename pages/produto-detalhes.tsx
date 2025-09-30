@@ -21,8 +21,15 @@ interface HistoricoPreco {
   preco_venda: number
   preco_custo: number
   data_alteracao: string
-  tipo_alteracao: 'manual' | 'automatico'
+  tipo_alteracao: 'manual' | 'automatico' | 'movimentacao'
   observacao?: string
+  // Campos adicionais da API
+  preco_venda_anterior?: number
+  preco_custo_anterior?: number
+  diferenca_preco_venda?: number
+  diferenca_preco_custo?: number
+  percentual_mudanca_venda?: number
+  percentual_mudanca_custo?: number
 }
 
 export default function ProdutoDetalhes() {
@@ -57,7 +64,7 @@ export default function ProdutoDetalhes() {
     try {
       setLoading(true)
       const response = await produtosService.getById(Number(id))
-      if (response.success) {
+      if (response.success && response.data) {
         setProduto(response.data)
         setEditData({
           nome: response.data.nome,
@@ -83,28 +90,45 @@ export default function ProdutoDetalhes() {
 
   const loadHistoricoPrecos = async () => {
     try {
-      // TODO: Implementar API para histórico de preços
-      // Por enquanto, vamos simular alguns dados
-      setHistoricoPrecos([
-        {
-          id: 1,
-          preco_venda: 25.90,
-          preco_custo: 18.13,
-          data_alteracao: new Date().toISOString(),
-          tipo_alteracao: 'manual',
-          observacao: 'Ajuste manual de preço'
-        },
-        {
-          id: 2,
-          preco_venda: 24.90,
-          preco_custo: 17.43,
-          data_alteracao: new Date(Date.now() - 86400000 * 7).toISOString(),
-          tipo_alteracao: 'automatico',
-          observacao: 'Atualização por movimentação de estoque'
+      if (!id) return
+      
+      const response = await fetch(`/api/historico-precos.php?produto_id=${id}&limit=20`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-      ])
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data) {
+          // Mapear dados da API para o formato esperado pelo componente
+          const historicoMapeado = data.data.map((item: any) => ({
+            id: item.id,
+            preco_venda: item.preco_venda_novo,
+            preco_custo: item.preco_custo_novo,
+            data_alteracao: item.created_at,
+            tipo_alteracao: item.tipo_alteracao,
+            observacao: item.observacao,
+            // Dados adicionais da API
+            preco_venda_anterior: item.preco_venda_anterior,
+            preco_custo_anterior: item.preco_custo_anterior,
+            diferenca_preco_venda: item.diferenca_preco_venda,
+            diferenca_preco_custo: item.diferenca_preco_custo,
+            percentual_mudanca_venda: item.percentual_mudanca_venda,
+            percentual_mudanca_custo: item.percentual_mudanca_custo
+          }))
+          setHistoricoPrecos(historicoMapeado)
+        } else {
+          // Se não há histórico, manter array vazio
+          setHistoricoPrecos([])
+        }
+      } else {
+        console.error('Erro ao carregar histórico de preços:', response.statusText)
+        setHistoricoPrecos([])
+      }
     } catch (err) {
       console.error('Erro ao carregar histórico de preços:', err)
+      setHistoricoPrecos([])
     }
   }
 
@@ -112,7 +136,7 @@ export default function ProdutoDetalhes() {
     try {
       setLoading(true)
       const response = await produtosService.update(Number(id), editData)
-      if (response.success) {
+      if (response.success && response.data) {
         setProduto(response.data)
         setShowEditForm(false)
         await loadProduto()
@@ -384,23 +408,49 @@ export default function ProdutoDetalhes() {
           <div className="space-y-4">
             {historicoPrecos.map((historico) => (
               <div key={historico.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-4">
                     <div>
-                      <span className="font-medium text-green-600">
-                        Venda: {formatCurrency(historico.preco_venda)}
-                      </span>
-                      <span className="mx-2">•</span>
-                      <span className="font-medium text-blue-600">
-                        Custo: {formatCurrency(historico.preco_custo)}
-                      </span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-green-600">
+                          Venda: {formatCurrency(historico.preco_venda)}
+                        </span>
+                        {historico.diferenca_preco_venda !== undefined && historico.diferenca_preco_venda !== 0 && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            historico.diferenca_preco_venda > 0 
+                              ? 'bg-red-100 text-red-600' 
+                              : 'bg-green-100 text-green-600'
+                          }`}>
+                            {historico.diferenca_preco_venda > 0 ? '+' : ''}{formatCurrency(historico.diferenca_preco_venda)}
+                            {historico.percentual_mudanca_venda && ` (${historico.percentual_mudanca_venda > 0 ? '+' : ''}${historico.percentual_mudanca_venda}%)`}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-blue-600">
+                          Custo: {formatCurrency(historico.preco_custo)}
+                        </span>
+                        {historico.diferenca_preco_custo !== undefined && historico.diferenca_preco_custo !== 0 && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            historico.diferenca_preco_custo > 0 
+                              ? 'bg-red-100 text-red-600' 
+                              : 'bg-green-100 text-green-600'
+                          }`}>
+                            {historico.diferenca_preco_custo > 0 ? '+' : ''}{formatCurrency(historico.diferenca_preco_custo)}
+                            {historico.percentual_mudanca_custo && ` (${historico.percentual_mudanca_custo > 0 ? '+' : ''}${historico.percentual_mudanca_custo}%)`}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       historico.tipo_alteracao === 'manual' 
                         ? 'bg-blue-100 text-blue-600' 
-                        : 'bg-green-100 text-green-600'
+                        : historico.tipo_alteracao === 'automatico'
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-orange-100 text-orange-600'
                     }`}>
-                      {historico.tipo_alteracao === 'manual' ? 'Manual' : 'Automático'}
+                      {historico.tipo_alteracao === 'manual' ? 'Manual' : 
+                       historico.tipo_alteracao === 'automatico' ? 'Automático' : 'Movimentação'}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500">
