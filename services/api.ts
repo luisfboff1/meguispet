@@ -329,7 +329,7 @@ export const transacoesService = {
   },
 
   async getMetricas(): Promise<ApiResponse> {
-    const response = await api.get('/transacoes.php/metricas')
+    const response = await api.get('/transacoes.php?metricas=1')
     return response.data
   }
 }
