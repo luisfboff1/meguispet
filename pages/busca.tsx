@@ -107,7 +107,7 @@ export default function BuscaPage() {
               type: 'produto',
               id: produto.id,
               title: produto.nome,
-              description: `${produto.categoria || 'Sem categoria'} | Estoque: ${produto.estoque} | R$ ${produto.preco}`,
+              description: `${produto.categoria || 'Sem categoria'} | Estoque: ${produto.estoque} | R$ ${produto.preco_venda}`,
               icon: Package,
               data: produto
             })

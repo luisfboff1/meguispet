@@ -24,7 +24,7 @@ try {
     $periodo = isset($_GET['periodo']) ? $_GET['periodo'] : '30'; // dias
     
     // Produtos mais vendidos no período
-    $sql = "SELECT p.id, p.nome, p.preco, p.estoque,
+    $sql = "SELECT p.id, p.nome, p.preco_venda, p.estoque,
                    SUM(iv.quantidade) as total_vendido,
                    SUM(iv.subtotal) as receita_total,
                    COUNT(DISTINCT v.id) as total_vendas
@@ -34,7 +34,7 @@ try {
             WHERE v.status != 'cancelado'
             AND v.data_venda >= DATE_SUB(CURRENT_DATE(), INTERVAL :periodo DAY)
             AND p.ativo = TRUE
-            GROUP BY p.id, p.nome, p.preco, p.estoque
+            GROUP BY p.id, p.nome, p.preco_venda, p.estoque
             ORDER BY total_vendido DESC
             LIMIT :limit";
     
@@ -51,7 +51,8 @@ try {
         $produtos_formatados[] = [
             'id' => (int)$produto['id'],
             'nome' => $produto['nome'],
-            'preco' => (float)$produto['preco'],
+            'preco' => (float)$produto['preco_venda'], // Mantém 'preco' para compatibilidade com frontend
+            'preco_venda' => (float)$produto['preco_venda'],
             'estoque' => (int)$produto['estoque'],
             'vendas' => (int)$produto['total_vendido'],
             'receita' => (float)$produto['receita_total'],

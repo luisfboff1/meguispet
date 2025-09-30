@@ -113,7 +113,7 @@ export default function EstoquePage() {
     return matchesSearch
   })
 
-  const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco * produto.estoque), 0)
+  const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco_venda * produto.estoque), 0)
   const lowStockCount = produtos.filter(produto => produto.estoque > 0 && produto.estoque <= 5).length
   const outOfStockCount = produtos.filter(produto => produto.estoque === 0).length
   const inStockCount = produtos.filter(produto => produto.estoque > 5).length
@@ -267,7 +267,7 @@ export default function EstoquePage() {
                   {filteredProdutos.map((produto) => {
                     const stockStatus = getStockStatus(produto.estoque)
                     const StockIcon = stockStatus.icon
-                    const totalValue = produto.preco * produto.estoque
+                    const totalValue = produto.preco_venda * produto.estoque
                     
                     return (
                       <tr key={produto.id} className="border-b hover:bg-gray-50">
@@ -289,12 +289,12 @@ export default function EstoquePage() {
                             <StockIcon className={`h-4 w-4 ${stockStatus.color}`} />
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {formatCurrency(produto.preco)}
-                        </td>
-                        <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                          {formatCurrency(produto.preco * produto.estoque)}
-                        </td>
+                            <td className="py-3 px-4 text-sm text-gray-900">
+                              {formatCurrency(produto.preco_venda)}
+                            </td>
+                            <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                              {formatCurrency(produto.preco_venda * produto.estoque)}
+                            </td>
                         <td className="py-3 px-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${stockStatus.bgColor} ${stockStatus.color}`}>
                             {stockStatus.text}

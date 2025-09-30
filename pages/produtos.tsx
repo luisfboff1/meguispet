@@ -106,7 +106,7 @@ export default function ProdutosPage() {
     setEditingProduto(null)
   }
 
-  const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco * produto.estoque), 0)
+  const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco_venda * produto.estoque), 0)
   const lowStockProducts = produtos.filter(produto => produto.estoque <= 5).length
 
   return (
@@ -243,7 +243,7 @@ export default function ProdutosPage() {
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Preço:</span>
-                    <span className="font-semibold text-lg">{formatCurrency(produto.preco)}</span>
+                    <span className="font-semibold text-lg">{formatCurrency(produto.preco_venda)}</span>
                   </div>
                   
                   <div className="flex items-center justify-between">

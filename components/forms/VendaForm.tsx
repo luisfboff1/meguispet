@@ -85,8 +85,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
       const produto = produtos.find(p => p.id === value)
       if (produto) {
         newItens[index].produto_nome = produto.nome
-        newItens[index].preco_unitario = produto.preco
-        newItens[index].subtotal = newItens[index].quantidade * produto.preco
+        newItens[index].preco_unitario = produto.preco_venda
+        newItens[index].subtotal = newItens[index].quantidade * produto.preco_venda
       }
     } else if (field === 'quantidade' || field === 'preco_unitario') {
       newItens[index].subtotal = newItens[index].quantidade * newItens[index].preco_unitario
@@ -238,7 +238,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
                       <option value={0}>Selecione um produto</option>
                       {produtos.map(produto => (
                         <option key={produto.id} value={produto.id}>
-                          {produto.nome} - R$ {produto.preco.toFixed(2)}
+                          {produto.nome} - R$ {produto.preco_venda.toFixed(2)}
                         </option>
                       ))}
                     </select>
