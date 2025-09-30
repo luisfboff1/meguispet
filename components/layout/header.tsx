@@ -144,7 +144,7 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
   }, [])
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Mobile Menu Button */}
         {isMobile && (
@@ -160,10 +160,10 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
 
         {/* Título da página */}
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {pageInfo.title}
           </h1>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {pageInfo.description}
           </p>
         </div>

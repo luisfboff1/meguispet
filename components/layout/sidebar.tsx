@@ -55,12 +55,12 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
 
   return (
     <div className={cn(
-      "bg-white border-r border-gray-200 h-full flex flex-col transition-all duration-300",
+      "bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col transition-all duration-300",
       isCollapsed ? "w-20" : "w-64"
     )}>
       {/* Header */}
       <div className={cn(
-        "border-b border-gray-200",
+        "border-b border-gray-200 dark:border-gray-700",
         isCollapsed ? "p-3" : "p-4"
       )}>
         <div className={cn(
@@ -78,7 +78,7 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
                   className="w-full h-full object-cover"
                 />
               </div>
-              <span className="font-semibold text-gray-900">MeguisPet</span>
+              <span className="font-semibold text-gray-900 dark:text-white">MeguisPet</span>
             </div>
           )}
           {isCollapsed && (
@@ -121,7 +121,7 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
                   "flex items-center rounded-lg text-sm font-medium transition-colors",
                   isActive
                     ? "bg-meguispet-primary text-white"
-                    : "text-gray-700 hover:bg-gray-100",
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700",
                   isCollapsed ? "justify-center p-3" : "justify-start px-3 py-2"
                 )}
                 title={isCollapsed ? item.label : undefined}
@@ -143,13 +143,13 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
 
       {/* Footer */}
       <div className={cn(
-        "border-t border-gray-200",
+        "border-t border-gray-200 dark:border-gray-700",
         isCollapsed ? "p-2" : "p-4"
       )}>
         <button
           onClick={handleLogout}
           className={cn(
-            "flex items-center rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full",
+            "flex items-center rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full",
             isCollapsed ? "justify-center p-3" : "justify-start px-3 py-2"
           )}
           title={isCollapsed ? "Sair" : undefined}

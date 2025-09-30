@@ -103,7 +103,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900" suppressHydrationWarning>
       {/* Mobile Backdrop */}
       {isMobile && sidebarOpen && (
         <div 
@@ -131,10 +131,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className={cn(
-        "flex-1 flex flex-col overflow-hidden transition-all duration-300",
-        !isMobile && (sidebarCollapsed ? "ml-20" : "ml-64")
-      )}>
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <Header 
           title={title}
