@@ -91,11 +91,18 @@ try {
                         ORDER BY m.created_at DESC 
                         LIMIT :limit OFFSET :offset";
                 
-                $params[':limit'] = $limit;
-                $params[':offset'] = $offset;
-                
                 $stmt = $conn->prepare($sql);
-                $stmt->execute($params);
+                
+                // Bind dos parâmetros de filtro
+                foreach ($params as $key => $value) {
+                    $stmt->bindValue($key, $value);
+                }
+                
+                // Bind dos parâmetros de paginação como inteiros
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+                
+                $stmt->execute();
                 $movimentacoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             } catch (Exception $e) {
                 http_response_code(500);
