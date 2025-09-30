@@ -18,7 +18,7 @@ const nextConfig = {
     // Cache de build otimizado (configuração válida para Next.js 14)
     webpackBuildWorker: true,
     // Otimizações Tailwind v4
-    optimizeCss: true,
+    optimizeCss: true, // Restaurado - critters já está no package.json
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
   
