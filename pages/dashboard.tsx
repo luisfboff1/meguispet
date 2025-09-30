@@ -285,37 +285,50 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-wrap gap-4">
-        <Button 
-          className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-          onClick={handleNovaVenda}
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Nova Venda
-        </Button>
-        <Button 
-          variant="outline"
-          onClick={handleNovoProduto}
-        >
-          <Package className="mr-2 h-4 w-4" />
-          Cadastrar Produto
-        </Button>
-        <Button 
-          variant="outline"
-          onClick={handleNovoCliente}
-        >
-          <Users className="mr-2 h-4 w-4" />
-          Novo Cliente
-        </Button>
-        <Button 
-          variant="outline"
-          onClick={handleVerRelatorios}
-        >
-          <Eye className="mr-2 h-4 w-4" />
-          Ver Relatórios
-        </Button>
-      </div>
+      {/* Quick Actions - Botões de Acesso Rápido */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Ações Rápidas</CardTitle>
+          <CardDescription>
+            Acesso rápido às principais funcionalidades
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button 
+              className="bg-meguispet-primary hover:bg-meguispet-primary/90 h-20 flex-col"
+              onClick={handleNovaVenda}
+            >
+              <ShoppingCart className="h-6 w-6 mb-2" />
+              <span className="text-sm">Nova Venda</span>
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleNovoProduto}
+              className="h-20 flex-col"
+            >
+              <Package className="h-6 w-6 mb-2" />
+              <span className="text-sm">Cadastrar Produto</span>
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleNovoCliente}
+              className="h-20 flex-col"
+            >
+              <Users className="h-6 w-6 mb-2" />
+              <span className="text-sm">Novo Cliente</span>
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleVerRelatorios}
+              className="h-20 flex-col"
+            >
+              <Eye className="h-6 w-6 mb-2" />
+              <span className="text-sm">Ver Relatórios</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Formulários Modais */}
       {showVendaForm && (

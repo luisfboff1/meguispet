@@ -17,7 +17,8 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
   const [formData, setFormData] = useState({
     nome: produto?.nome || '',
     descricao: produto?.descricao || '',
-    preco: produto?.preco || 0,
+    preco_venda: produto?.preco_venda || 0,
+    preco_custo: produto?.preco_custo || 0,
     estoque: produto?.estoque || 0,
     estoque_minimo: produto?.estoque_minimo || 0,
     categoria: produto?.categoria || '',
@@ -65,20 +66,36 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
             />
           </div>
 
-          {/* Preço e Categoria */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Preços e Categoria */}
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="preco">Preço (R$) *</Label>
+              <Label htmlFor="preco_venda">Preço de Venda (R$) *</Label>
               <Input
-                id="preco"
+                id="preco_venda"
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.preco}
-                onChange={(e) => setFormData(prev => ({ ...prev, preco: Number(e.target.value) }))}
+                value={formData.preco_venda}
+                onChange={(e) => setFormData(prev => ({ ...prev, preco_venda: Number(e.target.value) }))}
                 placeholder="0,00"
                 required
               />
+            </div>
+
+            <div>
+              <Label htmlFor="preco_custo">Preço de Custo (R$)</Label>
+              <Input
+                id="preco_custo"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.preco_custo}
+                onChange={(e) => setFormData(prev => ({ ...prev, preco_custo: Number(e.target.value) }))}
+                placeholder="0,00"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Deixe vazio para calcular automaticamente (70% do preço de venda)
+              </p>
             </div>
 
             <div>

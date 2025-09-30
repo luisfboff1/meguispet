@@ -5,6 +5,8 @@ import type {
   Produto, 
   Vendedor, 
   Venda, 
+  Fornecedor,
+  MovimentacaoEstoque,
   ApiResponse, 
   PaginatedResponse 
 } from '@/types'
@@ -112,6 +114,17 @@ export const produtosService = {
   async updateStock(id: number, quantidade: number): Promise<ApiResponse> {
     const response = await api.patch(`/produtos.php?id=${id}`, { estoque: quantidade })
     return response.data
+  },
+
+  async getEstoqueRelatorio(page = 1, limit = 50, filters?: any): Promise<ApiResponse> {
+    let url = `/estoque-relatorio.php?page=${page}&limit=${limit}`
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) url += `&${key}=${filters[key]}`
+      })
+    }
+    const response = await api.get(url)
+    return response.data
   }
 }
 
@@ -214,6 +227,61 @@ export const authService = {
 
   async getProfile(): Promise<ApiResponse<Usuario>> {
     const response = await api.get('/auth/profile.php')
+    return response.data
+  }
+}
+
+// 🚚 FORNECEDORES
+export const fornecedoresService = {
+  async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Fornecedor>> {
+    const response = await api.get(`/fornecedores.php?page=${page}&limit=${limit}`)
+    return response.data
+  },
+
+  async getById(id: number): Promise<ApiResponse<Fornecedor>> {
+    const response = await api.get(`/fornecedores.php/${id}`)
+    return response.data
+  },
+
+  async create(fornecedor: Omit<Fornecedor, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Fornecedor>> {
+    const response = await api.post('/fornecedores.php', fornecedor)
+    return response.data
+  },
+
+  async update(id: number, fornecedor: Partial<Fornecedor>): Promise<ApiResponse<Fornecedor>> {
+    const response = await api.put(`/fornecedores.php/${id}`, fornecedor)
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/fornecedores.php/${id}`)
+    return response.data
+  }
+}
+
+// 📦 MOVIMENTAÇÕES DE ESTOQUE
+export const movimentacoesService = {
+  async getAll(page = 1, limit = 10, tipo?: string, status?: string): Promise<PaginatedResponse<MovimentacaoEstoque>> {
+    let url = `/movimentacoes.php?page=${page}&limit=${limit}`
+    if (tipo) url += `&tipo=${tipo}`
+    if (status) url += `&status=${status}`
+    
+    const response = await api.get(url)
+    return response.data
+  },
+
+  async getById(id: number): Promise<ApiResponse<MovimentacaoEstoque>> {
+    const response = await api.get(`/movimentacoes.php/${id}`)
+    return response.data
+  },
+
+  async create(movimentacao: any): Promise<ApiResponse<MovimentacaoEstoque>> {
+    const response = await api.post('/movimentacoes.php', movimentacao)
+    return response.data
+  },
+
+  async updateStatus(id: number, status: string): Promise<ApiResponse> {
+    const response = await api.put(`/movimentacoes.php/${id}/status`, { status })
     return response.data
   }
 }

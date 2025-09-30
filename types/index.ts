@@ -34,7 +34,8 @@ export interface Produto {
   id: number
   nome: string
   descricao?: string
-  preco: number
+  preco_venda: number // Preço de venda ao cliente
+  preco_custo: number // Preço médio ponderado de custo
   estoque: number
   estoque_minimo: number
   categoria?: string
@@ -86,6 +87,50 @@ export interface ItemVenda {
   produto?: Produto
 }
 
+export interface Fornecedor {
+  id: number
+  nome: string
+  nome_fantasia?: string
+  cnpj?: string
+  inscricao_estadual?: string
+  email?: string
+  telefone?: string
+  endereco?: string
+  cidade?: string
+  estado?: string
+  cep?: string
+  observacoes?: string
+  ativo: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface MovimentacaoEstoque {
+  id: number
+  tipo: 'entrada' | 'saida' | 'ajuste'
+  fornecedor_id?: number
+  numero_pedido?: string
+  data_movimentacao: string
+  valor_total: number
+  condicao_pagamento: 'avista' | '30dias' | '60dias' | '90dias' | 'emprestimo' | 'cobranca'
+  status: 'pendente' | 'confirmado' | 'cancelado'
+  observacoes?: string
+  created_at: string
+  updated_at: string
+  fornecedor?: Fornecedor
+  itens?: ItemMovimentacao[]
+}
+
+export interface ItemMovimentacao {
+  id: number
+  movimentacao_id: number
+  produto_id: number
+  quantidade: number
+  preco_unitario: number
+  subtotal: number
+  produto?: Produto
+}
+
 // Tipos para formulários
 export interface LoginForm {
   email: string
@@ -105,7 +150,8 @@ export interface ClienteForm {
 export interface ProdutoForm {
   nome: string
   descricao?: string
-  preco: number
+  preco_venda: number
+  preco_custo?: number
   estoque: number
   estoque_minimo: number
   categoria?: string
@@ -124,6 +170,35 @@ export interface VendaForm {
   desconto?: number
   forma_pagamento: string
   observacoes?: string
+}
+
+export interface FornecedorForm {
+  nome: string
+  nome_fantasia?: string
+  cnpj?: string
+  inscricao_estadual?: string
+  email?: string
+  telefone?: string
+  endereco?: string
+  cidade?: string
+  estado?: string
+  cep?: string
+  observacoes?: string
+  ativo: boolean
+}
+
+export interface MovimentacaoForm {
+  tipo: 'entrada' | 'saida' | 'ajuste'
+  fornecedor_id?: number
+  numero_pedido?: string
+  data_movimentacao: string
+  condicao_pagamento: 'avista' | '30dias' | '60dias' | '90dias' | 'emprestimo' | 'cobranca'
+  observacoes?: string
+  itens: {
+    produto_id: number
+    quantidade: number
+    preco_unitario: number
+  }[]
 }
 
 // Tipos para API

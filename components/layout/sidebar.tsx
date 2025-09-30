@@ -14,7 +14,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  Package2
+  Package2,
+  Truck
 } from 'lucide-react'
 
 interface MenuItem {
@@ -27,8 +28,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { icon: Home, label: 'Dashboard', href: '/dashboard' },
   { icon: ShoppingCart, label: 'Vendas', href: '/vendas' },
-  { icon: Package, label: 'Produtos', href: '/produtos' },
-  { icon: Package2, label: 'Estoque', href: '/estoque' },
+  { icon: Package, label: 'Produtos & Estoque', href: '/produtos-estoque' },
   { icon: Users, label: 'Clientes', href: '/clientes' },
   { icon: UserCheck, label: 'Vendedores', href: '/vendedores' },
   { icon: DollarSign, label: 'Financeiro', href: '/financeiro' },

@@ -73,7 +73,7 @@ try {
             // Criar produto
             $data = json_decode(file_get_contents('php://input'), true);
             
-            $required = ['nome', 'preco', 'estoque'];
+            $required = ['nome', 'preco_venda', 'estoque'];
             foreach ($required as $field) {
                 if (!isset($data[$field]) || $data[$field] === '') {
                     http_response_code(400);
@@ -82,14 +82,18 @@ try {
                 }
             }
             
-            $sql = "INSERT INTO produtos (nome, descricao, preco, estoque, estoque_minimo, categoria, codigo_barras) 
-                    VALUES (:nome, :descricao, :preco, :estoque, :estoque_minimo, :categoria, :codigo_barras)";
+            // Se preco_custo não for fornecido, usar 70% do preço de venda como padrão
+            $preco_custo = $data['preco_custo'] ?? ($data['preco_venda'] * 0.7);
+            
+            $sql = "INSERT INTO produtos (nome, descricao, preco_venda, preco_custo, estoque, estoque_minimo, categoria, codigo_barras) 
+                    VALUES (:nome, :descricao, :preco_venda, :preco_custo, :estoque, :estoque_minimo, :categoria, :codigo_barras)";
             
             $stmt = $conn->prepare($sql);
             $stmt->execute([
                 ':nome' => $data['nome'],
                 ':descricao' => $data['descricao'] ?? null,
-                ':preco' => $data['preco'],
+                ':preco_venda' => $data['preco_venda'],
+                ':preco_custo' => $preco_custo,
                 ':estoque' => $data['estoque'],
                 ':estoque_minimo' => $data['estoque_minimo'] ?? 5,
                 ':categoria' => $data['categoria'] ?? null,
@@ -116,8 +120,8 @@ try {
             }
             
             $sql = "UPDATE produtos SET 
-                    nome = :nome, descricao = :descricao, preco = :preco, 
-                    estoque = :estoque, estoque_minimo = :estoque_minimo, 
+                    nome = :nome, descricao = :descricao, preco_venda = :preco_venda, 
+                    preco_custo = :preco_custo, estoque = :estoque, estoque_minimo = :estoque_minimo, 
                     categoria = :categoria, codigo_barras = :codigo_barras,
                     updated_at = CURRENT_TIMESTAMP
                     WHERE id = :id";
@@ -127,7 +131,8 @@ try {
                 ':id' => $data['id'],
                 ':nome' => $data['nome'],
                 ':descricao' => $data['descricao'] ?? null,
-                ':preco' => $data['preco'],
+                ':preco_venda' => $data['preco_venda'],
+                ':preco_custo' => $data['preco_custo'] ?? ($data['preco_venda'] * 0.7),
                 ':estoque' => $data['estoque'],
                 ':estoque_minimo' => $data['estoque_minimo'] ?? 5,
                 ':categoria' => $data['categoria'] ?? null,
