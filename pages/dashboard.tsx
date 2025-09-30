@@ -15,7 +15,7 @@ import { dashboardService } from '@/services/api'
 import VendaForm from '@/components/forms/VendaForm'
 import ProdutoForm from '@/components/forms/ProdutoForm'
 import ClienteForm from '@/components/forms/ClienteForm'
-import AjusteEstoqueForm from '@/components/forms/AjusteEstoqueForm'
+import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import VendasChart from '@/components/charts/VendasChart'
 
 // 📊 PÁGINA DASHBOARD - DADOS REAIS DO BANCO
@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const [showVendaForm, setShowVendaForm] = useState(false)
   const [showProdutoForm, setShowProdutoForm] = useState(false)
   const [showClienteForm, setShowClienteForm] = useState(false)
-  const [showAjusteEstoqueForm, setShowAjusteEstoqueForm] = useState(false)
+  const [showMovimentacaoForm, setShowMovimentacaoForm] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
@@ -92,7 +92,7 @@ export default function DashboardPage() {
   }
 
   const handleNovaMovimentacao = () => {
-    setShowAjusteEstoqueForm(true)
+    setShowMovimentacaoForm(true)
   }
 
   const handleVerRelatorios = () => {
@@ -145,16 +145,16 @@ export default function DashboardPage() {
     }
   }
 
-  const handleSalvarAjusteEstoque = async (ajusteData: any) => {
+  const handleSalvarMovimentacao = async (movimentacaoData: any) => {
     try {
       setFormLoading(true)
-      // Aqui você implementaria a lógica de salvar ajuste de estoque
-      console.log('Salvando ajuste de estoque:', ajusteData)
-      setShowAjusteEstoqueForm(false)
+      // Aqui você implementaria a lógica de salvar movimentação
+      console.log('Salvando movimentação:', movimentacaoData)
+      setShowMovimentacaoForm(false)
       // Recarregar dados do dashboard
       await loadDashboardData()
     } catch (error) {
-      console.error('Erro ao salvar ajuste de estoque:', error)
+      console.error('Erro ao salvar movimentação:', error)
     } finally {
       setFormLoading(false)
     }
@@ -164,7 +164,7 @@ export default function DashboardPage() {
     setShowVendaForm(false)
     setShowProdutoForm(false)
     setShowClienteForm(false)
-    setShowAjusteEstoqueForm(false)
+    setShowMovimentacaoForm(false)
   }
 
   const formatCurrency = (value: number) => {
@@ -355,42 +355,50 @@ export default function DashboardPage() {
 
       {/* Formulários Modais */}
       {showVendaForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <VendaForm
-            onSubmit={handleSalvarVenda}
-            onCancel={handleCancelarForm}
-            loading={formLoading}
-          />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <VendaForm
+              onSubmit={handleSalvarVenda}
+              onCancel={handleCancelarForm}
+              loading={formLoading}
+            />
+          </div>
         </div>
       )}
 
       {showProdutoForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <ProdutoForm
-            onSubmit={handleSalvarProduto}
-            onCancel={handleCancelarForm}
-            loading={formLoading}
-          />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <ProdutoForm
+              onSubmit={handleSalvarProduto}
+              onCancel={handleCancelarForm}
+              loading={formLoading}
+            />
+          </div>
         </div>
       )}
 
       {showClienteForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <ClienteForm
-            onSubmit={handleSalvarCliente}
-            onCancel={handleCancelarForm}
-            loading={formLoading}
-          />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <ClienteForm
+              onSubmit={handleSalvarCliente}
+              onCancel={handleCancelarForm}
+              loading={formLoading}
+            />
+          </div>
         </div>
       )}
 
-      {showAjusteEstoqueForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <AjusteEstoqueForm
-            onSubmit={handleSalvarAjusteEstoque}
-            onCancel={handleCancelarForm}
-            loading={formLoading}
-          />
+      {showMovimentacaoForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <MovimentacaoForm
+              onSubmit={handleSalvarMovimentacao}
+              onCancel={handleCancelarForm}
+              loading={formLoading}
+            />
+          </div>
         </div>
       )}
     </div>
