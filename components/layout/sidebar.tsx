@@ -55,11 +55,17 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   return (
     <div className={cn(
       "bg-white border-r border-gray-200 h-full flex flex-col transition-all duration-300",
-      isCollapsed ? "w-16" : "w-64"
+      isCollapsed ? "w-20" : "w-64"
     )}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
+      <div className={cn(
+        "border-b border-gray-200",
+        isCollapsed ? "p-3" : "p-4"
+      )}>
+        <div className={cn(
+          "flex items-center",
+          isCollapsed ? "justify-center" : "justify-between"
+        )}>
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg overflow-hidden">
@@ -75,19 +81,22 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             </div>
           )}
           {isCollapsed && (
-            <div className="w-8 h-8 rounded-lg overflow-hidden">
+            <div className="w-10 h-10 rounded-lg overflow-hidden">
               <Image
                 src="/Meguis-pet-1280x1147.png"
                 alt="MeguisPet Logo"
-                width={32}
-                height={32}
+                width={40}
+                height={40}
                 className="w-full h-full object-cover"
               />
             </div>
           )}
           <button
             onClick={onToggle}
-            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+            className={cn(
+              "p-1 hover:bg-gray-100 rounded-md transition-colors",
+              isCollapsed && "absolute top-2 right-2"
+            )}
           >
             <Menu size={20} />
           </button>
@@ -95,7 +104,10 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className={cn(
+        "flex-1",
+        isCollapsed ? "p-2" : "p-4"
+      )}>
         <div className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
@@ -106,14 +118,15 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center rounded-lg text-sm font-medium transition-colors",
                   isActive
                     ? "bg-meguispet-primary text-white"
                     : "text-gray-700 hover:bg-gray-100",
-                  isCollapsed ? "justify-center" : "justify-start"
+                  isCollapsed ? "justify-center p-3" : "justify-start px-3 py-2"
                 )}
+                title={isCollapsed ? item.label : undefined}
               >
-                <Icon size={20} />
+                <Icon size={isCollapsed ? 24 : 20} />
                 {!isCollapsed && (
                   <span className="ml-3">{item.label}</span>
                 )}
@@ -129,15 +142,19 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
+      <div className={cn(
+        "border-t border-gray-200",
+        isCollapsed ? "p-2" : "p-4"
+      )}>
         <button
           onClick={handleLogout}
           className={cn(
-            "flex items-center px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full",
-            isCollapsed ? "justify-center" : "justify-start"
+            "flex items-center rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors w-full",
+            isCollapsed ? "justify-center p-3" : "justify-start px-3 py-2"
           )}
+          title={isCollapsed ? "Sair" : undefined}
         >
-          <LogOut size={20} />
+          <LogOut size={isCollapsed ? 24 : 20} />
           {!isCollapsed && (
             <span className="ml-3">Sair</span>
           )}

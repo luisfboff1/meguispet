@@ -62,12 +62,23 @@ export default function ProdutosEstoquePage() {
       
       // Carregar fornecedores
       try {
+        console.log('🔄 Carregando fornecedores...')
         const fornecedoresResponse = await fornecedoresService.getAll(1, 100)
+        console.log('📦 Resposta fornecedores:', fornecedoresResponse)
         if (fornecedoresResponse.success && fornecedoresResponse.data) {
+          console.log('✅ Fornecedores carregados:', fornecedoresResponse.data.length, 'fornecedores')
+          console.log('📋 Lista de fornecedores:', fornecedoresResponse.data)
           setFornecedores(fornecedoresResponse.data)
+        } else {
+          console.warn('⚠️ Fornecedores não carregados:', fornecedoresResponse)
         }
       } catch (error) {
-        console.error('Erro ao carregar fornecedores:', error)
+        console.error('❌ Erro ao carregar fornecedores:', error)
+        console.error('🔍 Detalhes do erro:', {
+          message: error.message,
+          stack: error.stack,
+          response: error.response?.data
+        })
       }
       
       // Carregar movimentações
@@ -169,6 +180,11 @@ export default function ProdutosEstoquePage() {
   // Handlers para fornecedores
   const handleNovoFornecedor = () => {
     setEditingFornecedor(null)
+    setShowFornecedorForm(true)
+  }
+
+  const handleEditarFornecedor = (fornecedor: Fornecedor) => {
+    setEditingFornecedor(fornecedor)
     setShowFornecedorForm(true)
   }
 
@@ -710,19 +726,113 @@ export default function ProdutosEstoquePage() {
 
       {activeTab === 'fornecedores' && (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <ShoppingCart className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Fornecedores</h3>
-            <p className="text-gray-600 text-center mb-4">
-              Cadastre e gerencie seus fornecedores
-            </p>
-            <Button 
-              className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-              onClick={handleNovoFornecedor}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Fornecedor
-            </Button>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  Fornecedores ({fornecedores.length})
+                </CardTitle>
+                <CardDescription>
+                  Gerencie seus fornecedores e parceiros comerciais
+                </CardDescription>
+              </div>
+              <Button 
+                className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+                onClick={handleNovoFornecedor}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Fornecedor
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-gray-500">Carregando fornecedores...</div>
+              </div>
+            ) : fornecedores.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Fornecedor</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">CNPJ</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Telefone</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Cidade</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fornecedores.map((fornecedor) => (
+                      <tr key={fornecedor.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                              <ShoppingCart className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">{fornecedor.nome}</div>
+                              {fornecedor.nome_fantasia && (
+                                <div className="text-sm text-gray-500">{fornecedor.nome_fantasia}</div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900">
+                          {fornecedor.cnpj || 'N/A'}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900">
+                          {fornecedor.email || 'N/A'}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900">
+                          {fornecedor.telefone || 'N/A'}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900">
+                          {fornecedor.cidade && fornecedor.estado 
+                            ? `${fornecedor.cidade}/${fornecedor.estado}` 
+                            : 'N/A'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEditarFornecedor(fornecedor)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8">
+                <ShoppingCart className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum fornecedor encontrado</h3>
+                <p className="text-gray-600 text-center mb-4">
+                  Cadastre seu primeiro fornecedor para começar
+                </p>
+                <Button 
+                  className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+                  onClick={handleNovoFornecedor}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Fornecedor
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

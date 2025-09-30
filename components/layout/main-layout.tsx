@@ -12,29 +12,48 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, title, description }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
 
   // Páginas que não precisam de layout (login, etc)
   const noLayoutPages = ['/login', '/register', '/forgot-password']
   const isNoLayoutPage = noLayoutPages.includes(router.pathname)
 
+  // Verificar se o componente foi montado no cliente
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // Verificar autenticação
   useEffect(() => {
-    if (typeof window !== 'undefined' && !isNoLayoutPage) {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        router.push('/login')
+    if (mounted && typeof window !== 'undefined' && !isNoLayoutPage) {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          router.push('/login')
+        }
+      } catch (error) {
+        console.warn('Erro ao verificar token:', error)
       }
     }
-  }, [router.pathname, isNoLayoutPage])
+  }, [mounted, router.pathname, isNoLayoutPage])
 
   // Se for página sem layout, renderizar só o conteúdo
   if (isNoLayoutPage) {
     return <>{children}</>
   }
 
+  // Evitar hidratação mismatch - só renderizar após montar no cliente
+  if (!mounted) {
+    return <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-gray-500">Carregando...</div>
+      </div>
+    </div>
+  }
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
       {/* Sidebar */}
       <Sidebar 
         isCollapsed={sidebarCollapsed}
