@@ -15,10 +15,10 @@ const nextConfig = {
   
   // 🚀 BUILD CACHE - Configurações de performance
   experimental: {
-    // Cache de build para rebuilds mais rápidos
-    buildCache: true,
-    // Cache de módulos
-    cacheMaxMemorySize: 50 * 1024 * 1024, // 50MB
+    // Cache de build otimizado (configuração válida para Next.js 14)
+    webpackBuildWorker: true,
+    // Otimizações de cache
+    optimizeCss: true,
   },
   
   // Otimizações de compilação

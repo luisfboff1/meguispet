@@ -124,8 +124,8 @@ Acesse: `http://localhost:3000`
 # Desenvolvimento com Turbo (mais rápido)
 npm run dev:turbo
 
-# Build com cache (50-80% mais rápido)
-npm run build:cached
+# Build otimizado
+npm run build
 
 # Build com análise de bundle
 npm run build:analyze
@@ -137,10 +137,10 @@ npm run clean:build
 
 ### 📦 Cache Configurado
 
-- ✅ **Build Cache**: Rebuilds 50-80% mais rápidos
+- ✅ **Webpack Build Worker**: Builds paralelos mais rápidos
+- ✅ **CSS Optimization**: Otimização automática de CSS
 - ✅ **Module Cache**: Cache de dependências Node.js
 - ✅ **Image Cache**: Otimização automática de imagens
-- ✅ **Memory Cache**: 50MB de cache em memória
 - ✅ **Console Cleanup**: Remove console.log em produção
 
 ### 🎯 Benefícios
