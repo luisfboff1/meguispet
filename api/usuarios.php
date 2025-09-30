@@ -20,18 +20,15 @@ $method = $_SERVER['REQUEST_METHOD'];
 $auth = require_auth();
 
 // Verificar se é admin (apenas admins podem gerenciar usuários)
-// Temporariamente desabilitado para debug
-// if ($auth['user_role'] !== 'admin') {
-//     http_response_code(403);
-//     echo json_encode([
-//         'success' => false,
-//         'message' => 'Acesso negado. Apenas administradores podem gerenciar usuários.'
-//     ]);
-//     exit();
-// }
-
-// Debug: Log do payload do JWT
-error_log("JWT Payload: " . print_r($auth, true));
+// Corrigido: usar 'role' em vez de 'user_role' (conforme payload do JWT)
+if (!isset($auth['role']) || $auth['role'] !== 'admin') {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Acesso negado. Apenas administradores podem gerenciar usuários.'
+    ]);
+    exit();
+}
 
 try {
     $conn = getDbConnection();
