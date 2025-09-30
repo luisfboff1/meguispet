@@ -22,13 +22,23 @@ try {
     $method = $_SERVER['REQUEST_METHOD'];
     
     // Verificar se as tabelas existem
-    $tableCheck = $conn->query("SHOW TABLES LIKE 'movimentacoes_estoque'");
-    if ($tableCheck->rowCount() == 0) {
+    try {
+        $tableCheck = $conn->query("SHOW TABLES LIKE 'movimentacoes_estoque'");
+        if ($tableCheck->rowCount() == 0) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Tabelas de movimentações não foram criadas. Execute o script SQL primeiro.',
+                'error' => 'Tabela movimentacoes_estoque não encontrada'
+            ]);
+            exit();
+        }
+    } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Tabelas de movimentações não foram criadas. Execute o script SQL primeiro.',
-            'error' => 'Tabela movimentacoes_estoque não encontrada'
+            'message' => 'Erro ao verificar tabelas: ' . $e->getMessage(),
+            'error' => $e->getMessage()
         ]);
         exit();
     }
@@ -57,29 +67,68 @@ try {
             }
             
             // Contar total
-            $countSql = "SELECT COUNT(*) as total FROM movimentacoes_estoque $where";
-            $countStmt = $conn->prepare($countSql);
-            $countStmt->execute($params);
-            $total = $countStmt->fetch()['total'];
+            try {
+                $countSql = "SELECT COUNT(*) as total FROM movimentacoes_estoque $where";
+                $countStmt = $conn->prepare($countSql);
+                $countStmt->execute($params);
+                $total = $countStmt->fetch()['total'];
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao contar movimentações: ' . $e->getMessage(),
+                    'error' => $e->getMessage()
+                ]);
+                exit();
+            }
             
             // Buscar movimentações
-            $sql = "SELECT m.*, f.nome as fornecedor_nome 
-                    FROM movimentacoes_estoque m 
-                    LEFT JOIN fornecedores f ON m.fornecedor_id = f.id 
-                    $where 
-                    ORDER BY m.created_at DESC 
-                    LIMIT :limit OFFSET :offset";
+            try {
+                $sql = "SELECT m.*, f.nome as fornecedor_nome 
+                        FROM movimentacoes_estoque m 
+                        LEFT JOIN fornecedores f ON m.fornecedor_id = f.id 
+                        $where 
+                        ORDER BY m.created_at DESC 
+                        LIMIT :limit OFFSET :offset";
+                
+                $params[':limit'] = $limit;
+                $params[':offset'] = $offset;
+                
+                $stmt = $conn->prepare($sql);
+                $stmt->execute($params);
+                $movimentacoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                http_response_code(500);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao buscar movimentações: ' . $e->getMessage(),
+                    'error' => $e->getMessage()
+                ]);
+                exit();
+            }
             
-            $params[':limit'] = $limit;
-            $params[':offset'] = $offset;
-            
-            $stmt = $conn->prepare($sql);
-            $stmt->execute($params);
-            $movimentacoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
+            // Formatar dados das movimentações
+            $movimentacoesFormatadas = [];
+            foreach ($movimentacoes as $mov) {
+                $movimentacoesFormatadas[] = [
+                    'id' => (int)$mov['id'],
+                    'tipo' => $mov['tipo'],
+                    'fornecedor_id' => $mov['fornecedor_id'] ? (int)$mov['fornecedor_id'] : null,
+                    'fornecedor_nome' => $mov['fornecedor_nome'],
+                    'numero_pedido' => $mov['numero_pedido'],
+                    'data_movimentacao' => $mov['data_movimentacao'],
+                    'valor_total' => (float)$mov['valor_total'],
+                    'condicao_pagamento' => $mov['condicao_pagamento'],
+                    'status' => $mov['status'],
+                    'observacoes' => $mov['observacoes'],
+                    'created_at' => $mov['created_at'],
+                    'updated_at' => $mov['updated_at']
+                ];
+            }
+
             echo json_encode([
                 'success' => true,
-                'data' => $movimentacoes,
+                'data' => $movimentacoesFormatadas,
                 'pagination' => [
                     'page' => $page,
                     'limit' => $limit,
