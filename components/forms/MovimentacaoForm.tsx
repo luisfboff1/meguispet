@@ -31,7 +31,7 @@ interface MovimentacaoFormLocal {
   itens: ItemMovimentacao[]
 }
 
-export default function MovimentacaoForm({ onSubmit, onCancel, loading = false }: MovimentacaoFormProps) {
+export default function MovimentacaoForm({ onSubmit, onCancel, loading = false, editingData }: MovimentacaoFormProps) {
   const [formData, setFormData] = useState<MovimentacaoFormLocal>({
     tipo: 'entrada',
     fornecedor_id: undefined,
