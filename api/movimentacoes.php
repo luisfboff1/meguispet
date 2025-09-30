@@ -1,14 +1,37 @@
 <?php
+// Headers CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Content-Type: application/json');
+
+// Responder a requisições OPTIONS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/jwt_helper.php';
-
-$method = $_SERVER['REQUEST_METHOD'];
 
 // Middleware de autenticação
 $auth = require_auth();
 
 try {
     $conn = getDbConnection();
+    $method = $_SERVER['REQUEST_METHOD'];
+    
+    // Verificar se as tabelas existem
+    $tableCheck = $conn->query("SHOW TABLES LIKE 'movimentacoes_estoque'");
+    if ($tableCheck->rowCount() == 0) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Tabelas de movimentações não foram criadas. Execute o script SQL primeiro.',
+            'error' => 'Tabela movimentacoes_estoque não encontrada'
+        ]);
+        exit();
+    }
     
     switch ($method) {
         case 'GET':
@@ -22,18 +45,15 @@ try {
             
             $where = "WHERE 1=1";
             $params = [];
-            $paramCount = 1;
             
             if (!empty($tipo)) {
-                $where .= " AND tipo = ?";
-                $params[] = $tipo;
-                $paramCount++;
+                $where .= " AND tipo = :tipo";
+                $params[':tipo'] = $tipo;
             }
             
             if (!empty($status)) {
-                $where .= " AND status = ?";
-                $params[] = $status;
-                $paramCount++;
+                $where .= " AND status = :status";
+                $params[':status'] = $status;
             }
             
             // Contar total
@@ -48,14 +68,14 @@ try {
                     LEFT JOIN fornecedores f ON m.fornecedor_id = f.id 
                     $where 
                     ORDER BY m.created_at DESC 
-                    LIMIT ? OFFSET ?";
+                    LIMIT :limit OFFSET :offset";
             
-            $params[] = $limit;
-            $params[] = $offset;
+            $params[':limit'] = $limit;
+            $params[':offset'] = $offset;
             
             $stmt = $conn->prepare($sql);
             $stmt->execute($params);
-            $movimentacoes = $stmt->fetchAll();
+            $movimentacoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode([
                 'success' => true,
