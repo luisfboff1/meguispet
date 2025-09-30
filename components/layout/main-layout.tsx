@@ -104,14 +104,6 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900" suppressHydrationWarning>
-      {/* Mobile Backdrop */}
-      {isMobile && sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={closeSidebar}
-        />
-      )}
-
       {/* Sidebar */}
       <div className={cn(
         "transition-all duration-300",
@@ -129,6 +121,14 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
           hideToggle={isMobile}
         />
       </div>
+
+      {/* Mobile Backdrop - deve vir depois do sidebar para ficar atrás */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
