@@ -195,7 +195,7 @@ export default function FornecedorForm({ fornecedor, onSubmit, onCancel, loading
                   value={formData.observacoes}
                   onChange={(e) => handleChange('observacoes', e.target.value)}
                   placeholder="Informações adicionais sobre o fornecedor"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-meguispet-primary focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-meguispet-primary focus:border-transparent resize-none"
                   rows={3}
                 />
               </div>

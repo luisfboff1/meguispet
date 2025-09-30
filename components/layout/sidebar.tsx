@@ -39,9 +39,10 @@ const menuItems: MenuItem[] = [
 interface SidebarProps {
   isCollapsed: boolean
   onToggle: () => void
+  hideToggle?: boolean
 }
 
-export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarProps) {
   const router = useRouter()
 
   const handleLogout = () => {
@@ -91,12 +92,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               />
             </div>
           )}
-          <button
-            onClick={onToggle}
-            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <Menu size={isCollapsed ? 16 : 20} />
-          </button>
+          {!hideToggle && (
+            <button
+              onClick={onToggle}
+              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <Menu size={isCollapsed ? 16 : 20} />
+            </button>
+          )}
         </div>
       </div>
 

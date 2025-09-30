@@ -205,7 +205,7 @@ export default function BuscaPage() {
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <IconComponent className="h-6 w-6 text-meguispet-primary" />
                       </div>
                       <div className="flex-1">

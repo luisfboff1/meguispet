@@ -670,14 +670,14 @@ export default function ProdutosEstoquePage() {
                 </div>
                 <div className="flex gap-2">
                   <Button 
-                    variant={filterStatus === 'all' ? 'default' : 'outline'}
+                    variant={filterStatus === 'all' ? 'default' : 'outline-solid'}
                     onClick={() => setFilterStatus('all')}
                     size="sm"
                   >
                     Todos
                   </Button>
                   <Button 
-                    variant={filterStatus === 'low' ? 'default' : 'outline'}
+                    variant={filterStatus === 'low' ? 'default' : 'outline-solid'}
                     onClick={() => setFilterStatus('low')}
                     size="sm"
                     className="text-yellow-600"
@@ -685,7 +685,7 @@ export default function ProdutosEstoquePage() {
                     Baixo
                   </Button>
                   <Button 
-                    variant={filterStatus === 'out' ? 'default' : 'outline'}
+                    variant={filterStatus === 'out' ? 'default' : 'outline-solid'}
                     onClick={() => setFilterStatus('out')}
                     size="sm"
                     className="text-red-600"

@@ -12,7 +12,9 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, title, description }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
 
   // Páginas que não precisam de layout (login, etc)
@@ -23,6 +25,27 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Detectar mobile e gerenciar sidebar
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024
+      setIsMobile(mobile)
+      
+      if (mobile) {
+        setSidebarCollapsed(false) // Em mobile, sempre expandida quando aberta
+        setSidebarOpen(false) // Fechada por padrão em mobile
+      } else {
+        setSidebarOpen(false) // Em desktop, não usa overlay
+      }
+    }
+
+    if (mounted) {
+      checkMobile()
+      window.addEventListener('resize', checkMobile)
+      return () => window.removeEventListener('resize', checkMobile)
+    }
+  }, [mounted])
 
   // Forçar re-render após hidratação para evitar mismatches
   useEffect(() => {
@@ -63,28 +86,69 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     </div>
   }
 
+  // Função para toggle da sidebar
+  const toggleSidebar = () => {
+    if (isMobile) {
+      setSidebarOpen(!sidebarOpen)
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed)
+    }
+  }
+
+  // Fechar sidebar em mobile ao clicar fora
+  const closeSidebar = () => {
+    if (isMobile) {
+      setSidebarOpen(false)
+    }
+  }
+
   return (
     <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
+      {/* Mobile Backdrop */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
       {/* Sidebar */}
-      <Sidebar 
-        isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      <div className={cn(
+        "transition-all duration-300",
+        isMobile ? (
+          sidebarOpen 
+            ? "fixed inset-y-0 left-0 z-50 w-64" 
+            : "fixed inset-y-0 left-0 z-50 w-64 -translate-x-full"
+        ) : (
+          sidebarCollapsed ? "w-20" : "w-64"
+        )
+      )}>
+        <Sidebar 
+          isCollapsed={isMobile ? false : sidebarCollapsed}
+          onToggle={toggleSidebar}
+          hideToggle={isMobile}
+        />
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={cn(
+        "flex-1 flex flex-col overflow-hidden transition-all duration-300",
+        !isMobile && (sidebarCollapsed ? "ml-20" : "ml-64")
+      )}>
         {/* Header */}
         <Header 
           title={title}
           description={description}
           sidebarCollapsed={sidebarCollapsed}
+          onMenuClick={toggleSidebar}
+          isMobile={isMobile}
         />
 
         {/* Content */}
         <main className="flex-1 overflow-auto p-6">
           <div className={cn(
             "mx-auto transition-all duration-300",
-            sidebarCollapsed ? "max-w-7xl" : "max-w-6xl"
+            !isMobile && (sidebarCollapsed ? "max-w-7xl" : "max-w-6xl")
           )}>
             {children}
           </div>

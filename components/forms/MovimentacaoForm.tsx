@@ -212,7 +212,7 @@ export default function MovimentacaoForm({ onSubmit, onCancel, loading = false, 
                   id="tipo"
                   value={formData.tipo}
                   onChange={(e) => handleChange('tipo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-meguispet-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-meguispet-primary focus:border-transparent"
                   required
                 >
                   <option value="entrada">Entrada</option>
@@ -248,7 +248,7 @@ export default function MovimentacaoForm({ onSubmit, onCancel, loading = false, 
                   id="condicao_pagamento"
                   value={formData.condicao_pagamento}
                   onChange={(e) => handleChange('condicao_pagamento', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-meguispet-primary focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-meguispet-primary focus:border-transparent"
                 >
                   <option value="avista">À Vista</option>
                   <option value="30dias">30 Dias</option>
@@ -268,7 +268,7 @@ export default function MovimentacaoForm({ onSubmit, onCancel, loading = false, 
                   id="fornecedor"
                   value={formData.fornecedor_id || ''}
                   onChange={(e) => handleChange('fornecedor_id', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-meguispet-primary focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-meguispet-primary focus:border-transparent"
                 >
                   <option value="">Selecione um fornecedor</option>
                   {fornecedores.map(fornecedor => (
@@ -431,7 +431,7 @@ export default function MovimentacaoForm({ onSubmit, onCancel, loading = false, 
                 value={formData.observacoes}
                 onChange={(e) => handleChange('observacoes', e.target.value)}
                 placeholder="Informações adicionais sobre a movimentação"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-meguispet-primary focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-meguispet-primary focus:border-transparent resize-none"
                 rows={3}
               />
             </div>

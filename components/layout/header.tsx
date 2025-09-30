@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
-import { Bell, Search, User, ChevronDown, LogOut, Settings } from 'lucide-react'
+import { Bell, Search, User, ChevronDown, LogOut, Settings, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
   title?: string
   description?: string
   sidebarCollapsed: boolean
+  onMenuClick?: () => void
+  isMobile?: boolean
 }
 
 // Títulos das páginas
@@ -51,7 +54,7 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   },
 }
 
-export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
+export function Header({ title, description, sidebarCollapsed, onMenuClick, isMobile }: HeaderProps) {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -143,6 +146,18 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-4"
+            onClick={onMenuClick}
+          >
+            <Menu size={20} />
+          </Button>
+        )}
+
         {/* Título da página */}
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">
@@ -153,8 +168,11 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
           </p>
         </div>
 
-        {/* Barra de busca */}
-        <div className="flex-1 max-w-md mx-8">
+        {/* Barra de busca - Hidden em mobile */}
+        <div className={cn(
+          "flex-1 max-w-md mx-8",
+          isMobile ? "hidden" : "block"
+        )}>
           <form onSubmit={handleSearch} className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             <Input 
@@ -167,7 +185,10 @@ export function Header({ title, description, sidebarCollapsed }: HeaderProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          {/* Theme Toggle */}
+          <ThemeToggle variant="icon-only" />
+
           {/* Notificações */}
           <div className="relative" ref={notificationsRef}>
             <Button 
