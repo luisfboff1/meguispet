@@ -100,6 +100,7 @@ export default function ProdutoDetalhes() {
       
       if (response.ok) {
         const data = await response.json()
+        console.log('📦 Dados do histórico:', data)
         if (data.success && data.data) {
           // Mapear dados da API para o formato esperado pelo componente
           const historicoMapeado = data.data.map((item: any) => ({
