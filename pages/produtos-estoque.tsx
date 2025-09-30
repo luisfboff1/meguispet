@@ -279,6 +279,28 @@ export default function ProdutosEstoquePage() {
     }
   }
 
+  const handleConfirmarMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
+    if (confirm(`Confirmar a movimentação #${movimentacao.id}?\n\nIsso irá atualizar o estoque dos produtos.`)) {
+      try {
+        setFormLoading(true)
+        const response = await movimentacoesService.updateStatus(movimentacao.id, 'confirmada')
+        if (response.success) {
+          await loadData() // Recarregar dados para atualizar estoque
+          console.log('✅ Movimentação confirmada e estoque atualizado')
+          alert('Movimentação confirmada! Estoque atualizado com sucesso.')
+        } else {
+          console.error('❌ Erro ao confirmar movimentação:', response.message)
+          alert('Erro ao confirmar movimentação: ' + response.message)
+        }
+      } catch (error) {
+        console.error('❌ Erro ao confirmar movimentação:', error)
+        alert('Erro ao confirmar movimentação')
+      } finally {
+        setFormLoading(false)
+      }
+    }
+  }
+
   const handleCancelarForm = () => {
     setShowProdutoForm(false)
     setShowFornecedorForm(false)
@@ -843,19 +865,30 @@ export default function ProdutosEstoquePage() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              onClick={() => handleEditarMovimentacao(movimentacao)}
-                              title="Editar movimentação"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-blue-600 hover:text-blue-700"
                               onClick={() => handleVerDetalhesMovimentacao(movimentacao)}
                               title="Ver detalhes"
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            {movimentacao.status === 'pendente' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-green-600 hover:text-green-700"
+                                onClick={() => handleConfirmarMovimentacao(movimentacao)}
+                                disabled={formLoading}
+                                title="Confirmar movimentação (atualiza estoque)"
+                              >
+                                <ArrowUpCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEditarMovimentacao(movimentacao)}
+                              title="Editar movimentação"
+                            >
+                              <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="ghost" 
