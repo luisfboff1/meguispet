@@ -283,7 +283,7 @@ export default function ProdutosEstoquePage() {
     if (confirm(`Confirmar a movimentação #${movimentacao.id}?\n\nIsso irá atualizar o estoque dos produtos.`)) {
       try {
         setFormLoading(true)
-        const response = await movimentacoesService.updateStatus(movimentacao.id, 'confirmada')
+        const response = await movimentacoesService.updateStatus(movimentacao.id, 'confirmado')
         if (response.success) {
           await loadData() // Recarregar dados para atualizar estoque
           console.log('✅ Movimentação confirmada e estoque atualizado')
@@ -840,20 +840,20 @@ export default function ProdutosEstoquePage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-900">
-                          {movimentacao.fornecedor_nome || 'N/A'}
+                          {movimentacao.fornecedor?.nome || 'N/A'}
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-900">
                           {new Date(movimentacao.data_movimentacao).toLocaleDateString('pt-BR')}
                         </td>
                         <td className="py-3 px-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            movimentacao.status === 'confirmada' 
+                            movimentacao.status === 'confirmado' 
                               ? 'bg-green-100 text-green-800' 
                               : movimentacao.status === 'pendente'
                               ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {movimentacao.status === 'confirmada' ? 'Confirmada' : 
+                            {movimentacao.status === 'confirmado' ? 'Confirmada' : 
                              movimentacao.status === 'pendente' ? 'Pendente' : 'Cancelada'}
                           </span>
                         </td>
