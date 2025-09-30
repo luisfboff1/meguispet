@@ -147,6 +147,23 @@ try {
             // Se preco_custo não for fornecido, usar 70% do preço de venda como padrão
             $preco_custo = $data['preco_custo'] ?? ($data['preco_venda'] * 0.7);
             
+            // Validar código de barras único (se fornecido)
+            if (!empty($data['codigo_barras'])) {
+                $checkSql = "SELECT COUNT(*) FROM produtos WHERE codigo_barras = :codigo_barras";
+                $checkStmt = $conn->prepare($checkSql);
+                $checkStmt->execute([':codigo_barras' => $data['codigo_barras']]);
+                $exists = $checkStmt->fetchColumn();
+                
+                if ($exists > 0) {
+                    http_response_code(400);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Código de barras já existe. Use um código único.'
+                    ]);
+                    exit();
+                }
+            }
+            
             $sql = "INSERT INTO produtos (nome, descricao, preco_venda, preco_custo, estoque, estoque_minimo, categoria, codigo_barras) 
                     VALUES (:nome, :descricao, :preco_venda, :preco_custo, :estoque, :estoque_minimo, :categoria, :codigo_barras)";
             
@@ -179,6 +196,26 @@ try {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'ID do produto é obrigatório']);
                 exit();
+            }
+            
+            // Validar código de barras único (se fornecido)
+            if (!empty($data['codigo_barras'])) {
+                $checkSql = "SELECT COUNT(*) FROM produtos WHERE codigo_barras = :codigo_barras AND id != :id";
+                $checkStmt = $conn->prepare($checkSql);
+                $checkStmt->execute([
+                    ':codigo_barras' => $data['codigo_barras'],
+                    ':id' => $data['id']
+                ]);
+                $exists = $checkStmt->fetchColumn();
+                
+                if ($exists > 0) {
+                    http_response_code(400);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Código de barras já existe. Use um código único.'
+                    ]);
+                    exit();
+                }
             }
             
             $sql = "UPDATE produtos SET 

@@ -158,6 +158,33 @@ try {
                 }
             }
             
+            // Validar itens
+            if (!is_array($data['itens']) || count($data['itens']) === 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Pelo menos um item é obrigatório']);
+                exit();
+            }
+            
+            foreach ($data['itens'] as $index => $item) {
+                if (!isset($item['produto_id']) || !isset($item['quantidade']) || !isset($item['preco_unitario'])) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => "Item $index: produto_id, quantidade e preco_unitario são obrigatórios"]);
+                    exit();
+                }
+                
+                if ($item['quantidade'] <= 0) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => "Item $index: quantidade deve ser maior que zero"]);
+                    exit();
+                }
+                
+                if ($item['preco_unitario'] < 0) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => "Item $index: preço unitário não pode ser negativo"]);
+                    exit();
+                }
+            }
+            
             // Calcular valor total
             $valor_total = 0;
             foreach ($data['itens'] as $item) {

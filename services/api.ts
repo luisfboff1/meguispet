@@ -23,12 +23,17 @@ const api = axios.create({
 })
 
 // 🔐 INTERCEPTOR PARA AUTENTICAÇÃO
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+api.interceptors.request.use((config: any) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const token = localStorage.getItem('token')
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
+  } catch (error) {
+    // Ignorar erros de localStorage em SSR
+    console.warn('Erro ao acessar localStorage:', error)
   }
   return config
 })
@@ -220,8 +225,12 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token')
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('token')
+      }
+    } catch (error) {
+      console.warn('Erro ao acessar localStorage:', error)
     }
   },
 

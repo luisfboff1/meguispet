@@ -23,7 +23,60 @@ try {
 
     switch ($method) {
         case 'GET':
-            // GET /fornecedores - Listar todos
+            // Verificar se é busca por ID (PATH_INFO ou query parameter)
+            $id = null;
+            
+            // Tentar PATH_INFO primeiro
+            $path = $_SERVER['PATH_INFO'] ?? '';
+            $pathParts = explode('/', trim($path, '/'));
+            if (!empty($pathParts[0]) && is_numeric($pathParts[0])) {
+                $id = (int)$pathParts[0];
+            }
+            
+            // Se não encontrou no PATH_INFO, tentar query parameter
+            if (!$id && isset($_GET['id']) && is_numeric($_GET['id'])) {
+                $id = (int)$_GET['id'];
+            }
+            
+            // Se encontrou um ID, buscar fornecedor específico
+            if ($id) {
+                $sql = "SELECT * FROM fornecedores WHERE id = :id AND ativo = 1";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([':id' => $id]);
+                $fornecedor = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($fornecedor) {
+                    echo json_encode([
+                        'success' => true,
+                        'data' => [
+                            'id' => (int)$fornecedor['id'],
+                            'nome' => $fornecedor['nome'],
+                            'nome_fantasia' => $fornecedor['nome_fantasia'],
+                            'cnpj' => $fornecedor['cnpj'],
+                            'inscricao_estadual' => $fornecedor['inscricao_estadual'],
+                            'email' => $fornecedor['email'],
+                            'telefone' => $fornecedor['telefone'],
+                            'endereco' => $fornecedor['endereco'],
+                            'cidade' => $fornecedor['cidade'],
+                            'estado' => $fornecedor['estado'],
+                            'cep' => $fornecedor['cep'],
+                            'observacoes' => $fornecedor['observacoes'],
+                            'ativo' => (bool)$fornecedor['ativo'],
+                            'created_at' => $fornecedor['created_at'],
+                            'updated_at' => $fornecedor['updated_at']
+                        ]
+                    ]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Fornecedor não encontrado'
+                    ]);
+                }
+                exit();
+            }
+            
+            // Se não é busca por ID, listar fornecedores
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
             $search = isset($_GET['search']) ? $_GET['search'] : '';
