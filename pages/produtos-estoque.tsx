@@ -1106,13 +1106,15 @@ export default function ProdutosEstoquePage() {
       )}
 
       {showMovimentacaoForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <MovimentacaoForm
-            onSubmit={handleSalvarMovimentacao}
-            onCancel={handleCancelarForm}
-            loading={formLoading}
-            editingData={editingMovimentacao}
-          />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <MovimentacaoForm
+              onSubmit={handleSalvarMovimentacao}
+              onCancel={handleCancelarForm}
+              loading={formLoading}
+              editingData={editingMovimentacao}
+            />
+          </div>
         </div>
       )}
 
