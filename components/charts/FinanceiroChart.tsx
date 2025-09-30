@@ -13,7 +13,8 @@ interface FinanceiroChartProps {
 
 export function FinanceiroChart({ data, title, description }: FinanceiroChartProps) {
   const maxValue = Math.max(
-    ...data.flatMap(d => [d.receitas, d.despesas])
+    ...data.flatMap(d => [parseFloat(d.receitas) || 0, parseFloat(d.despesas) || 0]),
+    100 // Valor mínimo para evitar gráfico vazio
   )
 
   const formatCurrency = (value: number) => {
@@ -63,10 +64,10 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
                     <div
                       className="w-full bg-green-500 rounded-t transition-all duration-300 hover:bg-green-600 cursor-pointer"
                       style={{
-                        height: `${(item.receitas / maxValue) * 180}px`,
-                        minHeight: item.receitas > 0 ? '4px' : '0px'
+                        height: `${((parseFloat(item.receitas) || 0) / maxValue) * 180}px`,
+                        minHeight: (parseFloat(item.receitas) || 0) > 0 ? '4px' : '0px'
                       }}
-                      title={`Receitas: ${formatCurrency(item.receitas)}`}
+                      title={`Receitas: ${formatCurrency(parseFloat(item.receitas) || 0)}`}
                     />
                   </div>
 
@@ -75,10 +76,10 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
                     <div
                       className="w-full bg-red-500 rounded-b transition-all duration-300 hover:bg-red-600 cursor-pointer"
                       style={{
-                        height: `${(item.despesas / maxValue) * 180}px`,
-                        minHeight: item.despesas > 0 ? '4px' : '0px'
+                        height: `${((parseFloat(item.despesas) || 0) / maxValue) * 180}px`,
+                        minHeight: (parseFloat(item.despesas) || 0) > 0 ? '4px' : '0px'
                       }}
-                      title={`Despesas: ${formatCurrency(item.despesas)}`}
+                      title={`Despesas: ${formatCurrency(parseFloat(item.despesas) || 0)}`}
                     />
                   </div>
                 </div>
@@ -91,10 +92,10 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
                 {/* Values */}
                 <div className="text-xs text-center space-y-1">
                   <div className="text-green-600 font-medium">
-                    {formatCurrency(item.receitas)}
+                    {formatCurrency(parseFloat(item.receitas) || 0)}
                   </div>
                   <div className="text-red-600 font-medium">
-                    {formatCurrency(item.despesas)}
+                    {formatCurrency(parseFloat(item.despesas) || 0)}
                   </div>
                 </div>
               </div>
@@ -106,23 +107,23 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(data.reduce((acc, item) => acc + item.receitas, 0))}
+                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.receitas) || 0), 0))}
                 </div>
                 <div className="text-xs text-gray-500">Total Receitas</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-red-600">
-                  {formatCurrency(data.reduce((acc, item) => acc + item.despesas, 0))}
+                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.despesas) || 0), 0))}
                 </div>
                 <div className="text-xs text-gray-500">Total Despesas</div>
               </div>
               <div>
                 <div className={`text-2xl font-bold ${
-                  data.reduce((acc, item) => acc + item.receitas - item.despesas, 0) >= 0 
+                  data.reduce((acc, item) => acc + (parseFloat(item.receitas) || 0) - (parseFloat(item.despesas) || 0), 0) >= 0 
                     ? 'text-green-600' 
                     : 'text-red-600'
                 }`}>
-                  {formatCurrency(data.reduce((acc, item) => acc + item.receitas - item.despesas, 0))}
+                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.receitas) || 0) - (parseFloat(item.despesas) || 0), 0))}
                 </div>
                 <div className="text-xs text-gray-500">Saldo</div>
               </div>

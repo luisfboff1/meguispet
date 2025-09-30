@@ -49,12 +49,12 @@ try {
                 // Gráfico de receitas vs despesas (últimos 6 meses)
                 $sql = "SELECT 
                             DATE_FORMAT(data_transacao, '%Y-%m') as mes,
-                            SUM(CASE WHEN tipo = 'receita' THEN valor ELSE 0 END) as receitas,
-                            SUM(CASE WHEN tipo = 'despesa' THEN valor ELSE 0 END) as despesas
+                            COALESCE(SUM(CASE WHEN tipo = 'receita' THEN valor ELSE 0 END), 0) as receitas,
+                            COALESCE(SUM(CASE WHEN tipo = 'despesa' THEN valor ELSE 0 END), 0) as despesas
                         FROM transacoes 
                         WHERE data_transacao >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
                         GROUP BY DATE_FORMAT(data_transacao, '%Y-%m')
-                        ORDER BY mes DESC";
+                        ORDER BY mes ASC";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute();
                 $grafico_mensal = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -97,9 +97,7 @@ try {
                 $params[] = $data_fim;
             }
             
-            $sql .= " ORDER BY data_transacao DESC, id DESC LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
+            $sql .= " ORDER BY data_transacao DESC, id DESC LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
             
             $stmt = $conn->prepare($sql);
             $stmt->execute($params);
