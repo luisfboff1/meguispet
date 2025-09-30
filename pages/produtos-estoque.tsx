@@ -75,9 +75,9 @@ export default function ProdutosEstoquePage() {
       } catch (error) {
         console.error('❌ Erro ao carregar fornecedores:', error)
         console.error('🔍 Detalhes do erro:', {
-          message: error.message,
-          stack: error.stack,
-          response: error.response?.data
+          message: error instanceof Error ? error.message : 'Erro desconhecido',
+          stack: error instanceof Error ? error.stack : undefined,
+          response: error && typeof error === 'object' && 'response' in error ? (error as any).response?.data : undefined
         })
       }
       
