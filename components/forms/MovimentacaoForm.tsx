@@ -20,8 +20,18 @@ interface ItemMovimentacao {
   produto?: Produto
 }
 
+interface MovimentacaoFormLocal {
+  tipo: 'entrada' | 'saida' | 'ajuste'
+  fornecedor_id?: number
+  numero_pedido?: string
+  data_movimentacao: string
+  condicao_pagamento: 'avista' | '30dias' | '60dias' | '90dias' | 'emprestimo' | 'cobranca'
+  observacoes?: string
+  itens: ItemMovimentacao[]
+}
+
 export default function MovimentacaoForm({ onSubmit, onCancel, loading = false }: MovimentacaoFormProps) {
-  const [formData, setFormData] = useState<MovimentacaoFormType>({
+  const [formData, setFormData] = useState<MovimentacaoFormLocal>({
     tipo: 'entrada',
     fornecedor_id: undefined,
     numero_pedido: '',
@@ -76,7 +86,17 @@ export default function MovimentacaoForm({ onSubmit, onCancel, loading = false }
       return
     }
 
-    onSubmit(formData)
+    // Converter para o tipo esperado pela API (remover produto dos itens)
+    const dataToSubmit: MovimentacaoFormType = {
+      ...formData,
+      itens: formData.itens.map(item => ({
+        produto_id: item.produto_id,
+        quantidade: item.quantidade,
+        preco_unitario: item.preco_unitario
+      }))
+    }
+
+    onSubmit(dataToSubmit)
   }
 
   const handleChange = (field: keyof MovimentacaoFormType, value: any) => {
