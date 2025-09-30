@@ -64,7 +64,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       )}>
         <div className={cn(
           "flex items-center",
-          isCollapsed ? "justify-center" : "justify-between"
+          isCollapsed ? "flex-col space-y-2" : "justify-between"
         )}>
           {!isCollapsed && (
             <div className="flex items-center space-x-2">
@@ -93,12 +93,9 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           )}
           <button
             onClick={onToggle}
-            className={cn(
-              "p-1 hover:bg-gray-100 rounded-md transition-colors",
-              isCollapsed && "absolute top-2 right-2"
-            )}
+            className="p-1 hover:bg-gray-100 rounded-md transition-colors"
           >
-            <Menu size={20} />
+            <Menu size={isCollapsed ? 16 : 20} />
           </button>
         </div>
       </div>

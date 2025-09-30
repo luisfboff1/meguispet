@@ -17,20 +17,12 @@ const nextConfig = {
   experimental: {
     // Cache de build otimizado (configuração válida para Next.js 14)
     webpackBuildWorker: true,
-    // Otimizações de cache
-    optimizeCss: true,
   },
   
   // Otimizações de compilação
   compiler: {
     // Remove console.log em produção
     removeConsole: process.env.NODE_ENV === 'production',
-  },
-  
-  // Configurações de cache para desenvolvimento
-  onDemandEntries: {
-    maxInactiveAge: 25 * 1000, // 25 segundos
-    pagesBufferLength: 2,
   },
   
   // Configurações de ambiente
