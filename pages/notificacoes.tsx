@@ -111,19 +111,19 @@ export default function NotificacoesPage() {
         <CardContent className="pt-6">
           <div className="flex gap-2">
             <Button
-              variant={filter === 'all' ? 'default' : 'outline-solid'}
+              variant={filter === 'all' ? 'default' : 'outline'}
               onClick={() => setFilter('all')}
             >
               Todas ({notifications.length})
             </Button>
             <Button
-              variant={filter === 'unread' ? 'default' : 'outline-solid'}
+              variant={filter === 'unread' ? 'default' : 'outline'}
               onClick={() => setFilter('unread')}
             >
               Não lidas ({notifications.filter(n => !n.read).length})
             </Button>
             <Button
-              variant={filter === 'read' ? 'default' : 'outline-solid'}
+              variant={filter === 'read' ? 'default' : 'outline'}
               onClick={() => setFilter('read')}
             >
               Lidas ({notifications.filter(n => n.read).length})
