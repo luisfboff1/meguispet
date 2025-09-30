@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 interface FinanceiroChartProps {
   data: {
     mes: string
-    receitas: number
-    despesas: number
+    receitas: string | number
+    despesas: string | number
   }[]
   title: string
   description: string
@@ -13,7 +13,7 @@ interface FinanceiroChartProps {
 
 export function FinanceiroChart({ data, title, description }: FinanceiroChartProps) {
   const maxValue = Math.max(
-    ...data.flatMap(d => [parseFloat(d.receitas) || 0, parseFloat(d.despesas) || 0]),
+    ...data.flatMap(d => [parseFloat(d.receitas.toString()) || 0, parseFloat(d.despesas.toString()) || 0]),
     100 // Valor mínimo para evitar gráfico vazio
   )
 
@@ -64,10 +64,10 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
                     <div
                       className="w-full bg-green-500 rounded-t transition-all duration-300 hover:bg-green-600 cursor-pointer"
                       style={{
-                        height: `${((parseFloat(item.receitas) || 0) / maxValue) * 180}px`,
-                        minHeight: (parseFloat(item.receitas) || 0) > 0 ? '4px' : '0px'
+                        height: `${((parseFloat(item.receitas.toString()) || 0) / maxValue) * 180}px`,
+                        minHeight: (parseFloat(item.receitas.toString()) || 0) > 0 ? '4px' : '0px'
                       }}
-                      title={`Receitas: ${formatCurrency(parseFloat(item.receitas) || 0)}`}
+                      title={`Receitas: ${formatCurrency(parseFloat(item.receitas.toString()) || 0)}`}
                     />
                   </div>
 
@@ -76,10 +76,10 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
                     <div
                       className="w-full bg-red-500 rounded-b transition-all duration-300 hover:bg-red-600 cursor-pointer"
                       style={{
-                        height: `${((parseFloat(item.despesas) || 0) / maxValue) * 180}px`,
-                        minHeight: (parseFloat(item.despesas) || 0) > 0 ? '4px' : '0px'
+                        height: `${((parseFloat(item.despesas.toString()) || 0) / maxValue) * 180}px`,
+                        minHeight: (parseFloat(item.despesas.toString()) || 0) > 0 ? '4px' : '0px'
                       }}
-                      title={`Despesas: ${formatCurrency(parseFloat(item.despesas) || 0)}`}
+                      title={`Despesas: ${formatCurrency(parseFloat(item.despesas.toString()) || 0)}`}
                     />
                   </div>
                 </div>
@@ -92,10 +92,10 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
                 {/* Values */}
                 <div className="text-xs text-center space-y-1">
                   <div className="text-green-600 font-medium">
-                    {formatCurrency(parseFloat(item.receitas) || 0)}
+                    {formatCurrency(parseFloat(item.receitas.toString()) || 0)}
                   </div>
                   <div className="text-red-600 font-medium">
-                    {formatCurrency(parseFloat(item.despesas) || 0)}
+                    {formatCurrency(parseFloat(item.despesas.toString()) || 0)}
                   </div>
                 </div>
               </div>
@@ -107,23 +107,23 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.receitas) || 0), 0))}
+                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.receitas.toString()) || 0), 0))}
                 </div>
                 <div className="text-xs text-gray-500">Total Receitas</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-red-600">
-                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.despesas) || 0), 0))}
+                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.despesas.toString()) || 0), 0))}
                 </div>
                 <div className="text-xs text-gray-500">Total Despesas</div>
               </div>
               <div>
                 <div className={`text-2xl font-bold ${
-                  data.reduce((acc, item) => acc + (parseFloat(item.receitas) || 0) - (parseFloat(item.despesas) || 0), 0) >= 0 
+                  data.reduce((acc, item) => acc + (parseFloat(item.receitas.toString()) || 0) - (parseFloat(item.despesas.toString()) || 0), 0) >= 0 
                     ? 'text-green-600' 
                     : 'text-red-600'
                 }`}>
-                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.receitas) || 0) - (parseFloat(item.despesas) || 0), 0))}
+                  {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.receitas.toString()) || 0) - (parseFloat(item.despesas.toString()) || 0), 0))}
                 </div>
                 <div className="text-xs text-gray-500">Saldo</div>
               </div>
@@ -138,17 +138,19 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
 // Componente para gráfico de pizza simples
 interface PizzaChartProps {
   data: {
-    receita: number
-    despesas: number
+    receita: string | number
+    despesas: string | number
   }
   title: string
   description: string
 }
 
 export function PizzaChart({ data, title, description }: PizzaChartProps) {
-  const total = data.receita + data.despesas
-  const receitaPercent = total > 0 ? (data.receita / total) * 100 : 0
-  const despesaPercent = total > 0 ? (data.despesas / total) * 100 : 0
+  const receita = parseFloat(data.receita.toString()) || 0
+  const despesas = parseFloat(data.despesas.toString()) || 0
+  const total = receita + despesas
+  const receitaPercent = total > 0 ? (receita / total) * 100 : 0
+  const despesaPercent = total > 0 ? (despesas / total) * 100 : 0
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -212,7 +214,7 @@ export function PizzaChart({ data, title, description }: PizzaChartProps) {
                 <span className="text-sm">Receitas</span>
               </div>
               <div className="text-right">
-                <div className="font-medium">{formatCurrency(data.receita)}</div>
+                <div className="font-medium">{formatCurrency(receita)}</div>
                 <div className="text-xs text-gray-500">{receitaPercent.toFixed(1)}%</div>
               </div>
             </div>
@@ -223,7 +225,7 @@ export function PizzaChart({ data, title, description }: PizzaChartProps) {
                 <span className="text-sm">Despesas</span>
               </div>
               <div className="text-right">
-                <div className="font-medium">{formatCurrency(data.despesas)}</div>
+                <div className="font-medium">{formatCurrency(despesas)}</div>
                 <div className="text-xs text-gray-500">{despesaPercent.toFixed(1)}%</div>
               </div>
             </div>
