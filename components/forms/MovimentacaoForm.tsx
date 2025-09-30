@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Package, TrendingUp, TrendingDown, User, Building2 } from 'lucide-react'
 import { produtosService, clientesService, vendedoresService, fornecedoresService } from '@/services/api'
-import type { Produto, Cliente, Vendedor } from '@/types'
+import type { Produto, Cliente, Vendedor, Fornecedor } from '@/types'
 
 interface MovimentacaoFormProps {
   produto?: Produto
@@ -19,7 +19,7 @@ export default function MovimentacaoForm({ produto, onSubmit, onCancel, loading 
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
-  const [fornecedores, setFornecedores] = useState<Cliente[]>([])
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([])
   const [loadingProdutos, setLoadingProdutos] = useState(false)
   const [loadingClientes, setLoadingClientes] = useState(false)
   const [loadingVendedores, setLoadingVendedores] = useState(false)
