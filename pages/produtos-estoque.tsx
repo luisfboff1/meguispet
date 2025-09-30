@@ -20,7 +20,8 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Settings,
-  ShoppingCart
+  ShoppingCart,
+  X
 } from 'lucide-react'
 import { produtosService, fornecedoresService, movimentacoesService } from '@/services/api'
 import type { Produto, Fornecedor, MovimentacaoEstoque } from '@/types'
@@ -44,7 +45,12 @@ export default function ProdutosEstoquePage() {
   const [showMovimentacaoForm, setShowMovimentacaoForm] = useState(false)
   const [editingProduto, setEditingProduto] = useState<Produto | null>(null)
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null)
+  const [editingMovimentacao, setEditingMovimentacao] = useState<MovimentacaoEstoque | null>(null)
   const [formLoading, setFormLoading] = useState(false)
+  
+  // Estados para modal de detalhes
+  const [showMovimentacaoDetails, setShowMovimentacaoDetails] = useState(false)
+  const [selectedMovimentacao, setSelectedMovimentacao] = useState<MovimentacaoEstoque | null>(null)
 
   useEffect(() => {
     loadData()
@@ -254,14 +260,36 @@ export default function ProdutosEstoquePage() {
     }
   }
 
-  const handleEditarMovimentacao = (movimentacao: MovimentacaoEstoque) => {
-    // TODO: Implementar edição de movimentação
-    alert('Funcionalidade de edição será implementada em breve')
+  const handleEditarMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
+    try {
+      // Buscar detalhes completos da movimentação
+      const response = await movimentacoesService.getById(movimentacao.id)
+      if (response.success && response.data) {
+        setEditingMovimentacao(response.data)
+        setShowMovimentacaoForm(true)
+      } else {
+        alert('Erro ao carregar dados para edição')
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados para edição:', error)
+      alert('Erro ao carregar dados para edição')
+    }
   }
 
-  const handleVerDetalhesMovimentacao = (movimentacao: MovimentacaoEstoque) => {
-    // TODO: Implementar visualização de detalhes
-    alert(`Detalhes da movimentação #${movimentacao.id}\nTipo: ${movimentacao.tipo}\nStatus: ${movimentacao.status}`)
+  const handleVerDetalhesMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
+    try {
+      // Buscar detalhes completos da movimentação
+      const response = await movimentacoesService.getById(movimentacao.id)
+      if (response.success && response.data) {
+        setSelectedMovimentacao(response.data)
+        setShowMovimentacaoDetails(true)
+      } else {
+        alert('Erro ao carregar detalhes da movimentação')
+      }
+    } catch (error) {
+      console.error('Erro ao carregar detalhes:', error)
+      alert('Erro ao carregar detalhes da movimentação')
+    }
   }
 
   const handleExcluirMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
@@ -1072,7 +1100,189 @@ export default function ProdutosEstoquePage() {
             onSubmit={handleSalvarMovimentacao}
             onCancel={handleCancelarForm}
             loading={formLoading}
+            editingData={editingMovimentacao}
           />
+        </div>
+      )}
+
+      {/* Modal de Detalhes da Movimentação */}
+      {showMovimentacaoDetails && selectedMovimentacao && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Detalhes da Movimentação #{selectedMovimentacao.id}
+                </h2>
+                <button
+                  onClick={() => setShowMovimentacaoDetails(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Informações Gerais */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">Tipo</h3>
+                  <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${
+                    selectedMovimentacao.tipo === 'entrada' 
+                      ? 'bg-green-100 text-green-800' 
+                      : selectedMovimentacao.tipo === 'saida'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {selectedMovimentacao.tipo === 'entrada' ? 'Entrada' : 
+                     selectedMovimentacao.tipo === 'saida' ? 'Saída' : 'Ajuste'}
+                  </span>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">Status</h3>
+                  <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${
+                    selectedMovimentacao.status === 'confirmado' 
+                      ? 'bg-green-100 text-green-800' 
+                      : selectedMovimentacao.status === 'pendente'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {selectedMovimentacao.status === 'confirmado' ? 'Confirmada' : 
+                     selectedMovimentacao.status === 'pendente' ? 'Pendente' : 'Cancelada'}
+                  </span>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">Data</h3>
+                  <p className="text-gray-900">
+                    {new Date(selectedMovimentacao.data_movimentacao).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Fornecedor e Condições */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">Fornecedor</h3>
+                  <p className="text-gray-900">
+                    {selectedMovimentacao.fornecedor?.nome || 'N/A'}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-700 mb-2">Condição de Pagamento</h3>
+                  <p className="text-gray-900">
+                    {selectedMovimentacao.condicao_pagamento}
+                  </p>
+                </div>
+              </div>
+
+              {/* Produtos */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-700 mb-4">Produtos</h3>
+                {selectedMovimentacao.itens && selectedMovimentacao.itens.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Produto
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Quantidade
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Preço Unitário
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Subtotal
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {selectedMovimentacao.itens.map((item) => (
+                          <tr key={item.id}>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {item.produto?.nome || 'Produto não encontrado'}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  Código: {item.produto?.codigo_barras || 'N/A'}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {item.quantidade}
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format(item.preco_unitario)}
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format(item.subtotal)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Nenhum produto encontrado</p>
+                )}
+              </div>
+
+              {/* Valor Total */}
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold text-gray-700">Valor Total:</h3>
+                  <span className="text-2xl font-bold text-blue-900">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(selectedMovimentacao.valor_total)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Observações */}
+              {selectedMovimentacao.observacoes && (
+                <div className="mb-4">
+                  <h3 className="font-semibold text-gray-700 mb-2">Observações</h3>
+                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+                    {selectedMovimentacao.observacoes}
+                  </p>
+                </div>
+              )}
+
+              {/* Botões de Ação */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowMovimentacaoDetails(false)}
+                >
+                  Fechar
+                </Button>
+                {selectedMovimentacao.status === 'pendente' && (
+                  <Button
+                    onClick={() => {
+                      setShowMovimentacaoDetails(false)
+                      handleConfirmarMovimentacao(selectedMovimentacao)
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <ArrowUpCircle className="h-4 w-4 mr-2" />
+                    Confirmar Movimentação
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

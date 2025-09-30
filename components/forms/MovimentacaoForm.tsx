@@ -11,6 +11,7 @@ interface MovimentacaoFormProps {
   onSubmit: (data: MovimentacaoFormType) => void
   onCancel: () => void
   loading?: boolean
+  editingData?: any // Dados da movimentação para edição
 }
 
 interface ItemMovimentacao {
@@ -55,6 +56,21 @@ export default function MovimentacaoForm({ onSubmit, onCancel, loading = false }
     loadProdutos()
     loadFornecedores()
   }, [])
+
+  // Carregar dados para edição
+  useEffect(() => {
+    if (editingData) {
+      setFormData({
+        tipo: editingData.tipo,
+        fornecedor_id: editingData.fornecedor_id,
+        numero_pedido: editingData.numero_pedido || '',
+        data_movimentacao: editingData.data_movimentacao,
+        condicao_pagamento: editingData.condicao_pagamento,
+        observacoes: editingData.observacoes || '',
+        itens: editingData.itens || []
+      })
+    }
+  }, [editingData])
 
   const loadProdutos = async () => {
     try {

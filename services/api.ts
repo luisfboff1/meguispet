@@ -290,7 +290,7 @@ export const movimentacoesService = {
   },
 
   async updateStatus(id: number, status: string): Promise<ApiResponse> {
-    const response = await api.put(`/movimentacoes.php/${id}/status`, { status })
+    const response = await api.put(`/movimentacoes.php/${id}/status`, { id, status })
     return response.data
   }
 }

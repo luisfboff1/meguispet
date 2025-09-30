@@ -24,6 +24,17 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     setMounted(true)
   }, [])
 
+  // Forçar re-render após hidratação para evitar mismatches
+  useEffect(() => {
+    if (mounted) {
+      // Pequeno delay para garantir que tudo foi hidratado
+      const timer = setTimeout(() => {
+        setMounted(true) // Força re-render
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [mounted])
+
   // Verificar autenticação
   useEffect(() => {
     if (mounted && typeof window !== 'undefined' && !isNoLayoutPage) {
