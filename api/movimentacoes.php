@@ -45,7 +45,105 @@ try {
     
     switch ($method) {
         case 'GET':
-            // Listar movimentações
+            // Verificar se é busca por ID específico (PATH_INFO)
+            $pathInfo = $_SERVER['PATH_INFO'] ?? '';
+            if (!empty($pathInfo)) {
+                $id = trim($pathInfo, '/');
+                if (is_numeric($id)) {
+                    // Buscar movimentação específica por ID
+                    try {
+                        $stmt = $conn->prepare("
+                            SELECT 
+                                m.*,
+                                f.nome as fornecedor_nome,
+                                f.cnpj as fornecedor_cnpj,
+                                f.telefone as fornecedor_telefone,
+                                f.email as fornecedor_email
+                            FROM movimentacoes_estoque m
+                            LEFT JOIN fornecedores f ON m.fornecedor_id = f.id
+                            WHERE m.id = ?
+                        ");
+                        $stmt->execute([$id]);
+                        $movimentacao = $stmt->fetch(PDO::FETCH_ASSOC);
+                        
+                        if (!$movimentacao) {
+                            http_response_code(404);
+                            echo json_encode([
+                                'success' => false,
+                                'message' => 'Movimentação não encontrada'
+                            ]);
+                            exit();
+                        }
+                        
+                        // Debug log
+                        error_log("Movimentação encontrada: " . json_encode($movimentacao));
+                        
+                        // Buscar itens da movimentação
+                        $itemsStmt = $conn->prepare("
+                            SELECT 
+                                mi.*,
+                                p.nome as produto_nome,
+                                p.codigo_barras as produto_codigo_barras,
+                                p.estoque as produto_estoque,
+                                p.preco_venda as produto_preco_venda,
+                                p.preco_custo as produto_preco_custo
+                            FROM movimentacoes_itens mi
+                            LEFT JOIN produtos p ON mi.produto_id = p.id
+                            WHERE mi.movimentacao_id = ?
+                        ");
+                        $itemsStmt->execute([$id]);
+                        $itens = $itemsStmt->fetchAll();
+                        
+                        // Formatar resposta
+                        $movimentacao['fornecedor'] = $movimentacao['fornecedor_nome'] ? [
+                            'id' => $movimentacao['fornecedor_id'],
+                            'nome' => $movimentacao['fornecedor_nome'],
+                            'cnpj' => $movimentacao['fornecedor_cnpj'],
+                            'telefone' => $movimentacao['fornecedor_telefone'],
+                            'email' => $movimentacao['fornecedor_email']
+                        ] : null;
+                        
+                        $movimentacao['itens'] = array_map(function($item) {
+                            return [
+                                'id' => $item['id'],
+                                'movimentacao_id' => $item['movimentacao_id'],
+                                'produto_id' => $item['produto_id'],
+                                'quantidade' => $item['quantidade'],
+                                'preco_unitario' => $item['preco_unitario'],
+                                'subtotal' => $item['subtotal'],
+                                'produto' => $item['produto_nome'] ? [
+                                    'id' => $item['produto_id'],
+                                    'nome' => $item['produto_nome'],
+                                    'codigo_barras' => $item['produto_codigo_barras'],
+                                    'estoque' => $item['produto_estoque'],
+                                    'preco_venda' => $item['produto_preco_venda'],
+                                    'preco_custo' => $item['produto_preco_custo']
+                                ] : null
+                            ];
+                        }, $itens);
+                        
+                        // Limpar campos desnecessários
+                        unset($movimentacao['fornecedor_nome'], $movimentacao['fornecedor_cnpj'], 
+                              $movimentacao['fornecedor_telefone'], $movimentacao['fornecedor_email']);
+                        
+                        echo json_encode([
+                            'success' => true,
+                            'data' => $movimentacao
+                        ]);
+                        exit();
+                        
+                    } catch (Exception $e) {
+                        http_response_code(500);
+                        echo json_encode([
+                            'success' => false,
+                            'message' => 'Erro ao buscar movimentação: ' . $e->getMessage()
+                        ]);
+                        exit();
+                    }
+                }
+            }
+            
+            // Listar movimentações (lógica original)
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
             $tipo = isset($_GET['tipo']) ? $_GET['tipo'] : '';

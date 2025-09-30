@@ -13,7 +13,25 @@ const nextConfig = {
   distDir: 'out',
   generateEtags: false,
   
-  // Configurações experimentais removidas para compatibilidade
+  // 🚀 BUILD CACHE - Configurações de performance
+  experimental: {
+    // Cache de build para rebuilds mais rápidos
+    buildCache: true,
+    // Cache de módulos
+    cacheMaxMemorySize: 50 * 1024 * 1024, // 50MB
+  },
+  
+  // Otimizações de compilação
+  compiler: {
+    // Remove console.log em produção
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  
+  // Configurações de cache para desenvolvimento
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000, // 25 segundos
+    pagesBufferLength: 2,
+  },
   
   // Configurações de ambiente
   env: {

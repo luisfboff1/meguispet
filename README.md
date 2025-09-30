@@ -116,6 +116,41 @@ npm run dev
 
 Acesse: `http://localhost:3000`
 
+## ⚡ Build Cache & Performance
+
+### 🚀 Scripts Otimizados
+
+```bash
+# Desenvolvimento com Turbo (mais rápido)
+npm run dev:turbo
+
+# Build com cache (50-80% mais rápido)
+npm run build:cached
+
+# Build com análise de bundle
+npm run build:analyze
+
+# Limpeza de cache
+npm run clean
+npm run clean:build
+```
+
+### 📦 Cache Configurado
+
+- ✅ **Build Cache**: Rebuilds 50-80% mais rápidos
+- ✅ **Module Cache**: Cache de dependências Node.js
+- ✅ **Image Cache**: Otimização automática de imagens
+- ✅ **Memory Cache**: 50MB de cache em memória
+- ✅ **Console Cleanup**: Remove console.log em produção
+
+### 🎯 Benefícios
+
+- ⚡ **Desenvolvimento mais rápido** com hot reload otimizado
+- 🔄 **Builds incrementais** - só recompila o que mudou
+- 💾 **Cache inteligente** - evita reprocessamento desnecessário
+- 🚀 **Deploy mais rápido** - menos tempo de build
+- 💰 **Menos CPU** - otimização de recursos
+
 ## 🌐 Produção
 
 - **Frontend**: `https://gestao.meguispet.com`

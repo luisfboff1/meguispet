@@ -262,32 +262,43 @@ export default function ProdutosEstoquePage() {
 
   const handleEditarMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
     try {
+      console.log('✏️ Editando movimentação:', movimentacao.id)
       // Buscar detalhes completos da movimentação
       const response = await movimentacoesService.getById(movimentacao.id)
+      console.log('📦 Dados para edição:', response)
+      
       if (response.success && response.data) {
+        console.log('✅ Carregando dados para edição:', response.data)
         setEditingMovimentacao(response.data)
         setShowMovimentacaoForm(true)
       } else {
+        console.error('❌ Erro ao carregar dados:', response)
         alert('Erro ao carregar dados para edição')
       }
     } catch (error) {
-      console.error('Erro ao carregar dados para edição:', error)
+      console.error('❌ Erro ao carregar dados para edição:', error)
       alert('Erro ao carregar dados para edição')
     }
   }
 
   const handleVerDetalhesMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
     try {
+      console.log('🔍 Buscando detalhes da movimentação:', movimentacao.id)
       // Buscar detalhes completos da movimentação
       const response = await movimentacoesService.getById(movimentacao.id)
+      console.log('📦 Resposta da API:', response)
+      
       if (response.success && response.data) {
+        console.log('✅ Dados carregados:', response.data)
+        console.log('📋 Itens encontrados:', response.data.itens?.length || 0)
         setSelectedMovimentacao(response.data)
         setShowMovimentacaoDetails(true)
       } else {
+        console.error('❌ Erro na resposta:', response)
         alert('Erro ao carregar detalhes da movimentação')
       }
     } catch (error) {
-      console.error('Erro ao carregar detalhes:', error)
+      console.error('❌ Erro ao carregar detalhes:', error)
       alert('Erro ao carregar detalhes da movimentação')
     }
   }
@@ -1155,7 +1166,10 @@ export default function ProdutosEstoquePage() {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-gray-700 mb-2">Data</h3>
                   <p className="text-gray-900">
-                    {new Date(selectedMovimentacao.data_movimentacao).toLocaleDateString('pt-BR')}
+                    {selectedMovimentacao.data_movimentacao ? 
+                      new Date(selectedMovimentacao.data_movimentacao).toLocaleDateString('pt-BR') : 
+                      'Data não informada'
+                    }
                   </p>
                 </div>
               </div>
@@ -1245,7 +1259,7 @@ export default function ProdutosEstoquePage() {
                     {new Intl.NumberFormat('pt-BR', {
                       style: 'currency',
                       currency: 'BRL'
-                    }).format(selectedMovimentacao.valor_total)}
+                    }).format(selectedMovimentacao.valor_total || 0)}
                   </span>
                 </div>
               </div>
