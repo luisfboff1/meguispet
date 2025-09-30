@@ -1,9 +1,11 @@
 <?php
-header('Content-Type: application/json');
+// Headers CORS
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Content-Type: application/json');
 
+// Responder a requisições OPTIONS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -12,108 +14,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once 'config.php';
 require_once 'jwt_helper.php';
 
-try {
-    $headers = getallheaders();
-    $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
-    
-    if (!$token || !validateJWT($token)) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'Token inválido']);
-        exit();
-    }
+// Middleware de autenticação
+$auth = require_auth();
 
+try {
+    $conn = getDbConnection();
     $method = $_SERVER['REQUEST_METHOD'];
-    $path = $_SERVER['PATH_INFO'] ?? '';
-    $pathParts = explode('/', trim($path, '/'));
 
     switch ($method) {
         case 'GET':
-            if (empty($pathParts[0])) {
-                // GET /fornecedores - Listar todos
-                $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-                $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
-                $search = isset($_GET['search']) ? $_GET['search'] : '';
-                
-                $offset = ($page - 1) * $limit;
-                
-                $whereClause = "WHERE ativo = 1";
-                $params = [];
-                
-                if (!empty($search)) {
-                    $whereClause .= " AND (nome ILIKE $1 OR nome_fantasia ILIKE $1 OR cnpj ILIKE $1)";
-                    $params[] = "%$search%";
-                }
-                
-                $countQuery = "SELECT COUNT(*) FROM fornecedores $whereClause";
-                $countResult = pg_query_params($pdo, $countQuery, $params);
-                $total = pg_fetch_result($countResult, 0, 0);
-                
-                $query = "SELECT * FROM fornecedores $whereClause ORDER BY nome ASC LIMIT $limit OFFSET $offset";
-                $result = pg_query_params($pdo, $query, $params);
-                
-                $fornecedores = [];
-                while ($row = pg_fetch_assoc($result)) {
-                    $fornecedores[] = [
-                        'id' => (int)$row['id'],
-                        'nome' => $row['nome'],
-                        'nome_fantasia' => $row['nome_fantasia'],
-                        'cnpj' => $row['cnpj'],
-                        'inscricao_estadual' => $row['inscricao_estadual'],
-                        'email' => $row['email'],
-                        'telefone' => $row['telefone'],
-                        'endereco' => $row['endereco'],
-                        'cidade' => $row['cidade'],
-                        'estado' => $row['estado'],
-                        'cep' => $row['cep'],
-                        'observacoes' => $row['observacoes'],
-                        'ativo' => $row['ativo'] === 't',
-                        'created_at' => $row['created_at'],
-                        'updated_at' => $row['updated_at']
-                    ];
-                }
-                
-                echo json_encode([
-                    'success' => true,
-                    'data' => $fornecedores,
-                    'pagination' => [
-                        'page' => $page,
-                        'limit' => $limit,
-                        'total' => (int)$total,
-                        'pages' => ceil($total / $limit)
-                    ]
-                ]);
-            } else {
-                // GET /fornecedores/{id} - Buscar por ID
-                $id = (int)$pathParts[0];
-                $query = "SELECT * FROM fornecedores WHERE id = $1 AND ativo = 1";
-                $result = pg_query_params($pdo, $query, [$id]);
-                
-                if ($row = pg_fetch_assoc($result)) {
-                    echo json_encode([
-                        'success' => true,
-                        'data' => [
-                            'id' => (int)$row['id'],
-                            'nome' => $row['nome'],
-                            'nome_fantasia' => $row['nome_fantasia'],
-                            'cnpj' => $row['cnpj'],
-                            'inscricao_estadual' => $row['inscricao_estadual'],
-                            'email' => $row['email'],
-                            'telefone' => $row['telefone'],
-                            'endereco' => $row['endereco'],
-                            'cidade' => $row['cidade'],
-                            'estado' => $row['estado'],
-                            'cep' => $row['cep'],
-                            'observacoes' => $row['observacoes'],
-                            'ativo' => $row['ativo'] === 't',
-                            'created_at' => $row['created_at'],
-                            'updated_at' => $row['updated_at']
-                        ]
-                    ]);
-                } else {
-                    http_response_code(404);
-                    echo json_encode(['success' => false, 'message' => 'Fornecedor não encontrado']);
-                }
+            // GET /fornecedores - Listar todos
+            $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+            $search = isset($_GET['search']) ? $_GET['search'] : '';
+            
+            $offset = ($page - 1) * $limit;
+            
+            $whereClause = "WHERE ativo = 1";
+            $params = [];
+            
+            if (!empty($search)) {
+                $whereClause .= " AND (nome LIKE :search OR nome_fantasia LIKE :search OR cnpj LIKE :search)";
+                $params[':search'] = "%$search%";
             }
+            
+            $countQuery = "SELECT COUNT(*) FROM fornecedores $whereClause";
+            $countStmt = $conn->prepare($countQuery);
+            $countStmt->execute($params);
+            $total = $countStmt->fetchColumn();
+            
+            $query = "SELECT * FROM fornecedores $whereClause ORDER BY nome ASC LIMIT :limit OFFSET :offset";
+            $stmt = $conn->prepare($query);
+            
+            // Bind parameters
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $fornecedores = [];
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $fornecedores[] = [
+                    'id' => (int)$row['id'],
+                    'nome' => $row['nome'],
+                    'nome_fantasia' => $row['nome_fantasia'],
+                    'cnpj' => $row['cnpj'],
+                    'inscricao_estadual' => $row['inscricao_estadual'],
+                    'email' => $row['email'],
+                    'telefone' => $row['telefone'],
+                    'endereco' => $row['endereco'],
+                    'cidade' => $row['cidade'],
+                    'estado' => $row['estado'],
+                    'cep' => $row['cep'],
+                    'observacoes' => $row['observacoes'],
+                    'ativo' => (bool)$row['ativo'],
+                    'created_at' => $row['created_at'],
+                    'updated_at' => $row['updated_at']
+                ];
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $fornecedores,
+                'pagination' => [
+                    'page' => $page,
+                    'limit' => $limit,
+                    'total' => (int)$total,
+                    'pages' => ceil($total / $limit)
+                ]
+            ]);
             break;
             
         case 'POST':
@@ -129,24 +100,32 @@ try {
                 }
             }
             
-            $query = "INSERT INTO fornecedores (nome, nome_fantasia, cnpj, inscricao_estadual, email, telefone, endereco, cidade, estado, cep, observacoes, ativo) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *";
-            $params = [
-                $input['nome'],
-                $input['nome_fantasia'] ?? null,
-                $input['cnpj'] ?? null,
-                $input['inscricao_estadual'] ?? null,
-                $input['email'] ?? null,
-                $input['telefone'] ?? null,
-                $input['endereco'] ?? null,
-                $input['cidade'] ?? null,
-                $input['estado'] ?? null,
-                $input['cep'] ?? null,
-                $input['observacoes'] ?? null,
-                $input['ativo'] ?? true
-            ];
+            $query = "INSERT INTO fornecedores (nome, nome_fantasia, cnpj, inscricao_estadual, email, telefone, endereco, cidade, estado, cep, observacoes, ativo) 
+                     VALUES (:nome, :nome_fantasia, :cnpj, :inscricao_estadual, :email, :telefone, :endereco, :cidade, :estado, :cep, :observacoes, :ativo)";
             
-            $result = pg_query_params($pdo, $query, $params);
-            $row = pg_fetch_assoc($result);
+            $stmt = $conn->prepare($query);
+            $stmt->execute([
+                ':nome' => $input['nome'],
+                ':nome_fantasia' => $input['nome_fantasia'] ?? null,
+                ':cnpj' => $input['cnpj'] ?? null,
+                ':inscricao_estadual' => $input['inscricao_estadual'] ?? null,
+                ':email' => $input['email'] ?? null,
+                ':telefone' => $input['telefone'] ?? null,
+                ':endereco' => $input['endereco'] ?? null,
+                ':cidade' => $input['cidade'] ?? null,
+                ':estado' => $input['estado'] ?? null,
+                ':cep' => $input['cep'] ?? null,
+                ':observacoes' => $input['observacoes'] ?? null,
+                ':ativo' => $input['ativo'] ?? true
+            ]);
+            
+            $id = $conn->lastInsertId();
+            
+            // Buscar o fornecedor criado
+            $selectQuery = "SELECT * FROM fornecedores WHERE id = :id";
+            $selectStmt = $conn->prepare($selectQuery);
+            $selectStmt->execute([':id' => $id]);
+            $row = $selectStmt->fetch(PDO::FETCH_ASSOC);
             
             echo json_encode([
                 'success' => true,
@@ -163,7 +142,7 @@ try {
                     'estado' => $row['estado'],
                     'cep' => $row['cep'],
                     'observacoes' => $row['observacoes'],
-                    'ativo' => $row['ativo'] === 't',
+                    'ativo' => (bool)$row['ativo'],
                     'created_at' => $row['created_at'],
                     'updated_at' => $row['updated_at']
                 ],
@@ -173,6 +152,9 @@ try {
             
         case 'PUT':
             // PUT /fornecedores/{id} - Atualizar
+            $path = $_SERVER['PATH_INFO'] ?? '';
+            $pathParts = explode('/', trim($path, '/'));
+            
             if (empty($pathParts[0])) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'ID do fornecedor é obrigatório']);
@@ -183,26 +165,25 @@ try {
             $input = json_decode(file_get_contents('php://input'), true);
             
             // Verificar se o fornecedor existe
-            $checkQuery = "SELECT id FROM fornecedores WHERE id = $1 AND ativo = 1";
-            $checkResult = pg_query_params($pdo, $checkQuery, [$id]);
+            $checkQuery = "SELECT id FROM fornecedores WHERE id = :id AND ativo = 1";
+            $checkStmt = $conn->prepare($checkQuery);
+            $checkStmt->execute([':id' => $id]);
             
-            if (!pg_fetch_assoc($checkResult)) {
+            if (!$checkStmt->fetch()) {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'message' => 'Fornecedor não encontrado']);
                 exit();
             }
             
             $updateFields = [];
-            $params = [];
-            $paramCount = 1;
+            $params = [':id' => $id];
             
             $allowedFields = ['nome', 'nome_fantasia', 'cnpj', 'inscricao_estadual', 'email', 'telefone', 'endereco', 'cidade', 'estado', 'cep', 'observacoes', 'ativo'];
             
             foreach ($allowedFields as $field) {
                 if (isset($input[$field])) {
-                    $updateFields[] = "$field = $$paramCount";
-                    $params[] = $input[$field];
-                    $paramCount++;
+                    $updateFields[] = "$field = :$field";
+                    $params[":$field"] = $input[$field];
                 }
             }
             
@@ -212,11 +193,15 @@ try {
                 exit();
             }
             
-            $params[] = $id; // ID para WHERE
-            $query = "UPDATE fornecedores SET " . implode(', ', $updateFields) . ", updated_at = CURRENT_TIMESTAMP WHERE id = $" . $paramCount . " RETURNING *";
+            $query = "UPDATE fornecedores SET " . implode(', ', $updateFields) . ", updated_at = CURRENT_TIMESTAMP WHERE id = :id";
+            $stmt = $conn->prepare($query);
+            $stmt->execute($params);
             
-            $result = pg_query_params($pdo, $query, $params);
-            $row = pg_fetch_assoc($result);
+            // Buscar o fornecedor atualizado
+            $selectQuery = "SELECT * FROM fornecedores WHERE id = :id";
+            $selectStmt = $conn->prepare($selectQuery);
+            $selectStmt->execute([':id' => $id]);
+            $row = $selectStmt->fetch(PDO::FETCH_ASSOC);
             
             echo json_encode([
                 'success' => true,
@@ -233,7 +218,7 @@ try {
                     'estado' => $row['estado'],
                     'cep' => $row['cep'],
                     'observacoes' => $row['observacoes'],
-                    'ativo' => $row['ativo'] === 't',
+                    'ativo' => (bool)$row['ativo'],
                     'created_at' => $row['created_at'],
                     'updated_at' => $row['updated_at']
                 ],
@@ -243,6 +228,9 @@ try {
             
         case 'DELETE':
             // DELETE /fornecedores/{id} - Soft delete
+            $path = $_SERVER['PATH_INFO'] ?? '';
+            $pathParts = explode('/', trim($path, '/'));
+            
             if (empty($pathParts[0])) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'ID do fornecedor é obrigatório']);
@@ -251,10 +239,11 @@ try {
             
             $id = (int)$pathParts[0];
             
-            $query = "UPDATE fornecedores SET ativo = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND ativo = true";
-            $result = pg_query_params($pdo, $query, [$id]);
+            $query = "UPDATE fornecedores SET ativo = false, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND ativo = true";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([':id' => $id]);
             
-            if (pg_affected_rows($result) > 0) {
+            if ($stmt->rowCount() > 0) {
                 echo json_encode([
                     'success' => true,
                     'message' => 'Fornecedor removido com sucesso'
@@ -270,12 +259,17 @@ try {
             echo json_encode(['success' => false, 'message' => 'Método não permitido']);
     }
     
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Erro no servidor: ' . $e->getMessage()
+    ]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Erro interno do servidor',
-        'error' => $e->getMessage()
+        'message' => 'Erro interno do servidor: ' . $e->getMessage()
     ]);
 }
 ?>

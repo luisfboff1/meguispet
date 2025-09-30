@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +29,7 @@ import FornecedorForm from '@/components/forms/FornecedorForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 
 export default function ProdutosEstoquePage() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'produtos' | 'estoque' | 'movimentacoes' | 'fornecedores'>('produtos')
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([])
@@ -444,10 +446,20 @@ export default function ProdutosEstoquePage() {
                           </CardDescription>
                         </div>
                         <div className="flex space-x-1">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => router.push(`/produto-detalhes?id=${produto.id}`)}
+                            title="Ver detalhes"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEditarProduto(produto)}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleEditarProduto(produto)}
+                            title="Editar produto"
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </div>
