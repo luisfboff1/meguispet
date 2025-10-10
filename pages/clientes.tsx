@@ -16,7 +16,7 @@ import {
   Calendar
 } from 'lucide-react'
 import { clientesService } from '@/services/api'
-import type { Cliente } from '@/types'
+import type { Cliente, ClienteForm as ClienteFormValues } from '@/types'
 import ClienteForm from '@/components/forms/ClienteForm'
 
 export default function ClientesPage() {
@@ -66,7 +66,7 @@ export default function ClientesPage() {
     setShowForm(true)
   }
 
-  const handleSalvarCliente = async (clienteData: Partial<Cliente>) => {
+  const handleSalvarCliente = async (clienteData: ClienteFormValues) => {
     try {
       setFormLoading(true)
       
@@ -80,7 +80,7 @@ export default function ClientesPage() {
         }
       } else {
         // Criar novo cliente
-        const response = await clientesService.create(clienteData as Omit<Cliente, 'id' | 'created_at' | 'updated_at'>)
+        const response = await clientesService.create(clienteData)
         if (response.success) {
           await loadClientes()
           setShowForm(false)
