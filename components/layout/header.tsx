@@ -1,10 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
-import { Bell, Search, User, ChevronDown, LogOut, Settings, Menu } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import {
+  Bell,
+  Search,
+  User,
+  ChevronDown,
+  LogOut,
+  Settings,
+  Menu,
+  Sparkles
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cn } from '@/lib/utils'
+import { useSidebar } from '@/hooks/useSidebar'
+import { useAuth } from '@/hooks/useAuth'
 
 interface HeaderProps {
   title?: string
@@ -111,6 +123,8 @@ const pageTitles: Record<string, { title: string; description: string }> = {
 
 export function Header({ title, description, sidebarCollapsed, onMenuClick, isMobile }: HeaderProps) {
   const router = useRouter()
+  const { logout, user } = useAuth()
+  const { toggle } = useSidebar()
   const [searchTerm, setSearchTerm] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -129,12 +143,6 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
     if (searchTerm.trim()) {
       router.push(`/busca?q=${encodeURIComponent(searchTerm)}`)
     }
-  }
-
-  const handleLogout = () => {
-    // Implementar logout
-    localStorage.removeItem('token')
-    router.push('/login')
   }
 
   const handleNotifications = () => {
@@ -187,171 +195,193 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
   }, [])
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-      <div className="flex items-center justify-between">
-        {/* Mobile Menu Button */}
-        {isMobile && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="mr-4"
-            onClick={onMenuClick}
-          >
-            <Menu size={20} />
-          </Button>
-        )}
+    <header className="relative z-30 border-b border-white/30 bg-white/70 px-6 py-4 backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-950/60">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {isMobile && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-10 w-10 rounded-2xl border border-white/50 bg-white/80 text-slate-600 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-slate-100"
+              onClick={() => (onMenuClick ? onMenuClick() : toggle())}
+            >
+              <Menu size={18} />
+            </Button>
+          )}
 
-        {/* Título da página */}
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {pageInfo.title}
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {pageInfo.description}
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-slate-900 drop-shadow-sm dark:text-white md:text-2xl">
+                {pageInfo.title}
+              </h1>
+              <AnimatePresence>
+                <motion.span
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.25 }}
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50/80 px-2.5 py-1 text-xs font-semibold uppercase tracking-widest text-amber-600 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+                >
+                  <Sparkles size={12} />
+                  {router.locale === 'pt-BR' ? 'Visão' : 'Overview'}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{pageInfo.description}</p>
+          </div>
         </div>
 
-        {/* Barra de busca - Hidden em mobile */}
-        <div className={cn(
-          "flex-1 max-w-md mx-8",
-          isMobile ? "hidden" : "block"
-        )}>
+        <div className={cn('hidden flex-1 max-w-xl lg:block')}>
           <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <Input 
-              placeholder="Buscar vendas, clientes, produtos..." 
-              className="pl-10"
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder="Buscar vendas, clientes, produtos..."
+              className="h-12 rounded-2xl border border-white/60 bg-white/80 pl-12 pr-4 shadow-sm backdrop-blur-md transition focus:border-amber-400/60 focus:ring-amber-400/20 dark:border-slate-800/70 dark:bg-slate-900/70"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </form>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center space-x-2">
-          {/* Theme Toggle */}
+        <div className="flex items-center gap-2">
           <ThemeToggle variant="icon-only" />
 
-          {/* Notificações */}
           <div className="relative" ref={notificationsRef}>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="relative"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-11 w-11 rounded-2xl border border-transparent text-slate-500 transition hover:-translate-y-0.5 hover:text-slate-900 dark:text-slate-300"
               onClick={handleNotifications}
             >
-              <Bell size={20} />
+              <Bell size={18} />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-xs font-semibold text-white shadow-sm">
                   {unreadCount}
                 </span>
               )}
             </Button>
-            
-            {/* Dropdown de notificações */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                <div className="p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">Notificações</h3>
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
+
+            <AnimatePresence>
+              {showNotifications && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-3 w-80 overflow-hidden rounded-3xl border border-white/40 bg-white/95 p-4 shadow-2xl backdrop-blur-2xl dark:border-slate-800/60 dark:bg-slate-950/90"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Notificações</span>
+                    <span className="text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                      {unreadCount} novas
+                    </span>
+                  </div>
+                  <div className="space-y-3">
                     {notifications.map((notification) => (
-                      <div 
+                      <button
                         key={notification.id}
-                        className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 ${
-                          notification.type === 'warning' ? 'bg-yellow-50' :
-                          notification.type === 'success' ? 'bg-green-50' :
-                          'bg-blue-50'
-                        } ${notification.read ? 'opacity-60' : ''}`}
                         onClick={() => markNotificationAsRead(notification.id)}
-                      >
-                        <div className={`w-2 h-2 rounded-full mt-2 ${
-                          notification.type === 'warning' ? 'bg-yellow-500' :
-                          notification.type === 'success' ? 'bg-green-500' :
-                          'bg-blue-500'
-                        }`}></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                          <p className="text-xs text-gray-600">{notification.message}</p>
-                          <p className="text-xs text-gray-400">{notification.time}</p>
-                        </div>
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
+                        className={cn(
+                          'group relative flex w-full items-start gap-3 rounded-2xl border border-transparent p-3 text-left transition',
+                          notification.type === 'warning' && 'bg-amber-50/80 dark:bg-amber-500/10',
+                          notification.type === 'success' && 'bg-emerald-50/80 dark:bg-emerald-500/10',
+                          notification.type === 'info' && 'bg-sky-50/80 dark:bg-sky-500/10',
+                          notification.read && 'opacity-60'
                         )}
-                      </div>
+                      >
+                        <span
+                          className={cn(
+                            'mt-1 h-2 w-2 rounded-full',
+                            notification.type === 'warning' && 'bg-amber-500',
+                            notification.type === 'success' && 'bg-emerald-500',
+                            notification.type === 'info' && 'bg-sky-500'
+                          )}
+                        />
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-100">
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{notification.message}</p>
+                          <p className="text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                            {notification.time}
+                          </p>
+                        </div>
+                      </button>
                     ))}
                   </div>
-                  <div className="mt-4 pt-3 border-t border-gray-200">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={handleVerTodasNotificacoes}
-                    >
-                      Ver todas as notificações
+                  <div className="mt-4 flex justify-end">
+                    <Button variant="ghost" size="sm" onClick={handleVerTodasNotificacoes}>
+                      Ver todas
                     </Button>
                   </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Avatar do usuário */}
           <div className="relative" ref={userMenuRef}>
-            <div 
-              className="flex items-center space-x-2 cursor-pointer"
+            <button
+              className="group flex items-center gap-3 rounded-2xl border border-transparent bg-white/70 px-2 py-1 pl-1.5 pr-3 text-left transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/90 dark:bg-slate-900/70 dark:hover:border-slate-800/80 dark:hover:bg-slate-900/90"
               onClick={handleUserMenu}
             >
-              <div className="w-8 h-8 bg-meguispet-primary rounded-full flex items-center justify-center">
-                <User size={16} className="text-white" />
-              </div>
-              <div className={cn(
-                "flex items-center space-x-1 transition-all duration-300",
-                sidebarCollapsed ? "opacity-100" : "opacity-100"
-              )}>
-                <span className="text-sm font-medium text-gray-700">Admin</span>
-                <ChevronDown size={16} className="text-gray-400" />
-              </div>
-            </div>
-            
-            {/* Dropdown do usuário */}
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                <div className="py-1">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">Admin</p>
-                    <p className="text-xs text-gray-500">admin@meguispet.com</p>
+              <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/40">
+                <User size={18} />
+              </span>
+              <span className="hidden min-w-0 flex-1 text-left md:block">
+                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {user?.nome ?? 'Admin'}
+                </span>
+                <span className="block text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  {user?.email ?? 'admin@meguispet.com'}
+                </span>
+              </span>
+              <ChevronDown size={16} className="text-slate-400 transition group-hover:text-slate-600 dark:text-slate-500" />
+            </button>
+
+            <AnimatePresence>
+              {showUserMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18 }}
+                  className="absolute right-0 mt-3 w-60 overflow-hidden rounded-3xl border border-white/40 bg-white/95 p-3 shadow-2xl backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/90"
+                >
+                  <div className="rounded-2xl bg-slate-100/60 p-3 dark:bg-slate-900/70">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{user?.nome ?? 'Admin'}</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{user?.email ?? 'admin@meguispet.com'}</p>
                   </div>
-                  <button 
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setShowUserMenu(false)
-                      router.push('/perfil')
-                    }}
+                  <div className="mt-2 space-y-1">
+                    <button
+                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80"
+                      onClick={() => {
+                        setShowUserMenu(false)
+                        router.push('/perfil')
+                      }}
+                    >
+                      <User size={16} /> Perfil
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80"
+                      onClick={() => {
+                        setShowUserMenu(false)
+                        router.push('/configuracoes')
+                      }}
+                    >
+                      <Settings size={16} /> Configurações
+                    </button>
+                  </div>
+                  <div className="mt-2 border-t border-white/40 dark:border-slate-800/60" />
+                  <button
+                    className="mt-2 flex w-full items-center justify-between rounded-2xl bg-rose-500/10 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-500/15 dark:text-rose-300"
+                    onClick={() => logout()}
                   >
-                    <User className="mr-3 h-4 w-4" />
-                    Perfil
+                    <span>Encerrar sessão</span>
+                    <LogOut size={16} />
                   </button>
-                  <button 
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setShowUserMenu(false)
-                      router.push('/configuracoes')
-                    }}
-                  >
-                    <Settings className="mr-3 h-4 w-4" />
-                    Configurações
-                  </button>
-                  <div className="border-t border-gray-100"></div>
-                  <button 
-                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="mr-3 h-4 w-4" />
-                    Sair
-                  </button>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

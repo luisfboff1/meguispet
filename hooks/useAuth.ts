@@ -1,96 +1,136 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { authService } from '@/services/api'
-import type { Usuario } from '@/types'
+import { useAuthStore } from '@/store/auth'
 
-interface AuthState {
-  user: Usuario | null
-  loading: boolean
-  isAuthenticated: boolean
+const COOKIE_BASE = 'Path=/; SameSite=Lax'
+
+const getCookieSuffix = () =>
+  typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : ''
+
+const setTokenCookie = (value: string) => {
+  if (typeof document === 'undefined') return
+  const maxAge = 60 * 60 * 24 * 7 // 7 dias
+  document.cookie = `token=${value}; Max-Age=${maxAge}; ${COOKIE_BASE}${getCookieSuffix()}`
+}
+
+const clearTokenCookie = () => {
+  if (typeof document === 'undefined') return
+  document.cookie = `token=; Max-Age=0; ${COOKIE_BASE}${getCookieSuffix()}`
 }
 
 export function useAuth() {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    loading: true,
-    isAuthenticated: false
-  })
-  
   const router = useRouter()
+  const { user, token, status, setCredentials, clear, setStatus } = useAuthStore()
+
+  const loading = useMemo(() => status === 'idle' || status === 'loading', [status])
+  const isAuthenticated = status === 'authenticated'
+
+  const synchronizeLocalStorage = useCallback(() => {
+    if (typeof window === 'undefined') return
+    const storedToken = token ?? null
+
+    if (storedToken) {
+      localStorage.setItem('token', storedToken)
+    } else {
+      localStorage.removeItem('token')
+    }
+
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user))
+    } else {
+      localStorage.removeItem('user')
+    }
+  }, [token, user])
 
   useEffect(() => {
-    checkAuth()
-  }, [])
+    synchronizeLocalStorage()
+  }, [synchronizeLocalStorage])
 
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        setAuthState({ user: null, loading: false, isAuthenticated: false })
-        return
-      }
-
-      // Verificar se o token é válido
-      const response = await authService.getProfile()
-      if (response.success && response.data) {
-        setAuthState({
-          user: response.data,
-          loading: false,
-          isAuthenticated: true
-        })
-      } else {
-        // Token inválido, limpar e redirecionar
-        await logout()
-      }
-    } catch (error) {
-      console.error('Erro ao verificar autenticação:', error)
-      await logout()
-    }
-  }
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      const response = await authService.login(email, password)
-      if (response.success && response.data) {
-        localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        
-        setAuthState({
-          user: response.data.user,
-          loading: false,
-          isAuthenticated: true
-        })
-        
-        return true
-      }
-      return false
-    } catch (error) {
-      console.error('Erro no login:', error)
-      return false
-    }
-  }
-
-  const logout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await authService.logout()
     } catch (error) {
       console.error('Erro no logout:', error)
     } finally {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      setAuthState({
-        user: null,
-        loading: false,
-        isAuthenticated: false
-      })
+      clear()
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
+      clearTokenCookie()
       router.push('/login')
     }
-  }
+  }, [clear, router])
+
+  const checkAuth = useCallback(async () => {
+    try {
+      setStatus('loading')
+      const localToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+
+      if (!localToken) {
+        clear()
+        setStatus('unauthenticated')
+        clearTokenCookie()
+        return
+      }
+
+      const response = await authService.getProfile()
+      if (response.success && response.data) {
+        setCredentials(response.data, localToken)
+        setStatus('authenticated')
+      } else {
+        await handleLogout()
+      }
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error)
+      await handleLogout()
+    }
+  }, [clear, handleLogout, setCredentials, setStatus])
+
+  useEffect(() => {
+    if (status === 'idle') {
+      checkAuth()
+    }
+  }, [status, checkAuth])
+
+  const login = useCallback(
+    async (email: string, password: string): Promise<boolean> => {
+      try {
+        setStatus('loading')
+        const response = await authService.login(email, password)
+        if (response.success && response.data) {
+          const { token: newToken, user: newUser } = response.data
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('token', newToken)
+            localStorage.setItem('user', JSON.stringify(newUser))
+          }
+          setTokenCookie(newToken)
+          setCredentials(newUser, newToken)
+          setStatus('authenticated')
+          return true
+        }
+        setStatus('unauthenticated')
+        clearTokenCookie()
+        return false
+      } catch (error) {
+        console.error('Erro no login:', error)
+        setStatus('unauthenticated')
+        clearTokenCookie()
+        return false
+      }
+    },
+    [setCredentials, setStatus]
+  )
 
   return {
-    ...authState,
+    user,
+    token,
+    loading,
+    isAuthenticated,
+    status,
     login,
-    logout,
+    logout: handleLogout,
     checkAuth
   }
 }

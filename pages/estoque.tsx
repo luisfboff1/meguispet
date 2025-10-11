@@ -334,7 +334,7 @@ export default function EstoquePage() {
 
       {/* Formulário de Ajuste de Estoque */}
       {showAjusteForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
           <AjusteEstoqueForm
             onSubmit={handleSalvarAjuste}
             onCancel={handleCancelarAjuste}

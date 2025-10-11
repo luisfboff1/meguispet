@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
-import { authService } from '@/services/api'
+import { useAuth } from '@/hooks/useAuth'
 import type { LoginForm } from '@/types'
 
 // 🔐 PÁGINA DE LOGIN - SEM LAYOUT AUTOMÁTICO
@@ -20,22 +20,29 @@ export default function LoginPage() {
     email: '',
     password: ''
   })
+  const { login, isAuthenticated, status } = useAuth()
+
+  useEffect(() => {
+    if (!router.isReady || !isAuthenticated || loading) return
+    const redirectParam = router.query.redirect
+    const redirectPath = typeof redirectParam === 'string' && redirectParam.startsWith('/')
+      ? redirectParam
+      : '/dashboard'
+    router.replace(redirectPath)
+  }, [isAuthenticated, loading, router, router.query.redirect])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // 🔐 LOGIN REAL COM API
-      const response = await authService.login(formData.email, formData.password)
-      
-      if (response.success && response.data) {
-        // Salvar token real do banco
-        localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        
-        // Redirecionar para dashboard
-        router.push('/dashboard')
+      const success = await login(formData.email, formData.password)
+      if (success) {
+        const redirectParam = router.query.redirect
+        const redirectPath = typeof redirectParam === 'string' && redirectParam.startsWith('/')
+          ? redirectParam
+          : '/dashboard'
+        router.push(redirectPath)
       } else {
         alert('Credenciais inválidas!')
       }
@@ -129,9 +136,9 @@ export default function LoginPage() {
               <Button 
                 type="submit" 
                 className="w-full bg-meguispet-primary hover:bg-meguispet-primary/90"
-                disabled={loading}
+                disabled={loading || status === 'loading'}
               >
-                {loading ? (
+                {loading || status === 'loading' ? (
                   'Entrando...'
                 ) : (
                   <>

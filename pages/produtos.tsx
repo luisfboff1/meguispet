@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,23 +16,18 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { produtosService } from '@/services/api'
-import type { Produto } from '@/types'
-import ProdutoForm from '@/components/forms/ProdutoForm'
+import type { Produto, ProdutoForm as ProdutoFormValues } from '@/types'
+import { useModal } from '@/hooks/useModal'
 
 export default function ProdutosPage() {
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const [showForm, setShowForm] = useState(false)
-  const [editingProduto, setEditingProduto] = useState<Produto | null>(null)
-  const [formLoading, setFormLoading] = useState(false)
 
-  useEffect(() => {
-    loadProdutos()
-  }, [currentPage])
+  const { open: openModal, close: closeModal, setData: setModalData } = useModal()
 
-  const loadProdutos = async () => {
+  const loadProdutos = useCallback(async () => {
     try {
       setLoading(true)
       const response = await produtosService.getAll(currentPage, 10)
@@ -44,7 +39,11 @@ export default function ProdutosPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage])
+
+  useEffect(() => {
+    loadProdutos()
+  }, [loadProdutos])
 
   const filteredProdutos = produtos.filter(produto =>
     produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,47 +63,60 @@ export default function ProdutosPage() {
     return { color: 'text-green-600', icon: Package, text: 'Em estoque' }
   }
 
-  const handleNovoProduto = () => {
-    setEditingProduto(null)
-    setShowForm(true)
+  type ProdutoModalPayload = {
+    produto?: Produto
+    loading?: boolean
+    onSubmit: (values: ProdutoFormValues) => Promise<void> | void
+    onCancel?: () => void
   }
 
-  const handleEditarProduto = (produto: Produto) => {
-    setEditingProduto(produto)
-    setShowForm(true)
-  }
-
-  const handleSalvarProduto = async (produtoData: Partial<Produto>) => {
-    try {
-      setFormLoading(true)
-      
-      if (editingProduto) {
-        // Editar produto existente
-        const response = await produtosService.update(editingProduto.id, produtoData)
-        if (response.success) {
-          await loadProdutos()
-          setShowForm(false)
-          setEditingProduto(null)
+  const updateProdutoModalLoading = useCallback(
+    (loadingState: boolean) => {
+  setModalData((current: unknown) => {
+        if (!current || typeof current !== 'object') {
+          return current
         }
-      } else {
-        // Criar novo produto
-        const response = await produtosService.create(produtoData as Omit<Produto, 'id' | 'created_at' | 'updated_at'>)
-        if (response.success) {
-          await loadProdutos()
-          setShowForm(false)
+        return {
+          ...(current as ProdutoModalPayload),
+          loading: loadingState
         }
-      }
-    } catch (error) {
-      console.error('Erro ao salvar produto:', error)
-    } finally {
-      setFormLoading(false)
-    }
-  }
+      })
+    },
+    [setModalData]
+  )
 
-  const handleCancelarForm = () => {
-    setShowForm(false)
-    setEditingProduto(null)
-  }
+  const openProdutoModal = useCallback(
+    (produto?: Produto) => {
+      openModal('produto', {
+        produto,
+        loading: false,
+        onCancel: () => updateProdutoModalLoading(false),
+        onSubmit: async (formValues: ProdutoFormValues) => {
+          updateProdutoModalLoading(true)
+          try {
+            if (produto) {
+              const response = await produtosService.update(produto.id, formValues)
+              if (response.success) {
+                await loadProdutos()
+                closeModal()
+              }
+            } else {
+              const response = await produtosService.create(formValues)
+              if (response.success) {
+                await loadProdutos()
+                closeModal()
+              }
+            }
+          } catch (error) {
+            console.error('Erro ao salvar produto:', error)
+          } finally {
+            updateProdutoModalLoading(false)
+          }
+        }
+      } satisfies ProdutoModalPayload)
+    },
+    [closeModal, loadProdutos, openModal, updateProdutoModalLoading]
+  )
 
   const totalValue = produtos.reduce((sum, produto) => sum + (produto.preco_venda * produto.estoque), 0)
   const lowStockProducts = produtos.filter(produto => produto.estoque <= 5).length
@@ -121,7 +133,7 @@ export default function ProdutosPage() {
         <div className="flex flex-col sm:flex-row gap-2">
           <Button 
             className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-            onClick={handleNovoProduto}
+            onClick={() => openProdutoModal()}
           >
             <Plus className="mr-2 h-4 w-4" />
             Novo Produto
@@ -233,7 +245,7 @@ export default function ProdutosPage() {
                       <Button variant="ghost" size="sm">
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => openProdutoModal(produto)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
@@ -283,18 +295,6 @@ export default function ProdutosPage() {
             </p>
           </CardContent>
         </Card>
-      )}
-
-      {/* Formulário de Produto */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <ProdutoForm
-            produto={editingProduto || undefined}
-            onSubmit={handleSalvarProduto}
-            onCancel={handleCancelarForm}
-            loading={formLoading}
-          />
-        </div>
       )}
     </div>
   )

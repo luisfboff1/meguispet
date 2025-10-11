@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
 import { cn } from '@/lib/utils'
+import { useSidebar } from '@/hooks/useSidebar'
+import { useAuth } from '@/hooks/useAuth'
+import { ModalHost } from '@/components/modals/modal-host'
 
 interface MainLayoutProps {
   children: React.ReactNode
@@ -11,66 +15,59 @@ interface MainLayoutProps {
 }
 
 export function MainLayout({ children, title, description }: MainLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+  const [hydrated, setHydrated] = useState(false)
+
+  const {
+    isOpen,
+    isCollapsed,
+    isTemporary,
+    shouldShowOverlay,
+    toggle,
+    close,
+    closeOnNavigate,
+    toggleCollapsed
+  } = useSidebar()
+
+  const { loading, isAuthenticated } = useAuth()
 
   // Páginas que não precisam de layout (login, etc)
   const noLayoutPages = ['/login', '/register', '/forgot-password']
   const isNoLayoutPage = noLayoutPages.includes(router.pathname)
 
-  // Verificar se o componente foi montado no cliente
+  const sidebarWidth = useMemo(() => (isCollapsed && !isTemporary ? 88 : 268), [isCollapsed, isTemporary])
+
+  const sidebarContent = useMemo(
+    () => (
+      <Sidebar
+        isCollapsed={isTemporary ? false : isCollapsed}
+        onToggle={isTemporary ? toggle : toggleCollapsed}
+        hideToggle={isTemporary}
+      />
+    ),
+    [isCollapsed, isTemporary, toggle, toggleCollapsed]
+  )
+
   useEffect(() => {
-    setMounted(true)
+    setHydrated(true)
   }, [])
 
-  // Detectar mobile e gerenciar sidebar
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 1024
-      setIsMobile(mobile)
-      
-      if (mobile) {
-        setSidebarCollapsed(false) // Em mobile, sempre expandida quando aberta
-        setSidebarOpen(false) // Fechada por padrão em mobile
-      } else {
-        setSidebarOpen(false) // Em desktop, não usa overlay
-      }
+    if (!isNoLayoutPage && hydrated && !loading && !isAuthenticated) {
+      router.replace('/login')
+    }
+  }, [hydrated, isAuthenticated, isNoLayoutPage, loading, router])
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      closeOnNavigate()
     }
 
-    if (mounted) {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      return () => window.removeEventListener('resize', checkMobile)
+    router.events.on('routeChangeComplete', handleRouteChange)
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange)
     }
-  }, [mounted])
-
-  // Forçar re-render após hidratação para evitar mismatches
-  useEffect(() => {
-    if (mounted) {
-      // Pequeno delay para garantir que tudo foi hidratado
-      const timer = setTimeout(() => {
-        setMounted(true) // Força re-render
-      }, 100)
-      return () => clearTimeout(timer)
-    }
-  }, [mounted])
-
-  // Verificar autenticação
-  useEffect(() => {
-    if (mounted && typeof window !== 'undefined' && !isNoLayoutPage) {
-      try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          router.push('/login')
-        }
-      } catch (error) {
-        console.warn('Erro ao verificar token:', error)
-      }
-    }
-  }, [mounted, router.pathname, isNoLayoutPage])
+  }, [closeOnNavigate, router.events])
 
   // Se for página sem layout, renderizar só o conteúdo
   if (isNoLayoutPage) {
@@ -78,7 +75,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   }
 
   // Evitar hidratação mismatch - só renderizar após montar no cliente
-  if (!mounted) {
+  if (!hydrated || loading) {
     return <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
       <div className="flex-1 flex items-center justify-center">
         <div className="text-gray-500">Carregando...</div>
@@ -86,71 +83,76 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     </div>
   }
 
-  // Função para toggle da sidebar
-  const toggleSidebar = () => {
-    if (isMobile) {
-      setSidebarOpen(!sidebarOpen)
-    } else {
-      setSidebarCollapsed(!sidebarCollapsed)
-    }
-  }
-
-  // Fechar sidebar em mobile ao clicar fora
-  const closeSidebar = () => {
-    if (isMobile) {
-      setSidebarOpen(false)
-    }
+  if (!isAuthenticated) {
+    return null
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900" suppressHydrationWarning>
-      {/* Sidebar */}
-      <div className={cn(
-        "transition-all duration-300",
-        isMobile ? (
-          sidebarOpen 
-            ? "fixed inset-y-0 left-0 z-50 w-64" 
-            : "fixed inset-y-0 left-0 z-50 w-64 -translate-x-full"
+  <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900" suppressHydrationWarning>
+      <AnimatePresence initial={false}>
+        {isTemporary ? (
+          isOpen && (
+            <motion.aside
+              key="sidebar-mobile"
+              initial={{ x: '-100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '-100%', opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw]"
+            >
+              <div className="h-full bg-white/95 dark:bg-slate-900/95 shadow-2xl backdrop-blur-xl border-r border-white/20 dark:border-slate-800 rounded-r-3xl overflow-hidden">
+                {sidebarContent}
+              </div>
+            </motion.aside>
+          )
         ) : (
-          sidebarCollapsed ? "w-20" : "w-64"
-        )
-      )}>
-        <Sidebar 
-          isCollapsed={isMobile ? false : sidebarCollapsed}
-          onToggle={toggleSidebar}
-          hideToggle={isMobile}
-        />
-      </div>
+          <motion.aside
+            key="sidebar-desktop"
+            animate={{ width: sidebarWidth }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="relative z-40 hidden h-full border-r border-slate-200/80 bg-white/90 shadow-lg backdrop-blur-lg transition-colors dark:border-slate-800/80 dark:bg-slate-900/80 lg:block"
+            style={{ width: sidebarWidth }}
+          >
+            {sidebarContent}
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
-      {/* Mobile Backdrop - deve vir depois do sidebar para ficar atrás */}
-      {isMobile && sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={closeSidebar}
-        />
-      )}
+      <AnimatePresence>
+        {shouldShowOverlay && (
+          <motion.div
+            key="sidebar-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"
+            onClick={close}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <Header 
+        <Header
           title={title}
           description={description}
-          sidebarCollapsed={sidebarCollapsed}
-          onMenuClick={toggleSidebar}
-          isMobile={isMobile}
+          sidebarCollapsed={!isTemporary && isCollapsed}
+          onMenuClick={toggle}
+          isMobile={isTemporary}
         />
 
-        {/* Content */}
-        <main className="flex-1 overflow-auto p-6">
-          <div className={cn(
-            "mx-auto transition-all duration-300",
-            !isMobile && (sidebarCollapsed ? "max-w-7xl" : "max-w-6xl")
-          )}>
+        <main className="relative flex-1 overflow-auto p-6">
+          <div
+            className={cn(
+              'mx-auto min-h-full w-full max-w-7xl space-y-6 transition-all duration-300',
+              !isTemporary && (isCollapsed ? 'px-6' : 'px-2')
+            )}
+          >
             {children}
           </div>
         </main>
       </div>
+      <ModalHost />
     </div>
   )
 }

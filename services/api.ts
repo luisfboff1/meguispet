@@ -21,7 +21,7 @@ import type {
 } from '@/types'
 
 // 🔌 CONFIGURAÇÃO DA API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://gestao.meguispet.com/api'
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '/api').replace(/\/$/, '')
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -241,6 +241,10 @@ export const authService = {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.removeItem('token')
+      }
+      if (typeof document !== 'undefined') {
+        const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : ''
+        document.cookie = `token=; Max-Age=0; Path=/; SameSite=Lax${secure}`
       }
     } catch (error) {
       console.warn('Erro ao acessar localStorage:', error)

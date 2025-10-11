@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,11 +12,9 @@ import {
   Package2
 } from 'lucide-react'
 import { dashboardService } from '@/services/api'
-import VendaForm from '@/components/forms/VendaForm'
-import ProdutoForm from '@/components/forms/ProdutoForm'
-import ClienteForm from '@/components/forms/ClienteForm'
-import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import VendasChart from '@/components/charts/VendasChart'
+import { useModal } from '@/hooks/useModal'
+import { AnimatedCard } from '@/components/ui/animated-card'
 import type {
   DashboardTopProduct,
   DashboardVendasDia,
@@ -50,19 +48,9 @@ export default function DashboardPage() {
   const [topProducts, setTopProducts] = useState<DashboardTopProduct[]>([])
   const [vendas7Dias, setVendas7Dias] = useState<DashboardVendasDia[]>([])
   const [loading, setLoading] = useState(true)
-  
-  // Estados para formulários
-  const [showVendaForm, setShowVendaForm] = useState(false)
-  const [showProdutoForm, setShowProdutoForm] = useState(false)
-  const [showClienteForm, setShowClienteForm] = useState(false)
-  const [showMovimentacaoForm, setShowMovimentacaoForm] = useState(false)
-  const [formLoading, setFormLoading] = useState(false)
+  const { open, close, setData } = useModal()
 
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -96,95 +84,102 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [loadDashboardData])
+
+  const updateModalLoading = useCallback(
+    (value: boolean) => {
+      setData((current: unknown) => {
+        if (!current || typeof current !== 'object') {
+          return current
+        }
+        const payload = current as Record<string, unknown>
+        return { ...payload, loading: value }
+      })
+    },
+    [setData]
+  )
+
+  const showVendaModal = useCallback(() => {
+    open('venda', {
+      onSubmit: async (values: VendaFormValues) => {
+        try {
+          updateModalLoading(true)
+          console.log('Salvando venda:', values)
+          await loadDashboardData()
+          close()
+        } catch (error) {
+          console.error('Erro ao salvar venda:', error)
+        } finally {
+          updateModalLoading(false)
+        }
+      }
+    })
+  }, [close, loadDashboardData, open, updateModalLoading])
+
+  const showProdutoModal = useCallback(() => {
+    open('produto', {
+      onSubmit: async (values: ProdutoFormValues) => {
+        try {
+          updateModalLoading(true)
+          console.log('Salvando produto:', values)
+          await loadDashboardData()
+          close()
+        } catch (error) {
+          console.error('Erro ao salvar produto:', error)
+        } finally {
+          updateModalLoading(false)
+        }
+      }
+    })
+  }, [close, loadDashboardData, open, updateModalLoading])
+
+  const showClienteModal = useCallback(() => {
+    open('cliente', {
+      onSubmit: async (values: ClienteFormValues) => {
+        try {
+          updateModalLoading(true)
+          console.log('Salvando cliente:', values)
+          await loadDashboardData()
+          close()
+        } catch (error) {
+          console.error('Erro ao salvar cliente:', error)
+        } finally {
+          updateModalLoading(false)
+        }
+      }
+    })
+  }, [close, loadDashboardData, open, updateModalLoading])
+
+  const showMovimentacaoModal = useCallback(() => {
+    open('movimentacao', {
+      onSubmit: async (values: MovimentacaoFormValues) => {
+        try {
+          updateModalLoading(true)
+          console.log('Salvando movimentação:', values)
+          await loadDashboardData()
+          close()
+        } catch (error) {
+          console.error('Erro ao salvar movimentação:', error)
+        } finally {
+          updateModalLoading(false)
+        }
+      }
+    })
+  }, [close, loadDashboardData, open, updateModalLoading])
 
   // Funções para formulários
-  const handleNovaVenda = () => {
-    setShowVendaForm(true)
-  }
-
-  const handleNovoProduto = () => {
-    setShowProdutoForm(true)
-  }
-
-  const handleNovoCliente = () => {
-    setShowClienteForm(true)
-  }
-
-  const handleNovaMovimentacao = () => {
-    setShowMovimentacaoForm(true)
-  }
+  const handleNovaVenda = showVendaModal
+  const handleNovoProduto = showProdutoModal
+  const handleNovoCliente = showClienteModal
+  const handleNovaMovimentacao = showMovimentacaoModal
 
   const handleVerRelatorios = () => {
     // Redirecionar para página de relatórios
     window.location.href = '/relatorios'
-  }
-
-  const handleSalvarVenda = async (vendaData: VendaFormValues) => {
-    try {
-      setFormLoading(true)
-      // Aqui você implementaria a lógica de salvar venda
-      console.log('Salvando venda:', vendaData)
-      setShowVendaForm(false)
-      // Recarregar dados do dashboard
-      await loadDashboardData()
-    } catch (error) {
-      console.error('Erro ao salvar venda:', error)
-    } finally {
-      setFormLoading(false)
-    }
-  }
-
-  const handleSalvarProduto = async (produtoData: ProdutoFormValues) => {
-    try {
-      setFormLoading(true)
-      // Aqui você implementaria a lógica de salvar produto
-      console.log('Salvando produto:', produtoData)
-      setShowProdutoForm(false)
-      // Recarregar dados do dashboard
-      await loadDashboardData()
-    } catch (error) {
-      console.error('Erro ao salvar produto:', error)
-    } finally {
-      setFormLoading(false)
-    }
-  }
-
-  const handleSalvarCliente = async (clienteData: ClienteFormValues) => {
-    try {
-      setFormLoading(true)
-      // Aqui você implementaria a lógica de salvar cliente
-      console.log('Salvando cliente:', clienteData)
-      setShowClienteForm(false)
-      // Recarregar dados do dashboard
-      await loadDashboardData()
-    } catch (error) {
-      console.error('Erro ao salvar cliente:', error)
-    } finally {
-      setFormLoading(false)
-    }
-  }
-
-  const handleSalvarMovimentacao = async (movimentacaoData: MovimentacaoFormValues) => {
-    try {
-      setFormLoading(true)
-      // Aqui você implementaria a lógica de salvar movimentação
-      console.log('Salvando movimentação:', movimentacaoData)
-      setShowMovimentacaoForm(false)
-      // Recarregar dados do dashboard
-      await loadDashboardData()
-    } catch (error) {
-      console.error('Erro ao salvar movimentação:', error)
-    } finally {
-      setFormLoading(false)
-    }
-  }
-
-  const handleCancelarForm = () => {
-    setShowVendaForm(false)
-    setShowProdutoForm(false)
-    setShowClienteForm(false)
-    setShowMovimentacaoForm(false)
   }
 
   const formatCurrency = (value: number) => {
@@ -223,7 +218,7 @@ export default function DashboardPage() {
           metrics.map((metric, index) => {
             const Icon = metric.icon
             return (
-              <Card key={index} className="hover:shadow-md transition-shadow">
+              <AnimatedCard key={index}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600">
                     {metric.title}
@@ -250,7 +245,7 @@ export default function DashboardPage() {
                     <span className="text-gray-500 ml-1">vs. ontem</span>
                   </div>
                 </CardContent>
-              </Card>
+              </AnimatedCard>
             )
           })
         ) : (
@@ -272,7 +267,7 @@ export default function DashboardPage() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Vendas Chart */}
-        <Card>
+        <AnimatedCard>
           <CardHeader>
             <CardTitle>Vendas dos Últimos 7 Dias</CardTitle>
             <CardDescription>
@@ -282,10 +277,10 @@ export default function DashboardPage() {
           <CardContent>
             <VendasChart data={vendas7Dias} loading={loading} />
           </CardContent>
-        </Card>
+        </AnimatedCard>
 
         {/* Produtos Mais Vendidos */}
-        <Card>
+        <AnimatedCard>
           <CardHeader>
             <CardTitle>Produtos Mais Vendidos</CardTitle>
             <CardDescription>
@@ -325,11 +320,11 @@ export default function DashboardPage() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </AnimatedCard>
       </div>
 
       {/* Quick Actions - Botões de Acesso Rápido */}
-      <Card>
+      <AnimatedCard>
         <CardHeader>
           <CardTitle>Ações Rápidas</CardTitle>
           <CardDescription>
@@ -379,56 +374,7 @@ export default function DashboardPage() {
             </Button>
           </div>
         </CardContent>
-      </Card>
-
-      {/* Formulários Modais */}
-      {showVendaForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <VendaForm
-              onSubmit={handleSalvarVenda}
-              onCancel={handleCancelarForm}
-              loading={formLoading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showProdutoForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <ProdutoForm
-              onSubmit={handleSalvarProduto}
-              onCancel={handleCancelarForm}
-              loading={formLoading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showClienteForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <ClienteForm
-              onSubmit={handleSalvarCliente}
-              onCancel={handleCancelarForm}
-              loading={formLoading}
-            />
-          </div>
-        </div>
-      )}
-
-      {showMovimentacaoForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <MovimentacaoForm
-              onSubmit={handleSalvarMovimentacao}
-              onCancel={handleCancelarForm}
-              loading={formLoading}
-            />
-          </div>
-        </div>
-      )}
+      </AnimatedCard>
     </div>
   )
 }
