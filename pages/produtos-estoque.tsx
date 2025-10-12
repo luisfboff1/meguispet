@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { isAxiosError } from 'axios'
 import { useRouter } from 'next/router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,14 +24,15 @@ import {
   ShoppingCart,
   X
 } from 'lucide-react'
-import { produtosService, fornecedoresService, movimentacoesService } from '@/services/api'
+import { produtosService, fornecedoresService, movimentacoesService, estoquesService } from '@/services/api'
 import type {
   Produto,
   Fornecedor,
   MovimentacaoEstoque,
   MovimentacaoForm as MovimentacaoFormValues,
   ProdutoForm as ProdutoFormValues,
-  FornecedorForm as FornecedorFormValues
+  FornecedorForm as FornecedorFormValues,
+  Estoque
 } from '@/types'
 import ProdutoForm from '@/components/forms/ProdutoForm'
 import FornecedorForm from '@/components/forms/FornecedorForm'
@@ -41,11 +42,13 @@ export default function ProdutosEstoquePage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'produtos' | 'estoque' | 'movimentacoes' | 'fornecedores'>('produtos')
   const [produtos, setProdutos] = useState<Produto[]>([])
+  const [estoques, setEstoques] = useState<Estoque[]>([])
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([])
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'low' | 'out' | 'ok'>('all')
+  const [estoqueFilter, setEstoqueFilter] = useState<number | 'all'>('all')
   
   // Estados para formulários
   const [showProdutoForm, setShowProdutoForm] = useState(false)
@@ -72,6 +75,16 @@ export default function ProdutosEstoquePage() {
       const produtosResponse = await produtosService.getAll(1, 100)
       if (produtosResponse.success && produtosResponse.data) {
         setProdutos(produtosResponse.data)
+      }
+
+      // Carregar estoques
+      try {
+        const estoquesResponse = await estoquesService.getAll(true)
+        if (estoquesResponse.success && estoquesResponse.data) {
+          setEstoques(estoquesResponse.data)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar estoques:', error)
       }
       
       // Carregar fornecedores
@@ -143,16 +156,25 @@ export default function ProdutosEstoquePage() {
     }
   }
 
+  const normalizedSearch = searchTerm.trim().toLowerCase()
+
   const filteredProdutos = produtos.filter(produto => {
-    const matchesSearch = produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         produto.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    if (filterStatus === 'all') return matchesSearch
-    if (filterStatus === 'out') return matchesSearch && produto.estoque === 0
-    if (filterStatus === 'low') return matchesSearch && produto.estoque > 0 && produto.estoque <= 5
-    if (filterStatus === 'ok') return matchesSearch && produto.estoque > 5
-    
-    return matchesSearch
+    const nomeMatch = produto.nome.toLowerCase().includes(normalizedSearch)
+    const categoriaMatch = produto.categoria ? produto.categoria.toLowerCase().includes(normalizedSearch) : false
+    const matchesSearch = normalizedSearch.length === 0 ? true : (nomeMatch || categoriaMatch)
+
+    const matchesEstoque = estoqueFilter === 'all'
+      ? true
+      : Number(produto.estoque_id) === Number(estoqueFilter)
+
+    if (!matchesSearch || !matchesEstoque) return false
+
+    if (filterStatus === 'all') return true
+    if (filterStatus === 'out') return produto.estoque === 0
+    if (filterStatus === 'low') return produto.estoque > 0 && produto.estoque <= 5
+    if (filterStatus === 'ok') return produto.estoque > 5
+
+    return true
   })
 
   // Handlers para produtos
@@ -364,6 +386,38 @@ export default function ProdutosEstoquePage() {
   const outOfStockCount = produtos.filter(produto => produto.estoque === 0).length
   const inStockCount = produtos.filter(produto => produto.estoque > 5).length
 
+  const estoqueById = useMemo(() => {
+    return estoques.reduce<Record<number, Estoque>>((acc, estoque) => {
+      acc[estoque.id] = estoque
+      return acc
+    }, {})
+  }, [estoques])
+
+  const describeProdutoEstoques = (produto: Produto) => {
+    const nestedEstoques = (produto as unknown as { estoques?: Array<{ estoque_id?: number; estoque_nome?: string; nome?: string; quantidade?: number }> }).estoques
+    if (Array.isArray(nestedEstoques) && nestedEstoques.length > 0) {
+      return nestedEstoques
+        .map(item => {
+          const nome = item.estoque_nome || item.nome || (item.estoque_id ? estoqueById[item.estoque_id]?.nome : undefined)
+          const label = nome ?? 'Estoque não identificado'
+          return typeof item.quantidade === 'number' ? `${label} (${item.quantidade})` : label
+        })
+        .join(', ')
+    }
+
+    const estoqueId = typeof produto.estoque_id === 'number'
+      ? produto.estoque_id
+      : produto.estoque_id
+        ? Number(produto.estoque_id)
+        : null
+
+    if (estoqueId !== null && !Number.isNaN(estoqueId) && estoqueById[estoqueId]) {
+      return estoqueById[estoqueId].nome
+    }
+
+    return 'Estoque não vinculado'
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -547,6 +601,22 @@ export default function ProdutosEstoquePage() {
                     />
                   </div>
                 </div>
+                <div className="w-full sm:w-64">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Filtrar por estoque</label>
+                  <select
+                    value={estoqueFilter === 'all' ? '' : String(estoqueFilter)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setEstoqueFilter(value ? Number(value) : 'all')
+                    }}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-meguispet-primary focus:outline-none"
+                  >
+                    <option value="">Todos os estoques</option>
+                    {estoques.map(estoque => (
+                      <option key={estoque.id} value={estoque.id}>{estoque.nome}</option>
+                    ))}
+                  </select>
+                </div>
                 <Button variant="outline">
                   <Filter className="mr-2 h-4 w-4" />
                   Filtros
@@ -626,6 +696,11 @@ export default function ProdutosEstoquePage() {
                         </div>
                       </div>
 
+                      <div>
+                        <span className="text-sm text-gray-600 block">Local do estoque:</span>
+                        <span className="text-sm font-medium text-gray-900 block text-right">{describeProdutoEstoques(produto)}</span>
+                      </div>
+
                       <div className="pt-2">
                         <Button 
                           variant="outline" 
@@ -675,6 +750,22 @@ export default function ProdutosEstoquePage() {
                       className="pl-10"
                     />
                   </div>
+                </div>
+                <div className="w-full sm:w-64">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Estoque</label>
+                  <select
+                    value={estoqueFilter === 'all' ? '' : String(estoqueFilter)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setEstoqueFilter(value ? Number(value) : 'all')
+                    }}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-meguispet-primary focus:outline-none"
+                  >
+                    <option value="">Todos os estoques</option>
+                    {estoques.map(estoque => (
+                      <option key={estoque.id} value={estoque.id}>{estoque.nome}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex gap-2">
                   <Button 
@@ -726,6 +817,7 @@ export default function ProdutosEstoquePage() {
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Produto</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Categoria</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Estoque</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Local</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Preço Venda</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Preço Custo</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Valor Total Venda</th>
@@ -763,6 +855,9 @@ export default function ProdutosEstoquePage() {
                                 <span className="text-sm font-medium">{produto.estoque}</span>
                                 <StockIcon className={`h-4 w-4 ${stockStatus.color}`} />
                               </div>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-900">
+                              {describeProdutoEstoques(produto)}
                             </td>
                             <td className="py-3 px-4 text-sm text-green-600 font-medium">
                               {formatCurrency(produto.preco_venda)}
