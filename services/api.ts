@@ -17,7 +17,9 @@ import type {
   PaginatedResponse,
   DashboardMetric,
   DashboardTopProduct,
-  DashboardVendasDia
+  DashboardVendasDia,
+  FormaPagamentoRegistro,
+  Estoque
 } from '@/types'
 
 // 🔌 CONFIGURAÇÃO DA API
@@ -88,7 +90,7 @@ export const clientesService = {
   },
 
   async update(id: number, cliente: Partial<Cliente> | ClienteFormPayload): Promise<ApiResponse<Cliente>> {
-    const response = await api.put(`/clientes.php?id=${id}`, cliente)
+    const response = await api.put(`/clientes.php?id=${id}`, { ...cliente, id })
     return response.data
   },
 
@@ -170,6 +172,52 @@ export const vendasService = {
 
   async delete(id: number): Promise<ApiResponse> {
     const response = await api.delete(`/vendas.php?id=${id}`)
+    return response.data
+  }
+}
+
+// 🏬 ESTOQUES
+export const estoquesService = {
+  async getAll(activeOnly = false): Promise<ApiResponse<Estoque[]>> {
+    const response = await api.get(`/estoques.php${activeOnly ? '?active=1' : ''}`)
+    return response.data
+  },
+
+  async create(payload: { nome: string; descricao?: string; ativo?: number }): Promise<ApiResponse> {
+    const response = await api.post('/estoques.php', payload)
+    return response.data
+  },
+
+  async update(id: number, payload: { nome?: string; descricao?: string; ativo?: number }): Promise<ApiResponse> {
+    const response = await api.put('/estoques.php', { id, ...payload })
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/estoques.php?id=${id}`)
+    return response.data
+  }
+}
+
+// 💳 FORMAS DE PAGAMENTO
+export const formasPagamentoService = {
+  async getAll(activeOnly = false): Promise<ApiResponse<FormaPagamentoRegistro[]>> {
+    const response = await api.get(`/formas_pagamento.php${activeOnly ? '?active=1' : ''}`)
+    return response.data
+  },
+
+  async create(payload: { nome: string; ativo?: number; ordem?: number }): Promise<ApiResponse> {
+    const response = await api.post('/formas_pagamento.php', payload)
+    return response.data
+  },
+
+  async update(id: number, payload: { nome?: string; ativo?: number; ordem?: number }): Promise<ApiResponse> {
+    const response = await api.put('/formas_pagamento.php', { id, ...payload })
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/formas_pagamento.php?id=${id}`)
     return response.data
   }
 }

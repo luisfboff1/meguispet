@@ -127,6 +127,12 @@ function buildNext(envVars) {
     console.log("✅ Next.js build/export concluído.");
   } catch (err) {
     console.error("❌ Erro ao executar build do Next.js:", err.message);
+    if (typeof err.status !== "undefined") {
+      console.error("   -> status:", err.status);
+    }
+    if (typeof err.signal !== "undefined") {
+      console.error("   -> signal:", err.signal);
+    }
     process.exit(1);
   }
 }

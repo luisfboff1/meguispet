@@ -64,12 +64,16 @@ try {
             $total = $countStmt->fetch()['total'];
             
             // Buscar vendas com relacionamentos
-            $sql = "SELECT v.*, 
-                           c.nome as cliente_nome, c.email as cliente_email,
-                           vd.nome as vendedor_nome, vd.email as vendedor_email
-                    FROM vendas v
-                    LEFT JOIN clientes_fornecedores c ON v.cliente_id = c.id
-                    LEFT JOIN vendedores vd ON v.vendedor_id = vd.id
+         $sql = "SELECT v.*, 
+                  c.nome as cliente_nome, c.email as cliente_email,
+                  vd.nome as vendedor_nome, vd.email as vendedor_email,
+                  e.id AS estoque_rel_id, e.nome AS estoque_nome,
+                  fp.id AS forma_pagamento_rel_id, fp.nome AS forma_pagamento_nome
+              FROM vendas v
+              LEFT JOIN clientes_fornecedores c ON v.cliente_id = c.id
+              LEFT JOIN vendedores vd ON v.vendedor_id = vd.id
+              LEFT JOIN estoques e ON v.estoque_id = e.id
+              LEFT JOIN formas_pagamento fp ON v.forma_pagamento_id = fp.id
                     $where 
                     ORDER BY v.data_venda DESC 
                     LIMIT :limit OFFSET :offset";
@@ -94,11 +98,19 @@ try {
                     'valor_final' => $venda['valor_final'],
                     'desconto' => $venda['desconto'],
                     'status' => $venda['status'],
-                    'forma_pagamento' => $venda['forma_pagamento'],
+                    'forma_pagamento' => $venda['forma_pagamento_nome'] ?? $venda['forma_pagamento'],
                     'origem_venda' => $venda['origem_venda'],
                     'observacoes' => $venda['observacoes'],
                     'created_at' => $venda['data_venda'],
                     'updated_at' => $venda['updated_at'],
+                    'estoque' => $venda['estoque_rel_id'] ? [
+                        'id' => (int)$venda['estoque_rel_id'],
+                        'nome' => $venda['estoque_nome']
+                    ] : null,
+                    'forma_pagamento_detalhe' => $venda['forma_pagamento_rel_id'] ? [
+                        'id' => (int)$venda['forma_pagamento_rel_id'],
+                        'nome' => $venda['forma_pagamento_nome']
+                    ] : null,
                     'cliente' => $venda['cliente_nome'] ? [
                         'id' => $venda['cliente_id'],
                         'nome' => $venda['cliente_nome'],
@@ -128,13 +140,36 @@ try {
             // Criar venda
             $data = json_decode(file_get_contents('php://input'), true);
             
-            $required = ['itens'];
+            $required = ['itens', 'estoque_id', 'forma_pagamento_id'];
             foreach ($required as $field) {
                 if (empty($data[$field])) {
                     http_response_code(400);
                     echo json_encode(['success' => false, 'message' => "Campo $field é obrigatório"]);
                     exit();
                 }
+            }
+
+            $estoqueId = (int)$data['estoque_id'];
+            $formaPagamentoId = (int)$data['forma_pagamento_id'];
+
+            // Validar estoque
+            $stmt = $conn->prepare("SELECT id, nome FROM estoques WHERE id = :id AND ativo = 1");
+            $stmt->execute([':id' => $estoqueId]);
+            $estoque = $stmt->fetch();
+            if (!$estoque) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Estoque informado é inválido ou inativo']);
+                exit();
+            }
+
+            // Validar forma de pagamento
+            $stmt = $conn->prepare("SELECT id, nome FROM formas_pagamento WHERE id = :id AND ativo = 1");
+            $stmt->execute([':id' => $formaPagamentoId]);
+            $formaPagamento = $stmt->fetch();
+            if (!$formaPagamento) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Forma de pagamento inválida ou inativa']);
+                exit();
             }
             
             $conn->beginTransaction();
@@ -153,8 +188,8 @@ try {
                 $valor_final = $valor_total - $desconto;
                 
                 // Inserir venda
-                $sql = "INSERT INTO vendas (numero_venda, cliente_id, vendedor_id, valor_total, desconto, valor_final, status, forma_pagamento, origem_venda, observacoes) 
-                        VALUES (:numero_venda, :cliente_id, :vendedor_id, :valor_total, :desconto, :valor_final, :status, :forma_pagamento, :origem_venda, :observacoes)";
+                $sql = "INSERT INTO vendas (numero_venda, cliente_id, vendedor_id, valor_total, desconto, valor_final, status, forma_pagamento, forma_pagamento_id, origem_venda, estoque_id, observacoes) 
+                        VALUES (:numero_venda, :cliente_id, :vendedor_id, :valor_total, :desconto, :valor_final, :status, :forma_pagamento, :forma_pagamento_id, :origem_venda, :estoque_id, :observacoes)";
                 
                 $stmt = $conn->prepare($sql);
                 $stmt->execute([
@@ -165,8 +200,10 @@ try {
                     ':desconto' => $desconto,
                     ':valor_final' => $valor_final,
                     ':status' => $data['status'] ?? 'pendente',
-                    ':forma_pagamento' => $data['forma_pagamento'] ?? 'dinheiro',
+                    ':forma_pagamento' => $formaPagamento['nome'],
+                    ':forma_pagamento_id' => $formaPagamentoId,
                     ':origem_venda' => $data['origem_venda'] ?? 'loja_fisica',
+                    ':estoque_id' => $estoqueId,
                     ':observacoes' => $data['observacoes'] ?? null
                 ]);
                 
@@ -195,6 +232,39 @@ try {
                         ':quantidade' => $item['quantidade'],
                         ':produto_id' => $item['produto_id']
                     ]);
+
+                    // Garantir pivot produto-estoque
+                    $stmt = $conn->prepare("INSERT INTO produtos_estoques (produto_id, estoque_id, quantidade) VALUES (:produto_id, :estoque_id, 0)
+                        ON DUPLICATE KEY UPDATE quantidade = quantidade");
+                    $stmt->execute([
+                        ':produto_id' => $item['produto_id'],
+                        ':estoque_id' => $estoqueId
+                    ]);
+
+                    // Validar saldo disponível
+                    $stmt = $conn->prepare("SELECT quantidade FROM produtos_estoques WHERE produto_id = :produto_id AND estoque_id = :estoque_id FOR UPDATE");
+                    $stmt->execute([
+                        ':produto_id' => $item['produto_id'],
+                        ':estoque_id' => $estoqueId
+                    ]);
+                    $saldo = $stmt->fetchColumn();
+                    if ($saldo === false || $saldo < $item['quantidade']) {
+                        throw new Exception('Estoque insuficiente para o produto ' . $item['produto_id'] . ' no estoque selecionado.');
+                    }
+
+                    // Atualizar estoque específico
+                    $stmt = $conn->prepare("UPDATE produtos_estoques SET quantidade = quantidade - :qtd WHERE produto_id = :produto_id AND estoque_id = :estoque_id");
+                    $stmt->execute([
+                        ':qtd' => $item['quantidade'],
+                        ':produto_id' => $item['produto_id'],
+                        ':estoque_id' => $estoqueId
+                    ]);
+
+                    // Atualizar estoque total do produto
+                    $stmt = $conn->prepare("UPDATE produtos p 
+                        SET estoque = (SELECT COALESCE(SUM(pe.quantidade), 0) FROM produtos_estoques pe WHERE pe.produto_id = p.id)
+                        WHERE p.id = :produto_id");
+                    $stmt->execute([':produto_id' => $item['produto_id']]);
                 }
                 
                 $conn->commit();
@@ -210,7 +280,12 @@ try {
                 
             } catch (Exception $e) {
                 $conn->rollBack();
-                throw $e;
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+                exit();
             }
             break;
             

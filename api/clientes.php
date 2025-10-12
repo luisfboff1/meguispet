@@ -40,7 +40,11 @@ try {
             $total = $countStmt->fetch()['total'];
             
             // Buscar clientes
-            $sql = "SELECT * FROM clientes_fornecedores $where ORDER BY nome ASC LIMIT :limit OFFSET :offset";
+        $sql = "SELECT c.*, v.id AS vendedor_rel_id, v.nome AS vendedor_rel_nome
+            FROM clientes_fornecedores c
+            LEFT JOIN vendedores v ON c.vendedor_id = v.id
+            $where
+            ORDER BY c.nome ASC LIMIT :limit OFFSET :offset";
             $stmt = $conn->prepare($sql);
             
             foreach ($params as $key => $value) {
@@ -51,6 +55,19 @@ try {
             $stmt->execute();
             
             $clientes = $stmt->fetchAll();
+
+            $clientes = array_map(function ($cliente) {
+                if ($cliente['vendedor_rel_id']) {
+                    $cliente['vendedor'] = [
+                        'id' => (int)$cliente['vendedor_rel_id'],
+                        'nome' => $cliente['vendedor_rel_nome']
+                    ];
+                } else {
+                    $cliente['vendedor'] = null;
+                }
+                unset($cliente['vendedor_rel_id'], $cliente['vendedor_rel_nome']);
+                return $cliente;
+            }, $clientes);
             
             echo json_encode([
                 'success' => true,
@@ -77,8 +94,8 @@ try {
                 }
             }
             
-            $sql = "INSERT INTO clientes_fornecedores (nome, tipo, email, telefone, endereco, cidade, estado, cep, documento, observacoes) 
-                    VALUES (:nome, :tipo, :email, :telefone, :endereco, :cidade, :estado, :cep, :documento, :observacoes)";
+        $sql = "INSERT INTO clientes_fornecedores (nome, tipo, email, telefone, endereco, cidade, estado, cep, documento, observacoes, vendedor_id) 
+            VALUES (:nome, :tipo, :email, :telefone, :endereco, :cidade, :estado, :cep, :documento, :observacoes, :vendedor_id)";
             
             $stmt = $conn->prepare($sql);
             $stmt->execute([
@@ -91,7 +108,8 @@ try {
                 ':estado' => $data['estado'] ?? null,
                 ':cep' => $data['cep'] ?? null,
                 ':documento' => $data['documento'] ?? null,
-                ':observacoes' => $data['observacoes'] ?? null
+                ':observacoes' => $data['observacoes'] ?? null,
+                ':vendedor_id' => $data['vendedor_id'] ?? null
             ]);
             
             $cliente_id = $conn->lastInsertId();
@@ -113,10 +131,11 @@ try {
                 exit();
             }
             
-            $sql = "UPDATE clientes_fornecedores SET 
+        $sql = "UPDATE clientes_fornecedores SET 
                     nome = :nome, tipo = :tipo, email = :email, telefone = :telefone, 
                     endereco = :endereco, cidade = :cidade, estado = :estado, 
-                    cep = :cep, documento = :documento, observacoes = :observacoes,
+            cep = :cep, documento = :documento, observacoes = :observacoes,
+            vendedor_id = :vendedor_id,
                     updated_at = CURRENT_TIMESTAMP
                     WHERE id = :id";
             
@@ -132,7 +151,8 @@ try {
                 ':estado' => $data['estado'] ?? null,
                 ':cep' => $data['cep'] ?? null,
                 ':documento' => $data['documento'] ?? null,
-                ':observacoes' => $data['observacoes'] ?? null
+                ':observacoes' => $data['observacoes'] ?? null,
+                ':vendedor_id' => $data['vendedor_id'] ?? null
             ]);
             
             if ($result && $stmt->rowCount() > 0) {

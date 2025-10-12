@@ -26,6 +26,8 @@ export interface Cliente {
   bairro?: string
   documento?: string // CPF/CNPJ
   observacoes?: string
+  vendedor_id?: number | null
+  vendedor?: Vendedor | null
   ativo: boolean
   created_at: string
   updated_at: string
@@ -36,18 +38,34 @@ export interface Produto {
   nome: string
   descricao?: string
   preco_venda: number // Preço de venda ao cliente
+  estoque_id?: number | null
   preco_custo: number // Preço médio ponderado de custo
   estoque: number
   estoque_minimo: number
   categoria?: string
   codigo_barras?: string
   ativo: boolean
+  forma_pagamento_id?: number | null
   created_at: string
   updated_at: string
 }
 
+export interface Estoque {
+  id: number
+  nome: string
+  descricao?: string | null
+  ativo: boolean
+  created_at?: string
+  updated_at?: string
+}
+
 export interface Vendedor {
   id: number
+  estoque?: {
+    id: number
+    nome: string
+  } | null
+  forma_pagamento_detalhe?: FormaPagamentoRegistro | null
   nome: string
   email?: string
   telefone?: string
@@ -68,7 +86,11 @@ export interface Venda {
   desconto: number
   valor_final: number
   status: 'pendente' | 'pago' | 'cancelado'
-  forma_pagamento: 'dinheiro' | 'cartao' | 'pix' | 'transferencia'
+  forma_pagamento: FormaPagamento
+  forma_pagamento_id?: number | null
+  forma_pagamento_detalhe?: FormaPagamentoRegistro | null
+  estoque_id?: number | null
+  estoque?: Estoque | null
   origem_venda: 'loja_fisica' | 'mercado_livre' | 'shopee' | 'magazine_luiza' | 'americanas' | 'outros'
   observacoes?: string
   created_at: string
@@ -180,7 +202,16 @@ export interface ProdutoForm {
   ativo: boolean
 }
 
-export type FormaPagamento = 'dinheiro' | 'cartao' | 'pix' | 'transferencia'
+export type FormaPagamento = string
+
+export interface FormaPagamentoRegistro {
+  id: number
+  nome: string
+  ativo: boolean
+  ordem: number
+  created_at?: string
+  updated_at?: string
+}
 
 export type OrigemVenda =
   | 'loja_fisica'
@@ -199,6 +230,8 @@ export interface VendaItemInput {
 export interface VendaForm {
   cliente_id: number | null
   vendedor_id: number | null
+  forma_pagamento_id: number
+  estoque_id: string
   itens: VendaItemInput[]
   desconto?: number
   forma_pagamento: FormaPagamento

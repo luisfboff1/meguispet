@@ -4,9 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Plus, Trash2, ShoppingCart } from 'lucide-react'
-import { clientesService } from '@/services/api'
-import { vendedoresService } from '@/services/api'
-import { produtosService } from '@/services/api'
+import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService } from '@/services/api'
 import type {
   Venda,
   Cliente,
@@ -14,8 +12,9 @@ import type {
   Produto,
   VendaForm as VendaFormValues,
   VendaItemInput,
-  FormaPagamento,
-  OrigemVenda
+  OrigemVenda,
+  FormaPagamentoRegistro,
+  Estoque
 } from '@/types'
 
 interface ItemVenda extends VendaItemInput {
@@ -33,18 +32,42 @@ interface VendaFormProps {
 interface VendaFormState {
   cliente_id: string
   vendedor_id: string
-  forma_pagamento: FormaPagamento
+  forma_pagamento_id: string
   origem_venda: OrigemVenda
+  estoque_id: string
   observacoes: string
   desconto: number
+}
+
+const getFormaPagamentoIdFromVenda = (dados?: Venda): string => {
+  if (!dados) return ''
+  if (dados.forma_pagamento_id) {
+    return String(dados.forma_pagamento_id)
+  }
+  if (dados.forma_pagamento_detalhe?.id) {
+    return String(dados.forma_pagamento_detalhe.id)
+  }
+  return ''
+}
+
+const getEstoqueIdFromVenda = (dados?: Venda): string => {
+  if (!dados) return ''
+  if (dados.estoque_id) {
+    return String(dados.estoque_id)
+  }
+  if (dados.estoque?.id) {
+    return String(dados.estoque.id)
+  }
+  return ''
 }
 
 export default function VendaForm({ venda, onSubmit, onCancel, loading = false }: VendaFormProps) {
   const [formData, setFormData] = useState<VendaFormState>({
     cliente_id: venda?.cliente_id ? String(venda.cliente_id) : '',
     vendedor_id: venda?.vendedor_id ? String(venda.vendedor_id) : '',
-    forma_pagamento: venda?.forma_pagamento || 'dinheiro',
+    forma_pagamento_id: getFormaPagamentoIdFromVenda(venda),
     origem_venda: venda?.origem_venda || 'loja_fisica',
+    estoque_id: getEstoqueIdFromVenda(venda),
     observacoes: venda?.observacoes || '',
     desconto: venda?.desconto || 0
   })
@@ -53,6 +76,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [produtos, setProdutos] = useState<Produto[]>([])
+  const [formasPagamento, setFormasPagamento] = useState<FormaPagamentoRegistro[]>([])
+  const [estoques, setEstoques] = useState<Estoque[]>([])
   const [loadingData, setLoadingData] = useState(false)
 
   useEffect(() => {
@@ -61,8 +86,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
       setFormData({
         cliente_id: '',
         vendedor_id: '',
-        forma_pagamento: 'dinheiro',
+        forma_pagamento_id: '',
         origem_venda: 'loja_fisica',
+        estoque_id: '',
         observacoes: '',
         desconto: 0
       })
@@ -72,8 +98,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
     setFormData({
       cliente_id: venda.cliente_id ? String(venda.cliente_id) : '',
       vendedor_id: venda.vendedor_id ? String(venda.vendedor_id) : '',
-      forma_pagamento: venda.forma_pagamento,
+      forma_pagamento_id: getFormaPagamentoIdFromVenda(venda),
       origem_venda: venda.origem_venda,
+      estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0
     })
@@ -94,21 +121,25 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
   }, [venda])
 
   useEffect(() => {
-    loadData()
+    void loadData()
   }, [])
 
   const loadData = async () => {
     try {
       setLoadingData(true)
-      const [clientesRes, vendedoresRes, produtosRes] = await Promise.all([
+      const [clientesRes, vendedoresRes, produtosRes, formasPagamentoRes, estoquesRes] = await Promise.all([
         clientesService.getAll(1, 100),
         vendedoresService.getAll(1, 100),
-        produtosService.getAll(1, 100)
+        produtosService.getAll(1, 100),
+        formasPagamentoService.getAll(true),
+        estoquesService.getAll(true)
       ])
 
       if (clientesRes.success && clientesRes.data) setClientes(clientesRes.data)
       if (vendedoresRes.success && vendedoresRes.data) setVendedores(vendedoresRes.data)
       if (produtosRes.success && produtosRes.data) setProdutos(produtosRes.data)
+      if (formasPagamentoRes.success && formasPagamentoRes.data) setFormasPagamento(formasPagamentoRes.data)
+      if (estoquesRes.success && estoquesRes.data) setEstoques(estoquesRes.data)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
     } finally {
@@ -136,7 +167,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
   const updateItem = <Key extends keyof ItemVenda>(index: number, field: Key, value: ItemVenda[Key]) => {
     const newItens = [...itens]
     newItens[index] = { ...newItens[index], [field]: value }
-    
+
     if (field === 'produto_id') {
       const produto = produtos.find(p => p.id === value)
       if (produto) {
@@ -147,7 +178,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
     } else if (field === 'quantidade' || field === 'preco_unitario') {
       newItens[index].subtotal = newItens[index].quantidade * newItens[index].preco_unitario
     }
-    
+
     setItens(newItens)
   }
 
@@ -159,9 +190,23 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (itens.length === 0) {
       alert('Adicione pelo menos um item à venda')
+      return
+    }
+    if (!formData.estoque_id) {
+      alert('Selecione o estoque de origem da venda')
+      return
+    }
+    if (!formData.forma_pagamento_id) {
+      alert('Selecione a forma de pagamento')
+      return
+    }
+
+    const formaSelecionada = formasPagamento.find(fp => String(fp.id) === formData.forma_pagamento_id)
+    if (!formaSelecionada) {
+      alert('Forma de pagamento inválida')
       return
     }
 
@@ -169,6 +214,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
       ...formData,
       cliente_id: formData.cliente_id ? Number(formData.cliente_id) : null,
       vendedor_id: formData.vendedor_id ? Number(formData.vendedor_id) : null,
+      forma_pagamento_id: Number(formData.forma_pagamento_id),
+      estoque_id: formData.estoque_id,
+      forma_pagamento: formaSelecionada.nome,
       itens: itens.map(item => ({
         produto_id: item.produto_id,
         quantidade: item.quantidade,
@@ -200,14 +248,24 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Informações Básicas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="cliente_id">Cliente</Label>
               <select
                 id="cliente_id"
                 value={formData.cliente_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, cliente_id: e.target.value }))}
+                onChange={(e) => {
+                  const clienteId = e.target.value
+                  setFormData(prev => {
+                    const cliente = clientes.find(c => String(c.id) === clienteId)
+                    let vendedorId = prev.vendedor_id
+                    if (cliente && (cliente.vendedor_id || cliente.vendedor?.id)) {
+                      const vendedorPadrao = cliente.vendedor_id ?? cliente.vendedor?.id
+                      vendedorId = vendedorPadrao ? String(vendedorPadrao) : prev.vendedor_id
+                    }
+                    return { ...prev, cliente_id: clienteId, vendedor_id: vendedorId }
+                  })
+                }}
                 className="w-full p-2 border rounded-md"
               >
                 <option value="">Selecione um cliente</option>
@@ -215,6 +273,22 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
                   <option key={cliente.id} value={cliente.id}>
                     {cliente.nome}
                   </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="estoque_id">Estoque de Origem</Label>
+              <select
+                id="estoque_id"
+                value={formData.estoque_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, estoque_id: e.target.value }))}
+                className="w-full p-2 border rounded-md"
+                required
+              >
+                <option value="">Selecione o estoque</option>
+                {estoques.map(estoque => (
+                  <option key={estoque.id} value={estoque.id}>{estoque.nome}</option>
                 ))}
               </select>
             </div>
@@ -242,17 +316,16 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
               <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
               <select
                 id="forma_pagamento"
-                value={formData.forma_pagamento}
-                onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value as FormaPagamento }))}
+                value={formData.forma_pagamento_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento_id: e.target.value }))}
                 className="w-full p-2 border rounded-md"
               >
-                <option value="dinheiro">Dinheiro</option>
-                <option value="cartao">Cartão</option>
-                <option value="pix">PIX</option>
-                <option value="transferencia">Transferência</option>
+                <option value="">Selecione</option>
+                {formasPagamento.map(forma => (
+                  <option key={forma.id} value={forma.id}>{forma.nome}</option>
+                ))}
               </select>
             </div>
-
             <div>
               <Label htmlFor="origem_venda">Origem da Venda</Label>
               <select
@@ -271,7 +344,6 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
             </div>
           </div>
 
-          {/* Itens da Venda */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <Label>Itens da Venda</Label>
@@ -346,7 +418,6 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
             </div>
           </div>
 
-          {/* Desconto e Total */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="desconto">Desconto (R$)</Label>
@@ -371,7 +442,6 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
             </div>
           </div>
 
-          {/* Observações */}
           <div>
             <Label htmlFor="observacoes">Observações</Label>
             <textarea
@@ -383,7 +453,6 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
             />
           </div>
 
-          {/* Botões */}
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancelar

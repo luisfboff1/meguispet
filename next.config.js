@@ -1,54 +1,63 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+/**
+ * Limit rewrites to development so static export builds avoid unsupported warnings.
+ * @param {string} phase
+ * @returns {import('next').NextConfig}
+ */
+const nextConfig = (phase) => {
+  const isDev = phase === PHASE_DEVELOPMENT_SERVER
+
   // 🌐 Saída estática para ambiente PHP/Hostinger
-  output: 'export',
-  distDir: 'out',
-  trailingSlash: true,
-  skipTrailingSlashRedirect: true,
+  const config = {
+    output: 'export',
+    distDir: 'out',
+    trailingSlash: true,
+    skipTrailingSlashRedirect: true,
 
-  // 🖼️ Imagens e assets estáticos
-  images: {
-    unoptimized: true,
-  },
+    // 🖼️ Imagens e assets estáticos
+    images: {
+      unoptimized: true,
+    },
 
-  // ⚙️ Build e performance
-  generateEtags: false,
-  experimental: {
-    webpackBuildWorker: true,
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-  },
+    // ⚙️ Build e performance
+    generateEtags: false,
+    experimental: {},
 
-  outputFileTracingRoot: path.join(__dirname),
+    outputFileTracingRoot: path.join(__dirname),
 
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
+    compiler: {
+      removeConsole: process.env.NODE_ENV === 'production',
+    },
 
-  // 🌍 Variáveis públicas
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
-  },
+    // 🌍 Variáveis públicas
+    env: {
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
+    },
+  }
 
-  async rewrites() {
-    const target = process.env.NEXT_PRIVATE_API_PROXY_TARGET?.replace(/\/$/, '')
-    if (!target) {
-      return []
+  if (isDev) {
+    config.rewrites = async () => {
+      const target = process.env.NEXT_PRIVATE_API_PROXY_TARGET?.replace(/\/$/, '')
+      if (!target) {
+        return []
+      }
+
+      return [
+        {
+          source: '/api/:path*',
+          destination: `${target}/:path*`,
+        },
+      ]
     }
+  }
 
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${target}/:path*`,
-      },
-    ]
-  },
-};
+  return config
+}
 
 export default nextConfig;
