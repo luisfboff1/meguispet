@@ -235,6 +235,10 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
       }))
     }
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[VendaForm] submit payload', vendaData)
+    }
+
     onSubmit(vendaData)
   }
 

@@ -33,6 +33,29 @@ const api = axios.create({
   },
 })
 
+if (process.env.NODE_ENV === 'development') {
+  api.interceptors.request.use(config => {
+    const payloadPreview = typeof config.data === 'string' ? config.data : JSON.stringify(config.data)
+    console.log('[api] request', config.method?.toUpperCase(), config.url, payloadPreview)
+    return config
+  })
+
+  api.interceptors.response.use(
+    response => {
+      console.log('[api] response', response.status, response.config.url, response.data)
+      return response
+    },
+    error => {
+      if (error.response) {
+        console.error('[api] error', error.response.status, error.response.config?.url, error.response.data)
+      } else {
+        console.error('[api] network error', error.message)
+      }
+      return Promise.reject(error)
+    }
+  )
+}
+
 // 🔐 INTERCEPTOR PARA AUTENTICAÇÃO
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   try {
