@@ -231,7 +231,7 @@ export interface VendaForm {
   cliente_id: number | null
   vendedor_id: number | null
   forma_pagamento_id: number
-  estoque_id: string
+  estoque_id: number
   itens: VendaItemInput[]
   desconto?: number
   forma_pagamento: FormaPagamento

@@ -171,12 +171,17 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
     if (field === 'produto_id') {
       const produto = produtos.find(p => p.id === value)
       if (produto) {
+        const precoVenda = Number(produto.preco_venda) || 0
         newItens[index].produto_nome = produto.nome
-        newItens[index].preco_unitario = produto.preco_venda
-        newItens[index].subtotal = newItens[index].quantidade * produto.preco_venda
+        newItens[index].preco_unitario = precoVenda
+        newItens[index].subtotal = newItens[index].quantidade * precoVenda
       }
     } else if (field === 'quantidade' || field === 'preco_unitario') {
-      newItens[index].subtotal = newItens[index].quantidade * newItens[index].preco_unitario
+      const preco = Number(newItens[index].preco_unitario) || 0
+      const qtd = Number(newItens[index].quantidade) || 0
+      newItens[index].preco_unitario = preco
+      newItens[index].quantidade = qtd
+      newItens[index].subtotal = qtd * preco
     }
 
     setItens(newItens)
@@ -204,6 +209,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
       return
     }
 
+    const itensValidos = itens.every(item => item.produto_id > 0 && item.quantidade > 0 && item.preco_unitario > 0)
+    if (!itensValidos) {
+      alert('Verifique os itens: selecione o produto e informe quantidade e preço válidos')
+      return
+    }
+
     const formaSelecionada = formasPagamento.find(fp => String(fp.id) === formData.forma_pagamento_id)
     if (!formaSelecionada) {
       alert('Forma de pagamento inválida')
@@ -215,7 +226,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
       cliente_id: formData.cliente_id ? Number(formData.cliente_id) : null,
       vendedor_id: formData.vendedor_id ? Number(formData.vendedor_id) : null,
       forma_pagamento_id: Number(formData.forma_pagamento_id),
-      estoque_id: formData.estoque_id,
+  estoque_id: Number(formData.estoque_id),
       forma_pagamento: formaSelecionada.nome,
       itens: itens.map(item => ({
         produto_id: item.produto_id,
@@ -364,11 +375,15 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
                       className="w-full p-2 border rounded-md"
                     >
                       <option value={0}>Selecione um produto</option>
-                      {produtos.map(produto => (
-                        <option key={produto.id} value={produto.id}>
-                          {produto.nome} - R$ {produto.preco_venda.toFixed(2)}
-                        </option>
-                      ))}
+                      {produtos.map(produto => {
+                        const precoVenda = Number(produto.preco_venda)
+                        const precoFormatado = Number.isFinite(precoVenda) ? precoVenda.toFixed(2) : '0.00'
+                        return (
+                          <option key={produto.id} value={produto.id}>
+                            {produto.nome} - R$ {precoFormatado}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
 

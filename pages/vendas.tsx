@@ -46,10 +46,15 @@ export default function VendasPage() {
     }
   }
 
-  const filteredVendas = vendas.filter(venda =>
-    venda.cliente?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venda.vendedor?.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredVendas = vendas.filter(venda => {
+    const searchLower = searchTerm.toLowerCase()
+    const clienteMatch = venda.cliente?.nome?.toLowerCase().includes(searchLower)
+    const vendedorMatch = venda.vendedor?.nome?.toLowerCase().includes(searchLower)
+    const formaPagamentoMatch = (venda.forma_pagamento_detalhe?.nome ?? venda.forma_pagamento ?? '')
+      .toLowerCase()
+      .includes(searchLower)
+    return clienteMatch || vendedorMatch || formaPagamentoMatch
+  })
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -276,6 +281,8 @@ export default function VendasPage() {
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Cliente</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Vendedor</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Total</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Forma Pagamento</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Estoque</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Data</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Ações</th>
@@ -289,6 +296,12 @@ export default function VendasPage() {
                       <td className="py-3 px-4 text-sm text-gray-900">{venda.vendedor?.nome || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm font-medium text-gray-900">
                         {formatCurrency(venda.valor_final)}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-900">
+                        {venda.forma_pagamento_detalhe?.nome ?? venda.forma_pagamento ?? 'N/A'}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-900">
+                        {venda.estoque?.nome ?? 'N/A'}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(venda.status)}`}>
