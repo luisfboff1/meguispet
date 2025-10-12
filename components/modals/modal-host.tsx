@@ -21,6 +21,7 @@ interface VendaModalPayload {
   onSubmit: (values: VendaFormValues) => Promise<void> | void
   onCancel?: () => void
   loading?: boolean
+  errorMessage?: string
 }
 
 interface ProdutoModalPayload {
@@ -173,6 +174,7 @@ export function ModalHost() {
               close()
             }}
             loading={payload.loading}
+            errorMessage={payload.errorMessage}
           />
         )
       }

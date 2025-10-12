@@ -27,6 +27,7 @@ interface VendaFormProps {
   onSubmit: (venda: VendaFormValues) => Promise<void> | void
   onCancel: () => void
   loading?: boolean
+  errorMessage?: string
 }
 
 interface VendaFormState {
@@ -61,7 +62,7 @@ const getEstoqueIdFromVenda = (dados?: Venda): string => {
   return ''
 }
 
-export default function VendaForm({ venda, onSubmit, onCancel, loading = false }: VendaFormProps) {
+export default function VendaForm({ venda, onSubmit, onCancel, loading = false, errorMessage }: VendaFormProps) {
   const [formData, setFormData] = useState<VendaFormState>({
     cliente_id: venda?.cliente_id ? String(venda.cliente_id) : '',
     vendedor_id: venda?.vendedor_id ? String(venda.vendedor_id) : '',
@@ -262,6 +263,11 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false }
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {errorMessage ? (
+          <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage}
+          </div>
+        ) : null}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
