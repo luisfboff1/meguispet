@@ -302,6 +302,14 @@ try {
                     ]);
                 }
 
+                $totalEstoqueStmt = $conn->prepare("UPDATE produtos SET estoque = (
+                        SELECT COALESCE(SUM(pe.quantidade), 0)
+                        FROM produtos_estoques pe
+                        WHERE pe.produto_id = :produto_id
+                    )
+                    WHERE id = :produto_id");
+                $totalEstoqueStmt->execute([':produto_id' => $produto_id]);
+
                 $conn->commit();
 
                 echo json_encode([
@@ -408,6 +416,14 @@ try {
                         $cleanupStmt->execute(array_merge([$data['id']], $estoqueIdsRecebidos));
                     }
                 }
+
+                $totalEstoqueStmt = $conn->prepare("UPDATE produtos SET estoque = (
+                        SELECT COALESCE(SUM(pe.quantidade), 0)
+                        FROM produtos_estoques pe
+                        WHERE pe.produto_id = :produto_id
+                    )
+                    WHERE id = :produto_id");
+                $totalEstoqueStmt->execute([':produto_id' => $data['id']]);
 
                 $conn->commit();
 

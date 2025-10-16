@@ -33,14 +33,26 @@ CREATE TABLE IF NOT EXISTS produtos_estoques (
 
 -- 2a. Migrar estoque atual (se coluna estoque existir em produtos)
 SET @estoque_padrao_id = (SELECT id FROM estoques WHERE nome = 'São Paulo' LIMIT 1);
-INSERT INTO produtos_estoques (produto_id, estoque_id, quantidade)
-SELECT p.id, @estoque_padrao_id, p.estoque
-FROM produtos p
-ON DUPLICATE KEY UPDATE quantidade = VALUES(quantidade);
+SET @coluna_estoque_existe = (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'produtos'
+      AND COLUMN_NAME = 'estoque'
+);
 
--- 2b. Remover coluna de estoque total da tabela de produtos (o controle passa para produtos_estoques)
-ALTER TABLE produtos
-    DROP COLUMN IF EXISTS estoque;
+SET @migrar_estoque_sql = IF(
+    @coluna_estoque_existe > 0,
+    'INSERT INTO produtos_estoques (produto_id, estoque_id, quantidade)
+        SELECT p.id, @estoque_padrao_id, p.estoque
+        FROM produtos p
+        ON DUPLICATE KEY UPDATE quantidade = VALUES(quantidade);',
+    'SELECT 1;'
+);
+
+PREPARE stmt_migrar_estoque FROM @migrar_estoque_sql;
+EXECUTE stmt_migrar_estoque;
+DEALLOCATE PREPARE stmt_migrar_estoque;
 
 -- 3. Tabela de formas de pagamento dinâmicas
 CREATE TABLE IF NOT EXISTS formas_pagamento (
@@ -57,15 +69,69 @@ VALUES ('Dinheiro', 1), ('Cartão', 2), ('PIX', 3), ('Transferência', 4), ('Bol
 
 -- 4. Ajustes na tabela de clientes
 ALTER TABLE clientes_fornecedores
-    ADD COLUMN IF NOT EXISTS vendedor_id INT NULL,
-    ADD CONSTRAINT fk_clientes_vendedor FOREIGN KEY (vendedor_id) REFERENCES vendedores(id) ON DELETE SET NULL;
+    ADD COLUMN IF NOT EXISTS vendedor_id INT NULL;
+
+SET @fk_clientes_vendedor_existe = (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'clientes_fornecedores'
+      AND CONSTRAINT_NAME = 'fk_clientes_vendedor'
+);
+
+SET @sql_add_fk_clientes_vendedor = IF(
+    @fk_clientes_vendedor_existe = 0,
+    'ALTER TABLE clientes_fornecedores
+        ADD CONSTRAINT fk_clientes_vendedor FOREIGN KEY (vendedor_id) REFERENCES vendedores(id) ON DELETE SET NULL;',
+    'SELECT 1;'
+);
+
+PREPARE stmt_add_fk_clientes_vendedor FROM @sql_add_fk_clientes_vendedor;
+EXECUTE stmt_add_fk_clientes_vendedor;
+DEALLOCATE PREPARE stmt_add_fk_clientes_vendedor;
 
 -- 5. Ajustes na tabela de vendas
 ALTER TABLE vendas
     ADD COLUMN IF NOT EXISTS estoque_id INT NULL,
-    ADD COLUMN IF NOT EXISTS forma_pagamento_id INT NULL,
-    ADD CONSTRAINT fk_vendas_estoque FOREIGN KEY (estoque_id) REFERENCES estoques(id) ON DELETE SET NULL,
-    ADD CONSTRAINT fk_vendas_forma_pagamento FOREIGN KEY (forma_pagamento_id) REFERENCES formas_pagamento(id) ON DELETE SET NULL;
+    ADD COLUMN IF NOT EXISTS forma_pagamento_id INT NULL;
+
+SET @fk_vendas_estoque_existe = (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'vendas'
+      AND CONSTRAINT_NAME = 'fk_vendas_estoque'
+);
+
+SET @sql_add_fk_vendas_estoque = IF(
+    @fk_vendas_estoque_existe = 0,
+    'ALTER TABLE vendas
+        ADD CONSTRAINT fk_vendas_estoque FOREIGN KEY (estoque_id) REFERENCES estoques(id) ON DELETE SET NULL;',
+    'SELECT 1;'
+);
+
+PREPARE stmt_add_fk_vendas_estoque FROM @sql_add_fk_vendas_estoque;
+EXECUTE stmt_add_fk_vendas_estoque;
+DEALLOCATE PREPARE stmt_add_fk_vendas_estoque;
+
+SET @fk_vendas_forma_pagamento_existe = (
+    SELECT COUNT(*)
+    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'vendas'
+      AND CONSTRAINT_NAME = 'fk_vendas_forma_pagamento'
+);
+
+SET @sql_add_fk_vendas_forma_pagamento = IF(
+    @fk_vendas_forma_pagamento_existe = 0,
+    'ALTER TABLE vendas
+        ADD CONSTRAINT fk_vendas_forma_pagamento FOREIGN KEY (forma_pagamento_id) REFERENCES formas_pagamento(id) ON DELETE SET NULL;',
+    'SELECT 1;'
+);
+
+PREPARE stmt_add_fk_vendas_forma_pagamento FROM @sql_add_fk_vendas_forma_pagamento;
+EXECUTE stmt_add_fk_vendas_forma_pagamento;
+DEALLOCATE PREPARE stmt_add_fk_vendas_forma_pagamento;
 
 -- 5a. Migrar dados existentes de forma_pagamento para tabela de referência
 UPDATE vendas v
