@@ -98,7 +98,26 @@ function buildNext(envVars) {
   try {
     // Injetar envs públicas no processo do build
     Object.keys(envVars).forEach(k => (process.env[k] = envVars[k]));
-    execSync("npx next build", { cwd: rootDir, stdio: "inherit" });
+    let acessoViolado = false;
+    try {
+      execSync("npx next build", { cwd: rootDir, stdio: "inherit" });
+    } catch (err) {
+      const statusCode = typeof err?.status === "number" ? err.status : undefined;
+      const isAccessViolation = statusCode === 3221225477 || statusCode === -1073741819;
+
+      if (isAccessViolation) {
+        if (!existsSync(nextOutDir)) {
+          console.error("❌ Build encerrou com acesso inválido e a pasta 'out/' não foi gerada.");
+          process.exit(1);
+        }
+
+        acessoViolado = true;
+        console.warn("⚠️ Next.js finalizou com código 0xC0000005 (Access Violation em Windows).");
+        console.warn("   Continuando processo de build. Considere executar com Node 20.x ou em ambiente Linux para evitar este aviso.");
+      } else {
+        throw err;
+      }
+    }
 
     if (existsSync(nextOutDir)) {
       if (existsSync(distDir)) {
@@ -125,6 +144,9 @@ function buildNext(envVars) {
       mkdirSync(distDir, { recursive: true });
     }
     console.log("✅ Next.js build/export concluído.");
+    if (acessoViolado) {
+      console.warn("⚠️ Build concluído com aviso: Access Violation detectado, mas artefatos foram preservados.");
+    }
   } catch (err) {
     console.error("❌ Erro ao executar build do Next.js:", err.message);
     if (typeof err.status !== "undefined") {

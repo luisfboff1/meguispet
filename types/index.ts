@@ -189,19 +189,26 @@ export interface LoginForm {
   password: string
 }
 
-export interface ClienteForm {
+export type PessoaTipo = 'cliente' | 'fornecedor' | 'ambos'
+
+export interface PessoaFormInput {
   nome: string
-  email: string
-  telefone: string
+  documento?: string
+  email?: string
+  telefone?: string
   endereco?: string
   cidade?: string
   estado?: string
   cep?: string
   bairro?: string
-  documento?: string
   observacoes?: string
-  tipo: 'cliente' | 'fornecedor' | 'ambos'
+  tipo: PessoaTipo
+  nome_fantasia?: string
+  inscricao_estadual?: string
+  ativo?: boolean
 }
+
+export type ClienteForm = PessoaFormInput
 
 export interface ProdutoForm {
   nome: string
@@ -266,6 +273,7 @@ export interface FornecedorForm {
   cep?: string
   observacoes?: string
   ativo: boolean
+  tipo?: 'fornecedor' | 'ambos'
 }
 
 export type AjusteEstoqueTipo = 'entrada' | 'saida' | 'inventario'
