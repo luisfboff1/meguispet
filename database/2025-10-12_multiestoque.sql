@@ -38,6 +38,10 @@ SELECT p.id, @estoque_padrao_id, p.estoque
 FROM produtos p
 ON DUPLICATE KEY UPDATE quantidade = VALUES(quantidade);
 
+-- 2b. Remover coluna de estoque total da tabela de produtos (o controle passa para produtos_estoques)
+ALTER TABLE produtos
+    DROP COLUMN IF EXISTS estoque;
+
 -- 3. Tabela de formas de pagamento dinâmicas
 CREATE TABLE IF NOT EXISTS formas_pagamento (
     id INT AUTO_INCREMENT PRIMARY KEY,

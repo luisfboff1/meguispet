@@ -165,7 +165,9 @@ export default function ProdutosEstoquePage() {
 
     const matchesEstoque = estoqueFilter === 'all'
       ? true
-      : Number(produto.estoque_id) === Number(estoqueFilter)
+      : Array.isArray(produto.estoques)
+        ? produto.estoques.some(item => Number(item.estoque_id) === Number(estoqueFilter))
+        : false
 
     if (!matchesSearch || !matchesEstoque) return false
 
@@ -394,13 +396,11 @@ export default function ProdutosEstoquePage() {
   }, [estoques])
 
   const describeProdutoEstoques = (produto: Produto) => {
-    const nestedEstoques = (produto as unknown as { estoques?: Array<{ estoque_id?: number; estoque_nome?: string; nome?: string; quantidade?: number }> }).estoques
-    if (Array.isArray(nestedEstoques) && nestedEstoques.length > 0) {
-      return nestedEstoques
-        .map(item => {
-          const nome = item.estoque_nome || item.nome || (item.estoque_id ? estoqueById[item.estoque_id]?.nome : undefined)
-          const label = nome ?? 'Estoque não identificado'
-          return typeof item.quantidade === 'number' ? `${label} (${item.quantidade})` : label
+    if (Array.isArray(produto.estoques) && produto.estoques.length > 0) {
+      return produto.estoques
+        .map((item) => {
+          const nome = item.estoque_nome ?? estoqueById[item.estoque_id]?.nome ?? 'Estoque não identificado'
+          return typeof item.quantidade === 'number' ? `${nome} (${item.quantidade})` : nome
         })
         .join(', ')
     }

@@ -226,13 +226,6 @@ try {
                     ]);
                     
                     // Atualizar estoque
-                    $sql = "UPDATE produtos SET estoque = estoque - :quantidade WHERE id = :produto_id";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->execute([
-                        ':quantidade' => $item['quantidade'],
-                        ':produto_id' => $item['produto_id']
-                    ]);
-
                     // Garantir pivot produto-estoque
                     $stmt = $conn->prepare("INSERT INTO produtos_estoques (produto_id, estoque_id, quantidade) VALUES (:produto_id, :estoque_id, 0)
                         ON DUPLICATE KEY UPDATE quantidade = quantidade");
@@ -259,12 +252,6 @@ try {
                         ':produto_id' => $item['produto_id'],
                         ':estoque_id' => $estoqueId
                     ]);
-
-                    // Atualizar estoque total do produto
-                    $stmt = $conn->prepare("UPDATE produtos p 
-                        SET estoque = (SELECT COALESCE(SUM(pe.quantidade), 0) FROM produtos_estoques pe WHERE pe.produto_id = p.id)
-                        WHERE p.id = :produto_id");
-                    $stmt->execute([':produto_id' => $item['produto_id']]);
                 }
                 
                 $conn->commit();

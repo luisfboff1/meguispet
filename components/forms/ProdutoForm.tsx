@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Package } from 'lucide-react'
-import type { Produto, ProdutoForm as ProdutoFormValues } from '@/types'
+import type { Estoque, Produto, ProdutoForm as ProdutoFormValues } from '@/types'
+import { estoquesService } from '@/services/api'
 
 interface ProdutoFormProps {
   produto?: Produto
@@ -26,9 +27,65 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
     ativo: produto?.ativo ?? true
   })
 
+  const [estoquesDisponiveis, setEstoquesDisponiveis] = useState<Estoque[]>([])
+  const [estoqueQuantidades, setEstoqueQuantidades] = useState<Record<number, number>>({})
+  const [estoquesLoading, setEstoquesLoading] = useState(false)
+  const [estoquesErro, setEstoquesErro] = useState<string | null>(null)
+
+  useEffect(() => {
+    const carregarEstoques = async () => {
+      try {
+        setEstoquesLoading(true)
+        setEstoquesErro(null)
+        const response = await estoquesService.getAll(true)
+        if (response.success && response.data) {
+          setEstoquesDisponiveis(response.data)
+        } else {
+          setEstoquesErro(response.message || 'Não foi possível carregar os estoques')
+        }
+      } catch (error) {
+        console.error('Erro ao carregar estoques:', error)
+        setEstoquesErro('Erro ao carregar estoques')
+      } finally {
+        setEstoquesLoading(false)
+      }
+    }
+
+    carregarEstoques()
+  }, [])
+
+  useEffect(() => {
+    if (estoquesDisponiveis.length === 0) return
+
+    const quantidadesIniciais: Record<number, number> = {}
+    estoquesDisponiveis.forEach(estoque => {
+      const registro = produto?.estoques?.find(item => item.estoque_id === estoque.id)
+      quantidadesIniciais[estoque.id] = registro ? registro.quantidade : 0
+    })
+
+    setEstoqueQuantidades(quantidadesIniciais)
+  }, [estoquesDisponiveis, produto])
+
+  const totalEstoque = useMemo(() => {
+    return Object.values(estoqueQuantidades).reduce((total, quantidade) => total + quantidade, 0)
+  }, [estoqueQuantidades])
+
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, estoque: totalEstoque }))
+  }, [totalEstoque])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    const estoquesPayload = Object.entries(estoqueQuantidades).map(([estoqueId, quantidade]) => ({
+      estoque_id: Number(estoqueId),
+      quantidade
+    }))
+
+    onSubmit({
+      ...formData,
+      estoque: totalEstoque,
+      estoques: estoquesPayload
+    })
   }
 
   return (
@@ -113,15 +170,14 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
           {/* Estoque */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="estoque">Estoque Atual *</Label>
+              <Label htmlFor="estoque">Quantidade Total (calculada)</Label>
               <Input
                 id="estoque"
                 type="number"
                 min="0"
-                value={formData.estoque}
-                onChange={(e) => setFormData(prev => ({ ...prev, estoque: Number(e.target.value) }))}
+                value={totalEstoque}
+                readOnly
                 placeholder="0"
-                required
               />
             </div>
 
@@ -137,6 +193,48 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Distribuição por Estoque</Label>
+            {estoquesLoading && estoquesDisponiveis.length === 0 ? (
+              <div className="flex items-center text-sm text-gray-500">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregando estoques...
+              </div>
+            ) : estoquesErro ? (
+              <p className="text-sm text-red-600">{estoquesErro}</p>
+            ) : (
+              <div className="space-y-2">
+                {estoquesDisponiveis.map(estoque => (
+                  <div key={estoque.id} className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
+                    <div>
+                      <p className="text-sm font-medium">{estoque.nome}</p>
+                      {estoque.descricao ? (
+                        <p className="text-xs text-gray-500">{estoque.descricao}</p>
+                      ) : null}
+                    </div>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={estoqueQuantidades[estoque.id] ?? 0}
+                      onChange={(e) => {
+                        const valor = Number(e.target.value)
+                        setEstoqueQuantidades(prev => ({
+                          ...prev,
+                          [estoque.id]: Number.isNaN(valor) ? 0 : Math.max(0, Math.floor(valor))
+                        }))
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+                {estoquesDisponiveis.length === 0 ? (
+                  <p className="text-sm text-gray-500">Nenhum estoque cadastrado. Cadastre estoques antes de registrar produtos.</p>
+                ) : (
+                  <p className="text-xs text-gray-500">O total acima é atualizado automaticamente somando todas as quantidades informadas.</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Código de Barras */}

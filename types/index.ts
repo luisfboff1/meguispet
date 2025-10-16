@@ -41,6 +41,7 @@ export interface Produto {
   estoque_id?: number | null
   preco_custo: number // Preço médio ponderado de custo
   estoque: number
+  estoque_total?: number
   estoque_minimo: number
   categoria?: string
   codigo_barras?: string
@@ -48,6 +49,18 @@ export interface Produto {
   forma_pagamento_id?: number | null
   created_at: string
   updated_at: string
+  estoques?: ProdutoEstoqueDetalhe[]
+}
+
+export interface ProdutoEstoqueDetalhe {
+  estoque_id: number
+  estoque_nome: string
+  quantidade: number
+}
+
+export interface ProdutoEstoqueInput {
+  estoque_id: number
+  quantidade: number
 }
 
 export interface Estoque {
@@ -200,6 +213,7 @@ export interface ProdutoForm {
   categoria?: string
   codigo_barras?: string
   ativo: boolean
+  estoques?: ProdutoEstoqueInput[]
 }
 
 export type FormaPagamento = string
