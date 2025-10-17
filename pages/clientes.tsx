@@ -18,6 +18,7 @@ import {
 import { clientesService } from '@/services/api'
 import type { Cliente, ClienteForm as ClienteFormValues } from '@/types'
 import ClienteForm from '@/components/forms/ClienteForm'
+import Toast from '@/components/ui/Toast'
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -28,6 +29,7 @@ export default function ClientesPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' | 'info' } | null>(null)
 
   useEffect(() => {
     loadClientes()
@@ -86,24 +88,33 @@ export default function ClientesPage() {
   const handleSalvarCliente = async (clienteData: ClienteFormValues) => {
     try {
       setFormLoading(true)
-      
+      let response
       if (editingCliente) {
         // Editar cliente existente
-        const response = await clientesService.update(editingCliente.id, clienteData)
-        if (response.success) {
-          await loadClientes()
-          setShowForm(false)
-          setEditingCliente(null)
-        }
+        response = await clientesService.update(editingCliente.id, clienteData)
       } else {
         // Criar novo cliente
-        const response = await clientesService.create(clienteData)
-        if (response.success) {
-          await loadClientes()
-          setShowForm(false)
+        response = await clientesService.create(clienteData)
+      }
+      if (response && response.success) {
+        await loadClientes()
+        setShowForm(false)
+        setEditingCliente(null)
+        setToast({ message: editingCliente ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!', type: 'success' })
+      } else {
+        setToast({ message: response?.message || 'Erro ao salvar cliente. Tente novamente.', type: 'error' })
+      }
+    } catch (error: unknown) {
+      let msg = 'Erro ao salvar cliente. Tente novamente.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
         }
       }
-    } catch (error) {
+      setToast({ message: msg, type: 'error' })
       console.error('Erro ao salvar cliente:', error)
     } finally {
       setFormLoading(false)
@@ -121,6 +132,9 @@ export default function ClientesPage() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

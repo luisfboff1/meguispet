@@ -15,6 +15,7 @@ import {
 import { produtosService, movimentacoesService } from '@/services/api'
 import type { Produto, EstoqueOperacaoInput, MovimentacaoForm } from '@/types'
 import EstoqueOperacaoForm from '@/components/forms/EstoqueOperacaoForm'
+import Toast from '@/components/ui/Toast'
 
 export default function EstoquePage() {
   const [produtos, setProdutos] = useState<Produto[]>([])
@@ -23,6 +24,7 @@ export default function EstoquePage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'low' | 'out' | 'ok'>('all')
   const [showAjusteForm, setShowAjusteForm] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' | 'info' } | null>(null)
 
   useEffect(() => {
     loadProdutos()
@@ -83,20 +85,31 @@ export default function EstoquePage() {
       setFormLoading(true)
       const payload = convertToMovimentacaoPayload(ajusteData)
       if (!payload) {
-        alert('Fluxo de transferência ainda não está disponível. Selecione outro tipo de operação.')
+        setToast({ message: 'Fluxo de transferência ainda não está disponível. Selecione outro tipo de operação.', type: 'error' })
         return
       }
 
       const response = await movimentacoesService.create(payload)
       if (!response.success) {
-        throw new Error(response.message || 'Falha ao registrar movimentação de estoque')
+        setToast({ message: response.message || 'Falha ao registrar movimentação de estoque', type: 'error' })
+        return
       }
 
       await loadProdutos()
       setShowAjusteForm(false)
-    } catch (error) {
+      setToast({ message: 'Movimentação registrada com sucesso!', type: 'success' })
+    } catch (error: unknown) {
+      let msg = 'Não foi possível registrar a operação. Tente novamente mais tarde.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
+        }
+      }
+      setToast({ message: msg, type: 'error' })
       console.error('Erro ao ajustar estoque:', error)
-      alert('Não foi possível registrar a operação. Tente novamente mais tarde.')
     } finally {
       setFormLoading(false)
     }
@@ -149,6 +162,9 @@ export default function EstoquePage() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

@@ -48,21 +48,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Função para conectar ao banco
+// Função para conectar ao banco (reuso + persistente)
 function getDbConnection() {
+    static $pdo = null; // reuso dentro do mesmo request
     global $host, $dbname, $username, $password;
-    
+
+    if ($pdo instanceof PDO) {
+        return $pdo;
+    }
+
     try {
-        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            // Conexões persistentes reduzem novas conexões por hora (útil em hospedagem compartilhada)
+            PDO::ATTR_PERSISTENT => true,
+            // Evita emulação para maior segurança/compatibilidade
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ];
+
+        $pdo = new PDO($dsn, $username, $password, $options);
         return $pdo;
     } catch (PDOException $e) {
+        $msg = $e->getMessage();
+        // Mensagem amigável quando estourar limite de conexões por hora (1226)
+        if (strpos($msg, '1226') !== false || stripos($msg, 'max_connections_per_hour') !== false) {
+            $human = "O usuário do banco excedeu o limite de conexões por hora do provedor. Aguarde a janela horária renovar, reduza o número de requisições ou atualize o plano.";
+        } else {
+            $human = 'Erro de conexão com o banco de dados';
+        }
+
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Erro de conexão com o banco de dados',
-            'error' => $e->getMessage()
+            'message' => $human,
+            'error' => $msg
         ]);
         exit();
     }

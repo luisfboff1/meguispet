@@ -19,6 +19,7 @@ import {
 import { vendasService } from '@/services/api'
 import type { Venda, VendaForm as VendaFormValues } from '@/types'
 import VendaForm from '@/components/forms/VendaForm'
+import Toast from '@/components/ui/Toast'
 
 export default function VendasPage() {
   const [vendas, setVendas] = useState<Venda[]>([])
@@ -28,8 +29,7 @@ export default function VendasPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingVenda, setEditingVenda] = useState<Venda | null>(null)
   const [formLoading, setFormLoading] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' | 'info' } | null>(null)
   const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
@@ -87,16 +87,12 @@ export default function VendasPage() {
   }
 
   const handleNovaVenda = () => {
-    setFormError(null)
-    setSuccessMessage(null)
     setSelectedVenda(null)
     setEditingVenda(null)
     setShowForm(true)
   }
 
   const handleEditarVenda = (venda: Venda) => {
-    setFormError(null)
-    setSuccessMessage(null)
     setSelectedVenda(null)
     setEditingVenda(venda)
     setShowForm(true)
@@ -105,46 +101,40 @@ export default function VendasPage() {
   const handleSalvarVenda = async (vendaData: VendaFormValues) => {
     try {
       setFormLoading(true)
-      setFormError(null)
-      setSuccessMessage(null)
-      
+      let response
       if (editingVenda) {
-        // Editar venda existente
-        const response = await vendasService.update(editingVenda.id, vendaData)
-        if (response.success) {
-          await loadVendas()
-          setShowForm(false)
-          setEditingVenda(null)
-          setSuccessMessage('Venda atualizada com sucesso.')
-        }
+        response = await vendasService.update(editingVenda.id, vendaData)
       } else {
-        // Criar nova venda
-        const response = await vendasService.create(vendaData)
-        if (response.success) {
-          await loadVendas()
-          setShowForm(false)
-          setSuccessMessage('Venda criada com sucesso.')
+        response = await vendasService.create(vendaData)
+      }
+      if (response && response.success) {
+        await loadVendas()
+        setShowForm(false)
+        setEditingVenda(null)
+        setToast({ message: editingVenda ? 'Venda atualizada com sucesso.' : 'Venda criada com sucesso.', type: 'success' })
+      } else {
+        setToast({ message: response?.message || 'Não foi possível salvar a venda. Verifique os dados e tente novamente.', type: 'error' })
+      }
+    } catch (error: unknown) {
+      let msg = 'Não foi possível salvar a venda. Verifique os dados e tente novamente.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
         }
       }
-    } catch (error) {
+      setToast({ message: msg, type: 'error' })
       console.error('Erro ao salvar venda:', error)
-      if (axios.isAxiosError(error)) {
-        const message = typeof error.response?.data?.message === 'string'
-          ? error.response.data.message
-          : 'Não foi possível salvar a venda. Verifique os dados e tente novamente.'
-        setFormError(message)
-      } else {
-        setFormError('Não foi possível salvar a venda. Verifique os dados e tente novamente.')
-      }
     } finally {
       setFormLoading(false)
     }
   }
 
   const handleCancelarForm = () => {
-    setShowForm(false)
-    setEditingVenda(null)
-    setFormError(null)
+  setShowForm(false)
+  setEditingVenda(null)
   }
 
   const handleVisualizarVenda = (venda: Venda) => {
@@ -159,28 +149,28 @@ export default function VendasPage() {
 
     try {
       setDeletingId(venda.id)
-      setFormError(null)
-      setSuccessMessage(null)
       const response = await vendasService.delete(venda.id)
       if (response.success) {
         await loadVendas()
-        setSuccessMessage('Venda excluída com sucesso.')
+        setToast({ message: 'Venda excluída com sucesso.', type: 'success' })
         if (selectedVenda?.id === venda.id) {
           setSelectedVenda(null)
         }
       } else if (response.message) {
-        setFormError(response.message)
+        setToast({ message: response.message, type: 'error' })
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      let msg = 'Não foi possível excluir a venda.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
+        }
+      }
+      setToast({ message: msg, type: 'error' })
       console.error('Erro ao excluir venda:', error)
-      if (axios.isAxiosError(error)) {
-        const message = typeof error.response?.data?.message === 'string'
-          ? error.response.data.message
-          : 'Não foi possível excluir a venda.'
-        setFormError(message)
-      } else {
-        setFormError('Não foi possível excluir a venda.')
-      }
     } finally {
       setDeletingId(null)
     }
@@ -223,6 +213,9 @@ export default function VendasPage() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -248,17 +241,7 @@ export default function VendasPage() {
         </div>
       </div>
 
-      {successMessage ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-          {successMessage}
-        </div>
-      ) : null}
-
-      {!showForm && formError ? (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {formError}
-        </div>
-      ) : null}
+      {/* Toast cobre mensagens de sucesso/erro */}
 
       {selectedVenda ? (
         <Card>
@@ -477,7 +460,7 @@ export default function VendasPage() {
             onSubmit={handleSalvarVenda}
             onCancel={handleCancelarForm}
             loading={formLoading}
-            errorMessage={formError || undefined}
+            errorMessage={undefined}
           />
         </div>
       )}

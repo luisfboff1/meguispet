@@ -17,6 +17,7 @@ import {
 import { fornecedoresService } from '@/services/api'
 import type { Fornecedor, FornecedorForm as FornecedorFormValues } from '@/types'
 import FornecedorForm from '@/components/forms/FornecedorForm'
+import Toast from '@/components/ui/Toast'
 
 interface PaginationState {
   page: number
@@ -34,6 +35,7 @@ export default function FornecedoresPage() {
   const [pagination, setPagination] = useState<PaginationState>({ page: 1, pages: 1, total: 0, limit: 10 })
   const [showForm, setShowForm] = useState(false)
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null)
+  const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' | 'info' } | null>(null)
 
   useEffect(() => {
     void loadFornecedores()
@@ -114,21 +116,31 @@ export default function FornecedoresPage() {
     try {
       setFormLoading(true)
       const { tipo: _tipo, ...payload } = fornecedorData
+      let response
       if (editingFornecedor) {
-        const response = await fornecedoresService.update(editingFornecedor.id, payload)
-        if (response.success) {
-          await loadFornecedores()
-          setShowForm(false)
-          setEditingFornecedor(null)
-        }
+        response = await fornecedoresService.update(editingFornecedor.id, payload)
       } else {
-        const response = await fornecedoresService.create(payload as Omit<Fornecedor, 'id' | 'created_at' | 'updated_at'>)
-        if (response.success) {
-          await loadFornecedores()
-          setShowForm(false)
+        response = await fornecedoresService.create(payload as Omit<Fornecedor, 'id' | 'created_at' | 'updated_at'>)
+      }
+      if (response && response.success) {
+        await loadFornecedores()
+        setShowForm(false)
+        setEditingFornecedor(null)
+        setToast({ message: editingFornecedor ? 'Fornecedor atualizado com sucesso!' : 'Fornecedor cadastrado com sucesso!', type: 'success' })
+      } else {
+        setToast({ message: response?.message || 'Erro ao salvar fornecedor. Tente novamente.', type: 'error' })
+      }
+    } catch (error: unknown) {
+      let msg = 'Erro ao salvar fornecedor. Tente novamente.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
         }
       }
-    } catch (error) {
+      setToast({ message: msg, type: 'error' })
       console.error('Erro ao salvar fornecedor:', error)
     } finally {
       setFormLoading(false)
@@ -168,6 +180,9 @@ export default function FornecedoresPage() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Fornecedores</h1>
