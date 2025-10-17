@@ -37,7 +37,7 @@ export default function ClienteForm({ cliente, onSubmit, onCancel, loading = fal
       email: values.email ?? '',
       telefone: values.telefone ?? '',
       tipo: values.tipo || 'cliente',
-      ativo: undefined,
+      ativo: values.ativo ?? true,
       nome_fantasia: undefined,
       inscricao_estadual: undefined
     }
@@ -51,7 +51,7 @@ export default function ClienteForm({ cliente, onSubmit, onCancel, loading = fal
       mode="cliente"
       allowTipoSwitch
       allowFornecedorExtras
-      allowStatusToggle={false}
+      allowStatusToggle
       enableDocumentoLookup
       enableCepLookup
       loading={loading}
