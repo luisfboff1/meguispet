@@ -151,6 +151,29 @@ pnpm clean
 pnpm clean:build
 ```
 
+### 🗂️ Export estático e arquivos JSON
+
+Este projeto usa `output: 'export'` no `next.config.js`, gerando HTML estático em `dist/` e, para cada rota, um arquivo JSON em `dist/_next/data/<buildId>/<rota>.json` extraído do `__NEXT_DATA__` do HTML. Exemplos:
+
+- Página: `dist/login/index.html`
+- Dados: `dist/_next/data/<buildId>/login.json`
+
+Observações importantes:
+
+- Páginas sem `getStaticProps` continuam tendo um JSON correspondente (conteúdo deriva do `__NEXT_DATA__`), útil para compatibilidade com clientes que esperam `_next/data`.
+- Como usamos export estático, `getServerSideProps` não é suportado; use `getStaticProps`/client-side fetch.
+- Imagens Next estão com `images.unoptimized = true` para funcionar em hospedagem estática.
+
+### 👀 Preview local do build
+
+Para servir o resultado estático de `dist/` localmente (sem Node server do Next):
+
+```bash
+pnpm preview
+```
+
+Isso inicia um servidor estático simples apontando para `dist/`.
+
 ### 🎨 Tailwind sem DaisyUI
 
 - ⛔ **DaisyUI removido**: eliminamos o plugin para evitar seletores incompatíveis com o parser da pipeline de build.

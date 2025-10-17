@@ -15,7 +15,8 @@ import {
   LogOut,
   Package2,
   Truck,
-  X
+  X,
+  Building2
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -32,6 +33,7 @@ const menuItems: MenuItem[] = [
   { icon: Home, label: 'Dashboard', href: '/dashboard' },
   { icon: ShoppingCart, label: 'Vendas', href: '/vendas' },
   { icon: Package, label: 'Produtos & Estoque', href: '/produtos-estoque' },
+  { icon: Building2, label: 'Fornecedores', href: '/fornecedores' },
   { icon: Users, label: 'Clientes', href: '/clientes' },
   { icon: UserCheck, label: 'Vendedores', href: '/vendedores' },
   { icon: DollarSign, label: 'Financeiro', href: '/financeiro' },

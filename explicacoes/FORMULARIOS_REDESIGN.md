@@ -74,3 +74,43 @@
 
 ---
 Última atualização: 2025-10-16.
+
+## 7. To-Do
+- [x] Criar `PessoaForm` compartilhado e adaptar `ClienteForm`/`FornecedorForm`.
+- [x] Atualizar página de Clientes para aplicar filtros por tipo e ajustar UX.
+- [x] Revisar fluxo de fornecedores (nova página dedicada) consumindo `PessoaForm`.
+- [x] Refatorar `ProdutoForm` destacando cadastros de estoque em componente próprio.
+- [x] Implementar núcleo `EstoqueOperacaoForm` e substituir fluxo de ajustes em `estoque.tsx`.
+- [ ] Integrar `EstoqueOperacaoForm` aos fluxos de movimentação e vendas (pendente).
+- [ ] Implementar `OperacaoComercialForm` e atualizar `VendaForm` como wrapper.
+- [ ] Reorganizar navegação/rotas conforme estrutura proposta.
+- [x] Atualizar Sidebar/navegação principal para expor a nova página `fornecedores.tsx`.
+- [x] Detalhar plano de migração de `/produtos-estoque` para rotas dedicadas antes dos refactors.
+
+## 8. Plano de Migração de `/produtos-estoque`
+1. **Congelar estado atual**
+   - Registrar screenshots e métricas principais (quantidade de produtos, movimentações recentes) para comparação pós-migração.
+   - Mapear interdependências que apontam diretamente para `/produtos-estoque` (atalhos na UI, links em relatórios, deep links externos).
+
+2. **Extrair utilidades compartilhadas**
+   - Mover helpers de preço, estoque e status (`formatCurrency`, `getStockStatus`, `describeProdutoEstoques`) para `lib/estoque-utils.ts`.
+   - Criar hooks de dados (`useProdutos`, `useEstoques`, `useMovimentacoes`) centralizando paginação, filtros e estados de carregamento.
+
+3. **Gerar rotas focadas**
+   - `pages/produtos.tsx`: mantém cartões/tabela, remove abas e modais alheios.
+   - `pages/estoques.tsx`: apresenta métricas, filas de ajuste e consumirá `EstoqueOperacaoForm`.
+   - `pages/movimentacoes.tsx`: foca em histórico, filtros e modal de detalhes.
+
+4. **Migrar formulários associados**
+   - Conectar `ProdutoForm` refatorado à rota de produtos.
+   - Encaixar `EstoqueOperacaoForm` na nova página de estoques com presets para inventário/transferência.
+   - Reutilizar `MovimentacaoForm` existente como fallback até conclusão do novo núcleo.
+
+5. **Fazer rollout gradual**
+   - Exibir banner em `/produtos-estoque` indicando substituição e links para as novas rotas.
+   - Coletar feedback com check-list de regressão (CRUD produtos, confirmar movimentação, navegar relatórios).
+   - Após validação, redirecionar `/produtos-estoque` para `/produtos` e remover código legado.
+
+6. **Atualizar documentação e treinamentos**
+   - Revisar este plano, o README operacional e playbooks da equipe.
+   - Comunicar usuários sobre o novo fluxo, com data de corte para a aba antiga.

@@ -2,21 +2,19 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Download, 
-  Edit, 
+import {
+  Plus,
+  Search,
+  Download,
+  Edit,
   Package,
   AlertTriangle,
   TrendingUp,
-  TrendingDown,
   AlertCircle
 } from 'lucide-react'
-import { produtosService } from '@/services/api'
-import type { Produto, AjusteEstoqueForm as AjusteEstoqueFormValues } from '@/types'
-import AjusteEstoqueForm from '@/components/forms/AjusteEstoqueForm'
+import { produtosService, movimentacoesService } from '@/services/api'
+import type { Produto, EstoqueOperacaoInput, MovimentacaoForm } from '@/types'
+import EstoqueOperacaoForm from '@/components/forms/EstoqueOperacaoForm'
 
 export default function EstoquePage() {
   const [produtos, setProdutos] = useState<Produto[]>([])
@@ -55,19 +53,50 @@ export default function EstoquePage() {
     setShowAjusteForm(true)
   }
 
-  const handleSalvarAjuste = async (ajusteData: AjusteEstoqueFormValues) => {
+  const convertToMovimentacaoPayload = (input: EstoqueOperacaoInput): MovimentacaoForm | null => {
+    if (input.tipo === 'transferencia') {
+      console.warn('Transferência entre estoques ainda não implementada no backend atual.')
+      return null
+    }
+
+    const tipo_movimentacao: MovimentacaoForm['tipo_movimentacao'] =
+      input.tipo === 'saida' ? 'saida' : 'entrada'
+
+    return {
+      tipo_movimentacao,
+      fornecedor_id: input.participante?.fornecedor_id ?? undefined,
+      cliente_id: input.participante?.cliente_id ?? undefined,
+      vendedor_id: input.participante?.vendedor_id ?? undefined,
+      observacoes: input.observacoes,
+      produtos: input.itens.map((item) => ({
+        produto_id: item.produto_id,
+        quantidade: item.quantidade,
+        preco_unitario: item.preco_unitario ?? 0,
+        valor_total: item.valor_total ?? item.quantidade * (item.preco_unitario ?? 0),
+        produto_nome: item.produto_nome
+      }))
+    }
+  }
+
+  const handleSalvarAjuste = async (ajusteData: EstoqueOperacaoInput) => {
     try {
       setFormLoading(true)
-      
-      // Aqui você implementaria a lógica de ajuste de estoque
-      // Por enquanto, vamos simular um ajuste
-      console.log('Ajuste de estoque:', ajusteData)
-      
-      // Recarregar produtos após ajuste
+      const payload = convertToMovimentacaoPayload(ajusteData)
+      if (!payload) {
+        alert('Fluxo de transferência ainda não está disponível. Selecione outro tipo de operação.')
+        return
+      }
+
+      const response = await movimentacoesService.create(payload)
+      if (!response.success) {
+        throw new Error(response.message || 'Falha ao registrar movimentação de estoque')
+      }
+
       await loadProdutos()
       setShowAjusteForm(false)
     } catch (error) {
       console.error('Erro ao ajustar estoque:', error)
+      alert('Não foi possível registrar a operação. Tente novamente mais tarde.')
     } finally {
       setFormLoading(false)
     }
@@ -335,10 +364,20 @@ export default function EstoquePage() {
       {/* Formulário de Ajuste de Estoque */}
       {showAjusteForm && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
-          <AjusteEstoqueForm
+          <EstoqueOperacaoForm
+            title="Ajustar estoque"
+            description="Selecione os itens e o fluxo da movimentação para registrar a operação."
+            defaultTipo="ajuste"
+            tipoOptions={[
+              { value: 'entrada', label: 'Entrada (reposição)' },
+              { value: 'saida', label: 'Saída (baixa)' },
+              { value: 'ajuste', label: 'Inventário/Ajuste manual' }
+            ]}
             onSubmit={handleSalvarAjuste}
             onCancel={handleCancelarAjuste}
             loading={formLoading}
+            includeStatusControl
+            participanteConfig={{ enableCliente: true, enableFornecedor: true, enableVendedor: true }}
           />
         </div>
       )}

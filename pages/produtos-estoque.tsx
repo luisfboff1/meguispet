@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { isAxiosError } from 'axios'
 import { useRouter } from 'next/router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -21,29 +20,24 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Settings,
-  ShoppingCart,
   X
 } from 'lucide-react'
-import { produtosService, fornecedoresService, movimentacoesService, estoquesService } from '@/services/api'
+import { produtosService, movimentacoesService, estoquesService } from '@/services/api'
 import type {
   Produto,
-  Fornecedor,
   MovimentacaoEstoque,
   MovimentacaoForm as MovimentacaoFormValues,
   ProdutoForm as ProdutoFormValues,
-  FornecedorForm as FornecedorFormValues,
   Estoque
 } from '@/types'
 import ProdutoForm from '@/components/forms/ProdutoForm'
-import FornecedorForm from '@/components/forms/FornecedorForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 
 export default function ProdutosEstoquePage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'produtos' | 'estoque' | 'movimentacoes' | 'fornecedores'>('produtos')
+  const [activeTab, setActiveTab] = useState<'produtos' | 'estoque' | 'movimentacoes'>('produtos')
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [estoques, setEstoques] = useState<Estoque[]>([])
-  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([])
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -52,10 +46,8 @@ export default function ProdutosEstoquePage() {
   
   // Estados para formulários
   const [showProdutoForm, setShowProdutoForm] = useState(false)
-  const [showFornecedorForm, setShowFornecedorForm] = useState(false)
   const [showMovimentacaoForm, setShowMovimentacaoForm] = useState(false)
   const [editingProduto, setEditingProduto] = useState<Produto | null>(null)
-  const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null)
   const [editingMovimentacao, setEditingMovimentacao] = useState<MovimentacaoEstoque | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   
@@ -85,27 +77,6 @@ export default function ProdutosEstoquePage() {
         }
       } catch (error) {
         console.error('Erro ao carregar estoques:', error)
-      }
-      
-      // Carregar fornecedores
-      try {
-        console.log('🔄 Carregando fornecedores...')
-        const fornecedoresResponse = await fornecedoresService.getAll(1, 100)
-        console.log('📦 Resposta fornecedores:', fornecedoresResponse)
-        if (fornecedoresResponse.success && fornecedoresResponse.data) {
-          console.log('✅ Fornecedores carregados:', fornecedoresResponse.data.length, 'fornecedores')
-          console.log('📋 Lista de fornecedores:', fornecedoresResponse.data)
-          setFornecedores(fornecedoresResponse.data)
-        } else {
-          console.warn('⚠️ Fornecedores não carregados:', fornecedoresResponse)
-        }
-      } catch (error) {
-        console.error('❌ Erro ao carregar fornecedores:', error)
-        console.error('🔍 Detalhes do erro:', {
-          message: error instanceof Error ? error.message : 'Erro desconhecido',
-          stack: error instanceof Error ? error.stack : undefined,
-          response: isAxiosError(error) ? error.response?.data : undefined
-        })
       }
       
       // Carregar movimentações
@@ -215,63 +186,6 @@ export default function ProdutosEstoquePage() {
     }
   }
 
-  // Handlers para fornecedores
-  const handleNovoFornecedor = () => {
-    setEditingFornecedor(null)
-    setShowFornecedorForm(true)
-  }
-
-  const handleEditarFornecedor = (fornecedor: Fornecedor) => {
-    setEditingFornecedor(fornecedor)
-    setShowFornecedorForm(true)
-  }
-
-  const handleExcluirFornecedor = async (fornecedor: Fornecedor) => {
-    if (confirm(`Tem certeza que deseja excluir o fornecedor "${fornecedor.nome}"?`)) {
-      try {
-        setFormLoading(true)
-        const response = await fornecedoresService.delete(fornecedor.id)
-        if (response.success) {
-          await loadData() // Recarregar dados
-          console.log('✅ Fornecedor excluído com sucesso')
-        } else {
-          console.error('❌ Erro ao excluir fornecedor:', response.message)
-          alert('Erro ao excluir fornecedor: ' + response.message)
-        }
-      } catch (error) {
-        console.error('❌ Erro ao excluir fornecedor:', error)
-        alert('Erro ao excluir fornecedor')
-      } finally {
-        setFormLoading(false)
-      }
-    }
-  }
-
-  const handleSalvarFornecedor = async (fornecedorData: FornecedorFormValues) => {
-    try {
-      setFormLoading(true)
-      
-      if (editingFornecedor) {
-        const response = await fornecedoresService.update(editingFornecedor.id, fornecedorData)
-        if (response.success) {
-          await loadData()
-          setShowFornecedorForm(false)
-          setEditingFornecedor(null)
-        }
-      } else {
-        const response = await fornecedoresService.create(fornecedorData)
-        if (response.success) {
-          await loadData()
-          setShowFornecedorForm(false)
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao salvar fornecedor:', error)
-    } finally {
-      setFormLoading(false)
-    }
-  }
-
   // Handlers para movimentações
   const handleNovaMovimentacao = () => {
     setShowMovimentacaoForm(true)
@@ -374,10 +288,8 @@ export default function ProdutosEstoquePage() {
 
   const handleCancelarForm = () => {
     setShowProdutoForm(false)
-    setShowFornecedorForm(false)
     setShowMovimentacaoForm(false)
     setEditingProduto(null)
-    setEditingFornecedor(null)
   }
 
   // Estatísticas
@@ -458,15 +370,6 @@ export default function ProdutosEstoquePage() {
               </Button>
             </>
           )}
-          {activeTab === 'fornecedores' && (
-            <Button 
-              className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-              onClick={handleNovoFornecedor}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Fornecedor
-            </Button>
-          )}
         </div>
       </div>
 
@@ -505,17 +408,6 @@ export default function ProdutosEstoquePage() {
           >
             <Truck className="inline mr-2 h-4 w-4" />
             Movimentações
-          </button>
-          <button
-            onClick={() => setActiveTab('fornecedores')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'fornecedores'
-                ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <ShoppingCart className="inline mr-2 h-4 w-4" />
-            Fornecedores
           </button>
         </nav>
       </div>
@@ -1069,139 +961,12 @@ export default function ProdutosEstoquePage() {
         </Card>
       )}
 
-      {activeTab === 'fornecedores' && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  Fornecedores ({fornecedores.length})
-                </CardTitle>
-                <CardDescription>
-                  Gerencie seus fornecedores e parceiros comerciais
-                </CardDescription>
-              </div>
-              <Button 
-                className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-                onClick={handleNovoFornecedor}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Fornecedor
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-gray-500">Carregando fornecedores...</div>
-              </div>
-            ) : fornecedores.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Fornecedor</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">CNPJ</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Email</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Telefone</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Cidade</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fornecedores.map((fornecedor) => (
-                      <tr key={fornecedor.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                              <ShoppingCart className="h-4 w-4 text-blue-600" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{fornecedor.nome}</div>
-                              {fornecedor.nome_fantasia && (
-                                <div className="text-sm text-gray-500">{fornecedor.nome_fantasia}</div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {fornecedor.cnpj || 'N/A'}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {fornecedor.email || 'N/A'}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {fornecedor.telefone || 'N/A'}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {fornecedor.cidade && fornecedor.estado 
-                            ? `${fornecedor.cidade}/${fornecedor.estado}` 
-                            : 'N/A'}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleEditarFornecedor(fornecedor)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => handleExcluirFornecedor(fornecedor)}
-                              disabled={formLoading}
-                              title="Excluir fornecedor"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8">
-                <ShoppingCart className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum fornecedor encontrado</h3>
-                <p className="text-gray-600 text-center mb-4">
-                  Cadastre seu primeiro fornecedor para começar
-                </p>
-                <Button 
-                  className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-                  onClick={handleNovoFornecedor}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Fornecedor
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {/* Formulários Modais */}
       {showProdutoForm && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
           <ProdutoForm
             produto={editingProduto || undefined}
             onSubmit={handleSalvarProduto}
-            onCancel={handleCancelarForm}
-            loading={formLoading}
-          />
-        </div>
-      )}
-
-      {showFornecedorForm && (
-        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
-          <FornecedorForm
-            fornecedor={editingFornecedor || undefined}
-            onSubmit={handleSalvarFornecedor}
             onCancel={handleCancelarForm}
             loading={formLoading}
           />

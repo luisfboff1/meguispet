@@ -23,6 +23,7 @@ export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [tipoFiltro, setTipoFiltro] = useState<'todos' | 'cliente' | 'fornecedor' | 'ambos'>('cliente')
   const [currentPage, setCurrentPage] = useState(1)
   const [showForm, setShowForm] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
@@ -46,11 +47,27 @@ export default function ClientesPage() {
     }
   }
 
-  const filteredClientes = clientes.filter(cliente =>
-    cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.telefone?.includes(searchTerm)
-  )
+  const tipoMatch = (tipo: Cliente['tipo']) => {
+    if (tipoFiltro === 'todos') return true
+    if (tipoFiltro === 'cliente') return tipo === 'cliente' || tipo === 'ambos'
+    if (tipoFiltro === 'fornecedor') return tipo === 'fornecedor' || tipo === 'ambos'
+    return tipo === 'ambos'
+  }
+
+  const filteredClientes = clientes.filter(cliente => {
+    const termo = searchTerm.toLowerCase()
+    const matchesSearch =
+      cliente.nome.toLowerCase().includes(termo) ||
+      cliente.email?.toLowerCase().includes(termo) ||
+      cliente.telefone?.includes(searchTerm)
+    return matchesSearch && tipoMatch(cliente.tipo)
+  })
+
+  const tipoLabel: Record<Cliente['tipo'], string> = {
+    cliente: 'Cliente',
+    fornecedor: 'Fornecedor',
+    ambos: 'Cliente e Fornecedor'
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR')
@@ -201,10 +218,19 @@ export default function ClientesPage() {
                 />
               </div>
             </div>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtros
-            </Button>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <select
+                value={tipoFiltro}
+                onChange={(e) => setTipoFiltro(e.target.value as typeof tipoFiltro)}
+                className="border rounded-md px-3 py-2 text-sm"
+              >
+                <option value="cliente">Somente clientes</option>
+                <option value="fornecedor">Somente fornecedores</option>
+                <option value="ambos">Clientes+Fornecedores</option>
+                <option value="todos">Todos os registros</option>
+              </select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -234,6 +260,9 @@ export default function ClientesPage() {
                     </div>
                   </div>
                   <div className="flex space-x-1">
+                      <span className="inline-flex items-center rounded-full bg-meguispet-primary/10 px-2 py-0.5 text-xs font-medium text-meguispet-primary">
+                        {tipoLabel[cliente.tipo]}
+                      </span>
                     <Button variant="ghost" size="sm">
                       <Eye className="h-4 w-4" />
                     </Button>

@@ -12,6 +12,7 @@ import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import type {
   ClienteForm as ClienteFormValues,
   MovimentacaoForm as MovimentacaoFormValues,
+  MovimentacaoEstoque,
   Produto,
   ProdutoForm as ProdutoFormValues,
   VendaForm as VendaFormValues
@@ -41,6 +42,8 @@ interface MovimentacaoModalPayload {
   onSubmit: (values: MovimentacaoFormValues) => Promise<void> | void
   onCancel?: () => void
   loading?: boolean
+  produto?: Produto
+  editingData?: MovimentacaoEstoque
 }
 
 type ModalPayloadMap = {
@@ -221,6 +224,8 @@ export function ModalHost() {
               close()
             }}
             loading={payload.loading}
+            produto={payload.produto}
+            editingData={payload.editingData}
           />
         )
       }

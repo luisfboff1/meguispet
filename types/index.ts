@@ -223,6 +223,32 @@ export interface ProdutoForm {
   estoques?: ProdutoEstoqueInput[]
 }
 
+export type EstoqueOperacaoTipo = 'entrada' | 'saida' | 'ajuste' | 'transferencia'
+
+export interface EstoqueOperacaoItem {
+  produto_id: number
+  quantidade: number
+  preco_unitario?: number
+  valor_total?: number
+  produto_nome?: string
+}
+
+export interface EstoqueOperacaoParticipante {
+  cliente_id?: number | null
+  fornecedor_id?: number | null
+  vendedor_id?: number | null
+}
+
+export interface EstoqueOperacaoInput {
+  tipo: EstoqueOperacaoTipo
+  origem_estoque_id?: number | null
+  destino_estoque_id?: number | null
+  itens: EstoqueOperacaoItem[]
+  participante?: EstoqueOperacaoParticipante
+  observacoes?: string
+  status?: 'rascunho' | 'pendente' | 'confirmado'
+}
+
 export type FormaPagamento = string
 
 export interface FormaPagamentoRegistro {
@@ -274,17 +300,6 @@ export interface FornecedorForm {
   observacoes?: string
   ativo: boolean
   tipo?: 'fornecedor' | 'ambos'
-}
-
-export type AjusteEstoqueTipo = 'entrada' | 'saida' | 'inventario'
-
-export interface AjusteEstoqueForm {
-  produto_id: number
-  tipo_ajuste: AjusteEstoqueTipo
-  quantidade: number
-  motivo: string
-  observacoes?: string
-  vendedor_id?: number
 }
 
 export interface MovimentacaoProdutoItem {
