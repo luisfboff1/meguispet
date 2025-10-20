@@ -255,7 +255,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto max-h-[90vh] overflow-y-auto">
       <CardHeader>
         <CardTitle className="flex items-center">
           <ShoppingCart className="mr-2 h-5 w-5" />
@@ -366,7 +366,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <Label>Itens da Venda</Label>
               <Button type="button" onClick={addItem} size="sm">
                 <Plus className="mr-2 h-4 w-4" />
@@ -374,72 +374,83 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               </Button>
             </div>
 
-            <div className="space-y-3">
-              {itens.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5">
-                    <Label>Produto</Label>
-                    <select
-                      value={item.produto_id}
-                      onChange={(e) => updateItem(index, 'produto_id', Number(e.target.value))}
-                      className="w-full p-2 border rounded-md"
-                    >
-                      <option value={0}>Selecione um produto</option>
-                      {produtos.map(produto => {
-                        const precoVenda = Number(produto.preco_venda)
-                        const precoFormatado = Number.isFinite(precoVenda) ? precoVenda.toFixed(2) : '0.00'
-                        return (
-                          <option key={produto.id} value={produto.id}>
-                            {produto.nome} - R$ {precoFormatado}
-                          </option>
-                        )
-                      })}
-                    </select>
+            <div className="border rounded-md overflow-hidden">
+              <div className="max-h-[280px] overflow-y-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b sticky top-0 z-10">
+                    <tr>
+                      <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Produto</th>
+                      <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 w-20">Qtd</th>
+                      <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 w-28">Preço Unit.</th>
+                      <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 w-28">Subtotal</th>
+                      <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itens.map((item, index) => (
+                      <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                        <td className="py-2 px-3">
+                          <select
+                            value={item.produto_id}
+                            onChange={(e) => updateItem(index, 'produto_id', Number(e.target.value))}
+                            className="w-full p-1.5 border rounded text-sm"
+                          >
+                            <option value={0}>Selecione um produto</option>
+                            {produtos.map(produto => {
+                              const precoVenda = Number(produto.preco_venda)
+                              const precoFormatado = Number.isFinite(precoVenda) ? precoVenda.toFixed(2) : '0.00'
+                              return (
+                                <option key={produto.id} value={produto.id}>
+                                  {produto.nome} - R$ {precoFormatado}
+                                </option>
+                              )
+                            })}
+                          </select>
+                        </td>
+                        <td className="py-2 px-3">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantidade}
+                            onChange={(e) => updateItem(index, 'quantidade', Number(e.target.value))}
+                            className="w-full text-sm p-1.5"
+                          />
+                        </td>
+                        <td className="py-2 px-3">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.preco_unitario}
+                            onChange={(e) => updateItem(index, 'preco_unitario', Number(e.target.value))}
+                            className="w-full text-sm p-1.5"
+                          />
+                        </td>
+                        <td className="py-2 px-3">
+                          <div className="text-sm font-medium bg-gray-50 px-2 py-1.5 rounded">
+                            R$ {item.subtotal.toFixed(2)}
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-center">
+                          <Button
+                            type="button"
+                            onClick={() => removeItem(index)}
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 h-8 w-8 p-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {itens.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 text-sm">
+                    Nenhum item adicionado. Clique em "Adicionar Item" para começar.
                   </div>
-
-                  <div className="col-span-2">
-                    <Label>Qtd</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.quantidade}
-                      onChange={(e) => updateItem(index, 'quantidade', Number(e.target.value))}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label>Preço Unit.</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.preco_unitario}
-                      onChange={(e) => updateItem(index, 'preco_unitario', Number(e.target.value))}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label>Subtotal</Label>
-                    <Input
-                      type="text"
-                      value={`R$ ${item.subtotal.toFixed(2)}`}
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                  </div>
-
-                  <div className="col-span-1">
-                    <Button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
           </div>
 
