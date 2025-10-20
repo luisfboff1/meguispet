@@ -447,7 +447,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                 </table>
                 {itens.length === 0 && (
                   <div className="text-center py-8 text-gray-500 text-sm">
-                    Nenhum item adicionado. Clique em "Adicionar Item" para começar.
+                    Nenhum item adicionado. Clique em &quot;Adicionar Item&quot; para começar.
                   </div>
                 )}
               </div>
