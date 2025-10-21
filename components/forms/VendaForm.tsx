@@ -20,6 +20,7 @@ import type {
 interface ItemVenda extends VendaItemInput {
   produto_nome: string
   subtotal: number
+  desconto?: number
 }
 
 interface VendaFormProps {
@@ -38,6 +39,8 @@ interface VendaFormState {
   estoque_id: string
   observacoes: string
   desconto: number
+  prazo_pagamento?: string | number
+  imposto_percentual?: number
 }
 
 const getFormaPagamentoIdFromVenda = (dados?: Venda): string => {
@@ -91,7 +94,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         origem_venda: 'loja_fisica',
         estoque_id: '',
         observacoes: '',
-        desconto: 0
+        desconto: 0,
+        prazo_pagamento: '',
+        imposto_percentual: 0
       })
       return
     }
@@ -103,7 +108,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       origem_venda: venda.origem_venda,
       estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
-      desconto: venda.desconto || 0
+      desconto: venda.desconto || 0,
+      prazo_pagamento: (venda as any).prazo_pagamento || '',
+      imposto_percentual: (venda as any).imposto_percentual || 0
     })
 
     if (venda.itens?.length) {
@@ -157,6 +164,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         quantidade: 1,
         preco_unitario: 0,
         subtotal: 0
+        ,desconto: 0
       }
     ]))
   }
@@ -191,7 +199,10 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const calcularTotal = () => {
     const subtotal = itens.reduce((sum, item) => sum + item.subtotal, 0)
     const desconto = Number(formData.desconto) || 0
-    return subtotal - desconto
+    const imposto = Number(formData.imposto_percentual) || 0
+    const valorComDesconto = Math.max(0, subtotal - desconto)
+    const valorImposto = (valorComDesconto * imposto) / 100
+    return valorComDesconto + valorImposto
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -229,6 +240,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       forma_pagamento_id: Number(formData.forma_pagamento_id),
   estoque_id: Number(formData.estoque_id),
       forma_pagamento: formaSelecionada.nome,
+      prazo_pagamento: formData.prazo_pagamento,
+      imposto_percentual: formData.imposto_percentual,
       itens: itens.map(item => ({
         produto_id: item.produto_id,
         quantidade: item.quantidade,

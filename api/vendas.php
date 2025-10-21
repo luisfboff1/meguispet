@@ -97,6 +97,8 @@ try {
                     'valor_total' => $venda['valor_total'],
                     'valor_final' => $venda['valor_final'],
                     'desconto' => $venda['desconto'],
+                    'prazo_pagamento' => isset($venda['prazo_pagamento']) ? $venda['prazo_pagamento'] : null,
+                    'imposto_percentual' => isset($venda['imposto_percentual']) ? (float)$venda['imposto_percentual'] : 0.0,
                     'status' => $venda['status'],
                     'forma_pagamento' => $venda['forma_pagamento_nome'] ?? $venda['forma_pagamento'],
                     'origem_venda' => $venda['origem_venda'],
@@ -185,11 +187,19 @@ try {
                 }
                 
                 $desconto = $data['desconto'] ?? 0;
-                $valor_final = $valor_total - $desconto;
+                // Support percentual tax if provided (frontend sends imposto_percentual)
+                $imposto_percentual = isset($data['imposto_percentual']) ? floatval($data['imposto_percentual']) : 0.0;
+
+                // Calculate valor_final: apply desconto first, then percentual tax on the result
+                $base_after_discount = $valor_total - $desconto;
+                if ($base_after_discount < 0) {
+                    $base_after_discount = 0;
+                }
+                $valor_final = round($base_after_discount * (1 + ($imposto_percentual / 100)), 2);
                 
                 // Inserir venda
-                $sql = "INSERT INTO vendas (numero_venda, cliente_id, vendedor_id, valor_total, desconto, valor_final, status, forma_pagamento, forma_pagamento_id, origem_venda, estoque_id, observacoes) 
-                        VALUES (:numero_venda, :cliente_id, :vendedor_id, :valor_total, :desconto, :valor_final, :status, :forma_pagamento, :forma_pagamento_id, :origem_venda, :estoque_id, :observacoes)";
+        $sql = "INSERT INTO vendas (numero_venda, cliente_id, vendedor_id, valor_total, desconto, valor_final, status, forma_pagamento, forma_pagamento_id, origem_venda, estoque_id, observacoes, prazo_pagamento, imposto_percentual) 
+            VALUES (:numero_venda, :cliente_id, :vendedor_id, :valor_total, :desconto, :valor_final, :status, :forma_pagamento, :forma_pagamento_id, :origem_venda, :estoque_id, :observacoes, :prazo_pagamento, :imposto_percentual)";
                 
                 $stmt = $conn->prepare($sql);
                 $stmt->execute([
@@ -204,7 +214,9 @@ try {
                     ':forma_pagamento_id' => $formaPagamentoId,
                     ':origem_venda' => $data['origem_venda'] ?? 'loja_fisica',
                     ':estoque_id' => $estoqueId,
-                    ':observacoes' => $data['observacoes'] ?? null
+                    ':observacoes' => $data['observacoes'] ?? null,
+                    ':prazo_pagamento' => $data['prazo_pagamento'] ?? null,
+                    ':imposto_percentual' => $imposto_percentual
                 ]);
                 
                 $venda_id = $conn->lastInsertId();

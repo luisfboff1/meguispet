@@ -281,6 +281,8 @@ export interface VendaForm {
   estoque_id: number
   itens: VendaItemInput[]
   desconto?: number
+  prazo_pagamento?: string | number
+  imposto_percentual?: number
   forma_pagamento: FormaPagamento
   origem_venda: OrigemVenda
   observacoes?: string
