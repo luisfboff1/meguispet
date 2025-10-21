@@ -92,34 +92,36 @@ try {
             // Transformar dados para estrutura esperada pelo frontend
             $vendasFormatted = array_map(function($venda) {
                 return [
-                    'id' => $venda['id'],
+                    'id' => (int)$venda['id'],
                     'numero_venda' => $venda['numero_venda'],
-                    'valor_total' => $venda['valor_total'],
-                    'valor_final' => $venda['valor_final'],
-                    'desconto' => $venda['desconto'],
+                    'valor_total' => isset($venda['valor_total']) ? (float)$venda['valor_total'] : 0.0,
+                    'valor_final' => isset($venda['valor_final']) ? (float)$venda['valor_final'] : 0.0,
+                    'desconto' => isset($venda['desconto']) ? (float)$venda['desconto'] : 0.0,
                     'prazo_pagamento' => isset($venda['prazo_pagamento']) ? $venda['prazo_pagamento'] : null,
                     'imposto_percentual' => isset($venda['imposto_percentual']) ? (float)$venda['imposto_percentual'] : 0.0,
                     'status' => $venda['status'],
                     'forma_pagamento' => $venda['forma_pagamento_nome'] ?? $venda['forma_pagamento'],
                     'origem_venda' => $venda['origem_venda'],
                     'observacoes' => $venda['observacoes'],
-                    'created_at' => $venda['data_venda'],
+                    // prefer created_at column if present, fallback to data_venda
+                    'created_at' => isset($venda['created_at']) && $venda['created_at'] ? $venda['created_at'] : $venda['data_venda'],
+                    'data_venda' => $venda['data_venda'],
                     'updated_at' => $venda['updated_at'],
-                    'estoque' => $venda['estoque_rel_id'] ? [
+                    'estoque' => !empty($venda['estoque_rel_id']) ? [
                         'id' => (int)$venda['estoque_rel_id'],
                         'nome' => $venda['estoque_nome']
                     ] : null,
-                    'forma_pagamento_detalhe' => $venda['forma_pagamento_rel_id'] ? [
+                    'forma_pagamento_detalhe' => !empty($venda['forma_pagamento_rel_id']) ? [
                         'id' => (int)$venda['forma_pagamento_rel_id'],
                         'nome' => $venda['forma_pagamento_nome']
                     ] : null,
-                    'cliente' => $venda['cliente_nome'] ? [
-                        'id' => $venda['cliente_id'],
+                    'cliente' => !empty($venda['cliente_nome']) ? [
+                        'id' => isset($venda['cliente_id']) ? (int)$venda['cliente_id'] : null,
                         'nome' => $venda['cliente_nome'],
                         'email' => $venda['cliente_email']
                     ] : null,
-                    'vendedor' => $venda['vendedor_nome'] ? [
-                        'id' => $venda['vendedor_id'],
+                    'vendedor' => !empty($venda['vendedor_nome']) ? [
+                        'id' => isset($venda['vendedor_id']) ? (int)$venda['vendedor_id'] : null,
                         'nome' => $venda['vendedor_nome'],
                         'email' => $venda['vendedor_email']
                     ] : null
@@ -142,13 +144,21 @@ try {
             // Criar venda
             $data = json_decode(file_get_contents('php://input'), true);
             
-            $required = ['itens', 'estoque_id', 'forma_pagamento_id'];
-            foreach ($required as $field) {
-                if (empty($data[$field])) {
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'message' => "Campo $field é obrigatório"]);
-                    exit();
-                }
+            // Validação básica: itens deve ser array não-vazio, estoque_id e forma_pagamento_id são obrigatórios
+            if (empty($data['itens']) || !is_array($data['itens']) || count($data['itens']) === 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Campo itens é obrigatório e deve conter ao menos um item']);
+                exit();
+            }
+            if (!isset($data['estoque_id']) || $data['estoque_id'] === '') {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Campo estoque_id é obrigatório']);
+                exit();
+            }
+            if (!isset($data['forma_pagamento_id']) || $data['forma_pagamento_id'] === '') {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Campo forma_pagamento_id é obrigatório']);
+                exit();
             }
 
             $estoqueId = (int)$data['estoque_id'];
