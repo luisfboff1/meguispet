@@ -302,13 +302,18 @@ try {
                     ]);
                 }
 
-                $totalEstoqueStmt = $conn->prepare("UPDATE produtos SET estoque = (
-                        SELECT COALESCE(SUM(pe.quantidade), 0)
-                        FROM produtos_estoques pe
-                        WHERE pe.produto_id = :produto_id
-                    )
-                    WHERE id = :produto_id");
-                $totalEstoqueStmt->execute([':produto_id' => $produto_id]);
+                // Atualizar coluna produtos.estoque apenas se ela existir no schema
+                $colCheck = $conn->prepare("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'produtos' AND COLUMN_NAME = 'estoque'");
+                $colCheck->execute();
+                if ($colCheck->fetchColumn()) {
+                    $totalEstoqueStmt = $conn->prepare("UPDATE produtos SET estoque = (
+                            SELECT COALESCE(SUM(pe.quantidade), 0)
+                            FROM produtos_estoques pe
+                            WHERE pe.produto_id = :produto_id
+                        )
+                        WHERE id = :produto_id");
+                    $totalEstoqueStmt->execute([':produto_id' => $produto_id]);
+                }
 
                 $conn->commit();
 
@@ -417,13 +422,18 @@ try {
                     }
                 }
 
-                $totalEstoqueStmt = $conn->prepare("UPDATE produtos SET estoque = (
-                        SELECT COALESCE(SUM(pe.quantidade), 0)
-                        FROM produtos_estoques pe
-                        WHERE pe.produto_id = :produto_id
-                    )
-                    WHERE id = :produto_id");
-                $totalEstoqueStmt->execute([':produto_id' => $data['id']]);
+                // Atualizar coluna produtos.estoque apenas se ela existir no schema
+                $colCheck = $conn->prepare("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'produtos' AND COLUMN_NAME = 'estoque'");
+                $colCheck->execute();
+                if ($colCheck->fetchColumn()) {
+                    $totalEstoqueStmt = $conn->prepare("UPDATE produtos SET estoque = (
+                            SELECT COALESCE(SUM(pe.quantidade), 0)
+                            FROM produtos_estoques pe
+                            WHERE pe.produto_id = :produto_id
+                        )
+                        WHERE id = :produto_id");
+                    $totalEstoqueStmt->execute([':produto_id' => $data['id']]);
+                }
 
                 $conn->commit();
 
