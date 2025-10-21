@@ -480,14 +480,39 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               />
             </div>
 
-            <div>
-              <Label>Total da Venda</Label>
-              <Input
-                type="text"
-                value={`R$ ${calcularTotal().toFixed(2)}`}
-                readOnly
-                className="bg-gray-50 font-bold text-lg"
-              />
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="imposto_percentual">Imposto (%)</Label>
+                <Input
+                  id="imposto_percentual"
+                  type="number"
+                  step="0.01"
+                  value={formData.imposto_percentual}
+                  onChange={(e) => setFormData(prev => ({ ...prev, imposto_percentual: Number(e.target.value) }))}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="prazo_pagamento">Prazo de Pagamento</Label>
+                <Input
+                  id="prazo_pagamento"
+                  type="text"
+                  value={String(formData.prazo_pagamento || '')}
+                  onChange={(e) => setFormData(prev => ({ ...prev, prazo_pagamento: e.target.value }))}
+                  placeholder="Ex: 30 dias ou À vista"
+                />
+              </div>
+
+              <div>
+                <Label>Total da Venda</Label>
+                <Input
+                  type="text"
+                  value={`R$ ${calcularTotal().toFixed(2)}`}
+                  readOnly
+                  className="bg-gray-50 font-bold text-lg"
+                />
+              </div>
             </div>
           </div>
 
