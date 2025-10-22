@@ -6,8 +6,12 @@ interface JWTPayload {
   role: string;
 }
 
-// Fallback para desenvolvimento local se JWT_SECRET não estiver configurado
-const JWT_SECRET = process.env.JWT_SECRET || 'meguispet_jwt_secret_2025_super_secure_key_luisfboff_production';
+// Usa o JWT_SECRET do Supabase que já é injetado automaticamente pela Vercel
+// Fallback para desenvolvimento local
+const JWT_SECRET = 
+  process.env.SUPABASE_JWT_SECRET || 
+  process.env.JWT_SECRET || 
+  'meguispet_jwt_secret_2025_super_secure_key_luisfboff_production';
 const JWT_EXPIRY = '24h';
 
 // Converte a secret string para Uint8Array (requerido pelo jose)
