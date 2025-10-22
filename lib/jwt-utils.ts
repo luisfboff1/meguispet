@@ -1,31 +1,44 @@
-import jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify } from 'jose';
 
 interface JWTPayload {
   id: number;
   email: string;
   role: string;
-  exp?: number;
 }
 
-const getJWTSecret = (): string => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
-  }
-  return secret;
-};
+// Fallback para desenvolvimento local se JWT_SECRET não estiver configurado
+const JWT_SECRET = process.env.JWT_SECRET || 'meguispet_jwt_secret_2025_super_secure_key_luisfboff_production';
+const JWT_EXPIRY = '24h';
 
-export const signJWT = (payload: Omit<JWTPayload, 'exp'>): string => {
-  const secret = getJWTSecret();
-  return jwt.sign(payload, secret, { expiresIn: '24h' });
-};
+// Converte a secret string para Uint8Array (requerido pelo jose)
+const getSecretKey = () => new TextEncoder().encode(JWT_SECRET);
 
-export const verifyJWT = (token: string): JWTPayload | null => {
+export const signJWT = async (payload: JWTPayload): Promise<string> => {
   try {
-    const secret = getJWTSecret();
-    const decoded = jwt.verify(token, secret) as JWTPayload;
-    return decoded;
+    const token = await new SignJWT({ ...payload })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime(JWT_EXPIRY)
+      .sign(getSecretKey());
+    
+    return token;
   } catch (error) {
+    console.error('❌ Erro ao criar JWT:', error);
+    throw new Error('Falha ao criar token de autenticação');
+  }
+};
+
+export const verifyJWT = async (token: string): Promise<JWTPayload | null> => {
+  try {
+    const { payload } = await jwtVerify(token, getSecretKey());
+    
+    return {
+      id: payload.id as number,
+      email: payload.email as string,
+      role: payload.role as string,
+    };
+  } catch (error) {
+    console.error('❌ Erro ao verificar JWT:', error);
     return null;
   }
 };

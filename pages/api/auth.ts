@@ -59,7 +59,7 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     });
   }
 
-  const token = signJWT({
+  const token = await signJWT({
     id: user.id,
     email: user.email,
     role: user.role,
@@ -94,7 +94,7 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
     });
   }
 
-  const payload = verifyJWT(token);
+  const payload = await verifyJWT(token);
 
   if (!payload) {
     return res.status(401).json({

@@ -2,6 +2,18 @@ import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withAuth, AuthenticatedRequest } from '@/lib/api-middleware';
 
+interface VendaItem {
+  produto_id: number;
+  quantidade: number;
+  preco_unitario: number;
+  subtotal: number;
+}
+
+interface Produto {
+  id: number;
+  nome: string;
+}
+
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const supabase = getSupabase();
 
@@ -23,7 +35,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     if (error) throw error;
 
     // Buscar nomes dos produtos
-    const produtoIds = Array.from(new Set((vendasItens || []).map((item: any) => item.produto_id)));
+    const produtoIds = Array.from(new Set((vendasItens || []).map((item: VendaItem) => item.produto_id)));
     const { data: produtos, error: produtosError } = await supabase
       .from('produtos')
       .select('id, nome')
@@ -33,7 +45,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     // Criar mapa de produtos por ID
     const produtosById = new Map(
-      (produtos || []).map((p: any) => [p.id, p.nome])
+      (produtos || []).map((p: Produto) => [p.id, p.nome])
     );
 
     // Agrupar por produto e calcular totais
@@ -43,7 +55,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       receita: number;
     }>();
 
-    (vendasItens || []).forEach((item: any) => {
+    (vendasItens || []).forEach((item: VendaItem) => {
       if (!item.produto_id) return;
 
       const produtoId = item.produto_id;

@@ -22,7 +22,7 @@ export const withAuth = (
       });
     }
 
-    const payload = verifyJWT(token);
+    const payload = await verifyJWT(token);
 
     if (!payload) {
       return res.status(401).json({
