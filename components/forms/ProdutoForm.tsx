@@ -55,11 +55,20 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({
+    // Validação: exigir ao menos uma quantidade em estoques distribuidos
+    if (!estoquesDistribuidos || estoquesDistribuidos.length === 0 || totalEstoque <= 0) {
+      window.alert('Informe ao menos uma quantidade positiva em um dos estoques antes de salvar o produto.')
+      return
+    }
+
+    const payload = {
       ...formData,
       estoque: totalEstoque,
       estoques: estoquesDistribuidos
-    })
+    }
+    // Debug: print payload before sending
+    console.log('[produto-form] submit payload', payload)
+    onSubmit(payload)
   }
 
   return (

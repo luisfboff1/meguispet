@@ -11,6 +11,9 @@ node_modules/
 /out/
 dist/
 
+# Vercel
+.vercel/
+
 # Production
 /build
 

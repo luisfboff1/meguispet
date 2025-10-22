@@ -11,7 +11,7 @@ import {
   Eye,
   Package2
 } from 'lucide-react'
-import { dashboardService } from '@/services/api'
+import { dashboardService, produtosService, clientesService, movimentacoesService, vendasService } from '@/services/api'
 import VendasChart from '@/components/charts/VendasChart'
 import { useModal } from '@/hooks/useModal'
 import { AnimatedCard } from '@/components/ui/animated-card'
@@ -109,10 +109,21 @@ export default function DashboardPage() {
         try {
           updateModalLoading(true)
           console.log('Salvando venda:', values)
-          await loadDashboardData()
-          close()
+          // Salvar venda via API
+          const response = await vendasService.create(values)
+          console.log('[dashboard] vendas.create response', response)
+          if (response.success) {
+            await loadDashboardData()
+            close()
+            // Mostrar mensagem de sucesso
+            window.alert(response.message || '✅ Venda realizada com sucesso! Estoque atualizado.')
+          } else {
+            window.alert('❌ Erro ao criar venda: ' + (response.message || response.error || 'não especificado'))
+            console.error('dashboard vendas.create error', response)
+          }
         } catch (error) {
           console.error('Erro ao salvar venda:', error)
+          window.alert('❌ Erro ao salvar venda. Tente novamente.')
         } finally {
           updateModalLoading(false)
         }
@@ -126,8 +137,16 @@ export default function DashboardPage() {
         try {
           updateModalLoading(true)
           console.log('Salvando produto:', values)
-          await loadDashboardData()
-          close()
+          // Persist the product via API and reload dashboard if successful
+          const response = await produtosService.create(values)
+          console.log('[dashboard] produtos.create response', response)
+          if (response.success) {
+            await loadDashboardData()
+            close()
+          } else {
+            window.alert('Erro ao criar produto: ' + (response.message || response.error || 'não especificado'))
+            console.error('dashboard produtos.create error', response)
+          }
         } catch (error) {
           console.error('Erro ao salvar produto:', error)
         } finally {
@@ -143,10 +162,21 @@ export default function DashboardPage() {
         try {
           updateModalLoading(true)
           console.log('Salvando cliente:', values)
-          await loadDashboardData()
-          close()
+          // Salvar cliente via API
+          const response = await clientesService.create(values)
+          console.log('[dashboard] clientes.create response', response)
+          if (response.success) {
+            await loadDashboardData()
+            close()
+            // Mostrar mensagem de sucesso
+            window.alert('✅ Cliente cadastrado com sucesso!')
+          } else {
+            window.alert('❌ Erro ao criar cliente: ' + (response.message || response.error || 'não especificado'))
+            console.error('dashboard clientes.create error', response)
+          }
         } catch (error) {
           console.error('Erro ao salvar cliente:', error)
+          window.alert('❌ Erro ao salvar cliente. Tente novamente.')
         } finally {
           updateModalLoading(false)
         }
@@ -160,10 +190,21 @@ export default function DashboardPage() {
         try {
           updateModalLoading(true)
           console.log('Salvando movimentação:', values)
-          await loadDashboardData()
-          close()
+          // Salvar movimentação via API
+          const response = await movimentacoesService.create(values)
+          console.log('[dashboard] movimentacoes.create response', response)
+          if (response.success) {
+            await loadDashboardData()
+            close()
+            // Mostrar mensagem de sucesso
+            window.alert('✅ Movimentação cadastrada com sucesso!')
+          } else {
+            window.alert('❌ Erro ao criar movimentação: ' + (response.message || response.error || 'não especificado'))
+            console.error('dashboard movimentacoes.create error', response)
+          }
         } catch (error) {
           console.error('Erro ao salvar movimentação:', error)
+          window.alert('❌ Erro ao salvar movimentação. Tente novamente.')
         } finally {
           updateModalLoading(false)
         }

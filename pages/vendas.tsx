@@ -14,12 +14,14 @@ import {
   ShoppingCart,
   DollarSign,
   Calendar,
-  Loader2
+  Loader2,
+  Check
 } from 'lucide-react'
 import { vendasService } from '@/services/api'
 import type { Venda, VendaForm as VendaFormValues } from '@/types'
 import VendaForm from '@/components/forms/VendaForm'
 import Toast from '@/components/ui/Toast'
+import AlertDialog from '@/components/ui/AlertDialog'
 
 export default function VendasPage() {
   const [vendas, setVendas] = useState<Venda[]>([])
@@ -30,6 +32,7 @@ export default function VendasPage() {
   const [editingVenda, setEditingVenda] = useState<Venda | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' | 'info' } | null>(null)
+  const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
   const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
@@ -60,10 +63,15 @@ export default function VendasPage() {
     const searchLower = searchTerm.toLowerCase()
     const clienteMatch = venda.cliente?.nome?.toLowerCase().includes(searchLower)
     const vendedorMatch = venda.vendedor?.nome?.toLowerCase().includes(searchLower)
-    const formaPagamentoMatch = (venda.forma_pagamento_detalhe?.nome ?? venda.forma_pagamento ?? '')
-      .toLowerCase()
-      .includes(searchLower)
-    return clienteMatch || vendedorMatch || formaPagamentoMatch
+    const numeroVendaMatch = venda.numero_venda?.toLowerCase().includes(searchLower)
+
+    // Garantir que forma_pagamento seja sempre string
+    const formaPagamentoStr = venda.forma_pagamento_detalhe?.nome
+      || (typeof venda.forma_pagamento === 'string' ? venda.forma_pagamento : '')
+      || ''
+    const formaPagamentoMatch = formaPagamentoStr.toLowerCase().includes(searchLower)
+
+    return clienteMatch || vendedorMatch || formaPagamentoMatch || numeroVendaMatch
   })
 
   const formatCurrency = (value: number) => {
@@ -92,10 +100,24 @@ export default function VendasPage() {
     setShowForm(true)
   }
 
-  const handleEditarVenda = (venda: Venda) => {
-    setSelectedVenda(null)
-    setEditingVenda(venda)
-    setShowForm(true)
+  const handleEditarVenda = async (venda: Venda) => {
+    try {
+      setLoading(true)
+      // Buscar a venda completa com seus itens
+      const response = await vendasService.getById(venda.id)
+      if (response.success && response.data) {
+        setSelectedVenda(null)
+        setEditingVenda(response.data)
+        setShowForm(true)
+      } else {
+        setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Erro ao carregar venda:', error)
+      setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSalvarVenda = async (vendaData: VendaFormValues) => {
@@ -111,9 +133,21 @@ export default function VendasPage() {
         await loadVendas()
         setShowForm(false)
         setEditingVenda(null)
-        setToast({ message: editingVenda ? 'Venda atualizada com sucesso.' : 'Venda criada com sucesso.', type: 'success' })
+
+        // Mostrar mensagem de sucesso detalhada
+        setAlert({
+          title: editingVenda ? '✅ Venda Atualizada' : '✅ Venda Realizada com Sucesso',
+          message: response.message || (editingVenda
+            ? 'A venda foi atualizada com sucesso no sistema.'
+            : 'A venda foi registrada com sucesso e o estoque foi atualizado automaticamente.'),
+          type: 'success',
+        })
       } else {
-        setToast({ message: response?.message || 'Não foi possível salvar a venda. Verifique os dados e tente novamente.', type: 'error' })
+        setAlert({
+          title: '❌ Erro ao Salvar Venda',
+          message: response?.message || 'Não foi possível salvar a venda. Verifique os dados e tente novamente.',
+          type: 'error',
+        })
       }
     } catch (error: unknown) {
       let msg = 'Não foi possível salvar a venda. Verifique os dados e tente novamente.'
@@ -125,7 +159,11 @@ export default function VendasPage() {
           msg = errObj.message
         }
       }
-      setToast({ message: msg, type: 'error' })
+      setAlert({
+        title: '❌ Erro ao Salvar Venda',
+        message: msg,
+        type: 'error',
+      })
       console.error('Erro ao salvar venda:', error)
     } finally {
       setFormLoading(false)
@@ -176,6 +214,33 @@ export default function VendasPage() {
     }
   }
 
+  const handleConfirmarVenda = async (venda: Venda) => {
+    const confirmar = window.confirm(`Confirmar pagamento da venda #${venda.id}?`)
+    if (!confirmar) return
+
+    try {
+      const response = await vendasService.updateStatus(venda.id, 'pago')
+      if (response.success) {
+        await loadVendas()
+        setToast({ message: 'Venda confirmada com sucesso!', type: 'success' })
+      } else {
+        setToast({ message: response.message || 'Erro ao confirmar venda', type: 'error' })
+      }
+    } catch (error: unknown) {
+      let msg = 'Não foi possível confirmar a venda.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
+        }
+      }
+      setToast({ message: msg, type: 'error' })
+      console.error('Erro ao confirmar venda:', error)
+    }
+  }
+
   const handleExportar = () => {
     // Gerar CSV das vendas
     const csvContent = generateCSV(vendas)
@@ -213,6 +278,14 @@ export default function VendasPage() {
 
   return (
     <div className="space-y-6">
+      {alert && (
+        <AlertDialog
+          title={alert.title}
+          message={alert.message}
+          type={alert.type}
+          onClose={() => setAlert(null)}
+        />
+      )}
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
@@ -270,11 +343,11 @@ export default function VendasPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Forma de pagamento</p>
-                <p className="text-base text-gray-900">{selectedVenda.forma_pagamento_detalhe?.nome ?? selectedVenda.forma_pagamento ?? 'N/A'}</p>
+                <p className="text-base text-gray-900">{selectedVenda.forma_pagamento_detalhe?.nome ?? (typeof selectedVenda.forma_pagamento === 'string' ? selectedVenda.forma_pagamento : 'N/A')}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Estoque</p>
-                <p className="text-base text-gray-900">{selectedVenda.estoque?.nome ?? 'N/A'}</p>
+                <p className="text-base text-gray-900">{typeof selectedVenda.estoque === 'object' && selectedVenda.estoque?.nome ? selectedVenda.estoque.nome : 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
@@ -353,7 +426,7 @@ export default function VendasPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <Input
-                  placeholder="Buscar por cliente ou vendedor..."
+                  placeholder="Buscar por número, cliente ou vendedor..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -407,10 +480,10 @@ export default function VendasPage() {
                         {formatCurrency(venda.valor_final)}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-900">
-                        {venda.forma_pagamento_detalhe?.nome ?? venda.forma_pagamento ?? 'N/A'}
+                        {venda.forma_pagamento_detalhe?.nome ?? (typeof venda.forma_pagamento === 'string' ? venda.forma_pagamento : 'N/A')}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-900">
-                        {venda.estoque?.nome ?? 'N/A'}
+                        {typeof venda.estoque === 'object' && venda.estoque?.nome ? venda.estoque.nome : 'N/A'}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(venda.status)}`}>
@@ -428,6 +501,17 @@ export default function VendasPage() {
                           <Button variant="ghost" size="sm" onClick={() => handleEditarVenda(venda)}>
                             <Edit className="h-4 w-4" />
                           </Button>
+                          {venda.status === 'pendente' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-green-600 hover:text-green-700"
+                              onClick={() => handleConfirmarVenda(venda)}
+                              title="Confirmar Venda"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"

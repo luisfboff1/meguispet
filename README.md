@@ -13,14 +13,14 @@ Agora com **animações suaves em todas as seções** e **modais ainda mais aces
 - ✅ **Modais Acessíveis** - Foco preso, retorno ao elemento anterior e tecla *Esc* out-of-the-box
 - ✅ **SSG para Hostinger** - Export estático compatível
 - ✅ **Deploy Automático** - GitHub Actions para Hostinger
-- ✅ **APIs PHP Compatíveis** - Mantém suas APIs existentes
-
-## 🏗️ Arquitetura
-
-```
-┌─────────────────────────────────────┐
-│      FRONTEND (Next.js SSG)         │
+✅ **APIs Node.js (Next API routes)** - O projeto agora usa rotas de API em Node/Next.js
+│      BACKEND (Node + Postgres/DB)   │
 ├─────────────────────────────────────┤
+│   Rotas de API em Next.js (Node)    │
+- O projeto não depende de APIs PHP; use rotas de API Node ou um backend separado
+# Build otimizado (SSG)
+│      FRONTEND (Next.js SSG)         │
+-- Buildar Next.js (SSG) e publicar artefatos
 │  Shadcn/ui + Tailwind + TypeScript  │
 └─────────────────────────────────────┘
                   │

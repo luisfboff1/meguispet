@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Plus, Trash2, ShoppingCart } from 'lucide-react'
+import { Loader2, Plus, Trash2, ShoppingCart, AlertTriangle } from 'lucide-react'
 import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService } from '@/services/api'
+import AlertDialog from '@/components/ui/AlertDialog'
 import type {
   Venda,
   Cliente,
@@ -32,6 +33,7 @@ interface VendaFormProps {
 }
 
 interface VendaFormState {
+  numero_venda: string
   cliente_id: string
   vendedor_id: string
   forma_pagamento_id: string
@@ -65,8 +67,19 @@ const getEstoqueIdFromVenda = (dados?: Venda): string => {
   return ''
 }
 
+// Função para gerar número de venda no formato YYYYMMDD-XXXX
+const generateNumeroVenda = (): string => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+  return `${year}${month}${day}-${random}`
+}
+
 export default function VendaForm({ venda, onSubmit, onCancel, loading = false, errorMessage }: VendaFormProps) {
   const [formData, setFormData] = useState<VendaFormState>({
+    numero_venda: venda?.numero_venda || generateNumeroVenda(),
     cliente_id: venda?.cliente_id ? String(venda.cliente_id) : '',
     vendedor_id: venda?.vendedor_id ? String(venda.vendedor_id) : '',
     forma_pagamento_id: getFormaPagamentoIdFromVenda(venda),
@@ -83,11 +96,13 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamentoRegistro[]>([])
   const [estoques, setEstoques] = useState<Estoque[]>([])
   const [loadingData, setLoadingData] = useState(false)
+  const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
 
   useEffect(() => {
     if (!venda) {
       setItens([])
       setFormData({
+        numero_venda: generateNumeroVenda(),
         cliente_id: '',
         vendedor_id: '',
         forma_pagamento_id: '',
@@ -102,6 +117,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     }
 
     setFormData({
+      numero_venda: venda.numero_venda || generateNumeroVenda(),
       cliente_id: venda.cliente_id ? String(venda.cliente_id) : '',
       vendedor_id: venda.vendedor_id ? String(venda.vendedor_id) : '',
       forma_pagamento_id: getFormaPagamentoIdFromVenda(venda),
@@ -109,8 +125,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0,
-      prazo_pagamento: (venda as any).prazo_pagamento || '',
-      imposto_percentual: (venda as any).imposto_percentual || 0
+      prazo_pagamento: venda.prazo_pagamento || '',
+      imposto_percentual: venda.imposto_percentual || 0
     })
 
     if (venda.itens?.length) {
@@ -184,6 +200,18 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         newItens[index].produto_nome = produto.nome
         newItens[index].preco_unitario = precoVenda
         newItens[index].subtotal = newItens[index].quantidade * precoVenda
+
+        // Verificar estoque disponível
+        if (formData.estoque_id && produto.estoques) {
+          const estoqueItem = produto.estoques.find(e => Number(e.estoque_id) === Number(formData.estoque_id))
+          if (estoqueItem && estoqueItem.quantidade < newItens[index].quantidade) {
+            setAlert({
+              title: '⚠️ Atenção: Estoque Baixo',
+              message: `O produto "${produto.nome}" tem apenas ${estoqueItem.quantidade} unidades disponíveis no estoque selecionado.`,
+              type: 'warning',
+            })
+          }
+        }
       }
     } else if (field === 'quantidade' || field === 'preco_unitario') {
       const preco = Number(newItens[index].preco_unitario) || 0
@@ -191,6 +219,21 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       newItens[index].preco_unitario = preco
       newItens[index].quantidade = qtd
       newItens[index].subtotal = qtd * preco
+
+      // Verificar estoque ao alterar quantidade
+      if (field === 'quantidade' && formData.estoque_id && newItens[index].produto_id) {
+        const produto = produtos.find(p => p.id === newItens[index].produto_id)
+        if (produto && produto.estoques) {
+          const estoqueItem = produto.estoques.find(e => Number(e.estoque_id) === Number(formData.estoque_id))
+          if (estoqueItem && estoqueItem.quantidade < qtd) {
+            setAlert({
+              title: '⚠️ Atenção: Estoque Insuficiente',
+              message: `O produto "${produto.nome}" tem apenas ${estoqueItem.quantidade} unidades disponíveis no estoque selecionado. Você está tentando vender ${qtd} unidades.`,
+              type: 'warning',
+            })
+          }
+        }
+      }
     }
 
     setItens(newItens)
@@ -209,27 +252,47 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     e.preventDefault()
 
     if (itens.length === 0) {
-      alert('Adicione pelo menos um item à venda')
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Adicione pelo menos um item à venda antes de continuar.',
+        type: 'error',
+      })
       return
     }
     if (!formData.estoque_id) {
-      alert('Selecione o estoque de origem da venda')
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Selecione o estoque de origem da venda.',
+        type: 'error',
+      })
       return
     }
     if (!formData.forma_pagamento_id) {
-      alert('Selecione a forma de pagamento')
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Selecione a forma de pagamento.',
+        type: 'error',
+      })
       return
     }
 
     const itensValidos = itens.every(item => item.produto_id > 0 && item.quantidade > 0 && item.preco_unitario > 0)
     if (!itensValidos) {
-      alert('Verifique os itens: selecione o produto e informe quantidade e preço válidos')
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Verifique os itens da venda:\n- Todos os produtos devem estar selecionados\n- Quantidade e preço devem ser maiores que zero',
+        type: 'error',
+      })
       return
     }
 
     const formaSelecionada = formasPagamento.find(fp => String(fp.id) === formData.forma_pagamento_id)
     if (!formaSelecionada) {
-      alert('Forma de pagamento inválida')
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Forma de pagamento inválida. Selecione uma forma de pagamento válida.',
+        type: 'error',
+      })
       return
     }
 
@@ -245,7 +308,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       itens: itens.map(item => ({
         produto_id: item.produto_id,
         quantidade: item.quantidade,
-        preco_unitario: item.preco_unitario
+        preco_unitario: item.preco_unitario,
+        subtotal: item.quantidade * item.preco_unitario
       }))
     }
 
@@ -268,20 +332,49 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto max-h-[90vh] overflow-y-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <ShoppingCart className="mr-2 h-5 w-5" />
-          {venda ? 'Editar Venda' : 'Nova Venda'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {errorMessage ? (
-          <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {errorMessage}
-          </div>
-        ) : null}
+    <>
+      {alert && (
+        <AlertDialog
+          title={alert.title}
+          message={alert.message}
+          type={alert.type}
+          onClose={() => setAlert(null)}
+        />
+      )}
+
+      <Card className="w-full max-w-4xl mx-auto max-h-[90vh] overflow-y-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            {venda ? 'Editar Venda' : 'Nova Venda'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {errorMessage ? (
+            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {errorMessage}
+            </div>
+          ) : null}
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Número da Venda */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <Label htmlFor="numero_venda" className="text-sm font-medium text-blue-900">
+              Número da Venda / Pedido
+            </Label>
+            <Input
+              id="numero_venda"
+              type="text"
+              value={formData.numero_venda}
+              onChange={(e) => setFormData(prev => ({ ...prev, numero_venda: e.target.value }))}
+              placeholder="Ex: 20251022-0001"
+              className="mt-1"
+              required
+            />
+            <p className="text-xs text-blue-600 mt-1">
+              Este número será usado para identificar a venda e emitir a NF-e
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="cliente_id">Cliente</Label>
@@ -545,5 +638,6 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         </form>
       </CardContent>
     </Card>
+    </>
   )
 }

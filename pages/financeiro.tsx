@@ -135,6 +135,39 @@ export default function FinanceiroPage() {
     return matchesSearch && matchesTipo
   })
 
+  const handleExportarRelatorio = () => {
+    if (filteredTransacoes.length === 0) {
+      alert('Não há transações para exportar')
+      return
+    }
+
+    // Gerar CSV
+    const headers = ['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor']
+    const rows = filteredTransacoes.map(t => [
+      new Date(t.data_transacao).toLocaleDateString('pt-BR'),
+      t.tipo === 'receita' ? 'Receita' : 'Despesa',
+      t.categoria,
+      t.descricao,
+      formatCurrency(t.valor)
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+
+    // Download do arquivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -162,7 +195,7 @@ export default function FinanceiroPage() {
           </Button>
           <Button 
             variant="outline"
-            onClick={() => alert('Relatório em desenvolvimento')}
+            onClick={handleExportarRelatorio}
           >
             <Download className="mr-2 h-4 w-4" />
             Relatório
@@ -421,7 +454,7 @@ export default function FinanceiroPage() {
             <Button 
               variant="outline" 
               className="h-20 flex flex-col"
-              onClick={() => alert('Relatório Mensal - Em desenvolvimento')}
+              onClick={handleExportarRelatorio}
             >
               <Calendar className="h-6 w-6 mb-2" />
               <span>Relatório Mensal</span>

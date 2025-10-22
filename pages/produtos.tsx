@@ -91,9 +91,11 @@ export default function ProdutosPage() {
         produto,
         loading: false,
         onCancel: () => updateProdutoModalLoading(false),
-        onSubmit: async (formValues: ProdutoFormValues) => {
+            onSubmit: async (formValues: ProdutoFormValues) => {
           updateProdutoModalLoading(true)
           try {
+            // Debug: log payload before sending to API
+            console.log('[produtos] payload', formValues)
             if (produto) {
               const response = await produtosService.update(produto.id, formValues)
               if (response.success) {
@@ -102,9 +104,14 @@ export default function ProdutosPage() {
               }
             } else {
               const response = await produtosService.create(formValues)
+              console.log('[produtos] create response', response)
               if (response.success) {
                 await loadProdutos()
                 closeModal()
+              } else {
+                // show backend message for debugging
+                window.alert('Erro ao criar produto: ' + (response.message || response.error || 'não especificado'))
+                console.error('produtos.create error response', response)
               }
             }
           } catch (error) {

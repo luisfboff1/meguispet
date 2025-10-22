@@ -87,6 +87,8 @@ export interface Vendedor {
   ativo: boolean
   created_at: string
   updated_at: string
+  total_vendas?: number
+  total_faturamento?: number
 }
 
 export interface Venda {
@@ -106,6 +108,8 @@ export interface Venda {
   estoque?: Estoque | null
   origem_venda: 'loja_fisica' | 'mercado_livre' | 'shopee' | 'magazine_luiza' | 'americanas' | 'outros'
   observacoes?: string
+  prazo_pagamento?: string | number
+  imposto_percentual?: number
   created_at: string
   updated_at: string
   cliente?: Cliente
@@ -272,9 +276,11 @@ export interface VendaItemInput {
   produto_id: number
   quantidade: number
   preco_unitario: number
+  subtotal: number
 }
 
 export interface VendaForm {
+  numero_venda: string
   cliente_id: number | null
   vendedor_id: number | null
   forma_pagamento_id: number
@@ -328,6 +334,15 @@ export interface TransacaoForm {
   categoria: string
   data_transacao: string
   observacoes?: string
+}
+
+export interface VendedorForm {
+  nome: string
+  email?: string
+  telefone?: string
+  cpf?: string
+  comissao: number
+  ativo?: boolean
 }
 
 // Tipos para API
@@ -388,14 +403,9 @@ export interface DashboardMetric {
 }
 
 export interface DashboardTopProduct {
-  id: number
   nome: string
-  preco: number
-  preco_venda: number
-  estoque: number
   vendas: number
   receita: number
-  total_vendas: number
 }
 
 export interface DashboardVendasDia {
@@ -405,6 +415,12 @@ export interface DashboardVendasDia {
 }
 
 // Tipos para financeiro
+export interface FinanceiroMetricMonthly {
+  mes: string
+  receitas: number
+  despesas: number
+}
+
 export interface FinanceiroMetricMonthly {
   mes: string
   receitas: number

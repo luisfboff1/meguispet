@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"$USERPROFILE/.claude/projects/C--Users-Luisf-OneDrive-Github-Poker-Novo\" -type f -name \"*.json\" -o -name \"*.md\")",
+      "Bash(find \"$USERPROFILE/.claude/projects/c--Users-Luisf-OneDrive-Github-teste2\" -type f)",
+      "Bash(ls -la \"$USERPROFILE/.claude/ide\")",
+      "Bash(find \"$USERPROFILE/.claude\" -type f -name \"*workflow*\" -o -name \"*agent*\")",
+      "Bash(ls -la \"$APPDATA/claude-code\")",
+      "Bash(find \"$APPDATA/claude-code\" -type f -name \"*.md\")",
+      "Bash(ls -la \"$APPDATA/claude-code/agents\")",
+      "Bash(ls -la \"$APPDATA/claude-code/commands\")",
+      "Read(//c/Users/Luisf/AppData/Roaming/claude-code/agents/**)",
+      "Read(//c/Users/Luisf/AppData/Roaming/claude-code/commands/**)",
+      "Bash(mkdir -p .claude/agents .claude/commands)",
+      "Bash(cp \"$APPDATA/claude-code/agents/\"*.md .claude/agents/)",
+      "Bash(cp \"$APPDATA/claude-code/commands/\"*.md .claude/commands/)",
+      "Bash(find \"$APPDATA/claude-code\" -name \"init.md\" -o -name \"init\")",
+      "Bash(npm install bcryptjs)",
+      "Bash(npm install --save-dev @types/bcryptjs)",
+      "Bash(npm run typecheck)",
+      "Bash(npm install @supabase/supabase-js)",
+      "Bash(npm run build:next-only)",
+      "Bash(npm run)",
+      "Bash(npm run build)",
+      "Bash(test:*)",
+      "Bash(pnpm add:*)",
+      "Bash(for f in database/*.sql)",
+      "Bash(do [ -f \"$f\" ])",
+      "Bash(done)",
+      "Bash(find:*)",
+      "Bash(powershell -Command \"Get-Date -Format ''yyyy-MM-dd-HH-mm''\")",
+      "Bash(pnpm run build:*)",
+      "Bash(timeout 5 pnpm start:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

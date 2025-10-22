@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,8 +10,13 @@ import {
   Database,
   Save,
   Eye,
-  EyeOff
+  EyeOff,
+  CreditCard,
+  Plus,
+  Edit,
+  Trash2
 } from 'lucide-react'
+import axios from 'axios'
 
 type ConfiguracoesState = {
   notificacoesEmail: boolean
@@ -39,14 +44,109 @@ const DEFAULT_CONFIGURACOES: ConfiguracoesState = {
   logsAuditoria: true
 }
 
+interface FormaPagamento {
+  id: number
+  nome: string
+  ordem: number
+  ativo: boolean
+}
+
 export default function ConfiguracoesPage() {
   const [configuracoes, setConfiguracoes] = useState<ConfiguracoesState>(DEFAULT_CONFIGURACOES)
+  const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([])
+  const [novaFormaPagamento, setNovaFormaPagamento] = useState('')
+  const [editandoForma, setEditandoForma] = useState<FormaPagamento | null>(null)
 
   const [senhaAtual, setSenhaAtual] = useState('')
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [showSenhas, setShowSenhas] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    loadFormasPagamento()
+  }, [])
+
+  const loadFormasPagamento = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get('/api/formas_pagamento', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (response.data.success) {
+        setFormasPagamento(response.data.data)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar formas de pagamento:', error)
+    }
+  }
+
+  const handleAdicionarFormaPagamento = async () => {
+    if (!novaFormaPagamento.trim()) {
+      alert('Digite o nome da forma de pagamento')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.post('/api/formas_pagamento', 
+        { 
+          nome: novaFormaPagamento,
+          ordem: formasPagamento.length + 1
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      
+      if (response.data.success) {
+        setNovaFormaPagamento('')
+        await loadFormasPagamento()
+        alert('Forma de pagamento adicionada com sucesso!')
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar forma de pagamento:', error)
+      alert('Erro ao adicionar forma de pagamento')
+    }
+  }
+
+  const handleEditarFormaPagamento = async (forma: FormaPagamento) => {
+    const novoNome = prompt('Digite o novo nome:', forma.nome)
+    if (!novoNome || novoNome === forma.nome) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.put('/api/formas_pagamento',
+        { id: forma.id, nome: novoNome, ordem: forma.ordem },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      
+      if (response.data.success) {
+        await loadFormasPagamento()
+        alert('Forma de pagamento atualizada com sucesso!')
+      }
+    } catch (error) {
+      console.error('Erro ao editar forma de pagamento:', error)
+      alert('Erro ao editar forma de pagamento')
+    }
+  }
+
+  const handleRemoverFormaPagamento = async (id: number) => {
+    if (!confirm('Tem certeza que deseja remover esta forma de pagamento?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.delete(`/api/formas_pagamento?id=${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      if (response.data.success) {
+        await loadFormasPagamento()
+        alert('Forma de pagamento removida com sucesso!')
+      }
+    } catch (error) {
+      console.error('Erro ao remover forma de pagamento:', error)
+      alert('Erro ao remover forma de pagamento')
+    }
+  }
 
   const handleConfigChange = <K extends keyof ConfiguracoesState>(key: K, value: ConfiguracoesState[K]) => {
     setConfiguracoes(prev => ({ ...prev, [key]: value }))
@@ -301,6 +401,60 @@ export default function ConfiguracoesPage() {
                 checked={configuracoes.logsAuditoria}
                 onCheckedChange={(checked) => handleConfigChange('logsAuditoria', checked)}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Formas de Pagamento */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CreditCard className="mr-2 h-5 w-5" />
+              Formas de Pagamento
+            </CardTitle>
+            <CardDescription>
+              Gerencie as formas de pagamento aceitas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Lista de Formas de Pagamento */}
+            <div className="space-y-2">
+              {formasPagamento.map((forma) => (
+                <div key={forma.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <span className="font-medium">{forma.nome}</span>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditarFormaPagamento(forma)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoverFormaPagamento(forma.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Adicionar Nova Forma */}
+            <div className="flex space-x-2">
+              <Input
+                placeholder="Nome da nova forma de pagamento"
+                value={novaFormaPagamento}
+                onChange={(e) => setNovaFormaPagamento(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAdicionarFormaPagamento()}
+              />
+              <Button onClick={handleAdicionarFormaPagamento}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar
+              </Button>
             </div>
           </CardContent>
         </Card>

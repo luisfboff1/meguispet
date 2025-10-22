@@ -13,7 +13,7 @@ import {
   History,
   AlertTriangle
 } from 'lucide-react'
-import { produtosService } from '@/services/api'
+import { produtosService, historicoPrecosService } from '@/services/api'
 import { Produto } from '@/types'
 
 interface HistoricoPreco {
@@ -118,44 +118,31 @@ export default function ProdutoDetalhes() {
   const loadHistoricoPrecos = async () => {
     try {
       if (!id) return
-      
-      const response = await fetch(`/api/historico-precos.php?produto_id=${id}&limit=20`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        console.log('📦 Dados do histórico:', data)
-        if (data.success && Array.isArray(data.data)) {
-          const historicoMapeado = data.data
-            .filter(isHistoricoPrecoApiItem)
-            .map((item: HistoricoPrecoApiItem) => ({
-              id: item.id,
-              preco_venda: item.preco_venda_novo,
-              preco_custo: item.preco_custo_novo,
-              data_alteracao: item.created_at,
-              tipo_alteracao: item.tipo_alteracao,
-              observacao: item.observacao,
-              preco_venda_anterior: item.preco_venda_anterior,
-              preco_custo_anterior: item.preco_custo_anterior,
-              diferenca_preco_venda: item.diferenca_preco_venda,
-              diferenca_preco_custo: item.diferenca_preco_custo,
-              percentual_mudanca_venda: item.percentual_mudanca_venda,
-              percentual_mudanca_custo: item.percentual_mudanca_custo
-            }))
-          setHistoricoPrecos(historicoMapeado)
-        } else {
-          // Se não há histórico, manter array vazio
-          setHistoricoPrecos([])
-        }
+      const resposta = await historicoPrecosService.getByProdutoId(Number(id), 20)
+      console.log('📦 Dados do histórico (service):', resposta)
+      if (resposta.success && Array.isArray(resposta.data)) {
+        const historicoMapeado = resposta.data
+          .filter(isHistoricoPrecoApiItem)
+          .map((item: HistoricoPrecoApiItem) => ({
+            id: item.id,
+            preco_venda: item.preco_venda_novo,
+            preco_custo: item.preco_custo_novo,
+            data_alteracao: item.created_at,
+            tipo_alteracao: item.tipo_alteracao,
+            observacao: item.observacao,
+            preco_venda_anterior: item.preco_venda_anterior,
+            preco_custo_anterior: item.preco_custo_anterior,
+            diferenca_preco_venda: item.diferenca_preco_venda,
+            diferenca_preco_custo: item.diferenca_preco_custo,
+            percentual_mudanca_venda: item.percentual_mudanca_venda,
+            percentual_mudanca_custo: item.percentual_mudanca_custo
+          }))
+        setHistoricoPrecos(historicoMapeado)
       } else {
-        console.error('Erro ao carregar histórico de preços:', response.statusText)
         setHistoricoPrecos([])
       }
     } catch (err) {
-      console.error('Erro ao carregar histórico de preços:', err)
+      console.error('Erro ao carregar histórico de preços (service):', err)
       setHistoricoPrecos([])
     }
   }

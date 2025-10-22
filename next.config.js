@@ -13,13 +13,8 @@ const __dirname = path.dirname(__filename)
 const nextConfig = (phase) => {
   const isDev = phase === PHASE_DEVELOPMENT_SERVER
 
-  // 🌐 Saída estática para ambiente PHP/Hostinger
+  // 🌐 Server-side rendering for Vercel deployment
   const config = {
-    output: 'export',
-    distDir: 'out',
-    trailingSlash: true,
-    skipTrailingSlashRedirect: true,
-
     // 🖼️ Imagens e assets estáticos
     images: {
       unoptimized: true,
@@ -39,22 +34,6 @@ const nextConfig = (phase) => {
     env: {
       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
     },
-  }
-
-  if (isDev) {
-    config.rewrites = async () => {
-      const target = process.env.NEXT_PRIVATE_API_PROXY_TARGET?.replace(/\/$/, '')
-      if (!target) {
-        return []
-      }
-
-      return [
-        {
-          source: '/api/:path*',
-          destination: `${target}/:path*`,
-        },
-      ]
-    }
   }
 
   return config

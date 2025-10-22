@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { Link, useSearchParams } from 'react-router-dom';
-import { API_BASE_URL } from '../services/api';
+import { API_BASE_URL } from '../../services/api';
 
 export default function PasswordResetPage() {
   const [searchParams] = useSearchParams();
@@ -21,7 +21,7 @@ export default function PasswordResetPage() {
     setMessage('');
 
     try {
-  const response = await fetch(`${API_BASE_URL}/password_reset.php?action=request`, {
+  const response = await fetch(`${API_BASE_URL}/password_reset?action=request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -62,7 +62,7 @@ export default function PasswordResetPage() {
     }
 
     try {
-  const response = await fetch(`${API_BASE_URL}/password_reset.php?action=reset`, {
+  const response = await fetch(`${API_BASE_URL}/password_reset?action=reset`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

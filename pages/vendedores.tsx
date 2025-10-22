@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,13 +18,20 @@ import {
   DollarSign
 } from 'lucide-react'
 import { vendedoresService } from '@/services/api'
-import type { Vendedor } from '@/types'
+import VendedorForm from '@/components/forms/VendedorForm'
+import AlertDialog from '@/components/ui/AlertDialog'
+import type { Vendedor, VendedorForm as VendedorFormValues } from '@/types'
 
 export default function VendedoresPage() {
+  const router = useRouter()
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showForm, setShowForm] = useState(false)
+  const [editingVendedor, setEditingVendedor] = useState<Vendedor | null>(null)
+  const [formLoading, setFormLoading] = useState(false)
+  const [alertDialog, setAlertDialog] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
 
   useEffect(() => {
     loadVendedores()
@@ -34,6 +42,7 @@ export default function VendedoresPage() {
       setLoading(true)
       const response = await vendedoresService.getAll(currentPage, 10)
       if (response.success && response.data) {
+        console.log('Vendedores carregados:', response.data)
         setVendedores(response.data)
       }
     } catch (error) {
@@ -58,21 +67,208 @@ export default function VendedoresPage() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
 
+  const handleNovoVendedor = () => {
+    setEditingVendedor(null)
+    setShowForm(true)
+  }
+
+  const handleEditarVendedor = (vendedor: Vendedor) => {
+    setEditingVendedor(vendedor)
+    setShowForm(true)
+  }
+
+  const handleSalvarVendedor = async (vendedorData: VendedorFormValues) => {
+    try {
+      setFormLoading(true)
+
+      // Garantir que ativo seja sempre boolean
+      const vendedorPayload = {
+        ...vendedorData,
+        ativo: vendedorData.ativo ?? true
+      }
+
+      if (editingVendedor) {
+        const response = await vendedoresService.update(editingVendedor.id, vendedorPayload)
+        if (response.success) {
+          await loadVendedores()
+          setShowForm(false)
+          setEditingVendedor(null)
+          setAlertDialog({
+            title: '✅ Vendedor Atualizado',
+            message: `O vendedor "${vendedorData.nome}" foi atualizado com sucesso!`,
+            type: 'success',
+          })
+        } else {
+          setAlertDialog({
+            title: '❌ Erro ao Atualizar Vendedor',
+            message: response.message || 'Não foi possível atualizar o vendedor. Tente novamente.',
+            type: 'error',
+          })
+        }
+      } else {
+        const response = await vendedoresService.create(vendedorPayload)
+        if (response.success) {
+          await loadVendedores()
+          setShowForm(false)
+          setAlertDialog({
+            title: '✅ Vendedor Cadastrado',
+            message: `O vendedor "${vendedorData.nome}" foi cadastrado com sucesso!`,
+            type: 'success',
+          })
+        } else {
+          setAlertDialog({
+            title: '❌ Erro ao Cadastrar Vendedor',
+            message: response.message || 'Não foi possível cadastrar o vendedor. Verifique os dados e tente novamente.',
+            type: 'error',
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao salvar vendedor:', error)
+      setAlertDialog({
+        title: '❌ Erro Inesperado',
+        message: 'Ocorreu um erro ao salvar o vendedor. Tente novamente mais tarde.',
+        type: 'error',
+      })
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleCancelarForm = () => {
+    setShowForm(false)
+    setEditingVendedor(null)
+  }
+
+  const handleExcluirVendedor = async (vendedor: Vendedor) => {
+    const confirmar = window.confirm(`Deseja realmente excluir o vendedor "${vendedor.nome}"?`)
+    if (!confirmar) return
+
+    try {
+      const response = await vendedoresService.delete(vendedor.id)
+      if (response.success) {
+        await loadVendedores()
+        setAlertDialog({
+          title: '✅ Vendedor Excluído',
+          message: `O vendedor "${vendedor.nome}" foi removido com sucesso.`,
+          type: 'success',
+        })
+      } else {
+        setAlertDialog({
+          title: '❌ Erro ao Excluir',
+          message: response.message || 'Não foi possível excluir o vendedor.',
+          type: 'error',
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao excluir vendedor:', error)
+      setAlertDialog({
+        title: '❌ Erro Inesperado',
+        message: 'Ocorreu um erro ao excluir o vendedor. Tente novamente.',
+        type: 'error',
+      })
+    }
+  }
+
+  const handleVerVendas = (vendedor: Vendedor) => {
+    // Usar router.push para navegar sem recarregar a página
+    router.push({
+      pathname: '/vendas',
+      query: { 
+        vendedor_id: vendedor.id, 
+        vendedor_nome: vendedor.nome 
+      }
+    })
+  }
+
+  const handleVerRelatorio = (vendedor: Vendedor) => {
+    // Usar router.push para navegar sem recarregar a página
+    router.push({
+      pathname: '/relatorios',
+      query: { 
+        vendedor_id: vendedor.id, 
+        vendedor_nome: vendedor.nome 
+      }
+    })
+  }
+
+  const handleExportar = () => {
+    // Gerar CSV dos vendedores
+    const csvContent = generateCSV(vendedores)
+    downloadCSV(csvContent, 'vendedores.csv')
+  }
+
+  const generateCSV = (data: Vendedor[]) => {
+    const headers = ['ID', 'Nome', 'Email', 'Telefone', 'Comissão (%)', 'Vendas', 'Faturamento']
+    const rows = data.map(vendedor => [
+      vendedor.id,
+      vendedor.nome,
+      vendedor.email || 'N/A',
+      vendedor.telefone || 'N/A',
+      vendedor.comissao,
+      vendedor.total_vendas || 0,
+      vendedor.total_faturamento || 0
+    ])
+    
+    return [headers, ...rows].map(row => 
+      row.map(field => `"${field}"`).join(',')
+    ).join('\n')
+  }
+
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', filename)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  if (showForm) {
+    return (
+      <div className="space-y-6">
+        <VendedorForm
+          vendedor={editingVendedor}
+          onSubmit={handleSalvarVendedor}
+          onCancel={handleCancelarForm}
+          loading={formLoading}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
+      {alertDialog && (
+        <AlertDialog
+          title={alertDialog.title}
+          message={alertDialog.message}
+          type={alertDialog.type}
+          onClose={() => setAlertDialog(null)}
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Vendedores</h1>
           <p className="text-gray-600">Gerencie sua equipe de vendas</p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button className="bg-meguispet-primary hover:bg-meguispet-primary/90">
+          <Button
+            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+            onClick={handleNovoVendedor}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Novo Vendedor
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={handleExportar}
+          >
             <Download className="mr-2 h-4 w-4" />
             Exportar
           </Button>
@@ -94,34 +290,43 @@ export default function VendedoresPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas do Mês</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
             <TrendingUp className="h-4 w-4 text-meguispet-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 0,00</div>
-            <p className="text-xs text-muted-foreground">Total</p>
+            <div className="text-2xl font-bold">
+              {vendedores.reduce((sum, v) => sum + (v.total_vendas || 0), 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">Todas as vendas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Faturamento Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-meguispet-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(vendedores.reduce((sum, v) => sum + (v.total_faturamento || 0), 0))}
+            </div>
+            <p className="text-xs text-muted-foreground">Todos os vendedores</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-            <DollarSign className="h-4 w-4 text-meguispet-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 0,00</div>
-            <p className="text-xs text-muted-foreground">Por vendedor</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Performance</CardTitle>
             <TrendingUp className="h-4 w-4 text-meguispet-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0%</div>
-            <p className="text-xs text-muted-foreground">Crescimento</p>
+            <div className="text-2xl font-bold">
+              {vendedores.length > 0 
+                ? formatCurrency(vendedores.reduce((sum, v) => sum + (v.total_faturamento || 0), 0) / vendedores.length)
+                : 'R$ 0,00'
+              }
+            </div>
+            <p className="text-xs text-muted-foreground">Por vendedor</p>
           </CardContent>
         </Card>
       </div>
@@ -180,11 +385,21 @@ export default function VendedoresPage() {
                     </div>
                   </div>
                   <div className="flex space-x-1">
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditarVendedor(vendedor)}
+                      title="Editar vendedor"
+                    >
                       <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleExcluirVendedor(vendedor)}
+                      title="Excluir vendedor"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
                 </div>
@@ -207,20 +422,34 @@ export default function VendedoresPage() {
 
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div className="text-center">
-                    <div className="text-lg font-semibold text-meguispet-primary">0</div>
+                    <div className="text-lg font-semibold text-meguispet-primary">
+                      {vendedor.total_vendas || 0}
+                    </div>
                     <div className="text-xs text-gray-500">Vendas</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-semibold text-green-600">R$ 0,00</div>
+                    <div className="text-lg font-semibold text-green-600">
+                      {formatCurrency(vendedor.total_faturamento || 0)}
+                    </div>
                     <div className="text-xs text-gray-500">Faturamento</div>
                   </div>
                 </div>
 
                 <div className="pt-2 flex space-x-2">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleVerVendas(vendedor)}
+                  >
                     Ver Vendas
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => handleVerRelatorio(vendedor)}
+                  >
                     Relatório
                   </Button>
                 </div>

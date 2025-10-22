@@ -75,22 +75,22 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // 📊 DASHBOARD
 export const dashboardService = {
   async getMetrics(): Promise<ApiResponse<DashboardMetric[]>> {
-    const response = await api.get('/dashboard/metrics.php')
+    const response = await api.get('/dashboard/metrics')
     return response.data
   },
 
   async getRecentSales(): Promise<ApiResponse> {
-    const response = await api.get('/dashboard/recent-sales.php')
+    const response = await api.get('/dashboard/recent-sales')
     return response.data
   },
 
   async getTopProducts(): Promise<ApiResponse<DashboardTopProduct[]>> {
-    const response = await api.get('/dashboard/top-products.php')
+    const response = await api.get('/dashboard/top-products')
     return response.data
   },
 
   async getVendas7Dias(): Promise<ApiResponse<DashboardVendasDia[]>> {
-    const response = await api.get('/dashboard/vendas-7-dias.php')
+    const response = await api.get('/dashboard/vendas-7-dias')
     return response.data
   }
 }
@@ -98,27 +98,27 @@ export const dashboardService = {
 // 👥 CLIENTES
 export const clientesService = {
   async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Cliente>> {
-    const response = await api.get(`/clientes.php?page=${page}&limit=${limit}`)
+    const response = await api.get(`/clientes?page=${page}&limit=${limit}`)
     return response.data
   },
 
   async getById(id: number): Promise<ApiResponse<Cliente>> {
-    const response = await api.get(`/clientes.php?id=${id}`)
+    const response = await api.get(`/clientes?id=${id}`)
     return response.data
   },
 
   async create(cliente: ClienteFormPayload): Promise<ApiResponse<Cliente>> {
-    const response = await api.post('/clientes.php', cliente)
+    const response = await api.post('/clientes', cliente)
     return response.data
   },
 
   async update(id: number, cliente: Partial<Cliente> | ClienteFormPayload): Promise<ApiResponse<Cliente>> {
-    const response = await api.put(`/clientes.php?id=${id}`, { ...cliente, id })
+    const response = await api.put(`/clientes?id=${id}`, { ...cliente, id })
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/clientes.php?id=${id}`)
+    const response = await api.delete(`/clientes?id=${id}`)
     return response.data
   }
 }
@@ -126,32 +126,38 @@ export const clientesService = {
 // 📦 PRODUTOS
 export const produtosService = {
   async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Produto>> {
-    const response = await api.get(`/produtos.php?page=${page}&limit=${limit}`)
+    const response = await api.get(`/produtos?page=${page}&limit=${limit}`)
     return response.data
   },
 
   async getById(id: number): Promise<ApiResponse<Produto>> {
-    const response = await api.get(`/produtos.php/${id}`)
-    return response.data
+    // Try Node-style REST first (/produtos/:id), fall back to query-style for legacy PHP endpoints
+    try {
+      const response = await api.get(`/produtos/${id}`)
+      return response.data
+    } catch (err) {
+      const response = await api.get(`/produtos?id=${id}`)
+      return response.data
+    }
   },
 
   async create(produto: ProdutoFormPayload): Promise<ApiResponse<Produto>> {
-    const response = await api.post('/produtos.php', produto)
+    const response = await api.post('/produtos', produto)
     return response.data
   },
 
   async update(id: number, produto: Partial<Produto> | ProdutoFormPayload): Promise<ApiResponse<Produto>> {
-    const response = await api.put(`/produtos.php?id=${id}`, produto)
+    const response = await api.put(`/produtos?id=${id}`, { ...produto, id })
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/produtos.php?id=${id}`)
+    const response = await api.delete(`/produtos?id=${id}`)
     return response.data
   },
 
   async updateStock(id: number, quantidade: number): Promise<ApiResponse> {
-    const response = await api.patch(`/produtos.php?id=${id}`, { estoque: quantidade })
+    const response = await api.patch(`/produtos?id=${id}`, { estoque: quantidade })
     return response.data
   },
 
@@ -160,7 +166,7 @@ export const produtosService = {
     limit = 50,
     filters?: Record<string, string | number | boolean | undefined>
   ): Promise<ApiResponse> {
-    let url = `/estoque-relatorio.php?page=${page}&limit=${limit}`
+    let url = `/estoque-relatorio?page=${page}&limit=${limit}`
     if (filters) {
       Object.keys(filters).forEach(key => {
         if (filters[key]) url += `&${key}=${filters[key]}`
@@ -171,30 +177,44 @@ export const produtosService = {
   }
 }
 
+// Histórico de preços
+export const historicoPrecosService = {
+  async getByProdutoId(produtoId: number, limit = 20): Promise<ApiResponse> {
+    // Node-style endpoint (no .php). The project no longer depends on PHP endpoints.
+    const response = await api.get(`/historico-precos?produto_id=${produtoId}&limit=${limit}`)
+    return response.data
+  }
+}
+
 // 🛒 VENDAS
 export const vendasService = {
   async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Venda>> {
-    const response = await api.get(`/vendas.php?page=${page}&limit=${limit}`)
+    const response = await api.get(`/vendas?page=${page}&limit=${limit}`)
     return response.data
   },
 
   async getById(id: number): Promise<ApiResponse<Venda>> {
-    const response = await api.get(`/vendas.php?id=${id}`)
+    const response = await api.get(`/vendas/${id}`)
     return response.data
   },
 
   async create(venda: VendaFormPayload): Promise<ApiResponse<Venda>> {
-    const response = await api.post('/vendas.php', venda)
+    const response = await api.post('/vendas', venda)
     return response.data
   },
 
   async update(id: number, venda: Partial<Venda> | VendaFormPayload): Promise<ApiResponse<Venda>> {
-    const response = await api.put(`/vendas.php?id=${id}`, venda)
+    const response = await api.put(`/vendas?id=${id}`, { ...venda, id })
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/vendas.php?id=${id}`)
+    const response = await api.delete(`/vendas?id=${id}`)
+    return response.data
+  },
+
+  async updateStatus(id: number, status: string): Promise<ApiResponse> {
+    const response = await api.patch(`/vendas/${id}`, { status })
     return response.data
   }
 }
@@ -202,22 +222,22 @@ export const vendasService = {
 // 🏬 ESTOQUES
 export const estoquesService = {
   async getAll(activeOnly = false): Promise<ApiResponse<Estoque[]>> {
-    const response = await api.get(`/estoques.php${activeOnly ? '?active=1' : ''}`)
+    const response = await api.get(`/estoques${activeOnly ? '?active=1' : ''}`)
     return response.data
   },
 
   async create(payload: { nome: string; descricao?: string; ativo?: number }): Promise<ApiResponse> {
-    const response = await api.post('/estoques.php', payload)
+    const response = await api.post('/estoques', payload)
     return response.data
   },
 
   async update(id: number, payload: { nome?: string; descricao?: string; ativo?: number }): Promise<ApiResponse> {
-    const response = await api.put('/estoques.php', { id, ...payload })
+    const response = await api.put('/estoques', { id, ...payload })
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/estoques.php?id=${id}`)
+    const response = await api.delete(`/estoques?id=${id}`)
     return response.data
   }
 }
@@ -225,22 +245,22 @@ export const estoquesService = {
 // 💳 FORMAS DE PAGAMENTO
 export const formasPagamentoService = {
   async getAll(activeOnly = false): Promise<ApiResponse<FormaPagamentoRegistro[]>> {
-    const response = await api.get(`/formas_pagamento.php${activeOnly ? '?active=1' : ''}`)
+    const response = await api.get(`/formas_pagamento${activeOnly ? '?active=1' : ''}`)
     return response.data
   },
 
   async create(payload: { nome: string; ativo?: number; ordem?: number }): Promise<ApiResponse> {
-    const response = await api.post('/formas_pagamento.php', payload)
+    const response = await api.post('/formas_pagamento', payload)
     return response.data
   },
 
   async update(id: number, payload: { nome?: string; ativo?: number; ordem?: number }): Promise<ApiResponse> {
-    const response = await api.put('/formas_pagamento.php', { id, ...payload })
+    const response = await api.put('/formas_pagamento', { id, ...payload })
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/formas_pagamento.php?id=${id}`)
+    const response = await api.delete(`/formas_pagamento?id=${id}`)
     return response.data
   }
 }
@@ -248,27 +268,27 @@ export const formasPagamentoService = {
 // 👨‍💼 VENDEDORES
 export const vendedoresService = {
   async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Vendedor>> {
-    const response = await api.get(`/vendedores.php?page=${page}&limit=${limit}`)
+    const response = await api.get(`/vendedores?page=${page}&limit=${limit}`)
     return response.data
   },
 
   async getById(id: number): Promise<ApiResponse<Vendedor>> {
-    const response = await api.get(`/vendedores.php?id=${id}`)
+    const response = await api.get(`/vendedores?id=${id}`)
     return response.data
   },
 
   async create(vendedor: Omit<Vendedor, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Vendedor>> {
-    const response = await api.post('/vendedores.php', vendedor)
+    const response = await api.post('/vendedores', vendedor)
     return response.data
   },
 
   async update(id: number, vendedor: Partial<Vendedor>): Promise<ApiResponse<Vendedor>> {
-    const response = await api.put(`/vendedores.php?id=${id}`, vendedor)
+    const response = await api.put(`/vendedores?id=${id}`, vendedor)
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/vendedores.php?id=${id}`)
+    const response = await api.delete(`/vendedores?id=${id}`)
     return response.data
   }
 }
@@ -276,27 +296,27 @@ export const vendedoresService = {
 // 👥 USUÁRIOS
 export const usuariosService = {
   async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Usuario>> {
-    const response = await api.get(`/usuarios.php?page=${page}&limit=${limit}`)
+    const response = await api.get(`/usuarios?page=${page}&limit=${limit}`)
     return response.data
   },
 
   async getById(id: number): Promise<ApiResponse<Usuario>> {
-    const response = await api.get(`/usuarios.php?id=${id}`)
+    const response = await api.get(`/usuarios?id=${id}`)
     return response.data
   },
 
   async create(usuario: Omit<Usuario, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Usuario>> {
-    const response = await api.post('/usuarios.php', usuario)
+    const response = await api.post('/usuarios', usuario)
     return response.data
   },
 
   async update(id: number, usuario: Partial<Usuario>): Promise<ApiResponse<Usuario>> {
-    const response = await api.put(`/usuarios.php?id=${id}`, usuario)
+    const response = await api.put(`/usuarios?id=${id}`, usuario)
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/usuarios.php?id=${id}`)
+    const response = await api.delete(`/usuarios?id=${id}`)
     return response.data
   }
 }
@@ -304,7 +324,7 @@ export const usuariosService = {
 // 🔐 AUTENTICAÇÃO
 export const authService = {
   async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: Usuario }>> {
-    const response = await api.post('/auth.php', { email, password })
+    const response = await api.post('/auth', { email, password })
     return response.data
   },
 
@@ -323,7 +343,7 @@ export const authService = {
   },
 
   async getProfile(): Promise<ApiResponse<Usuario>> {
-    const response = await api.get('/auth/profile.php')
+    const response = await api.get('/auth/profile')
     return response.data
   }
 }
@@ -331,27 +351,27 @@ export const authService = {
 // 🚚 FORNECEDORES
 export const fornecedoresService = {
   async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Fornecedor>> {
-    const response = await api.get(`/fornecedores.php?page=${page}&limit=${limit}`)
+    const response = await api.get(`/fornecedores?page=${page}&limit=${limit}`)
     return response.data
   },
 
   async getById(id: number): Promise<ApiResponse<Fornecedor>> {
-    const response = await api.get(`/fornecedores.php/${id}`)
+    const response = await api.get(`/fornecedores/${id}`)
     return response.data
   },
 
   async create(fornecedor: Omit<Fornecedor, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<Fornecedor>> {
-    const response = await api.post('/fornecedores.php', fornecedor)
+    const response = await api.post('/fornecedores', fornecedor)
     return response.data
   },
 
   async update(id: number, fornecedor: Partial<Fornecedor>): Promise<ApiResponse<Fornecedor>> {
-    const response = await api.put(`/fornecedores.php/${id}`, fornecedor)
+    const response = await api.put(`/fornecedores/${id}`, fornecedor)
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/fornecedores.php/${id}`)
+    const response = await api.delete(`/fornecedores/${id}`)
     return response.data
   }
 }
@@ -359,7 +379,7 @@ export const fornecedoresService = {
 // 📦 MOVIMENTAÇÕES DE ESTOQUE
 export const movimentacoesService = {
   async getAll(page = 1, limit = 10, tipo?: string, status?: string): Promise<PaginatedResponse<MovimentacaoEstoque>> {
-    let url = `/movimentacoes.php?page=${page}&limit=${limit}`
+    let url = `/movimentacoes?page=${page}&limit=${limit}`
     if (tipo) url += `&tipo=${tipo}`
     if (status) url += `&status=${status}`
     
@@ -368,17 +388,17 @@ export const movimentacoesService = {
   },
 
   async getById(id: number): Promise<ApiResponse<MovimentacaoEstoque>> {
-    const response = await api.get(`/movimentacoes.php/${id}`)
+    const response = await api.get(`/movimentacoes/${id}`)
     return response.data
   },
 
   async create(movimentacao: MovimentacaoFormPayload): Promise<ApiResponse<MovimentacaoEstoque>> {
-    const response = await api.post('/movimentacoes.php', movimentacao)
+    const response = await api.post('/movimentacoes', movimentacao)
     return response.data
   },
 
   async updateStatus(id: number, status: string): Promise<ApiResponse> {
-    const response = await api.put(`/movimentacoes.php/${id}/status`, { id, status })
+    const response = await api.put(`/movimentacoes/${id}/status`, { id, status })
     return response.data
   }
 }
@@ -386,7 +406,7 @@ export const movimentacoesService = {
 // 💰 TRANSAÇÕES FINANCEIRAS
 export const transacoesService = {
   async getAll(page = 1, limit = 10, tipo?: string, dataInicio?: string, dataFim?: string): Promise<PaginatedResponse<TransacaoFinanceira>> {
-    let url = `/transacoes.php?page=${page}&limit=${limit}`
+    let url = `/transacoes?page=${page}&limit=${limit}`
     if (tipo) url += `&tipo=${tipo}`
     if (dataInicio) url += `&data_inicio=${dataInicio}`
     if (dataFim) url += `&data_fim=${dataFim}`
@@ -396,27 +416,27 @@ export const transacoesService = {
   },
 
   async getById(id: number): Promise<ApiResponse<TransacaoFinanceira>> {
-    const response = await api.get(`/transacoes.php/${id}`)
+    const response = await api.get(`/transacoes/${id}`)
     return response.data
   },
 
   async create(transacao: Omit<TransacaoFinanceira, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<TransacaoFinanceira>> {
-    const response = await api.post('/transacoes.php', transacao)
+    const response = await api.post('/transacoes', transacao)
     return response.data
   },
 
   async update(id: number, transacao: Partial<TransacaoFinanceira>): Promise<ApiResponse<TransacaoFinanceira>> {
-    const response = await api.put(`/transacoes.php/${id}`, transacao)
+    const response = await api.put(`/transacoes/${id}`, { ...transacao, id })
     return response.data
   },
 
   async delete(id: number): Promise<ApiResponse> {
-    const response = await api.delete(`/transacoes.php/${id}`)
+    const response = await api.delete(`/transacoes/${id}`)
     return response.data
   },
 
   async getMetricas(): Promise<ApiResponse<FinanceiroMetrics>> {
-    const response = await api.get('/transacoes.php?metricas=1')
+    const response = await api.get('/transacoes/metricas')
     return response.data
   }
 }

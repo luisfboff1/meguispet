@@ -23,6 +23,7 @@ import {
   X
 } from 'lucide-react'
 import { produtosService, movimentacoesService, estoquesService } from '@/services/api'
+import AlertDialog from '@/components/ui/AlertDialog'
 import type {
   Produto,
   MovimentacaoEstoque,
@@ -50,6 +51,7 @@ export default function ProdutosEstoquePage() {
   const [editingProduto, setEditingProduto] = useState<Produto | null>(null)
   const [editingMovimentacao, setEditingMovimentacao] = useState<MovimentacaoEstoque | null>(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [alertDialog, setAlertDialog] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
   
   // Estados para modal de detalhes
   const [showMovimentacaoDetails, setShowMovimentacaoDetails] = useState(false)
@@ -67,6 +69,10 @@ export default function ProdutosEstoquePage() {
       const produtosResponse = await produtosService.getAll(1, 100)
       if (produtosResponse.success && produtosResponse.data) {
         setProdutos(produtosResponse.data)
+        // Debug: inspect the first product's estoques shape
+        if (process.env.NODE_ENV === 'development' && produtosResponse.data.length) {
+          console.log('[produtos-estoque] exemplo produto.estoques:', produtosResponse.data[0].estoques)
+        }
       }
 
       // Carregar estoques
@@ -164,23 +170,50 @@ export default function ProdutosEstoquePage() {
   const handleSalvarProduto = async (produtoData: ProdutoFormValues) => {
     try {
       setFormLoading(true)
-      
+
       if (editingProduto) {
         const response = await produtosService.update(editingProduto.id, produtoData)
         if (response.success) {
           await loadData()
           setShowProdutoForm(false)
           setEditingProduto(null)
+          setAlertDialog({
+            title: '✅ Produto Atualizado',
+            message: `O produto "${produtoData.nome}" foi atualizado com sucesso! O estoque foi distribuído conforme configurado.`,
+            type: 'success',
+          })
+        } else {
+          setAlertDialog({
+            title: '❌ Erro ao Atualizar Produto',
+            message: response.message || 'Não foi possível atualizar o produto. Tente novamente.',
+            type: 'error',
+          })
         }
       } else {
         const response = await produtosService.create(produtoData)
         if (response.success) {
           await loadData()
           setShowProdutoForm(false)
+          setAlertDialog({
+            title: '✅ Produto Cadastrado',
+            message: `O produto "${produtoData.nome}" foi cadastrado com sucesso! O estoque foi distribuído nos locais selecionados.`,
+            type: 'success',
+          })
+        } else {
+          setAlertDialog({
+            title: '❌ Erro ao Cadastrar Produto',
+            message: response.message || 'Não foi possível cadastrar o produto. Verifique os dados e tente novamente.',
+            type: 'error',
+          })
         }
       }
     } catch (error) {
       console.error('Erro ao salvar produto:', error)
+      setAlertDialog({
+        title: '❌ Erro Inesperado',
+        message: 'Ocorreu um erro ao salvar o produto. Tente novamente mais tarde.',
+        type: 'error',
+      })
     } finally {
       setFormLoading(false)
     }
@@ -308,30 +341,58 @@ export default function ProdutosEstoquePage() {
   }, [estoques])
 
   const describeProdutoEstoques = (produto: Produto) => {
-    if (Array.isArray(produto.estoques) && produto.estoques.length > 0) {
-      return produto.estoques
-        .map((item) => {
-          const nome = item.estoque_nome ?? estoqueById[item.estoque_id]?.nome ?? 'Estoque não identificado'
-          return typeof item.quantidade === 'number' ? `${nome} (${item.quantidade})` : nome
-        })
-        .join(', ')
+    // Verificar se o produto tem estoques
+    if (!produto.estoques || !Array.isArray(produto.estoques) || produto.estoques.length === 0) {
+      return 'Nenhum estoque vinculado'
     }
 
-    const estoqueId = typeof produto.estoque_id === 'number'
-      ? produto.estoque_id
-      : produto.estoque_id
-        ? Number(produto.estoque_id)
-        : null
+    // Mapear estoques para exibição
+    const estoquesFormatados = produto.estoques.map((item: { estoque_id?: number; estoqueId?: number; estoque?: { id?: number; nome?: string }; quantidade?: number }) => {
+      // Extrair estoque_id
+      const estoqueId = item.estoque_id || item.estoqueId || (item.estoque?.id)
 
-    if (estoqueId !== null && !Number.isNaN(estoqueId) && estoqueById[estoqueId]) {
-      return estoqueById[estoqueId].nome
-    }
+      // Extrair nome do estoque
+      let nomeEstoque = 'Estoque não identificado'
+      if (item.estoque && typeof item.estoque === 'object' && item.estoque.nome) {
+        nomeEstoque = item.estoque.nome
+      } else if (estoqueId) {
+        const estoqueEncontrado = estoques.find(e => Number(e.id) === Number(estoqueId))
+        nomeEstoque = estoqueEncontrado?.nome || `Estoque #${estoqueId}`
+      }
 
-    return 'Estoque não vinculado'
+      // Extrair quantidade
+      const quantidade = Number(item.quantidade || 0)
+
+      return { nome: nomeEstoque, quantidade }
+    })
+
+    // Agrupar por nome e somar quantidades
+    const agrupado = estoquesFormatados.reduce((acc: Record<string, number>, item) => {
+      if (!acc[item.nome]) {
+        acc[item.nome] = 0
+      }
+      acc[item.nome] += item.quantidade
+      return acc
+    }, {})
+
+    // Formatar para exibição
+    const resultado = Object.entries(agrupado)
+      .map(([nome, qtd]) => `${nome} (${qtd})`)
+      .join(', ')
+
+    return resultado || 'Estoque não vinculado'
   }
 
   return (
     <div className="space-y-6">
+      {alertDialog && (
+        <AlertDialog
+          title={alertDialog.title}
+          message={alertDialog.message}
+          type={alertDialog.type}
+          onClose={() => setAlertDialog(null)}
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
