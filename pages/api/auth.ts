@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getSupabaseBrowser } from '@/lib/supabase';
-import { verifySupabaseUser, getUserProfile } from '@/lib/supabase-auth';
+import { getSupabaseServerAuth, verifySupabaseUser, getUserProfile } from '@/lib/supabase-auth';
 
 /**
  * Authentication endpoint using Supabase Auth
@@ -41,8 +40,8 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    // Use Supabase Auth for authentication
-    const supabase = getSupabaseBrowser();
+    // Use Supabase Auth for authentication with server client
+    const supabase = getSupabaseServerAuth(req, res);
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
