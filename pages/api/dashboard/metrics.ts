@@ -1,6 +1,6 @@
 import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
-import { withAuth, AuthenticatedRequest } from '@/lib/api-middleware';
+import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const supabase = getSupabase();
@@ -70,4 +70,4 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   }
 };
 
-export default withAuth(handler);
+export default withSupabaseAuth(handler);
