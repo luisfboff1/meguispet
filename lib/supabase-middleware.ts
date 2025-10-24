@@ -29,7 +29,7 @@ export const withSupabaseAuth = (
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       // Verify Supabase JWT token and get user
-      const supabaseUser = await verifySupabaseUser(req);
+      const supabaseUser = await verifySupabaseUser(req, res);
 
       if (!supabaseUser || !supabaseUser.email) {
         return res.status(401).json({

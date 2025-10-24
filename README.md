@@ -6,6 +6,7 @@ Agora com **animações suaves em todas as seções** e **modais ainda mais aces
 
 ## ✨ Características
 
+- ✅ **Edge Middleware** - Autenticação otimizada no Edge runtime com latência mínima
 - ✅ **Layout Global Automático** - Não precisa configurar página por página
 - ✅ **TypeScript Profissional** - Tipos seguros em todo o sistema
 - ✅ **Shadcn/ui Components** - Componentes modernos e acessíveis

@@ -97,7 +97,7 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
 const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     // Verify Supabase user from JWT token
-    const supabaseUser = await verifySupabaseUser(req);
+    const supabaseUser = await verifySupabaseUser(req, res);
 
     if (!supabaseUser || !supabaseUser.email) {
       return res.status(401).json({
