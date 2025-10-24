@@ -1,4 +1,17 @@
-# 🔐 Sistema JWT - Autenticação MeguisPet
+# ⚠️ DEPRECATED - Sistema JWT - Autenticação MeguisPet (Legacy)
+
+> **IMPORTANTE**: Este documento descreve o sistema PHP com JWT customizado que foi **REMOVIDO**.
+> 
+> **Novo Sistema**: O projeto agora usa:
+> - **Supabase Auth** para autenticação (tokens JWT gerenciados pelo Supabase)
+> - **Next.js API Routes** para endpoints (não mais PHP)
+> - **Middleware `withSupabaseAuth`** para proteção de rotas
+> 
+> Este arquivo é mantido apenas para referência histórica.
+
+---
+
+# 🔐 Sistema JWT - Autenticação MeguisPet (LEGACY - NÃO MAIS USADO)
 
 ## 📋 Visão Geral
 

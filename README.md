@@ -47,14 +47,18 @@ NEXT_PUBLIC_API_URL=/api
 API_BASE_URL=https://gestao.meguispet.com/api
 NEXT_PRIVATE_API_PROXY_TARGET=https://gestao.meguispet.com/api
 
-# Banco (seus atuais)
+# Supabase (for authentication and database)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Banco (para queries legadas, migrar para Supabase)
 DB_HOST=localhost
 DB_NAME=u123456_meguispet  
 DB_USER=u123456_admin
 DB_PASSWORD=sua_senha
 
-# Outros (seus atuais)
-JWT_SECRET=seu_jwt_secret
+# SMTP (para notificações)
 SMTP_HOST=smtp.hostinger.com
 SMTP_PORT=587
 # ... etc

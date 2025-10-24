@@ -30,6 +30,7 @@ export function useAuth() {
     if (typeof window === 'undefined') return
     const storedToken = token ?? null
 
+    // Legacy token storage for backwards compatibility
     if (storedToken) {
       localStorage.setItem('token', storedToken)
     } else {
@@ -57,6 +58,15 @@ export function useAuth() {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
+        
+        // Clear Supabase session
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        if (supabaseUrl) {
+          const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
+          if (projectRef) {
+            localStorage.removeItem(`sb-${projectRef}-auth-token`)
+          }
+        }
       }
       clearTokenCookie()
       router.push('/login')
@@ -66,7 +76,31 @@ export function useAuth() {
   const checkAuth = useCallback(async () => {
     try {
       setStatus('loading')
-      const localToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      
+      // Check for Supabase session first
+      let localToken = null
+      if (typeof window !== 'undefined') {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        if (supabaseUrl) {
+          const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
+          if (projectRef) {
+            const supabaseSession = localStorage.getItem(`sb-${projectRef}-auth-token`)
+            if (supabaseSession) {
+              try {
+                const session = JSON.parse(supabaseSession)
+                localToken = session?.access_token || null
+              } catch (parseError) {
+                console.warn('Erro ao parsear sessão Supabase:', parseError)
+              }
+            }
+          }
+        }
+        
+        // Fallback to legacy token
+        if (!localToken) {
+          localToken = localStorage.getItem('token')
+        }
+      }
 
       if (!localToken) {
         clear()
@@ -101,10 +135,31 @@ export function useAuth() {
         const response = await authService.login(email, password)
         if (response.success && response.data) {
           const { token: newToken, user: newUser } = response.data
+          
           if (typeof window !== 'undefined') {
+            // Store token for backwards compatibility
             localStorage.setItem('token', newToken)
             localStorage.setItem('user', JSON.stringify(newUser))
+            
+            // Store Supabase session structure
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+            if (supabaseUrl) {
+              const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
+              if (projectRef) {
+                const supabaseSession = {
+                  access_token: newToken,
+                  refresh_token: response.data.refresh_token,
+                  expires_at: response.data.expires_at,
+                  user: newUser
+                }
+                localStorage.setItem(
+                  `sb-${projectRef}-auth-token`,
+                  JSON.stringify(supabaseSession)
+                )
+              }
+            }
           }
+          
           setTokenCookie(newToken)
           setCredentials(newUser, newToken)
           setStatus('authenticated')

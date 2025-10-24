@@ -1,6 +1,14 @@
-# 🔐 **CONFIGURAÇÃO DE SECRETS - MEGUISPET ADMIN**
+# ⚠️ DEPRECATED - CONFIGURAÇÃO DE SECRETS - MEGUISPET ADMIN (Legacy)
 
-## 📋 **LISTA DE SECRETS NECESSÁRIOS**
+> **IMPORTANTE**: Este documento contém configurações do sistema de autenticação JWT customizado que foi **REMOVIDO**.
+> 
+> **Novo Sistema**: O projeto agora usa **Supabase Auth** para autenticação.
+> 
+> **JWT_SECRET não é mais necessário** - Use as variáveis do Supabase listadas abaixo.
+
+---
+
+## 📋 **LISTA DE SECRETS NECESSÁRIOS** (ATUALIZADO)
 
 ### **Como configurar no GitHub:**
 1. Acesse: `https://github.com/luisfboff1/meguispet/settings/secrets/actions`
@@ -9,7 +17,14 @@
 
 ---
 
-## 🗄️ **BANCO DE DADOS MYSQL**
+## 🔐 **SUPABASE (Autenticação e Banco de Dados)**
+```
+NEXT_PUBLIC_SUPABASE_URL=https://[seu-projeto].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[sua-anon-key]
+SUPABASE_SERVICE_ROLE_KEY=[sua-service-role-key]
+```
+
+## 🗄️ **BANCO DE DADOS MYSQL (Legacy - Migrar para Supabase)**
 ```
 DB_HOST=localhost
 DB_NAME=u818487728_gestao
@@ -17,9 +32,9 @@ DB_USER=u818487728_gestao
 DB_PASSWORD=[SUA_SENHA_MYSQL]
 ```
 
-## 🔑 **AUTENTICAÇÃO JWT**
+## ~~🔑 **AUTENTICAÇÃO JWT**~~ (REMOVIDO)
 ```
-JWT_SECRET=[SEU_JWT_SECRET_AQUI]
+# JWT_SECRET=[SEU_JWT_SECRET_AQUI]  # NÃO MAIS USADO
 ```
 
 ## 📧 **CONFIGURAÇÕES SMTP (EMAIL)**
