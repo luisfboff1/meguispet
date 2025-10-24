@@ -74,11 +74,14 @@ The `MainLayout` component is automatically applied to all pages via `_app.tsx`,
 - **Hook**: `hooks/useAuth.ts` provides `login()`, `logout()`, `checkAuth()`
 - **Auth Method**: Supabase Auth with JWT tokens (access + refresh tokens)
 - **Session Storage**: Supabase session in localStorage (automatic token refresh)
-- **Protection**: MainLayout checks auth status and redirects to `/login` if unauthenticated
+- **Edge Middleware**: `middleware.ts` runs on Edge runtime for route protection
+- **Protection**: Edge middleware checks auth status and redirects to `/login` if unauthenticated
+- **Client Protection**: MainLayout double-checks auth status on client side
 - **API Integration**: Request interceptor auto-adds `Authorization: Bearer {token}` header
-- **Middleware**: API routes protected with `withSupabaseAuth` from `lib/supabase-middleware.ts`
+- **API Middleware**: API routes protected with `withSupabaseAuth` from `lib/supabase-middleware.ts`
 - **User Profiles**: Custom `usuarios` table stores app-specific metadata (role, permissoes)
 - **Security**: No hardcoded secrets, 1-hour token expiry with automatic refresh, MFA-ready
+- **Cookie Handling**: Uses `@supabase/ssr` for secure cookie management
 
 ### 3. State Management (Zustand)
 Four main stores with SSR-safe persistence:
@@ -187,7 +190,7 @@ interface ClienteFormProps {
 ### Environment Variables
 Required in `.env.local`:
 ```bash
-# Supabase (authentication and database)
+# Supabase (authentication and database) - Required for middleware
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key

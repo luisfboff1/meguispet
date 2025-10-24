@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 let supabaseInstance: SupabaseClient | null = null;
 
@@ -30,6 +31,7 @@ export const getSupabase = (): SupabaseClient => {
 
 /**
  * Get Supabase client for browser-side use with auth enabled
+ * Uses @supabase/ssr for optimal cookie handling and middleware integration
  * Use this in React components and hooks
  */
 export const getSupabaseBrowser = (): SupabaseClient => {
@@ -40,12 +42,7 @@ export const getSupabaseBrowser = (): SupabaseClient => {
     throw new Error('Missing Supabase environment variables');
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    },
-  });
+  // Use createBrowserClient from @supabase/ssr for better integration
+  // with Next.js middleware and automatic cookie handling
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 };

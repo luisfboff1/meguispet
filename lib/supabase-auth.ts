@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { NextApiRequest } from 'next';
+import { createServerClient } from '@supabase/ssr';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 /**
  * Supabase Auth utilities for server-side API routes
@@ -27,10 +28,14 @@ export const getSupabaseServiceRole = (): SupabaseClient => {
 };
 
 /**
- * Get Supabase client for server-side with user context
+ * Get Supabase client for server-side with user context in API routes
+ * Uses @supabase/ssr for optimal cookie handling
  * Extracts JWT from Authorization header and creates authenticated client
  */
-export const getSupabaseServerAuth = (req: NextApiRequest): SupabaseClient => {
+export const getSupabaseServerAuth = (
+  req: NextApiRequest,
+  res: NextApiResponse
+): SupabaseClient => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -38,17 +43,27 @@ export const getSupabaseServerAuth = (req: NextApiRequest): SupabaseClient => {
     throw new Error('Missing Supabase environment variables');
   }
 
-  // Extract token from Authorization header
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-    global: {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+  // Use createServerClient from @supabase/ssr for better cookie handling
+  const client = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        const cookies: { name: string; value: string }[] = [];
+        const cookieHeader = req.headers.cookie;
+        if (cookieHeader) {
+          cookieHeader.split(';').forEach((cookie) => {
+            const [name, ...valueParts] = cookie.trim().split('=');
+            if (name && valueParts.length > 0) {
+              cookies.push({ name, value: valueParts.join('=') });
+            }
+          });
+        }
+        return cookies;
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          res.setHeader('Set-Cookie', `${name}=${value}; Path=${options?.path || '/'}; ${options?.httpOnly ? 'HttpOnly; ' : ''}${options?.secure ? 'Secure; ' : ''}${options?.sameSite ? `SameSite=${options.sameSite}; ` : ''}${options?.maxAge ? `Max-Age=${options.maxAge}` : ''}`);
+        });
+      },
     },
   });
 
@@ -59,9 +74,12 @@ export const getSupabaseServerAuth = (req: NextApiRequest): SupabaseClient => {
  * Verify user from Supabase JWT token
  * Returns user object if valid, null if invalid/expired
  */
-export const verifySupabaseUser = async (req: NextApiRequest): Promise<User | null> => {
+export const verifySupabaseUser = async (
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<User | null> => {
   try {
-    const client = getSupabaseServerAuth(req);
+    const client = getSupabaseServerAuth(req, res);
     const { data, error } = await client.auth.getUser();
 
     if (error || !data.user) {
