@@ -72,9 +72,13 @@ The `MainLayout` component is automatically applied to all pages via `_app.tsx`,
 ### 2. Authentication Flow
 - **Store**: `store/auth.ts` (Zustand with localStorage persistence)
 - **Hook**: `hooks/useAuth.ts` provides `login()`, `logout()`, `checkAuth()`
-- **Tokens**: JWT stored in localStorage + httpOnly cookies (7-day expiry)
+- **Auth Method**: Supabase Auth with JWT tokens (access + refresh tokens)
+- **Session Storage**: Supabase session in localStorage (automatic token refresh)
 - **Protection**: MainLayout checks auth status and redirects to `/login` if unauthenticated
 - **API Integration**: Request interceptor auto-adds `Authorization: Bearer {token}` header
+- **Middleware**: API routes protected with `withSupabaseAuth` from `lib/supabase-middleware.ts`
+- **User Profiles**: Custom `usuarios` table stores app-specific metadata (role, permissoes)
+- **Security**: No hardcoded secrets, 1-hour token expiry with automatic refresh, MFA-ready
 
 ### 3. State Management (Zustand)
 Four main stores with SSR-safe persistence:
@@ -183,14 +187,16 @@ interface ClienteFormProps {
 ### Environment Variables
 Required in `.env.local`:
 ```bash
-# Database
+# Supabase (authentication and database)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Database (legacy, migrating to Supabase)
 DB_HOST=localhost
 DB_NAME=u123456_meguispet
 DB_USER=u123456_admin
 DB_PASSWORD=your_password
-
-# JWT
-JWT_SECRET=your_secret_key
 
 # API URL (for static export)
 NEXT_PUBLIC_API_URL=/api

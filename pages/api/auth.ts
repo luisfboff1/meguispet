@@ -1,8 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import bcrypt from 'bcryptjs';
-import { getSupabase } from '@/lib/supabase';
-import { signJWT, verifyJWT, extractTokenFromHeader } from '@/lib/jwt-utils';
+import { getSupabaseBrowser } from '@/lib/supabase';
+import { verifySupabaseUser, getUserProfile } from '@/lib/supabase-auth';
 
+/**
+ * Authentication endpoint using Supabase Auth
+ * Replaces custom JWT implementation
+ * 
+ * POST /api/auth - Login with email/password
+ * GET /api/auth/profile - Get current user profile
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
 
@@ -34,93 +40,100 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     });
   }
 
-  const supabase = getSupabase();
+  try {
+    // Use Supabase Auth for authentication
+    const supabase = getSupabaseBrowser();
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  const { data: user, error } = await supabase
-    .from('usuarios')
-    .select('id, nome, email, password_hash, role, permissoes, ativo')
-    .eq('email', email)
-    .eq('ativo', true)
-    .single();
+    if (error || !data.session) {
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciais inválidas',
+      });
+    }
 
-  if (error || !user) {
-    return res.status(401).json({
+    // Get user profile from custom usuarios table
+    const userProfile = await getUserProfile(email);
+
+    if (!userProfile) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não encontrado ou inativo',
+      });
+    }
+
+    // Return session token and user data
+    return res.status(200).json({
+      success: true,
+      data: {
+        token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_at: data.session.expires_at,
+        user: {
+          id: userProfile.id,
+          nome: userProfile.nome,
+          email: userProfile.email,
+          role: userProfile.role,
+          permissoes: userProfile.permissoes,
+          ativo: userProfile.ativo,
+        },
+      },
+      message: 'Login realizado com sucesso',
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Credenciais inválidas',
+      message: 'Erro ao realizar login',
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-
-  const passwordMatch = await bcrypt.compare(password, user.password_hash);
-
-  if (!passwordMatch) {
-    return res.status(401).json({
-      success: false,
-      message: 'Credenciais inválidas',
-    });
-  }
-
-  const token = await signJWT({
-    id: user.id,
-    email: user.email,
-    role: user.role,
-  });
-
-  const userData = {
-    id: user.id,
-    nome: user.nome,
-    email: user.email,
-    role: user.role,
-    permissoes: user.permissoes,
-    ativo: user.ativo,
-  };
-
-  return res.status(200).json({
-    success: true,
-    data: {
-      token,
-      user: userData,
-    },
-    message: 'Login realizado com sucesso',
-  });
 };
 
 const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
-  const token = extractTokenFromHeader(req.headers.authorization);
+  try {
+    // Verify Supabase user from JWT token
+    const supabaseUser = await verifySupabaseUser(req);
 
-  if (!token) {
-    return res.status(401).json({
+    if (!supabaseUser || !supabaseUser.email) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido ou expirado',
+      });
+    }
+
+    // Get user profile from custom usuarios table
+    const userProfile = await getUserProfile(supabaseUser.email);
+
+    if (!userProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: userProfile.id,
+        nome: userProfile.nome,
+        email: userProfile.email,
+        role: userProfile.role,
+        permissoes: userProfile.permissoes,
+        ativo: userProfile.ativo,
+      },
+      message: 'Perfil carregado com sucesso',
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Token não fornecido',
+      message: 'Erro ao carregar perfil',
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-
-  const payload = await verifyJWT(token);
-
-  if (!payload) {
-    return res.status(401).json({
-      success: false,
-      message: 'Token inválido ou expirado',
-    });
-  }
-
-  const supabase = getSupabase();
-
-  const { data: user, error } = await supabase
-    .from('usuarios')
-    .select('id, nome, email, role, permissoes, ativo')
-    .eq('id', payload.id)
-    .single();
-
-  if (error || !user) {
-    return res.status(404).json({
-      success: false,
-      message: 'Usuário não encontrado',
-    });
-  }
-
-  return res.status(200).json({
-    success: true,
-    data: user,
-    message: 'Perfil carregado com sucesso',
-  });
 };

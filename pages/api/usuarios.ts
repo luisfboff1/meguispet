@@ -1,7 +1,6 @@
 import type { NextApiResponse } from 'next';
-import bcrypt from 'bcryptjs';
 import { getSupabase } from '@/lib/supabase';
-import { withAuth, AuthenticatedRequest } from '@/lib/api-middleware';
+import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
@@ -43,56 +42,31 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         return res.status(400).json({ success: false, message: 'Nome, email e senha são obrigatórios' });
       }
 
-      const password_hash = await bcrypt.hash(password, 10);
-
-      const { data, error } = await supabase
-        .from('usuarios')
-        .insert({
-          nome,
-          email,
-          password_hash,
-          role: role || 'user',
-          permissoes: permissoes || null,
-        })
-        .select('id, nome, email, role, permissoes, ativo, created_at, updated_at')
-        .single();
-
-      if (error) throw error;
-
-      return res.status(201).json({
-        success: true,
-        message: 'Usuário criado com sucesso',
-        data,
+      // Note: User creation now needs to use Supabase Auth signup
+      // For now, this endpoint is deprecated for creating auth users
+      // It can be used for updating user metadata only
+      return res.status(501).json({
+        success: false,
+        message: 'Criação de usuário deve ser feita via Supabase Auth signup',
       });
     }
 
     if (method === 'PUT') {
-      const { id, nome, email, password, role, permissoes } = req.body;
+      const { id, nome, email, role, permissoes } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'ID do usuário é obrigatório' });
       }
 
-      interface UpdateData {
-        nome: string;
-        email: string;
-        role: string;
-        permissoes: string | null;
-        updated_at: string;
-        password_hash?: string;
-      }
-
-      const updateData: UpdateData = {
+      // Only update metadata in usuarios table
+      // Password changes should be done via Supabase Auth
+      const updateData = {
         nome,
         email,
         role: role || 'user',
         permissoes: permissoes || null,
         updated_at: new Date().toISOString(),
       };
-
-      if (password) {
-        updateData.password_hash = await bcrypt.hash(password, 10);
-      }
 
       const { data, error } = await supabase
         .from('usuarios')
@@ -149,4 +123,4 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   }
 };
 
-export default withAuth(handler);
+export default withSupabaseAuth(handler);

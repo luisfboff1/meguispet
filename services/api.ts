@@ -56,12 +56,27 @@ if (process.env.NODE_ENV === 'development') {
   )
 }
 
-// 🔐 INTERCEPTOR PARA AUTENTICAÇÃO
+// 🔐 INTERCEPTOR PARA AUTENTICAÇÃO SUPABASE
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== 'undefined') {
+      // Get Supabase session from localStorage
+      const supabaseSession = localStorage.getItem('sb-' + process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token')
+      
+      if (supabaseSession) {
+        try {
+          const session = JSON.parse(supabaseSession)
+          if (session?.access_token) {
+            config.headers.Authorization = `Bearer ${session.access_token}`
+          }
+        } catch (parseError) {
+          console.warn('Erro ao parsear sessão Supabase:', parseError)
+        }
+      }
+      
+      // Fallback: check for direct token storage (backwards compatibility)
       const token = localStorage.getItem('token')
-      if (token) {
+      if (token && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${token}`
       }
     }
@@ -323,22 +338,33 @@ export const usuariosService = {
 
 // 🔐 AUTENTICAÇÃO
 export const authService = {
-  async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: Usuario }>> {
+  async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: Usuario; refresh_token?: string; expires_at?: number }>> {
     const response = await api.post('/auth', { email, password })
     return response.data
   },
 
   async logout(): Promise<void> {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
+      if (typeof window !== 'undefined') {
+        // Remove legacy token
         localStorage.removeItem('token')
+        
+        // Remove Supabase session
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        if (supabaseUrl) {
+          const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
+          if (projectRef) {
+            localStorage.removeItem(`sb-${projectRef}-auth-token`)
+          }
+        }
       }
+      
       if (typeof document !== 'undefined') {
         const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : ''
         document.cookie = `token=; Max-Age=0; Path=/; SameSite=Lax${secure}`
       }
     } catch (error) {
-      console.warn('Erro ao acessar localStorage:', error)
+      console.warn('Erro ao limpar autenticação:', error)
     }
   },
 
