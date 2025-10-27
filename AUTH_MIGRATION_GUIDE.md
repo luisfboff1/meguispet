@@ -11,6 +11,7 @@ This guide explains how to set up and migrate to the new Supabase-based authenti
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
+3. **IMPORTANT**: The `supabase_user_id` column must exist in the usuarios table before using the signup endpoint
 
 ## Migration Steps
 
