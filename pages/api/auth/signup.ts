@@ -64,18 +64,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 2. Create user profile in custom usuarios table
-    const { data: usuarioData, error: usuarioError } = await supabaseAdmin
+    // Try with supabase_user_id first, fallback if column doesn't exist
+    const usuarioData: any = {
+      email,
+      nome,
+      role,
+      permissoes,
+      ativo: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Only add supabase_user_id if the migration has been run
+    try {
+      usuarioData.supabase_user_id = authData.user.id;
+    } catch (e) {
+      console.log('supabase_user_id column may not exist yet');
+    }
+
+    const { data: profileData, error: usuarioError } = await supabaseAdmin
       .from('usuarios')
-      .insert({
-        email,
-        nome,
-        role,
-        permissoes,
-        ativo: true,
-        supabase_user_id: authData.user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .insert(usuarioData)
       .select('id, nome, email, role, permissoes, ativo')
       .single();
 
@@ -95,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       message: 'Usuário criado com sucesso',
       data: {
-        user: usuarioData,
+        user: profileData,
         auth_user_id: authData.user.id,
       },
     });
