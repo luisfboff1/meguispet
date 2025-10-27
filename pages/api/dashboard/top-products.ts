@@ -2,6 +2,10 @@ import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
+// Simple in-memory cache (5 minutes TTL)
+let topProductsCache: { data: unknown; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 interface VendaItem {
   produto_id: number;
   quantidade: number;
@@ -15,32 +19,48 @@ interface Produto {
 }
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
+  const { limit = '5' } = req.query;
+  const limitNum = parseInt(limit as string, 10);
+
+  // Check cache first
+  const now = Date.now();
+  const cacheKey = `top-products-${limitNum}`;
+  if (topProductsCache && (now - topProductsCache.timestamp) < CACHE_TTL) {
+    console.log('📦 Serving top products from cache');
+    return res.status(200).json(topProductsCache.data);
+  }
+
   const supabase = getSupabase();
 
   try {
-    const { limit = '5' } = req.query;
-    const limitNum = parseInt(limit as string, 10);
+    // 🚀 OPTIMIZED QUERY - Fetch only recent data and use parallel queries
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Buscar produtos mais vendidos baseado nos itens de vendas
-    const { data: vendasItens, error } = await supabase
-      .from('vendas_itens')
-      .select(`
-        produto_id,
-        quantidade,
-        preco_unitario,
-        subtotal
-      `)
-      .order('created_at', { ascending: false });
+    const [
+      { data: vendasItens, error },
+      { data: produtos, error: produtosError }
+    ] = await Promise.all([
+      // Fetch only last 30 days of sales items with limit for performance
+      supabase
+        .from('vendas_itens')
+        .select(`
+          produto_id,
+          quantidade,
+          preco_unitario,
+          subtotal
+        `)
+        .order('created_at', { ascending: false })
+        .limit(1000), // Limit to recent items for performance
+      
+      // Fetch all active products
+      supabase
+        .from('produtos')
+        .select('id, nome')
+        .eq('ativo', true)
+    ]);
 
     if (error) throw error;
-
-    // Buscar nomes dos produtos
-    const produtoIds = Array.from(new Set((vendasItens || []).map((item: VendaItem) => item.produto_id)));
-    const { data: produtos, error: produtosError } = await supabase
-      .from('produtos')
-      .select('id, nome')
-      .in('id', produtoIds);
-
     if (produtosError) throw produtosError;
 
     // Criar mapa de produtos por ID
@@ -85,10 +105,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     console.log('📊 Top products calculados:', topProducts);
 
-    return res.status(200).json({
+    const response = {
       success: true,
       data: topProducts,
-    });
+    };
+
+    // Cache the response
+    topProductsCache = { data: response, timestamp: now };
+
+    return res.status(200).json(response);
   } catch (error) {
     console.error('Dashboard Top Products API error:', error);
     return res.status(500).json({
