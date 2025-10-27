@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { authService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
+import { getSupabaseBrowser } from '@/lib/supabase'
 
 const COOKIE_BASE = 'Path=/; SameSite=Lax'
 
@@ -50,16 +51,25 @@ export function useAuth() {
 
   const handleLogout = useCallback(async () => {
     try {
+      // Sign out from Supabase first
+      if (typeof window !== 'undefined') {
+        const supabase = getSupabaseBrowser()
+        await supabase.auth.signOut()
+      }
+      
+      // Then call the API logout endpoint (for any server-side cleanup)
       await authService.logout()
     } catch (error) {
       console.error('Erro no logout:', error)
     } finally {
       clear()
       if (typeof window !== 'undefined') {
+        // Clear all auth-related storage
         localStorage.removeItem('token')
         localStorage.removeItem('user')
+        localStorage.removeItem('meguispet-auth-store')
         
-        // Clear Supabase session
+        // Clear Supabase session storage
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
         if (supabaseUrl) {
           const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
@@ -77,47 +87,49 @@ export function useAuth() {
     try {
       setStatus('loading')
       
-      // Check for Supabase session first
-      let localToken = null
+      // Check Supabase session and refresh if needed
       if (typeof window !== 'undefined') {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-        if (supabaseUrl) {
-          const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
-          if (projectRef) {
-            const supabaseSession = localStorage.getItem(`sb-${projectRef}-auth-token`)
-            if (supabaseSession) {
-              try {
-                const session = JSON.parse(supabaseSession)
-                localToken = session?.access_token || null
-              } catch (parseError) {
-                console.warn('Erro ao parsear sessão Supabase:', parseError)
-              }
-            }
-          }
+        const supabase = getSupabaseBrowser()
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        // If there's a session error or no session, clear auth state
+        if (error || !session) {
+          clear()
+          setStatus('unauthenticated')
+          clearTokenCookie()
+          return
         }
         
-        // Fallback to legacy token
-        if (!localToken) {
-          localToken = localStorage.getItem('token')
+        // Session exists - verify with backend and get user profile
+        try {
+          const response = await authService.getProfile()
+          if (response.success && response.data) {
+            // Update tokens in case they were refreshed
+            setCredentials(response.data, session.access_token)
+            setTokenCookie(session.access_token)
+            setStatus('authenticated')
+          } else {
+            // Profile not found or invalid - logout
+            await handleLogout()
+          }
+        } catch (error: any) {
+          // Handle 401 errors (expired/invalid token)
+          if (error?.response?.status === 401) {
+            console.log('Token expirado, fazendo logout...')
+            await handleLogout()
+          } else {
+            // Other errors - still logout for safety
+            console.error('Erro ao verificar autenticação:', error)
+            await handleLogout()
+          }
         }
-      }
-
-      if (!localToken) {
+      } else {
+        // Server-side - set unauthenticated
         clear()
         setStatus('unauthenticated')
-        clearTokenCookie()
-        return
-      }
-
-      const response = await authService.getProfile()
-      if (response.success && response.data) {
-        setCredentials(response.data, localToken)
-        setStatus('authenticated')
-      } else {
-        await handleLogout()
       }
     } catch (error) {
-      console.error('Erro ao verificar autenticação:', error)
+      console.error('Erro crítico ao verificar autenticação:', error)
       await handleLogout()
     }
   }, [clear, handleLogout, setCredentials, setStatus])
@@ -127,6 +139,48 @@ export function useAuth() {
       checkAuth()
     }
   }, [status, checkAuth])
+
+  // Set up Supabase auth state listener for automatic token refresh
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const supabase = getSupabaseBrowser()
+    
+    // Listen for auth state changes (including token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event)
+      
+      if (event === 'TOKEN_REFRESHED' && session) {
+        // Update token in state when it's refreshed
+        console.log('Token refreshed automatically')
+        if (user) {
+          setCredentials(user, session.access_token)
+          setTokenCookie(session.access_token)
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // User signed out - clear state
+        clear()
+        setStatus('unauthenticated')
+        clearTokenCookie()
+      } else if (event === 'SIGNED_IN' && session) {
+        // User signed in - fetch profile
+        try {
+          const response = await authService.getProfile()
+          if (response.success && response.data) {
+            setCredentials(response.data, session.access_token)
+            setTokenCookie(session.access_token)
+            setStatus('authenticated')
+          }
+        } catch (error) {
+          console.error('Error fetching profile after sign in:', error)
+        }
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [user, setCredentials, setStatus, clear])
 
   const login = useCallback(
     async (email: string, password: string): Promise<boolean> => {

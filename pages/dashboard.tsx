@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,6 +28,9 @@ import type {
 // Esta página não precisa configurar layout - é automático!
 // O layout é aplicado pelo _app.tsx globalmente
 
+// Cache duration: 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000
+
 const metricIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ShoppingCart,
   DollarSign,
@@ -49,9 +52,28 @@ export default function DashboardPage() {
   const [vendas7Dias, setVendas7Dias] = useState<DashboardVendasDia[]>([])
   const [loading, setLoading] = useState(true)
   const { open, close, setData } = useModal()
+  
+  // Cache timestamps to prevent unnecessary refetches
+  const lastFetchRef = useRef<number>(0)
+  const isFetchingRef = useRef<boolean>(false)
 
-  const loadDashboardData = useCallback(async () => {
+  const loadDashboardData = useCallback(async (force = false) => {
+    const now = Date.now()
+    
+    // If data was fetched recently and not forcing, skip
+    if (!force && now - lastFetchRef.current < CACHE_DURATION) {
+      console.log('Using cached dashboard data')
+      return
+    }
+    
+    // Prevent multiple simultaneous fetches
+    if (isFetchingRef.current) {
+      console.log('Dashboard data fetch already in progress')
+      return
+    }
+
     try {
+      isFetchingRef.current = true
       setLoading(true)
       
       // 📊 CARREGAR MÉTRICAS REAIS
@@ -76,6 +98,9 @@ export default function DashboardPage() {
       if (vendasResponse.success && vendasResponse.data) {
         setVendas7Dias(vendasResponse.data)
       }
+      
+      // Update cache timestamp
+      lastFetchRef.current = now
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error)
       // Fallback para dados vazios se API falhar
@@ -83,6 +108,7 @@ export default function DashboardPage() {
       setTopProducts([])
     } finally {
       setLoading(false)
+      isFetchingRef.current = false
     }
   }, [])
 
@@ -113,7 +139,7 @@ export default function DashboardPage() {
           const response = await vendasService.create(values)
           console.log('[dashboard] vendas.create response', response)
           if (response.success) {
-            await loadDashboardData()
+            await loadDashboardData(true) // Force refresh after successful operation
             close()
             // Mostrar mensagem de sucesso
             window.alert(response.message || '✅ Venda realizada com sucesso! Estoque atualizado.')
@@ -141,7 +167,7 @@ export default function DashboardPage() {
           const response = await produtosService.create(values)
           console.log('[dashboard] produtos.create response', response)
           if (response.success) {
-            await loadDashboardData()
+            await loadDashboardData(true) // Force refresh after successful operation
             close()
           } else {
             window.alert('Erro ao criar produto: ' + (response.message || response.error || 'não especificado'))
@@ -166,7 +192,7 @@ export default function DashboardPage() {
           const response = await clientesService.create(values)
           console.log('[dashboard] clientes.create response', response)
           if (response.success) {
-            await loadDashboardData()
+            await loadDashboardData(true) // Force refresh after successful operation
             close()
             // Mostrar mensagem de sucesso
             window.alert('✅ Cliente cadastrado com sucesso!')
@@ -194,7 +220,7 @@ export default function DashboardPage() {
           const response = await movimentacoesService.create(values)
           console.log('[dashboard] movimentacoes.create response', response)
           if (response.success) {
-            await loadDashboardData()
+            await loadDashboardData(true) // Force refresh after successful operation
             close()
             // Mostrar mensagem de sucesso
             window.alert('✅ Movimentação cadastrada com sucesso!')
