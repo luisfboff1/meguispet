@@ -48,6 +48,12 @@ export async function middleware(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
+  // Try to refresh the session - this will automatically refresh expired tokens
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  // Get the user (this will use the refreshed session if available)
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -56,7 +62,11 @@ export async function middleware(request: NextRequest) {
   if (!user && request.nextUrl.pathname !== '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
+    // Clear any stale auth cookies
+    const response = NextResponse.redirect(url)
+    response.cookies.delete('sb-access-token')
+    response.cookies.delete('sb-refresh-token')
+    return response
   }
 
   // If user is signed in and tries to access /login, redirect to /dashboard

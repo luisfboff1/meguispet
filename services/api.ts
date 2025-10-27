@@ -345,9 +345,14 @@ export const authService = {
 
   async logout(): Promise<void> {
     try {
+      // Call the logout endpoint to sign out from Supabase
+      await api.post('/auth/logout')
+      
       if (typeof window !== 'undefined') {
         // Remove legacy token
         localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        localStorage.removeItem('meguispet-auth-store')
         
         // Remove Supabase session
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -364,12 +369,30 @@ export const authService = {
         document.cookie = `token=; Max-Age=0; Path=/; SameSite=Lax${secure}`
       }
     } catch (error) {
-      console.warn('Erro ao limpar autenticação:', error)
+      console.warn('Erro ao fazer logout no servidor:', error)
+      // Continue with local cleanup even if server logout fails
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        localStorage.removeItem('meguispet-auth-store')
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        if (supabaseUrl) {
+          const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
+          if (projectRef) {
+            localStorage.removeItem(`sb-${projectRef}-auth-token`)
+          }
+        }
+      }
     }
   },
 
   async getProfile(): Promise<ApiResponse<Usuario>> {
     const response = await api.get('/auth/profile')
+    return response.data
+  },
+
+  async signup(email: string, password: string, nome: string, role = 'user'): Promise<ApiResponse<{ user: Usuario; auth_user_id: string }>> {
+    const response = await api.post('/auth/signup', { email, password, nome, role })
     return response.data
   }
 }
