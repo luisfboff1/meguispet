@@ -76,25 +76,28 @@ export default function DashboardPage() {
       isFetchingRef.current = true
       setLoading(true)
       
-      // 📊 CARREGAR MÉTRICAS REAIS
-      const metricsResponse = await dashboardService.getMetrics()
+      // 🚀 PARALLEL LOADING - Load all dashboard data simultaneously
+      const [metricsResponse, productsResponse, vendasResponse] = await Promise.all([
+        dashboardService.getMetrics(),
+        dashboardService.getTopProducts(),
+        dashboardService.getVendas7Dias()
+      ])
+      
+      // 📊 PROCESS METRICS
       if (metricsResponse.success && metricsResponse.data) {
         const mappedMetrics: MetricCard[] = metricsResponse.data.map((metric) => ({
           ...metric,
           icon: metricIconMap[metric.icon as keyof typeof metricIconMap] ?? Package
         }))
-
         setMetrics(mappedMetrics)
       }
       
-      // 📈 CARREGAR PRODUTOS MAIS VENDIDOS
-      const productsResponse = await dashboardService.getTopProducts()
+      // 📈 PROCESS TOP PRODUCTS
       if (productsResponse.success && productsResponse.data) {
         setTopProducts(productsResponse.data)
       }
       
-      // 📊 CARREGAR VENDAS DOS ÚLTIMOS 7 DIAS
-      const vendasResponse = await dashboardService.getVendas7Dias()
+      // 📊 PROCESS 7-DAY SALES
       if (vendasResponse.success && vendasResponse.data) {
         setVendas7Dias(vendasResponse.data)
       }

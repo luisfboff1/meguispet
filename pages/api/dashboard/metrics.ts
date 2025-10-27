@@ -2,18 +2,43 @@ import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
+// Simple in-memory cache (5 minutes TTL)
+let metricsCache: { data: unknown; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
+  // Check cache first
+  const now = Date.now();
+  if (metricsCache && (now - metricsCache.timestamp) < CACHE_TTL) {
+    console.log('📊 Serving metrics from cache');
+    return res.status(200).json(metricsCache.data);
+  }
+
   const supabase = getSupabase();
 
   try {
-    const { count: totalVendas } = await supabase.from('vendas').select('*', { count: 'exact', head: true }).neq('status', 'cancelado');
-    const { count: vendasMes } = await supabase.from('vendas').select('*', { count: 'exact', head: true }).gte('data_venda', new Date(new Date().setDate(1)).toISOString()).neq('status', 'cancelado');
-    const { data: receitaTotal } = await supabase.from('vendas').select('valor_final').eq('status', 'pago');
-    const { data: receitaMes } = await supabase.from('vendas').select('valor_final').eq('status', 'pago').gte('data_venda', new Date(new Date().setDate(1)).toISOString());
-    const { count: totalClientes } = await supabase.from('clientes_fornecedores').select('*', { count: 'exact', head: true }).eq('ativo', true);
-    const { count: totalProdutos } = await supabase.from('produtos').select('*', { count: 'exact', head: true }).eq('ativo', true);
-    const { count: produtosBaixoEstoque } = await supabase.from('produtos').select('*', { count: 'exact', head: true }).filter('estoque', 'lte', 'estoque_minimo').eq('ativo', true);
-    const { count: vendasPendentes } = await supabase.from('vendas').select('*', { count: 'exact', head: true }).eq('status', 'pendente');
+    const firstDayOfMonth = new Date(new Date().setDate(1)).toISOString();
+
+    // 🚀 PARALLEL QUERIES - Execute all queries simultaneously
+    const [
+      { count: totalVendas },
+      { count: vendasMes },
+      { data: receitaTotal },
+      { data: receitaMes },
+      { count: totalClientes },
+      { count: totalProdutos },
+      { count: produtosBaixoEstoque },
+      { count: vendasPendentes }
+    ] = await Promise.all([
+      supabase.from('vendas').select('*', { count: 'exact', head: true }).neq('status', 'cancelado'),
+      supabase.from('vendas').select('*', { count: 'exact', head: true }).gte('data_venda', firstDayOfMonth).neq('status', 'cancelado'),
+      supabase.from('vendas').select('valor_final').eq('status', 'pago'),
+      supabase.from('vendas').select('valor_final').eq('status', 'pago').gte('data_venda', firstDayOfMonth),
+      supabase.from('clientes_fornecedores').select('*', { count: 'exact', head: true }).eq('ativo', true),
+      supabase.from('produtos').select('*', { count: 'exact', head: true }).eq('ativo', true),
+      supabase.from('produtos').select('*', { count: 'exact', head: true }).filter('estoque', 'lte', 'estoque_minimo').eq('ativo', true),
+      supabase.from('vendas').select('*', { count: 'exact', head: true }).eq('status', 'pendente')
+    ]);
 
     const receitaTotalValue = receitaTotal?.reduce((sum, v) => sum + (parseFloat(String(v.valor_final)) || 0), 0) || 0;
     const receitaMesValue = receitaMes?.reduce((sum, v) => sum + (parseFloat(String(v.valor_final)) || 0), 0) || 0;
@@ -56,10 +81,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       },
     ];
 
-    return res.status(200).json({
+    const response = {
       success: true,
       data: metrics,
-    });
+    };
+
+    // Cache the response
+    metricsCache = { data: response, timestamp: now };
+
+    return res.status(200).json(response);
   } catch (error) {
     console.error('Dashboard Metrics API error:', error);
     return res.status(500).json({

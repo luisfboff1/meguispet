@@ -2,7 +2,18 @@ import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
+// Simple in-memory cache (5 minutes TTL)
+let vendas7DiasCache: { data: unknown; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
+  // Check cache first
+  const now = Date.now();
+  if (vendas7DiasCache && (now - vendas7DiasCache.timestamp) < CACHE_TTL) {
+    console.log('📈 Serving vendas 7 dias from cache');
+    return res.status(200).json(vendas7DiasCache.data);
+  }
+
   const supabase = getSupabase();
 
   try {
@@ -41,10 +52,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     const result = Object.values(groupedByDate);
 
-    return res.status(200).json({
+    const response = {
       success: true,
       data: result,
-    });
+    };
+
+    // Cache the response
+    vendas7DiasCache = { data: response, timestamp: now };
+
+    return res.status(200).json(response);
   } catch (error) {
     console.error('Dashboard Vendas 7 Dias API error:', error);
     return res.status(500).json({
