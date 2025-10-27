@@ -2,12 +2,23 @@ import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
+// Simple in-memory cache (5 minutes TTL)
+let metricasCache: { data: unknown; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
-  const supabase = getSupabase();
 
   try {
     if (method === 'GET') {
+      // Check cache first
+      const now = Date.now();
+      if (metricasCache && (now - metricasCache.timestamp) < CACHE_TTL) {
+        console.log('💰 Serving financial metrics from cache');
+        return res.status(200).json(metricasCache.data);
+      }
+
+      const supabase = getSupabase();
       // Calcular data de 6 meses atrás
       const dataInicio = new Date();
       dataInicio.setMonth(dataInicio.getMonth() - 6);
@@ -83,7 +94,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         meses: grafico_mensal.length
       });
 
-      return res.status(200).json({
+      const response = {
         success: true,
         data: {
           receita: parseFloat(receita.toFixed(2)),
@@ -92,7 +103,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           margem: parseFloat(margem.toFixed(2)),
           grafico_mensal
         }
-      });
+      };
+
+      // Cache the response
+      metricasCache = { data: response, timestamp: now };
+
+      return res.status(200).json(response);
     }
 
     return res.status(405).json({ success: false, message: 'Método não permitido' });
