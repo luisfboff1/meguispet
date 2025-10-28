@@ -270,7 +270,7 @@ export function ModalHost() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: shouldReduceMotion ? 0 : 0.24, ease: MODAL_EASE }}
-          className="modal-overlay fixed inset-0 z-[1000] flex items-center justify-center p-6 backdrop-blur-lg"
+          className="modal-overlay fixed inset-0 z-[1000] flex items-center justify-center p-4 backdrop-blur-lg overflow-y-auto"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               close()
@@ -285,7 +285,7 @@ export function ModalHost() {
             animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { y: 24, opacity: 0, scale: 0.98 }}
             transition={{ duration: shouldReduceMotion ? 0.12 : 0.28, ease: MODAL_EASE }}
-            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-white/40 bg-white/95 p-6 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.35)] backdrop-blur-2xl dark:border-slate-800/60 dark:bg-slate-950/90"
+            className="relative w-full max-w-2xl my-auto overflow-hidden rounded-3xl border border-white/40 bg-white/95 p-6 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.35)] backdrop-blur-2xl dark:border-slate-800/60 dark:bg-slate-950/90 max-h-[calc(100vh-2rem)]"
           >
             <button
               ref={closeButtonRef}
@@ -295,7 +295,7 @@ export function ModalHost() {
             >
               <X size={18} />
             </button>
-            <div className="max-h-[80vh] overflow-y-auto pr-1">
+            <div className="max-h-[calc(100vh-8rem)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
               {renderModalContent()}
             </div>
           </motion.div>

@@ -32,7 +32,8 @@
       "Bash(pnpm run build:*)",
       "Bash(timeout 5 pnpm start:*)",
       "Bash(pnpm lint:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
