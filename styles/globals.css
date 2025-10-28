@@ -383,3 +383,108 @@
 .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: rgb(71 85 105);
 }
+
+/* Neutralizar Card dentro de modais para evitar dupla camada visual */
+.modal-form-container > div:first-child {
+  max-width: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  /* Remove animações do Card dentro do modal */
+  transform: none !important;
+}
+
+/* Ajustar espaçamento do header dentro de modal */
+.modal-form-container > div:first-child > div:first-child {
+  padding: 0 0 1.5rem 0 !important;
+}
+
+/* Ajustar padding do conteúdo dentro de modal */
+.modal-form-container > div:first-child > div:nth-child(2) {
+  padding: 0 !important;
+}
+
+/* Esconder botão Cancelar duplicado no header dos formulários dentro do modal */
+.modal-form-container button[type="button"]:has(+ div),
+.modal-form-container > div:first-child > div:first-child button {
+  display: none !important;
+}
+
+/* Correções para modais diretos (não usando modal-host) - Responsividade ao zoom */
+.modal-overlay {
+  overflow-y: auto !important;
+  padding: 1rem !important;
+}
+
+/* Container dentro de modal-overlay */
+.modal-overlay > div,
+.modal-overlay > form {
+  max-height: calc(100vh - 2rem) !important;
+  margin: auto !important;
+  overflow-y: auto !important;
+}
+
+/* Scrollbar para modais diretos */
+.modal-overlay > div,
+.modal-overlay > form {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.dark .modal-overlay > div,
+.dark .modal-overlay > form {
+  scrollbar-color: rgb(51 65 85) transparent;
+}
+
+.modal-overlay > div::-webkit-scrollbar,
+.modal-overlay > form::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.modal-overlay > div::-webkit-scrollbar-track,
+.modal-overlay > form::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.modal-overlay > div::-webkit-scrollbar-thumb,
+.modal-overlay > form::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.dark .modal-overlay > div::-webkit-scrollbar-thumb,
+.dark .modal-overlay > form::-webkit-scrollbar-thumb {
+  background-color: rgb(51 65 85);
+}
+
+.modal-overlay > div::-webkit-scrollbar-thumb:hover,
+.modal-overlay > form::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184);
+}
+
+.dark .modal-overlay > div::-webkit-scrollbar-thumb:hover,
+.dark .modal-overlay > form::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(71 85 105);
+}
+
+/* Neutralizar Cards dentro de modais diretos */
+.modal-overlay > div[class*="max-h-"],
+.modal-overlay > div > div[class*="max-h-"] {
+  max-height: calc(100vh - 2rem) !important;
+}
+
+/* Remove estilos visuais duplicados de Cards dentro de modais diretos */
+.modal-overlay > div > div:first-child[class*="Card"],
+.modal-overlay > div:first-child[class*="bg-white"][class*="rounded-lg"][class*="shadow"] {
+  border: none !important;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+}

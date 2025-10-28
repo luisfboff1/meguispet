@@ -295,7 +295,7 @@ export function ModalHost() {
             >
               <X size={18} />
             </button>
-            <div className="max-h-[calc(100vh-8rem)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+            <div className="modal-form-container max-h-[calc(100vh-8rem)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
               {renderModalContent()}
             </div>
           </motion.div>
