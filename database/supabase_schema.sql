@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id BIGSERIAL PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NULL, -- Legacy column - passwords now managed by Supabase Auth
     role VARCHAR(50) NOT NULL DEFAULT 'user',
     permissoes TEXT,
     ativo BOOLEAN NOT NULL DEFAULT true,

@@ -104,6 +104,20 @@ WHERE ativo = true;
 
 ## Troubleshooting
 
+### Issue: "null value in column 'password_hash' violates not-null constraint"
+
+**Error message**: "Erro ao criar perfil do usuário"
+
+**Cause**: The usuarios table has a NOT NULL constraint on password_hash column, but the signup endpoint doesn't provide this value (since passwords are managed by Supabase Auth).
+
+**Solution**: Run the migration to make password_hash nullable:
+```sql
+-- Run database/migration_password_hash_nullable.sql in Supabase SQL Editor
+ALTER TABLE usuarios ALTER COLUMN password_hash DROP NOT NULL;
+```
+
+Or update your schema if creating a new database - use the updated `database/supabase_schema.sql` which has password_hash as nullable.
+
 ### Issue: "supabase_user_id column does not exist"
 
 **Solution**: Run the migration script from `database/migration_supabase_auth.sql`
@@ -205,12 +219,18 @@ Expected response:
 ## Next Steps
 
 After migration:
-1. Enable email confirmation in Supabase if needed
-2. Set up password reset flow
-3. Configure SMTP settings in Supabase for email notifications
-4. Remove password_hash column from usuarios table (optional, after migration)
+1. **Run the password_hash nullable migration** if you're experiencing user creation errors:
+   ```sql
+   -- Run database/migration_password_hash_nullable.sql
+   -- This makes password_hash column nullable since passwords are managed by Supabase Auth
+   ```
+2. Enable email confirmation in Supabase if needed
+3. Set up password reset flow
+4. Configure SMTP settings in Supabase for email notifications
+5. (Optional) Remove password_hash column from usuarios table after verifying all users work correctly
 
 ```sql
--- Only run after verifying all users migrated successfully
+-- Only run after verifying all users migrated successfully and system is stable
+-- This is optional - keeping the column as nullable is also fine
 ALTER TABLE usuarios DROP COLUMN IF EXISTS password_hash;
 ```

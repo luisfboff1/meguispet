@@ -5,7 +5,7 @@ export interface Usuario {
   id: number
   nome: string
   email: string
-  password_hash: string
+  password_hash?: string // Optional - legacy field, passwords now managed by Supabase Auth
   role: 'admin' | 'convidado'
   permissoes: Record<string, unknown>
   ativo: boolean
