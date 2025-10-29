@@ -52,7 +52,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'PUT') {
-      const { id, nome, email, role, permissoes } = req.body;
+      // Accept ID from either body or query parameter
+      const idFromBody = req.body?.id;
+      const idFromQuery = req.query?.id;
+      const id = idFromBody || idFromQuery;
+      
+      const { nome, email, role, permissoes } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'ID do usuário é obrigatório' });
@@ -60,13 +65,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       // Only update metadata in usuarios table
       // Password changes should be done via Supabase Auth
-      const updateData = {
-        nome,
-        email,
-        role: role || 'user',
-        permissoes: permissoes || null,
+      const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
       };
+      
+      // Only add fields that were provided
+      if (nome !== undefined) updateData.nome = nome;
+      if (email !== undefined) updateData.email = email;
+      if (role !== undefined) updateData.role = role;
+      if (permissoes !== undefined) updateData.permissoes = permissoes;
 
       const { data, error } = await supabase
         .from('usuarios')
