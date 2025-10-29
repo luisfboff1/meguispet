@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/components/ui/use-toast'
+import { useModal } from '@/hooks/useModal'
 import { 
   Plus, 
   Search, 
@@ -16,7 +18,7 @@ import {
   Phone,
   Calendar
 } from 'lucide-react'
-import { usuariosService } from '@/services/api'
+import { usuariosService, authService } from '@/services/api'
 import type { Usuario } from '@/types'
 
 export default function UsuariosPage() {
@@ -24,6 +26,8 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const { toast } = useToast()
+  const { open: openModal } = useModal()
 
   useEffect(() => {
     loadUsuarios()
@@ -38,9 +42,75 @@ export default function UsuariosPage() {
       }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar a lista de usuários',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleCreateUser = async (userData: {
+    nome: string
+    email: string
+    password: string
+    role: 'admin' | 'convidado'
+    permissoes: Record<string, boolean>
+  }) => {
+    try {
+      const response = await authService.signup(
+        userData.email,
+        userData.password,
+        userData.nome,
+        userData.role
+      )
+
+      if (response.success) {
+        // Update the user's permissions in the usuarios table
+        if (response.data?.user?.id) {
+          await usuariosService.update(response.data.user.id, {
+            permissoes: userData.permissoes as Record<string, unknown>,
+          })
+        }
+
+        toast({
+          title: 'Sucesso',
+          description: 'Usuário criado com sucesso',
+          variant: 'default',
+        })
+
+        // Reload the usuarios list
+        await loadUsuarios()
+      } else {
+        toast({
+          title: 'Erro',
+          description: response.message || 'Erro ao criar usuário',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error)
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data)
+          ? String((error.response.data as { message?: string }).message)
+          : 'Erro ao criar usuário'
+      
+      toast({
+        title: 'Erro',
+        description: errorMessage,
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
+  const openCreateUserModal = () => {
+    openModal('usuario', {
+      onSubmit: handleCreateUser,
+    })
   }
 
   const formatDate = (dateString: string) => {
@@ -70,7 +140,10 @@ export default function UsuariosPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button className="bg-meguispet-primary hover:bg-meguispet-primary/90">
+          <Button 
+            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+            onClick={openCreateUserModal}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Novo Usuário
           </Button>

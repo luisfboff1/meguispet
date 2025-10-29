@@ -5,6 +5,7 @@ type ModalId =
   | 'produto'
   | 'venda'
   | 'movimentacao'
+  | 'usuario'
   | 'generic'
 
 interface ModalState {

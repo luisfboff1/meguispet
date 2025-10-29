@@ -9,6 +9,7 @@ import VendaForm from '@/components/forms/VendaForm'
 import ProdutoForm from '@/components/forms/ProdutoForm'
 import ClienteForm from '@/components/forms/ClienteForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
+import UsuarioForm from '@/components/forms/UsuarioForm'
 import type {
   ClienteForm as ClienteFormValues,
   MovimentacaoForm as MovimentacaoFormValues,
@@ -46,11 +47,24 @@ interface MovimentacaoModalPayload {
   editingData?: MovimentacaoEstoque
 }
 
+interface UsuarioModalPayload {
+  onSubmit: (values: {
+    nome: string
+    email: string
+    password: string
+    role: 'admin' | 'convidado'
+    permissoes: Record<string, boolean>
+  }) => Promise<void> | void
+  onCancel?: () => void
+  loading?: boolean
+}
+
 type ModalPayloadMap = {
   venda: VendaModalPayload
   produto: ProdutoModalPayload
   cliente: ClienteModalPayload
   movimentacao: MovimentacaoModalPayload
+  usuario: UsuarioModalPayload
   generic: {
     title?: string
     description?: string
@@ -226,6 +240,21 @@ export function ModalHost() {
             loading={payload.loading}
             produto={payload.produto}
             editingData={payload.editingData}
+          />
+        )
+      }
+      case 'usuario': {
+        const payload = (data as ModalPayloadMap['usuario']) ?? {
+          onSubmit: () => undefined
+        }
+        return (
+          <UsuarioForm
+            onSubmit={payload.onSubmit}
+            onCancel={() => {
+              payload.onCancel?.()
+              close()
+            }}
+            loading={payload.loading}
           />
         )
       }

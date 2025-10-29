@@ -33,6 +33,10 @@ export const getSupabase = (): SupabaseClient => {
  * Get Supabase client for browser-side use with auth enabled
  * Uses @supabase/ssr for optimal cookie handling and middleware integration
  * Use this in React components and hooks
+ * 
+ * Token Configuration:
+ * - JWT expiration is configured in Supabase dashboard (recommended: 10 hours = 36000 seconds)
+ * - Auto-refresh is enabled to refresh tokens before expiration
  */
 export const getSupabaseBrowser = (): SupabaseClient => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,5 +48,11 @@ export const getSupabaseBrowser = (): SupabaseClient => {
 
   // Use createBrowserClient from @supabase/ssr for better integration
   // with Next.js middleware and automatic cookie handling
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true, // Automatically refresh tokens before expiration
+      persistSession: true, // Persist session in localStorage
+      detectSessionInUrl: true, // Detect auth redirects
+    },
+  });
 };
