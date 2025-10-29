@@ -27,7 +27,7 @@ export default function UsuariosPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const { toast } = useToast()
-  const { open: openModal } = useModal()
+  const { open: openModal, close: closeModal } = useModal()
 
   useEffect(() => {
     loadUsuarios()
@@ -75,6 +75,10 @@ export default function UsuariosPage() {
           })
         }
 
+        // Close modal first
+        closeModal()
+
+        // Show success toast
         toast({
           title: 'Sucesso',
           description: 'Usuário criado com sucesso',
