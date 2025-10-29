@@ -11,7 +11,7 @@ This guide explains how to set up and migrate to the new Supabase-based authenti
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
-3. **IMPORTANT**: The `supabase_user_id` column must exist in the usuarios table before using the signup endpoint
+3. Database schema created using `database/supabase_schema.sql` (includes `supabase_user_id` column)
 
 ## Migration Steps
 
@@ -30,10 +30,11 @@ supabase db push
 ```
 
 This migration will:
-- Add `supabase_user_id` column to usuarios table
 - Set up Row Level Security (RLS) policies
 - Create trigger to auto-sync new auth users with usuarios table
-- Add updated_at trigger
+- Add updated_at trigger (if not already present)
+
+**Note**: The `supabase_user_id` column is now included in the base schema (`database/supabase_schema.sql`), so the migration will skip adding it if it already exists.
 
 ### 2. Migrate Existing Users (if any)
 

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     role VARCHAR(50) NOT NULL DEFAULT 'user',
     permissoes TEXT,
     ativo BOOLEAN NOT NULL DEFAULT true,
+    supabase_user_id UUID NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -230,6 +231,7 @@ CREATE TABLE IF NOT EXISTS transacoes (
 -- Usuarios indexes
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
 CREATE INDEX IF NOT EXISTS idx_usuarios_ativo ON usuarios(ativo);
+CREATE INDEX IF NOT EXISTS idx_usuarios_supabase_id ON usuarios(supabase_user_id);
 
 -- Vendedores indexes
 CREATE INDEX IF NOT EXISTS idx_vendedores_ativo ON vendedores(ativo);

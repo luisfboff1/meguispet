@@ -13,7 +13,8 @@ BEGIN;
 -- =====================================================
 
 -- Add a column to link usuarios with Supabase auth.users
--- This is optional but recommended for easier sync
+-- NOTE: This column is included in the base schema (supabase_schema.sql)
+-- This section is kept for backward compatibility with existing databases
 ALTER TABLE usuarios 
 ADD COLUMN IF NOT EXISTS supabase_user_id UUID NULL;
 
