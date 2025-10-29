@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServiceRole, getSupabaseServerAuth } from '@/lib/supabase-auth';
+import { hashPassword } from '@/lib/password';
 
 /**
  * User Signup endpoint using Supabase Auth
@@ -65,9 +66,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 2. Create user profile in custom usuarios table
+    // Hash the password for the usuarios table (legacy compatibility)
+    const password_hash = await hashPassword(password);
+    
     const usuarioData = {
       email,
       nome,
+      password_hash,
       role,
       permissoes,
       ativo: true,
