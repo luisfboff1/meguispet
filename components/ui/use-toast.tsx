@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, ReactNode, useRef } from 'react'
 
 export interface Toast {
   id: string
@@ -15,13 +15,12 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
 
-let toastCount = 0
-
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const toastCountRef = useRef(0)
 
   const toast = useCallback(({ title, description, variant = 'default' }: Omit<Toast, 'id'>) => {
-    const id = `toast-${toastCount++}`
+    const id = `toast-${Date.now()}-${toastCountRef.current++}`
     const newToast: Toast = { id, title, description, variant }
     
     setToasts(prev => [...prev, newToast])

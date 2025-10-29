@@ -92,18 +92,21 @@ export default function UsuariosPage() {
       }
     } catch (error) {
       console.error('Erro ao criar usuário:', error)
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'message' in error.response.data)
-          ? String((error.response.data as { message?: string }).message)
-          : 'Erro ao criar usuário'
+      
+      // Extract error message safely
+      let errorMessage = 'Erro ao criar usuário'
+      if (error instanceof Error) {
+        errorMessage = error.message
+      } else if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response?: { data?: { message?: string } } }).response
+        errorMessage = response?.data?.message || errorMessage
+      }
       
       toast({
         title: 'Erro',
         description: errorMessage,
         variant: 'destructive',
       })
-      throw error
     }
   }
 
