@@ -267,7 +267,7 @@ export default function FornecedoresPage() {
     },
     {
       id: "acoes",
-      header: ({ column }) => <SortableHeader column={column}>Ações</SortableHeader>,
+      header: "Ações",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Button 

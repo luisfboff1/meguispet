@@ -335,7 +335,7 @@ export default function ProdutosEstoquePage() {
     },
     {
       id: "acoes",
-      header: ({ column }) => <SortableHeader column={column}>Ações</SortableHeader>,
+      header: "Ações",
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <Button variant="ghost" size="sm" onClick={() => handleEditarProduto(row.original)}>
@@ -427,7 +427,7 @@ export default function ProdutosEstoquePage() {
     },
     {
       id: "acoes",
-      header: ({ column }) => <SortableHeader column={column}>Ações</SortableHeader>,
+      header: "Ações",
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <Button 
