@@ -596,59 +596,59 @@ export default function ProdutosEstoquePage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Produtos</CardTitle>
-            <Package className="h-4 w-4 text-meguispet-primary" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium min-w-0 break-words pr-2">Total Produtos</CardTitle>
+            <Package className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{produtos.length}</div>
-            <p className="text-xs text-muted-foreground">Cadastrados</p>
+          <CardContent className="min-w-0">
+            <div className="text-2xl font-bold break-all">{produtos.length}</div>
+            <p className="text-xs text-muted-foreground break-words">Cadastrados</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total Venda</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium min-w-0 break-words pr-2">Valor Total Venda</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalValue)}</div>
-            <p className="text-xs text-muted-foreground">Preço de venda</p>
+          <CardContent className="min-w-0">
+            <div className="text-2xl font-bold text-green-600 break-all">{formatCurrency(totalValue)}</div>
+            <p className="text-xs text-muted-foreground break-words">Preço de venda</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total Custo</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium min-w-0 break-words pr-2">Valor Total Custo</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalCusto)}</div>
-            <p className="text-xs text-muted-foreground">Preço de custo</p>
+          <CardContent className="min-w-0">
+            <div className="text-2xl font-bold text-blue-600 break-all">{formatCurrency(totalCusto)}</div>
+            <p className="text-xs text-muted-foreground break-words">Preço de custo</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Margem de Lucro</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium min-w-0 break-words pr-2">Margem de Lucro</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{formatCurrency(totalMargem)}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="min-w-0">
+            <div className="text-2xl font-bold text-purple-600 break-all">{formatCurrency(totalMargem)}</div>
+            <p className="text-xs text-muted-foreground break-words">
               {totalCusto > 0 ? `${((totalMargem / totalCusto) * 100).toFixed(1)}%` : '0%'}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Estoque Baixo</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 min-w-0">
+            <CardTitle className="text-sm font-medium min-w-0 break-words pr-2">Estoque Baixo</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{lowStockCount}</div>
-            <p className="text-xs text-muted-foreground">Produtos</p>
+          <CardContent className="min-w-0">
+            <div className="text-2xl font-bold text-yellow-600 break-all">{lowStockCount}</div>
+            <p className="text-xs text-muted-foreground break-words">Produtos</p>
           </CardContent>
         </Card>
       </div>
