@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ import { fornecedoresService } from '@/services/api'
 import type { Fornecedor, FornecedorForm as FornecedorFormValues } from '@/types'
 import FornecedorForm from '@/components/forms/FornecedorForm'
 import Toast from '@/components/ui/Toast'
+import { DataTable, SortableHeader } from '@/components/ui/data-table'
 
 interface PaginationState {
   page: number
@@ -178,6 +180,120 @@ export default function FornecedoresPage() {
     if (canGoNext) setCurrentPage((prev) => prev + 1)
   }
 
+  // Column definitions for fornecedores table
+  const fornecedoresColumns = useMemo<ColumnDef<Fornecedor>[]>(() => {
+    return [
+    {
+      accessorKey: "nome",
+      header: ({ column }) => <SortableHeader column={column}>Fornecedor</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[200px]">
+          <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-meguispet-primary">
+              {getInitials(row.original.nome)}
+            </span>
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{row.original.nome}</div>
+            <div className="text-sm text-gray-500">
+              Cadastro em {formatDate(row.original.created_at)}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "nome_fantasia",
+      header: ({ column }) => <SortableHeader column={column}>Nome Fantasia</SortableHeader>,
+      cell: ({ row }) => (
+        row.original.nome_fantasia ? (
+          <div className="flex items-center space-x-2">
+            <Building2 className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{row.original.nome_fantasia}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: ({ column }) => <SortableHeader column={column}>Email</SortableHeader>,
+      cell: ({ row }) => (
+        row.original.email ? (
+          <div className="flex items-center space-x-2">
+            <Mail className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{row.original.email}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      accessorKey: "telefone",
+      header: ({ column }) => <SortableHeader column={column}>Telefone</SortableHeader>,
+      cell: ({ row }) => (
+        row.original.telefone ? (
+          <div className="flex items-center space-x-2">
+            <Phone className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{row.original.telefone}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      id: "localizacao",
+      header: "Localização",
+      cell: ({ row }) => {
+        const { endereco, cidade, estado, cep } = row.original
+        if (!endereco && !cidade && !estado) {
+          return <span className="text-sm text-gray-400">-</span>
+        }
+        const location = [
+          endereco,
+          cidade && estado ? `${cidade}/${estado}` : cidade,
+          cep
+        ].filter(Boolean).join(' • ')
+        return (
+          <div className="flex items-start space-x-2">
+            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-gray-600 line-clamp-2">{location}</span>
+          </div>
+        )
+      },
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleEditarFornecedor(row.original)}
+            title="Editar fornecedor"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-600 hover:text-red-700"
+            onClick={() => handleRemoverFornecedor(row.original)}
+            disabled={formLoading}
+            title="Desativar fornecedor"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [formLoading])
+
   return (
     <div className="space-y-6">
       {toast && (
@@ -252,93 +368,32 @@ export default function FornecedoresPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          <div className="col-span-full flex items-center justify-center py-8">
+      {/* Fornecedores Table */}
+      {loading ? (
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-meguispet-primary" />
-          </div>
-        ) : filteredFornecedores.length > 0 ? (
-          filteredFornecedores.map((fornecedor) => (
-            <Card key={fornecedor.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-meguispet-primary">
-                        {getInitials(fornecedor.nome)}
-                      </span>
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{fornecedor.nome}</CardTitle>
-                      <CardDescription>
-                        Cadastro em {formatDate(fornecedor.created_at)}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEditarFornecedor(fornecedor)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => handleRemoverFornecedor(fornecedor)}
-                      disabled={formLoading}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {fornecedor.nome_fantasia && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Building2 className="h-4 w-4" />
-                    <span>{fornecedor.nome_fantasia}</span>
-                  </div>
-                )}
-                {fornecedor.email && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Mail className="h-4 w-4" />
-                    <span>{fornecedor.email}</span>
-                  </div>
-                )}
-                {fornecedor.telefone && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4" />
-                    <span>{fornecedor.telefone}</span>
-                  </div>
-                )}
-                {(fornecedor.cidade || fornecedor.estado || fornecedor.endereco) && (
-                  <div className="flex items-start space-x-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mt-0.5" />
-                    <span>
-                      {[
-                        fornecedor.endereco,
-                        fornecedor.cidade && fornecedor.estado ? `${fornecedor.cidade}/${fornecedor.estado}` : fornecedor.cidade,
-                        fornecedor.cep
-                      ]
-                        .filter(Boolean)
-                        .join(' • ')}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Card className="col-span-full">
-            <CardContent className="flex flex-col items-center justify-center py-8">
-              <Building2 className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum fornecedor encontrado</h3>
-              <p className="text-gray-600 text-center">
-                {searchTerm ? 'Ajuste a busca ou limpe o filtro para ver mais resultados.' : 'Cadastre seu primeiro fornecedor para começar.'}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          </CardContent>
+        </Card>
+      ) : filteredFornecedores.length > 0 ? (
+        <DataTable 
+          columns={fornecedoresColumns} 
+          data={filteredFornecedores}
+          enableColumnResizing={true}
+          enableSorting={true}
+          enableColumnVisibility={true}
+        />
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <Building2 className="h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum fornecedor encontrado</h3>
+            <p className="text-gray-600 text-center">
+              {searchTerm ? 'Ajuste a busca ou limpe o filtro para ver mais resultados.' : 'Cadastre seu primeiro fornecedor para começar.'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {pagination.pages > 1 && (
         <div className="flex items-center justify-between border rounded-md px-4 py-3">

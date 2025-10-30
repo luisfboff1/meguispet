@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,7 @@ import { clientesService } from '@/services/api'
 import type { Cliente, ClienteForm as ClienteFormValues } from '@/types'
 import ClienteForm from '@/components/forms/ClienteForm'
 import Toast from '@/components/ui/Toast'
+import { DataTable, SortableHeader } from '@/components/ui/data-table'
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -129,6 +131,101 @@ export default function ClientesPage() {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
+
+  // Column definitions for clientes table
+  const clientesColumns = useMemo<ColumnDef<Cliente>[]>(() => {
+    return [
+    {
+      accessorKey: "nome",
+      header: ({ column }) => <SortableHeader column={column}>Cliente</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[200px]">
+          <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-meguispet-primary">
+              {getInitials(row.original.nome)}
+            </span>
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{row.original.nome}</div>
+            <div className="text-sm text-gray-500">
+              Cliente desde {formatDate(row.original.created_at)}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "tipo",
+      header: ({ column }) => <SortableHeader column={column}>Tipo</SortableHeader>,
+      cell: ({ row }) => (
+        <span className="inline-flex items-center rounded-full bg-meguispet-primary/10 px-2 py-0.5 text-xs font-medium text-meguispet-primary">
+          {tipoLabel[row.original.tipo]}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: ({ column }) => <SortableHeader column={column}>Email</SortableHeader>,
+      cell: ({ row }) => (
+        row.original.email ? (
+          <div className="flex items-center space-x-2">
+            <Mail className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{row.original.email}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      accessorKey: "telefone",
+      header: ({ column }) => <SortableHeader column={column}>Telefone</SortableHeader>,
+      cell: ({ row }) => (
+        row.original.telefone ? (
+          <div className="flex items-center space-x-2">
+            <Phone className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{row.original.telefone}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      accessorKey: "endereco",
+      header: "Endereço",
+      cell: ({ row }) => (
+        row.original.endereco ? (
+          <div className="flex items-start space-x-2">
+            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-gray-600 line-clamp-2">{row.original.endereco}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" title="Ver detalhes">
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleEditarCliente(row.original)}
+            title="Editar cliente"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -249,85 +346,22 @@ export default function ClientesPage() {
         </CardContent>
       </Card>
 
-      {/* Clientes List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          <div className="col-span-full flex items-center justify-center py-8">
+      {/* Clientes Table */}
+      {loading ? (
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
-          </div>
-        ) : (
-          filteredClientes.map((cliente) => (
-            <Card key={cliente.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-meguispet-primary">
-                        {getInitials(cliente.nome)}
-                      </span>
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{cliente.nome}</CardTitle>
-                      <CardDescription>
-                        Cliente desde {formatDate(cliente.created_at)}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex space-x-1">
-                      <span className="inline-flex items-center rounded-full bg-meguispet-primary/10 px-2 py-0.5 text-xs font-medium text-meguispet-primary">
-                        {tipoLabel[cliente.tipo]}
-                      </span>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEditarCliente(cliente)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-3">
-                {cliente.email && (
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{cliente.email}</span>
-                  </div>
-                )}
-                
-                {cliente.telefone && (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{cliente.telefone}</span>
-                  </div>
-                )}
-                
-                {cliente.endereco && (
-                  <div className="flex items-start space-x-2">
-                    <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                    <span className="text-sm text-gray-600">{cliente.endereco}</span>
-                  </div>
-                )}
-
-                <div className="pt-2 flex space-x-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Ver Histórico
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Nova Venda
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {!loading && filteredClientes.length === 0 && (
+          </CardContent>
+        </Card>
+      ) : filteredClientes.length > 0 ? (
+        <DataTable 
+          columns={clientesColumns} 
+          data={filteredClientes}
+          enableColumnResizing={true}
+          enableSorting={true}
+          enableColumnVisibility={true}
+        />
+      ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
             <Users className="h-12 w-12 text-gray-400 mb-4" />
