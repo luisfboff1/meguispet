@@ -51,12 +51,12 @@ const getStockByLocation = (produto: Produto, locationName: string): number => {
   }
   
   const stockItem = produto.estoques.find((item) => {
-    const nome = (item as { estoque?: { nome?: string }; estoque_nome?: string }).estoque?.nome || 
-                 (item as { estoque_nome?: string }).estoque_nome || ''
+    // Access the nested estoque.nome property or fallback to estoque_nome for backwards compatibility
+    const nome = item.estoque?.nome || item.estoque_nome || ''
     return nome.toLowerCase().includes(locationName.toLowerCase())
   })
   
-  return stockItem ? Number((stockItem as { quantidade?: number }).quantidade || 0) : 0
+  return stockItem ? Number(stockItem.quantidade || 0) : 0
 }
 
 export default function ProdutosEstoquePage() {

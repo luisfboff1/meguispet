@@ -54,7 +54,11 @@ export interface Produto {
 
 export interface ProdutoEstoqueDetalhe {
   estoque_id: number
-  estoque_nome: string
+  estoque?: {
+    id: number
+    nome: string
+  }
+  estoque_nome?: string  // Legacy field for backwards compatibility
   quantidade: number
 }
 
