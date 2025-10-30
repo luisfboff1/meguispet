@@ -131,8 +131,10 @@ export function DataTable<TData, TValue>({
                             <div
                               onMouseDown={header.getResizeHandler()}
                               onTouchStart={header.getResizeHandler()}
-                              className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none bg-meguispet-primary opacity-0 hover:opacity-100 ${
-                                header.column.getIsResizing() ? 'opacity-100 bg-meguispet-primary' : ''
+                              className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none ${
+                                header.column.getIsResizing() 
+                                  ? 'opacity-100 bg-meguispet-primary' 
+                                  : 'bg-meguispet-primary opacity-0 hover:opacity-100'
                               }`}
                             />
                           )}

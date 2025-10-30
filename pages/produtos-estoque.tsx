@@ -94,7 +94,8 @@ export default function ProdutosEstoquePage() {
   }
 
   // Column definitions for products table
-  const productColumns = useMemo<ColumnDef<Produto>[]>(() => [
+  const productColumns = useMemo<ColumnDef<Produto>[]>(() => {
+    return [
     {
       accessorKey: "nome",
       header: ({ column }) => <SortableHeader column={column}>Produto</SortableHeader>,
@@ -191,7 +192,8 @@ export default function ProdutosEstoquePage() {
         </div>
       ),
     },
-  ], [handleEditarProduto])
+  ]
+  }, [])
 
   useEffect(() => {
     loadData()
