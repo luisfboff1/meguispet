@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
+import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +23,7 @@ import type { Venda, VendaForm as VendaFormValues } from '@/types'
 import VendaForm from '@/components/forms/VendaForm'
 import Toast from '@/components/ui/Toast'
 import AlertDialog from '@/components/ui/AlertDialog'
+import { DataTable, SortableHeader } from '@/components/ui/data-table'
 
 export default function VendasPage() {
   const [vendas, setVendas] = useState<Venda[]>([])
@@ -276,6 +278,141 @@ export default function VendasPage() {
     document.body.removeChild(link)
   }
 
+  // Helper function to get payment method
+  const getFormaPagamento = (venda: Venda): string => {
+    return venda.forma_pagamento_detalhe?.nome || 
+           (typeof venda.forma_pagamento === 'string' ? venda.forma_pagamento : '') || 
+           ''
+  }
+
+  // Column definitions for vendas table
+  const vendasColumns = useMemo<ColumnDef<Venda>[]>(() => {
+    return [
+    {
+      accessorKey: "numero_venda",
+      header: ({ column }) => <SortableHeader column={column}>Venda</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[140px]">
+          <div className="w-8 h-8 bg-meguispet-primary/10 rounded flex items-center justify-center flex-shrink-0">
+            <ShoppingCart className="h-4 w-4 text-meguispet-primary" />
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{row.original.numero_venda || `#${row.original.id}`}</div>
+            <div className="text-sm text-gray-500">ID: #{row.original.id}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "cliente",
+      header: ({ column }) => <SortableHeader column={column}>Cliente</SortableHeader>,
+      accessorFn: (row) => row.cliente?.nome || 'N/A',
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">
+          {row.original.cliente?.nome || 'N/A'}
+        </div>
+      ),
+    },
+    {
+      id: "vendedor",
+      header: ({ column }) => <SortableHeader column={column}>Vendedor</SortableHeader>,
+      accessorFn: (row) => row.vendedor?.nome || 'N/A',
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">
+          {row.original.vendedor?.nome || 'N/A'}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "valor_final",
+      header: ({ column }) => <SortableHeader column={column}>Total</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm font-medium text-green-600">
+          {formatCurrency(row.original.valor_final)}
+        </div>
+      ),
+    },
+    {
+      id: "forma_pagamento",
+      header: ({ column }) => <SortableHeader column={column}>Pagamento</SortableHeader>,
+      accessorFn: (row) => getFormaPagamento(row),
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">
+          {getFormaPagamento(row.original) || 'N/A'}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
+      cell: ({ row }) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(row.original.status)}`}>
+          {row.original.status === 'pago' ? 'Pago' : 
+           row.original.status === 'pendente' ? 'Pendente' : 'Cancelado'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: ({ column }) => <SortableHeader column={column}>Data</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">
+          {formatDate(row.original.created_at)}
+        </div>
+      ),
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleVisualizarVenda(row.original)}
+            title="Ver detalhes"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleEditarVenda(row.original)}
+            title="Editar venda"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          {row.original.status === 'pendente' && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-green-600 hover:text-green-700"
+              onClick={() => handleConfirmarVenda(row.original)}
+              title="Confirmar pagamento"
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+          )}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="text-red-600 hover:text-red-700"
+            onClick={() => handleExcluirVenda(row.original)}
+            disabled={deletingId === row.original.id}
+            title="Excluir venda"
+          >
+            {deletingId === row.original.id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [deletingId])
+
   return (
     <div className="space-y-6">
       {alert && (
@@ -442,99 +579,31 @@ export default function VendasPage() {
       </Card>
 
       {/* Vendas Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Vendas</CardTitle>
-          <CardDescription>
-            {filteredVendas.length} venda(s) encontrada(s)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">ID</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Cliente</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Vendedor</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Total</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Forma Pagamento</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Estoque</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Data</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredVendas.map((venda) => (
-                    <tr key={venda.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-900">#{venda.id}</td>
-                      <td className="py-3 px-4 text-sm text-gray-900">{venda.cliente?.nome || 'N/A'}</td>
-                      <td className="py-3 px-4 text-sm text-gray-900">{venda.vendedor?.nome || 'N/A'}</td>
-                      <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                        {formatCurrency(venda.valor_final)}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-900">
-                        {venda.forma_pagamento_detalhe?.nome ?? (typeof venda.forma_pagamento === 'string' ? venda.forma_pagamento : 'N/A')}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-900">
-                        {typeof venda.estoque === 'object' && venda.estoque?.nome ? venda.estoque.nome : 'N/A'}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(venda.status)}`}>
-                          {venda.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-900">
-                        {formatDate(venda.created_at)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleVisualizarVenda(venda)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEditarVenda(venda)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {venda.status === 'pendente' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-green-600 hover:text-green-700"
-                              onClick={() => handleConfirmarVenda(venda)}
-                              title="Confirmar Venda"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => handleExcluirVenda(venda)}
-                            disabled={deletingId === venda.id}
-                          >
-                            {deletingId === venda.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {loading ? (
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
+          </CardContent>
+        </Card>
+      ) : filteredVendas.length > 0 ? (
+        <DataTable 
+          columns={vendasColumns} 
+          data={filteredVendas}
+          enableColumnResizing={true}
+          enableSorting={true}
+          enableColumnVisibility={true}
+        />
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <ShoppingCart className="h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma venda encontrada</h3>
+            <p className="text-gray-600 text-center">
+              {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando sua primeira venda'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Formulário de Venda */}
       {showForm && (

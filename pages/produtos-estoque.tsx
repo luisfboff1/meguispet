@@ -209,6 +209,271 @@ export default function ProdutosEstoquePage() {
   ]
   }, [])
 
+  // Column definitions for estoque (stock) table
+  const estoqueColumns = useMemo<ColumnDef<Produto>[]>(() => {
+    return [
+    {
+      accessorKey: "nome",
+      header: ({ column }) => <SortableHeader column={column}>Produto</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[200px]">
+          <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+            <Package className="h-4 w-4 text-gray-600" />
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{row.original.nome}</div>
+            <div className="text-sm text-gray-500">ID: #{row.original.id}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "categoria",
+      header: ({ column }) => <SortableHeader column={column}>Categoria</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">{row.original.categoria || 'N/A'}</div>
+      ),
+    },
+    {
+      accessorKey: "estoque",
+      header: ({ column }) => <SortableHeader column={column}>Estoque</SortableHeader>,
+      cell: ({ row }) => {
+        const stockStatus = getStockStatus(row.original.estoque)
+        const StockIcon = stockStatus.icon
+        return (
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">{row.original.estoque}</span>
+            <StockIcon className={`h-4 w-4 ${stockStatus.color}`} />
+          </div>
+        )
+      },
+    },
+    {
+      id: "local",
+      header: ({ column }) => <SortableHeader column={column}>Local</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">
+          {describeProdutoEstoques(row.original)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "preco_venda",
+      header: ({ column }) => <SortableHeader column={column}>Preço Venda</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-green-600 font-medium">
+          {formatCurrency(row.original.preco_venda)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "preco_custo",
+      header: ({ column }) => <SortableHeader column={column}>Preço Custo</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-blue-600 font-medium">
+          {formatCurrency(row.original.preco_custo)}
+        </div>
+      ),
+    },
+    {
+      id: "valor_total_venda",
+      header: ({ column }) => <SortableHeader column={column}>Valor Total Venda</SortableHeader>,
+      accessorFn: (row) => row.preco_venda * row.estoque,
+      cell: ({ row }) => {
+        const totalValueVenda = row.original.preco_venda * row.original.estoque
+        return (
+          <div className="text-sm font-medium text-green-600">
+            {formatCurrency(totalValueVenda)}
+          </div>
+        )
+      },
+    },
+    {
+      id: "valor_total_custo",
+      header: ({ column }) => <SortableHeader column={column}>Valor Total Custo</SortableHeader>,
+      accessorFn: (row) => row.preco_custo * row.estoque,
+      cell: ({ row }) => {
+        const totalValueCusto = row.original.preco_custo * row.original.estoque
+        return (
+          <div className="text-sm font-medium text-blue-600">
+            {formatCurrency(totalValueCusto)}
+          </div>
+        )
+      },
+    },
+    {
+      id: "margem",
+      header: ({ column }) => <SortableHeader column={column}>Margem</SortableHeader>,
+      accessorFn: (row) => (row.preco_venda - row.preco_custo) * row.estoque,
+      cell: ({ row }) => {
+        const totalValueVenda = row.original.preco_venda * row.original.estoque
+        const totalValueCusto = row.original.preco_custo * row.original.estoque
+        const margemLucro = totalValueVenda - totalValueCusto
+        const margemPercentual = row.original.preco_custo > 0 
+          ? ((row.original.preco_venda - row.original.preco_custo) / row.original.preco_custo) * 100 
+          : 0
+        return (
+          <div className="text-sm font-medium text-purple-600">
+            {formatCurrency(margemLucro)}
+            <br />
+            <span className="text-xs">({margemPercentual.toFixed(1)}%)</span>
+          </div>
+        )
+      },
+    },
+    {
+      id: "status",
+      header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
+      cell: ({ row }) => {
+        const stockStatus = getStockStatus(row.original.estoque)
+        return (
+          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${stockStatus.bgColor} ${stockStatus.color}`}>
+            {stockStatus.text}
+          </span>
+        )
+      },
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex space-x-2">
+          <Button variant="ghost" size="sm" onClick={() => handleEditarProduto(row.original)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" className="text-meguispet-primary">
+            Ajustar
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [])
+
+  // Column definitions for movimentacoes (movements) table
+  const movimentacoesColumns = useMemo<ColumnDef<MovimentacaoEstoque>[]>(() => {
+    return [
+    {
+      accessorKey: "id",
+      header: ({ column }) => <SortableHeader column={column}>ID</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[120px]">
+          <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center flex-shrink-0">
+            <Truck className="h-4 w-4 text-green-600" />
+          </div>
+          <div className="font-medium text-gray-900">#{row.original.id}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "tipo",
+      header: ({ column }) => <SortableHeader column={column}>Tipo</SortableHeader>,
+      cell: ({ row }) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+          row.original.tipo === 'entrada' 
+            ? 'bg-green-100 text-green-800' 
+            : row.original.tipo === 'saida'
+            ? 'bg-red-100 text-red-800'
+            : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {row.original.tipo === 'entrada' ? 'Entrada' : 
+           row.original.tipo === 'saida' ? 'Saída' : 'Ajuste'}
+        </span>
+      ),
+    },
+    {
+      id: "fornecedor",
+      header: "Fornecedor",
+      accessorFn: (row) => row.fornecedor?.nome || 'N/A',
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">
+          {row.original.fornecedor?.nome || 'N/A'}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "data_movimentacao",
+      header: ({ column }) => <SortableHeader column={column}>Data</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">
+          {new Date(row.original.data_movimentacao).toLocaleDateString('pt-BR')}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
+      cell: ({ row }) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+          row.original.status === 'confirmado' 
+            ? 'bg-green-100 text-green-800' 
+            : row.original.status === 'pendente'
+            ? 'bg-yellow-100 text-yellow-800'
+            : 'bg-gray-100 text-gray-800'
+        }`}>
+          {row.original.status === 'confirmado' ? 'Confirmada' : 
+           row.original.status === 'pendente' ? 'Pendente' : 'Cancelada'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "valor_total",
+      header: ({ column }) => <SortableHeader column={column}>Total</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm font-medium text-gray-900">
+          {formatCurrency(row.original.valor_total || 0)}
+        </div>
+      ),
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex space-x-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleVerDetalhesMovimentacao(row.original)}
+            title="Ver detalhes"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          {row.original.status === 'pendente' && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-green-600 hover:text-green-700"
+              onClick={() => handleConfirmarMovimentacao(row.original)}
+              disabled={formLoading}
+              title="Confirmar movimentação (atualiza estoque)"
+            >
+              <ArrowUpCircle className="h-4 w-4" />
+            </Button>
+          )}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleEditarMovimentacao(row.original)}
+            title="Editar movimentação"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-red-600 hover:text-red-700"
+            onClick={() => handleExcluirMovimentacao(row.original)}
+            disabled={formLoading}
+            title="Excluir movimentação"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [formLoading])
+
   useEffect(() => {
     loadData()
   }, [])
@@ -806,112 +1071,22 @@ export default function ProdutosEstoquePage() {
             </CardContent>
           </Card>
 
-          {/* Produtos Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Produtos em Estoque</CardTitle>
-              <CardDescription>
-                {filteredProdutos.length} produto(s) encontrado(s)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Produto</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Categoria</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Estoque</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Local</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Preço Venda</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Preço Custo</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Valor Total Venda</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Valor Total Custo</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Margem</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredProdutos.map((produto) => {
-                        const stockStatus = getStockStatus(produto.estoque)
-                        const StockIcon = stockStatus.icon
-                        const totalValueVenda = produto.preco_venda * produto.estoque
-                        const totalValueCusto = produto.preco_custo * produto.estoque
-                        const margemLucro = totalValueVenda - totalValueCusto
-                        const margemPercentual = produto.preco_custo > 0 ? ((produto.preco_venda - produto.preco_custo) / produto.preco_custo) * 100 : 0
-                        
-                        return (
-                          <tr key={produto.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                                  <Package className="h-4 w-4 text-gray-600" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900">{produto.nome}</div>
-                                  <div className="text-sm text-gray-500">ID: #{produto.id}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900">{produto.categoria || 'N/A'}</td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium">{produto.estoque}</span>
-                                <StockIcon className={`h-4 w-4 ${stockStatus.color}`} />
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-sm text-gray-900">
-                              {describeProdutoEstoques(produto)}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-green-600 font-medium">
-                              {formatCurrency(produto.preco_venda)}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-blue-600 font-medium">
-                              {formatCurrency(produto.preco_custo)}
-                            </td>
-                            <td className="py-3 px-4 text-sm font-medium text-green-600">
-                              {formatCurrency(totalValueVenda)}
-                            </td>
-                            <td className="py-3 px-4 text-sm font-medium text-blue-600">
-                              {formatCurrency(totalValueCusto)}
-                            </td>
-                            <td className="py-3 px-4 text-sm font-medium text-purple-600">
-                              {formatCurrency(margemLucro)}
-                              <br />
-                              <span className="text-xs">({margemPercentual.toFixed(1)}%)</span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${stockStatus.bgColor} ${stockStatus.color}`}>
-                                {stockStatus.text}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex space-x-2">
-                                <Button variant="ghost" size="sm" onClick={() => handleEditarProduto(produto)}>
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="text-meguispet-primary">
-                                  Ajustar
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {!loading && filteredProdutos.length === 0 && (
+          {/* Estoque Table */}
+          {loading ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
+              </CardContent>
+            </Card>
+          ) : filteredProdutos.length > 0 ? (
+            <DataTable 
+              columns={estoqueColumns} 
+              data={filteredProdutos}
+              enableColumnResizing={true}
+              enableSorting={true}
+              enableColumnVisibility={true}
+            />
+          ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <Package className="h-12 w-12 text-gray-400 mb-4" />
@@ -926,141 +1101,24 @@ export default function ProdutosEstoquePage() {
       )}
 
       {activeTab === 'movimentacoes' && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Truck className="h-5 w-5" />
-                  Movimentações ({movimentacoes.length})
-                </CardTitle>
-                <CardDescription>
-                  Gerencie as movimentações de entrada e saída do estoque
-                </CardDescription>
-              </div>
-              <Button 
-                className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-                onClick={handleNovaMovimentacao}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Movimentação
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
+        <>
+          {loading ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-8">
                 <div className="text-gray-500">Carregando movimentações...</div>
-              </div>
-            ) : movimentacoes.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">ID</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Tipo</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Fornecedor</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Data</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Total</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {movimentacoes.map((movimentacao) => (
-                      <tr key={movimentacao.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
-                              <Truck className="h-4 w-4 text-green-600" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900">#{movimentacao.id}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            movimentacao.tipo === 'entrada' 
-                              ? 'bg-green-100 text-green-800' 
-                              : movimentacao.tipo === 'saida'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {movimentacao.tipo === 'entrada' ? 'Entrada' : 
-                             movimentacao.tipo === 'saida' ? 'Saída' : 'Ajuste'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {movimentacao.fornecedor?.nome || 'N/A'}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          {new Date(movimentacao.data_movimentacao).toLocaleDateString('pt-BR')}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            movimentacao.status === 'confirmado' 
-                              ? 'bg-green-100 text-green-800' 
-                              : movimentacao.status === 'pendente'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {movimentacao.status === 'confirmado' ? 'Confirmada' : 
-                             movimentacao.status === 'pendente' ? 'Pendente' : 'Cancelada'}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                          {formatCurrency(movimentacao.valor_total || 0)}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleVerDetalhesMovimentacao(movimentacao)}
-                              title="Ver detalhes"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {movimentacao.status === 'pendente' && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-green-600 hover:text-green-700"
-                                onClick={() => handleConfirmarMovimentacao(movimentacao)}
-                                disabled={formLoading}
-                                title="Confirmar movimentação (atualiza estoque)"
-                              >
-                                <ArrowUpCircle className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleEditarMovimentacao(movimentacao)}
-                              title="Editar movimentação"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => handleExcluirMovimentacao(movimentacao)}
-                              disabled={formLoading}
-                              title="Excluir movimentação"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8">
+              </CardContent>
+            </Card>
+          ) : movimentacoes.length > 0 ? (
+            <DataTable 
+              columns={movimentacoesColumns} 
+              data={movimentacoes}
+              enableColumnResizing={true}
+              enableSorting={true}
+              enableColumnVisibility={true}
+            />
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8">
                 <Truck className="h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma movimentação encontrada</h3>
                 <p className="text-gray-600 text-center mb-4">
@@ -1073,10 +1131,10 @@ export default function ProdutosEstoquePage() {
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Movimentação
                 </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {/* Formulários Modais */}
