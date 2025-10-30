@@ -53,7 +53,21 @@ const getStockByLocation = (produto: Produto, locationName: string): number => {
   const stockItem = produto.estoques.find((item) => {
     // Access the nested estoque.nome property or fallback to estoque_nome for backwards compatibility
     const nome = item.estoque?.nome || item.estoque_nome || ''
-    return nome.toLowerCase().includes(locationName.toLowerCase())
+    const nomeLower = nome.toLowerCase()
+    const locationLower = locationName.toLowerCase()
+    
+    // Match by location abbreviation or full name
+    // RS -> "Rio Grande do Sul" or names containing "RS"
+    // SP -> "São Paulo" or names containing "SP"
+    if (locationLower === 'rs') {
+      return nomeLower.includes('rio grande do sul') || nomeLower.includes(' rs')
+    }
+    if (locationLower === 'sp') {
+      return nomeLower.includes('são paulo') || nomeLower.includes('sao paulo') || nomeLower.includes(' sp')
+    }
+    
+    // Default: case-insensitive substring match
+    return nomeLower.includes(locationLower)
   })
   
   return stockItem ? Number(stockItem.quantidade || 0) : 0
