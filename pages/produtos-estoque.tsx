@@ -594,47 +594,47 @@ export default function ProdutosEstoquePage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Produtos</CardTitle>
-            <Package className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Total Produtos</CardTitle>
+            <Package className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{produtos.length}</div>
+            <div className="text-2xl font-bold whitespace-nowrap">{produtos.length}</div>
             <p className="text-xs text-muted-foreground">Cadastrados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total Venda</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Valor Total Venda</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalValue)}</div>
+            <div className="text-2xl font-bold text-green-600 whitespace-nowrap">{formatCurrency(totalValue)}</div>
             <p className="text-xs text-muted-foreground">Preço de venda</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total Custo</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Valor Total Custo</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalCusto)}</div>
+            <div className="text-2xl font-bold text-blue-600 whitespace-nowrap">{formatCurrency(totalCusto)}</div>
             <p className="text-xs text-muted-foreground">Preço de custo</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Margem de Lucro</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Margem de Lucro</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{formatCurrency(totalMargem)}</div>
+            <div className="text-2xl font-bold text-purple-600 whitespace-nowrap">{formatCurrency(totalMargem)}</div>
             <p className="text-xs text-muted-foreground">
               {totalCusto > 0 ? `${((totalMargem / totalCusto) * 100).toFixed(1)}%` : '0%'}
             </p>
@@ -643,11 +643,11 @@ export default function ProdutosEstoquePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Estoque Baixo</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Estoque Baixo</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{lowStockCount}</div>
+            <div className="text-2xl font-bold text-yellow-600 whitespace-nowrap">{lowStockCount}</div>
             <p className="text-xs text-muted-foreground">Produtos</p>
           </CardContent>
         </Card>
