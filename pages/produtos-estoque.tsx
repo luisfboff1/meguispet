@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
+import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,6 +34,30 @@ import type {
 } from '@/types'
 import ProdutoForm from '@/components/forms/ProdutoForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
+import { DataTable, SortableHeader } from '@/components/ui/data-table'
+
+// Helper function to format currency
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value)
+}
+
+// Helper function to get stock quantity by location name
+const getStockByLocation = (produto: Produto, locationName: string): number => {
+  if (!produto.estoques || !Array.isArray(produto.estoques)) {
+    return 0
+  }
+  
+  const stockItem = produto.estoques.find((item) => {
+    const nome = (item as { estoque?: { nome?: string }; estoque_nome?: string }).estoque?.nome || 
+                 (item as { estoque_nome?: string }).estoque_nome || ''
+    return nome.toLowerCase().includes(locationName.toLowerCase())
+  })
+  
+  return stockItem ? Number((stockItem as { quantidade?: number }).quantidade || 0) : 0
+}
 
 export default function ProdutosEstoquePage() {
   const router = useRouter()
@@ -56,6 +81,117 @@ export default function ProdutosEstoquePage() {
   // Estados para modal de detalhes
   const [showMovimentacaoDetails, setShowMovimentacaoDetails] = useState(false)
   const [selectedMovimentacao, setSelectedMovimentacao] = useState<MovimentacaoEstoque | null>(null)
+
+  // Handlers para produtos
+  const handleNovoProduto = () => {
+    setEditingProduto(null)
+    setShowProdutoForm(true)
+  }
+
+  const handleEditarProduto = (produto: Produto) => {
+    setEditingProduto(produto)
+    setShowProdutoForm(true)
+  }
+
+  // Column definitions for products table
+  const productColumns = useMemo<ColumnDef<Produto>[]>(() => [
+    {
+      accessorKey: "nome",
+      header: ({ column }) => <SortableHeader column={column}>Produto</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[200px]">
+          <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+            <Package className="h-4 w-4 text-gray-600" />
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{row.original.nome}</div>
+            <div className="text-sm text-gray-500">{row.original.categoria || 'N/A'}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "preco_venda",
+      header: ({ column }) => <SortableHeader column={column}>Preço Venda</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-green-600 font-medium">
+          {formatCurrency(row.original.preco_venda)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "preco_custo",
+      header: ({ column }) => <SortableHeader column={column}>Preço Custo</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-blue-600 font-medium">
+          {formatCurrency(row.original.preco_custo)}
+        </div>
+      ),
+    },
+    {
+      id: "margem",
+      header: ({ column }) => <SortableHeader column={column}>Margem</SortableHeader>,
+      accessorFn: (row) => row.preco_venda - row.preco_custo,
+      cell: ({ row }) => {
+        const margem = row.original.preco_venda - row.original.preco_custo
+        const margemPercentual = row.original.preco_custo > 0 
+          ? ((margem / row.original.preco_custo) * 100).toFixed(1)
+          : '0'
+        return (
+          <div className="text-purple-600 font-medium">
+            {formatCurrency(margem)}
+            <br />
+            <span className="text-xs">({margemPercentual}%)</span>
+          </div>
+        )
+      },
+    },
+    {
+      id: "estoque_rs",
+      header: ({ column }) => <SortableHeader column={column}>Estoque (RS)</SortableHeader>,
+      accessorFn: (row) => getStockByLocation(row, 'RS'),
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {getStockByLocation(row.original, 'RS')}
+        </div>
+      ),
+    },
+    {
+      id: "estoque_sp",
+      header: ({ column }) => <SortableHeader column={column}>Estoque (SP)</SortableHeader>,
+      accessorFn: (row) => getStockByLocation(row, 'SP'),
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {getStockByLocation(row.original, 'SP')}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "estoque",
+      header: ({ column }) => <SortableHeader column={column}>Estoque Total</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-center font-bold text-gray-900">
+          {row.original.estoque}
+        </div>
+      ),
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleEditarProduto(row.original)}
+            title="Editar produto"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ], [handleEditarProduto])
 
   useEffect(() => {
     loadData()
@@ -100,13 +236,6 @@ export default function ProdutosEstoquePage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
   }
 
   const getStockStatus = (estoque: number) => {
@@ -155,17 +284,6 @@ export default function ProdutosEstoquePage() {
 
     return true
   })
-
-  // Handlers para produtos
-  const handleNovoProduto = () => {
-    setEditingProduto(null)
-    setShowProdutoForm(true)
-  }
-
-  const handleEditarProduto = (produto: Produto) => {
-    setEditingProduto(produto)
-    setShowProdutoForm(true)
-  }
 
   const handleSalvarProduto = async (produtoData: ProdutoFormValues) => {
     try {
@@ -578,99 +696,22 @@ export default function ProdutosEstoquePage() {
             </CardContent>
           </Card>
 
-          {/* Produtos Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {loading ? (
-              <div className="col-span-full flex items-center justify-center py-8">
+          {/* Produtos Table */}
+          {loading ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
-              </div>
-            ) : (
-              filteredProdutos.map((produto) => {
-                const stockStatus = getStockStatus(produto.estoque)
-                const StockIcon = stockStatus.icon
-                
-                return (
-                  <Card key={produto.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg line-clamp-2">{produto.nome}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {produto.categoria}
-                          </CardDescription>
-                        </div>
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => router.push(`/produto-detalhes?id=${produto.id}`)}
-                            title="Ver detalhes"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleEditarProduto(produto)}
-                            title="Editar produto"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Preço Venda:</span>
-                        <span className="font-semibold text-lg text-green-600">{formatCurrency(produto.preco_venda)}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Preço Custo:</span>
-                        <span className="font-semibold text-sm text-blue-600">{formatCurrency(produto.preco_custo)}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Margem:</span>
-                        <span className="font-semibold text-sm text-purple-600">
-                          {formatCurrency(produto.preco_venda - produto.preco_custo)} 
-                          ({produto.preco_custo > 0 ? `${(((produto.preco_venda - produto.preco_custo) / produto.preco_custo) * 100).toFixed(1)}%` : '0%'})
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Estoque:</span>
-                        <div className="flex items-center space-x-2">
-                          <StockIcon className={`h-4 w-4 ${stockStatus.color}`} />
-                          <span className={`text-sm font-medium ${stockStatus.color}`}>
-                            {produto.estoque} {stockStatus.text}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <span className="text-sm text-gray-600 block">Local do estoque:</span>
-                        <span className="text-sm font-medium text-gray-900 block text-right">{describeProdutoEstoques(produto)}</span>
-                      </div>
-
-                      <div className="pt-2">
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          disabled={produto.estoque === 0}
-                        >
-                          {produto.estoque === 0 ? 'Sem estoque' : 'Ver detalhes'}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })
-            )}
-          </div>
-
-          {!loading && filteredProdutos.length === 0 && (
+              </CardContent>
+            </Card>
+          ) : filteredProdutos.length > 0 ? (
+            <DataTable 
+              columns={productColumns} 
+              data={filteredProdutos}
+              enableColumnResizing={true}
+              enableSorting={true}
+              enableColumnVisibility={true}
+            />
+          ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <Package className="h-12 w-12 text-gray-400 mb-4" />
