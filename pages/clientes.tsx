@@ -193,7 +193,7 @@ export default function ClientesPage() {
     },
     {
       accessorKey: "endereco",
-      header: "Endereço",
+      header: ({ column }) => <SortableHeader column={column}>Endereço</SortableHeader>,
       cell: ({ row }) => (
         row.original.endereco ? (
           <div className="flex items-start space-x-2">
@@ -207,7 +207,7 @@ export default function ClientesPage() {
     },
     {
       id: "acoes",
-      header: "Ações",
+      header: ({ column }) => <SortableHeader column={column}>Ações</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" title="Ver detalhes">

@@ -250,7 +250,7 @@ export default function ProdutosEstoquePage() {
     },
     {
       id: "local",
-      header: "Local",
+      header: ({ column }) => <SortableHeader column={column}>Local</SortableHeader>,
       cell: ({ row }) => (
         <div className="text-sm text-gray-900">
           {describeProdutoEstoques(row.original)}
@@ -323,7 +323,7 @@ export default function ProdutosEstoquePage() {
     },
     {
       id: "status",
-      header: "Status",
+      header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
       cell: ({ row }) => {
         const stockStatus = getStockStatus(row.original.estoque)
         return (
@@ -335,7 +335,7 @@ export default function ProdutosEstoquePage() {
     },
     {
       id: "acoes",
-      header: "Ações",
+      header: ({ column }) => <SortableHeader column={column}>Ações</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <Button variant="ghost" size="sm" onClick={() => handleEditarProduto(row.original)}>
@@ -427,7 +427,7 @@ export default function ProdutosEstoquePage() {
     },
     {
       id: "acoes",
-      header: "Ações",
+      header: ({ column }) => <SortableHeader column={column}>Ações</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <Button 

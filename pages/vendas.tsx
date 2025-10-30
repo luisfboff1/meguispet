@@ -278,6 +278,13 @@ export default function VendasPage() {
     document.body.removeChild(link)
   }
 
+  // Helper function to get payment method
+  const getFormaPagamento = (venda: Venda): string => {
+    return venda.forma_pagamento_detalhe?.nome || 
+           (typeof venda.forma_pagamento === 'string' ? venda.forma_pagamento : '') || 
+           ''
+  }
+
   // Column definitions for vendas table
   const vendasColumns = useMemo<ColumnDef<Venda>[]>(() => {
     return [
@@ -328,12 +335,10 @@ export default function VendasPage() {
     {
       id: "forma_pagamento",
       header: ({ column }) => <SortableHeader column={column}>Pagamento</SortableHeader>,
-      accessorFn: (row) => row.forma_pagamento_detalhe?.nome || (typeof row.forma_pagamento === 'string' ? row.forma_pagamento : '') || '',
+      accessorFn: (row) => getFormaPagamento(row),
       cell: ({ row }) => (
         <div className="text-sm text-gray-900">
-          {row.original.forma_pagamento_detalhe?.nome || 
-           (typeof row.original.forma_pagamento === 'string' ? row.original.forma_pagamento : '') || 
-           'N/A'}
+          {getFormaPagamento(row.original) || 'N/A'}
         </div>
       ),
     },
@@ -358,7 +363,7 @@ export default function VendasPage() {
     },
     {
       id: "acoes",
-      header: "Ações",
+      header: ({ column }) => <SortableHeader column={column}>Ações</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Button 

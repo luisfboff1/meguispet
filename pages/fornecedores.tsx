@@ -246,7 +246,7 @@ export default function FornecedoresPage() {
     },
     {
       id: "localizacao",
-      header: "Localização",
+      header: ({ column }) => <SortableHeader column={column}>Localização</SortableHeader>,
       cell: ({ row }) => {
         const { endereco, cidade, estado, cep } = row.original
         if (!endereco && !cidade && !estado) {
@@ -267,7 +267,7 @@ export default function FornecedoresPage() {
     },
     {
       id: "acoes",
-      header: "Ações",
+      header: ({ column }) => <SortableHeader column={column}>Ações</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Button 
