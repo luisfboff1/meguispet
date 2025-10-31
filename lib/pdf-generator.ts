@@ -234,26 +234,25 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
   // Calcular total de produtos (soma dos subtotais dos itens)
   const totalProdutos = (venda.itens || []).reduce((sum, item) => sum + item.subtotal, 0)
   
-  doc.setFontSize(9)
+  doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
   
   // Total de Produtos
   doc.text('Total de Produtos:', totalsX, yPos)
-  doc.text(`R$ ${totalProdutos.toFixed(2).replace('.', ',')}`, totalsX + 45, yPos, { align: 'right' })
+  doc.text(`R$ ${totalProdutos.toFixed(2).replace('.', ',')}`, totalsX + 50, yPos, { align: 'right' })
   yPos += 5
 
   // Desconto (se aplicável)
   if (venda.desconto > 0) {
     doc.text('Desconto:', totalsX, yPos)
-    doc.text(`R$ ${venda.desconto.toFixed(2).replace('.', ',')}`, totalsX + 45, yPos, { align: 'right' })
+    doc.text(`R$ ${venda.desconto.toFixed(2).replace('.', ',')}`, totalsX + 50, yPos, { align: 'right' })
     yPos += 5
   }
 
-  // Total com Imposto (valor final)
-  doc.setFontSize(11)
+  // Total com Imposto (valor final) - mesmo tamanho mas em negrito
   doc.setFont('helvetica', 'bold')
-  doc.text('TOTAL COM IMPOSTO: R$', totalsX - 5, yPos)
-  doc.text(venda.valor_final.toFixed(2).replace('.', ','), totalsX + 50, yPos, { align: 'right' })
+  doc.text('TOTAL COM IMPOSTO:', totalsX, yPos)
+  doc.text(`R$ ${venda.valor_final.toFixed(2).replace('.', ',')}`, totalsX + 50, yPos, { align: 'right' })
   yPos += 8
 
   // ==================== OBSERVAÇÕES ====================

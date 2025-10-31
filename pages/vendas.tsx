@@ -19,7 +19,7 @@ import {
   Check,
   FileText
 } from 'lucide-react'
-import { vendasService } from '@/services/api'
+import { vendasService, clientesService } from '@/services/api'
 import type { Venda, VendaForm as VendaFormValues } from '@/types'
 import VendaForm from '@/components/forms/VendaForm'
 import Toast from '@/components/ui/Toast'
@@ -262,6 +262,17 @@ export default function VendasPage() {
         } else {
           setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
           return
+        }
+      }
+      
+      // Se o cliente existe mas não tem documento, buscar dados completos do cliente
+      if (vendaCompleta.cliente_id && vendaCompleta.cliente && !vendaCompleta.cliente.documento) {
+        const clienteResponse = await clientesService.getById(vendaCompleta.cliente_id)
+        if (clienteResponse.success && clienteResponse.data) {
+          vendaCompleta = {
+            ...vendaCompleta,
+            cliente: clienteResponse.data
+          }
         }
       }
       
