@@ -24,7 +24,7 @@ const getPaymentMethodName = (venda: Venda): string => {
  * Gera PDF de pedido de venda em formato profissional
  * Layout simples, preto e branco, sem efeitos
  */
-export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
+export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
   // Criar documento PDF (A4)
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -40,11 +40,45 @@ export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
   
   let yPos = margin
 
-  // ==================== CABEÇALHO ====================
-  doc.setFontSize(16)
+  // ==================== CABEÇALHO COM LOGO ====================
+  try {
+    // Carregar logo (deve estar em /public/Meguis-pet-1280x1147.png)
+    const logoPath = '/Meguis-pet-1280x1147.png'
+    const logoWidth = 20
+    const logoHeight = 18 // Manter proporção aproximada (1280x1147)
+    const logoX = margin
+    
+    // Adicionar logo ao PDF
+    if (typeof window !== 'undefined') {
+      const img = new Image()
+      img.src = logoPath
+      await new Promise((resolve, reject) => {
+        img.onload = () => {
+          doc.addImage(img, 'PNG', logoX, yPos, logoWidth, logoHeight)
+          resolve(true)
+        }
+        img.onerror = () => {
+          console.warn('Logo não carregado, continuando sem logo')
+          resolve(false)
+        }
+      })
+    }
+  } catch (error) {
+    console.warn('Erro ao carregar logo:', error)
+  }
+
+  // Nome da empresa ao lado do logo
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
-  doc.text(nomeEmpresa, pageWidth / 2, yPos, { align: 'center' })
-  yPos += 10
+  const empresaNome = 'Meguispet Produtos Pets LTDA'
+  doc.text(empresaNome, margin + 25, yPos + 6)
+  
+  // CNPJ da empresa abaixo do nome
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.text('60.826.400/0001-82', margin + 25, yPos + 12)
+  
+  yPos += 22
 
   // Linha separadora
   doc.setLineWidth(0.5)
@@ -57,16 +91,16 @@ export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
   doc.text('NOME:', margin, yPos)
   doc.setFont('helvetica', 'normal')
   doc.text(venda.cliente?.nome || 'N/A', margin + 20, yPos)
-  
-  // CNPJ/CPF na mesma linha se disponível
-  if (venda.cliente?.documento) {
-    const docX = pageWidth - margin - 60
-    doc.setFont('helvetica', 'bold')
-    doc.text('CNPJ:', docX, yPos)
-    doc.setFont('helvetica', 'normal')
-    doc.text(venda.cliente.documento, docX + 15, yPos)
-  }
   yPos += 6
+  
+  // CNPJ/CPF abaixo do nome
+  if (venda.cliente?.documento) {
+    doc.setFont('helvetica', 'bold')
+    doc.text('CNPJ:', margin, yPos)
+    doc.setFont('helvetica', 'normal')
+    doc.text(venda.cliente.documento, margin + 20, yPos)
+    yPos += 6
+  }
 
   // Endereço do cliente
   if (venda.cliente?.endereco) {
@@ -250,8 +284,8 @@ export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
 /**
  * Baixa o PDF gerado
  */
-export const downloadOrderPDF = (venda: Venda, nomeEmpresa?: string) => {
-  const doc = generateOrderPDF(venda, nomeEmpresa)
+export const downloadOrderPDF = async (venda: Venda, nomeEmpresa?: string) => {
+  const doc = await generateOrderPDF(venda, nomeEmpresa)
   const filename = `pedido-${venda.numero_venda || venda.id}.pdf`
   doc.save(filename)
 }
@@ -259,8 +293,8 @@ export const downloadOrderPDF = (venda: Venda, nomeEmpresa?: string) => {
 /**
  * Abre o PDF em nova aba para visualização
  */
-export const previewOrderPDF = (venda: Venda, nomeEmpresa?: string) => {
-  const doc = generateOrderPDF(venda, nomeEmpresa)
+export const previewOrderPDF = async (venda: Venda, nomeEmpresa?: string) => {
+  const doc = await generateOrderPDF(venda, nomeEmpresa)
   const blob = doc.output('blob')
   const url = URL.createObjectURL(blob)
   window.open(url, '_blank')

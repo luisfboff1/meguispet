@@ -266,7 +266,7 @@ export default function VendasPage() {
       }
       
       // Gerar e baixar o PDF
-      downloadOrderPDF(vendaCompleta, 'MEGUISPET')
+      await downloadOrderPDF(vendaCompleta, 'MEGUISPET')
       setToast({ message: 'PDF gerado com sucesso!', type: 'success' })
     } catch (error) {
       console.error('Erro ao gerar PDF:', error)
