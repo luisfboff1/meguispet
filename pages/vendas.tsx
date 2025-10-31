@@ -255,7 +255,7 @@ export default function VendasPage() {
     try {
       // Se a venda não tem itens, buscar a venda completa
       let vendaCompleta = venda
-      if (!venda.itens || venda.itens.length === 0) {
+      if (!venda.itens?.length) {
         const response = await vendasService.getById(venda.id)
         if (response.success && response.data) {
           vendaCompleta = response.data

@@ -6,9 +6,18 @@ import type { Venda } from '@/types'
  * Helper function to extract payment method name from venda
  */
 const getPaymentMethodName = (venda: Venda): string => {
-  return venda.forma_pagamento_detalhe?.nome || 
-         (typeof venda.forma_pagamento === 'string' ? venda.forma_pagamento : '') || 
-         'N/A'
+  // Priority 1: forma_pagamento_detalhe.nome
+  if (venda.forma_pagamento_detalhe?.nome) {
+    return venda.forma_pagamento_detalhe.nome
+  }
+  
+  // Priority 2: forma_pagamento as string
+  if (typeof venda.forma_pagamento === 'string' && venda.forma_pagamento) {
+    return venda.forma_pagamento
+  }
+  
+  // Default fallback
+  return 'N/A'
 }
 
 /**
