@@ -99,8 +99,7 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
   doc.setFont('helvetica', 'bold')
   doc.text('CNPJ:', margin, yPos)
   doc.setFont('helvetica', 'normal')
-  // Tentar diferentes campos para o documento (documento é o padrão, mas tentar cpf_cnpj como fallback)
-  const clienteDocumento = venda.cliente?.documento || venda.cliente?.cpf_cnpj || ''
+  const clienteDocumento = venda.cliente?.documento || ''
   doc.text(clienteDocumento, margin + 20, yPos)
   yPos += 6
 
