@@ -229,7 +229,9 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
   yPos += 8
 
   // ==================== TOTAIS ====================
-  const totalsX = pageWidth - margin - 60
+  // Ajustar posição baseada no tamanho da página para ser responsivo
+  const totalsX = pageWidth - margin - 70
+  const valueX = pageWidth - margin - 5 // Valores sempre alinhados à direita com margem fixa
   
   // Calcular total de produtos (soma dos subtotais dos itens)
   const totalProdutos = (venda.itens || []).reduce((sum, item) => sum + item.subtotal, 0)
@@ -239,20 +241,20 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
   
   // Total de Produtos
   doc.text('Total de Produtos:', totalsX, yPos)
-  doc.text(`R$ ${totalProdutos.toFixed(2).replace('.', ',')}`, totalsX + 50, yPos, { align: 'right' })
+  doc.text(`R$ ${totalProdutos.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
   yPos += 5
 
   // Desconto (se aplicável)
   if (venda.desconto > 0) {
     doc.text('Desconto:', totalsX, yPos)
-    doc.text(`R$ ${venda.desconto.toFixed(2).replace('.', ',')}`, totalsX + 50, yPos, { align: 'right' })
+    doc.text(`R$ ${venda.desconto.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
     yPos += 5
   }
 
   // Total com Imposto (valor final) - mesmo tamanho mas em negrito
   doc.setFont('helvetica', 'bold')
   doc.text('TOTAL COM IMPOSTO:', totalsX, yPos)
-  doc.text(`R$ ${venda.valor_final.toFixed(2).replace('.', ',')}`, totalsX + 50, yPos, { align: 'right' })
+  doc.text(`R$ ${venda.valor_final.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
   yPos += 8
 
   // ==================== OBSERVAÇÕES ====================

@@ -265,8 +265,8 @@ export default function VendasPage() {
         }
       }
       
-      // Se o cliente existe mas não tem documento, buscar dados completos do cliente
-      if (vendaCompleta.cliente_id && vendaCompleta.cliente && !vendaCompleta.cliente.documento) {
+      // Sempre buscar dados completos do cliente se houver cliente_id
+      if (vendaCompleta.cliente_id) {
         const clienteResponse = await clientesService.getById(vendaCompleta.cliente_id)
         if (clienteResponse.success && clienteResponse.data) {
           vendaCompleta = {
