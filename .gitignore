@@ -2,6 +2,7 @@
 node_modules/
 /.pnp
 .pnp.js
+package-lock.json
 
 # Testing
 /coverage
@@ -126,3 +127,7 @@ jspm_packages/
 # TernJS port file
 .tern-port
 .env.local
+
+# Test files
+test-pdf-generation.js
+public/test-pdf.html

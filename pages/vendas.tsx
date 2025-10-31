@@ -16,14 +16,16 @@ import {
   DollarSign,
   Calendar,
   Loader2,
-  Check
+  Check,
+  FileText
 } from 'lucide-react'
-import { vendasService } from '@/services/api'
+import { vendasService, clientesService } from '@/services/api'
 import type { Venda, VendaForm as VendaFormValues } from '@/types'
 import VendaForm from '@/components/forms/VendaForm'
 import Toast from '@/components/ui/Toast'
 import AlertDialog from '@/components/ui/AlertDialog'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+import { downloadOrderPDF } from '@/lib/pdf-generator'
 
 export default function VendasPage() {
   const [vendas, setVendas] = useState<Venda[]>([])
@@ -249,6 +251,45 @@ export default function VendasPage() {
     downloadCSV(csvContent, 'vendas.csv')
   }
 
+  const handleExportarPDF = async (venda: Venda) => {
+    try {
+      // Se a venda não tem itens, buscar a venda completa
+      let vendaCompleta = venda
+      if (!venda.itens?.length) {
+        const response = await vendasService.getById(venda.id)
+        if (response.success && response.data) {
+          vendaCompleta = response.data
+        } else {
+          setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
+          return
+        }
+      }
+      
+      // Sempre buscar dados completos do cliente se houver cliente_id e não tiver cliente
+      if (vendaCompleta.cliente_id && !vendaCompleta.cliente) {
+        try {
+          const clienteResponse = await clientesService.getById(vendaCompleta.cliente_id)
+          if (clienteResponse.success && clienteResponse.data) {
+            vendaCompleta = {
+              ...vendaCompleta,
+              cliente: clienteResponse.data
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao buscar dados do cliente:', error)
+          // Continua mesmo se falhar ao buscar cliente
+        }
+      }
+      
+      // Gerar e baixar o PDF
+      await downloadOrderPDF(vendaCompleta, 'MEGUISPET')
+      setToast({ message: 'PDF gerado com sucesso!', type: 'success' })
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error)
+      setToast({ message: 'Erro ao gerar PDF do pedido', type: 'error' })
+    }
+  }
+
   const generateCSV = (data: Venda[]) => {
     const headers = ['ID', 'Cliente', 'Vendedor', 'Total', 'Status', 'Data', 'Forma Pagamento']
     const rows = data.map(venda => [
@@ -377,6 +418,15 @@ export default function VendasPage() {
           <Button 
             variant="ghost" 
             size="sm"
+            onClick={() => handleExportarPDF(row.original)}
+            title="Exportar PDF"
+            className="text-blue-600 hover:text-blue-700"
+          >
+            <FileText className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
             onClick={() => handleEditarVenda(row.original)}
             title="Editar venda"
           >
@@ -460,9 +510,20 @@ export default function VendasPage() {
               <CardTitle>Detalhes da venda #{selectedVenda.id}</CardTitle>
               <CardDescription>Número: {selectedVenda.numero_venda}</CardDescription>
             </div>
-            <Button variant="ghost" onClick={() => setSelectedVenda(null)}>
-              Fechar
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleExportarPDF(selectedVenda)}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Exportar PDF
+              </Button>
+              <Button variant="ghost" onClick={() => setSelectedVenda(null)}>
+                Fechar
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
