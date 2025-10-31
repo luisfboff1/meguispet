@@ -9,7 +9,24 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const supabase = getSupabase();
 
     if (method === 'GET') {
-      const { page = '1', limit = '10', search = '', tipo = '' } = req.query;
+      const { page = '1', limit = '10', search = '', tipo = '', id } = req.query;
+      
+      // If requesting a specific cliente by ID, return just that one
+      if (id) {
+        const { data: cliente, error } = await supabase
+          .from('clientes_fornecedores')
+          .select('*, vendedor:vendedores(id, nome)')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        return res.status(200).json({
+          success: true,
+          data: cliente,
+        });
+      }
+
       const pageNum = parseInt(page as string, 10);
       const limitNum = parseInt(limit as string, 10);
       const offset = (pageNum - 1) * limitNum;

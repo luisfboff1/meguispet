@@ -90,14 +90,18 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
   doc.setFont('helvetica', 'bold')
   doc.text('NOME:', margin, yPos)
   doc.setFont('helvetica', 'normal')
-  doc.text(venda.cliente?.nome || 'N/A', margin + 20, yPos)
+  // Garantir que temos um nome válido
+  const clienteNome = venda.cliente?.nome || 'N/A'
+  doc.text(clienteNome, margin + 20, yPos)
   yPos += 6
   
   // CNPJ/CPF abaixo do nome - sempre exibir o campo
   doc.setFont('helvetica', 'bold')
   doc.text('CNPJ:', margin, yPos)
   doc.setFont('helvetica', 'normal')
-  doc.text(venda.cliente?.documento || '', margin + 20, yPos)
+  // Tentar diferentes campos para o documento (documento é o padrão, mas tentar cpf_cnpj como fallback)
+  const clienteDocumento = venda.cliente?.documento || venda.cliente?.cpf_cnpj || ''
+  doc.text(clienteDocumento, margin + 20, yPos)
   yPos += 6
 
   // Endereço do cliente

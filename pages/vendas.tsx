@@ -265,14 +265,19 @@ export default function VendasPage() {
         }
       }
       
-      // Sempre buscar dados completos do cliente se houver cliente_id
-      if (vendaCompleta.cliente_id) {
-        const clienteResponse = await clientesService.getById(vendaCompleta.cliente_id)
-        if (clienteResponse.success && clienteResponse.data) {
-          vendaCompleta = {
-            ...vendaCompleta,
-            cliente: clienteResponse.data
+      // Sempre buscar dados completos do cliente se houver cliente_id e não tiver cliente
+      if (vendaCompleta.cliente_id && !vendaCompleta.cliente) {
+        try {
+          const clienteResponse = await clientesService.getById(vendaCompleta.cliente_id)
+          if (clienteResponse.success && clienteResponse.data) {
+            vendaCompleta = {
+              ...vendaCompleta,
+              cliente: clienteResponse.data
+            }
           }
+        } catch (error) {
+          console.error('Erro ao buscar dados do cliente:', error)
+          // Continua mesmo se falhar ao buscar cliente
         }
       }
       
