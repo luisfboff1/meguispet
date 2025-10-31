@@ -1,0 +1,110 @@
+┌─────────────────────────────────────────────────────────────┐
+│                        LAYOUT DO PDF                          │
+│                  Pedido de Venda - A4 (210x297mm)            │
+└─────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ Margem: 15mm                                    Margem: 15mm │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │                                                        │  │
+│  │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │  │
+│  │  ┃              CABEÇALHO - MEGUISPET              ┃  │  │
+│  │  ┃          (Helvetica Bold, 16pt, Centro)         ┃  │  │
+│  │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │  │
+│  │  ─────────────────────────────────────────────────────  │  │
+│  │                                                        │  │
+│  │  ┌──────────────────────────────────────────────────┐  │  │
+│  │  │ INFORMAÇÕES DO CLIENTE                          │  │  │
+│  │  │ (Helvetica, 10pt)                               │  │  │
+│  │  │                                                  │  │  │
+│  │  │ NOME: DELTA FIRE LTDA                           │  │  │
+│  │  │ ENDEREÇO: RUA VICO COSTA                        │  │  │
+│  │  │           CIDADE NOVA, CAXIAS DO SUL            │  │  │
+│  │  │ CNPJ: 09.523.815/0001-20                        │  │  │
+│  │  │ TELEFONE: (54) 3025-1234                        │  │  │
+│  │  └──────────────────────────────────────────────────┘  │  │
+│  │  ─────────────────────────────────────────────────────  │  │
+│  │                                                        │  │
+│  │  ┌────────────────────┬──────────────────────────────┐  │  │
+│  │  │ INFORMAÇÕES DO PEDIDO (Helvetica, 9pt)          │  │  │
+│  │  ├────────────────────┼──────────────────────────────┤  │  │
+│  │  │ PEDIDO: 22874      │ DATA: 21/10/2025            │  │  │
+│  │  │ VENDEDOR: ROSE ... │ PAGAMENTO: 28.42 dias       │  │  │
+│  │  └────────────────────┴──────────────────────────────┘  │  │
+│  │                                                        │  │
+│  │  ┌──────────────────────────────────────────────────┐  │  │
+│  │  │ TABELA DE PRODUTOS (jsPDF AutoTable)            │  │  │
+│  │  ├─────┬────────────────┬─────┬──────────┬─────────┤  │  │
+│  │  │ CÓD │  DESCRIÇÃO     │ QTD │ P. UNIT. │  TOTAL  │  │  │
+│  │  ├─────┼────────────────┼─────┼──────────┼─────────┤  │  │
+│  │  │2771 │ETIQUETA BOPP..│ 20  │  R$ 42,50│ R$ 850  │  │  │
+│  │  │3892 │ETIQUETA BOPP..│ 25  │  R$ 42,00│R$ 1050  │  │  │
+│  │  │5241 │ETIQUETA BOPP..│  5  │  R$ 75,25│ R$ 376  │  │  │
+│  │  └─────┴────────────────┴─────┴──────────┴─────────┘  │  │
+│  │                                                        │  │
+│  │  ┌──────────────────────────────────────────────────┐  │  │
+│  │  │                             Subtotal: R$ 2.380,25│  │  │
+│  │  │                             Desconto: R$   104,00│  │  │
+│  │  │                      ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓│  │  │
+│  │  │                      ┃ TOTAL PEDIDO: R$ 2.276,25┃│  │  │
+│  │  │                      ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛│  │  │
+│  │  └──────────────────────────────────────────────────┘  │  │
+│  │  ─────────────────────────────────────────────────────  │  │
+│  │                                                        │  │
+│  │  ┌──────────────────────────────────────────────────┐  │  │
+│  │  │ OBSERVAÇÕES:                                     │  │  │
+│  │  │ Entrega urgente. Prazo: 15 dias úteis.          │  │  │
+│  │  └──────────────────────────────────────────────────┘  │  │
+│  │                                                        │  │
+│  │                                                        │  │
+│  │                                                        │  │
+│  │                                                        │  │
+│  │  ─────────────────────────────────────────────────────  │  │
+│  │  Documento gerado automaticamente - MEGUISPET        │  │  │
+│  │         Sistema de Gestão (Helvetica Italic, 8pt)    │  │  │
+│  └────────────────────────────────────────────────────────┘  │
+│ Margem: 15mm                                    Margem: 15mm │
+└──────────────────────────────────────────────────────────────┘
+
+LEGENDA:
+━━━━━ = Texto em negrito / Destaque
+───── = Linhas separadoras
+┌────┐ = Seções do documento
+│    │ = Bordas / Margens
+
+ESPECIFICAÇÕES:
+- Formato: A4 (210mm x 297mm)
+- Margens: 15mm (todas)
+- Área útil: 180mm x 267mm
+- Fonte: Helvetica (sans-serif)
+- Cores: Preto (#000000) e Branco (#FFFFFF)
+- Orientação: Retrato (Portrait)
+
+TAMANHOS DE FONTE:
+- Cabeçalho empresa: 16pt (negrito)
+- Labels do cliente: 10pt (negrito)
+- Valores do cliente: 10pt (normal)
+- Info do pedido: 9pt (negrito/normal)
+- Tabela cabeçalho: 9pt (negrito)
+- Tabela corpo: 9pt (normal)
+- Totais: 9pt (normal) / 11pt (total final, negrito)
+- Rodapé: 8pt (itálico)
+
+ALINHAMENTOS:
+- Cabeçalho: Centro
+- Cliente: Esquerda
+- Pedido: 2 colunas (esquerda/esquerda)
+- Tabela CÓD/QTD: Centro
+- Tabela DESCRIÇÃO: Esquerda
+- Tabela VALORES: Direita
+- Totais: Direita
+- Rodapé: Centro
+
+ESPAÇAMENTOS:
+- Entre seções: 3-8mm
+- Linha separadora: 0.3-0.5pt
+- Padding células: 3mm
+- Altura cabeçalho: ~23mm
+- Altura cliente: ~30mm
+- Altura pedido: ~13mm
+- Altura rodapé: ~15mm
