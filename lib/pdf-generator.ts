@@ -57,9 +57,18 @@ export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
   doc.text('NOME:', margin, yPos)
   doc.setFont('helvetica', 'normal')
   doc.text(venda.cliente?.nome || 'N/A', margin + 20, yPos)
+  
+  // CNPJ/CPF na mesma linha se disponível
+  if (venda.cliente?.documento) {
+    const docX = pageWidth - margin - 60
+    doc.setFont('helvetica', 'bold')
+    doc.text('CNPJ:', docX, yPos)
+    doc.setFont('helvetica', 'normal')
+    doc.text(venda.cliente.documento, docX + 15, yPos)
+  }
   yPos += 6
 
-  // Endereço do cliente (se disponível)
+  // Endereço do cliente
   if (venda.cliente?.endereco) {
     doc.setFont('helvetica', 'bold')
     doc.text('ENDEREÇO:', margin, yPos)
@@ -68,26 +77,29 @@ export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
     yPos += 6
   }
 
-  // Cidade/Estado/CEP
-  if (venda.cliente?.cidade || venda.cliente?.estado || venda.cliente?.cep) {
-    const location = [
-      venda.cliente?.cidade,
-      venda.cliente?.estado,
-      venda.cliente?.cep
-    ].filter(Boolean).join(' - ')
-    
-    if (location) {
-      doc.text(location, margin + 25, yPos)
-      yPos += 6
-    }
-  }
+  // Nome do contato (se disponível no campo nome_contato ou similar)
+  // Linha vazia para contato - pode ser preenchido manualmente
 
-  // Telefone
-  if (venda.cliente?.telefone) {
-    doc.setFont('helvetica', 'bold')
-    doc.text('TELEFONE:', margin, yPos)
-    doc.setFont('helvetica', 'normal')
-    doc.text(venda.cliente.telefone, margin + 25, yPos)
+  // Bairro e Cidade na mesma linha
+  const hasBairro = venda.cliente?.bairro
+  const hasCidade = venda.cliente?.cidade
+  
+  if (hasBairro || hasCidade) {
+    if (hasBairro) {
+      doc.setFont('helvetica', 'bold')
+      doc.text('BAIRRO:', margin, yPos)
+      doc.setFont('helvetica', 'normal')
+      doc.text(venda.cliente!.bairro!, margin + 20, yPos)
+    }
+    
+    if (hasCidade) {
+      const cidadeX = hasBairro ? pageWidth / 2 : margin
+      const cidadeLabel = hasBairro ? pageWidth / 2 : margin
+      doc.setFont('helvetica', 'bold')
+      doc.text('CIDADE:', cidadeX, yPos)
+      doc.setFont('helvetica', 'normal')
+      doc.text(venda.cliente!.cidade!, cidadeX + 20, yPos)
+    }
     yPos += 6
   }
 
@@ -101,41 +113,52 @@ export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
   // ==================== INFORMAÇÕES DO PEDIDO ====================
   const infoBoxWidth = (pageWidth - 2 * margin) / 2
 
-  // Coluna esquerda
+  // Primeira linha
   doc.setFontSize(9)
   doc.setFont('helvetica', 'bold')
   doc.text('PEDIDO:', margin, yPos)
   doc.setFont('helvetica', 'normal')
   doc.text(venda.numero_venda || `#${venda.id}`, margin + 20, yPos)
 
-  // Coluna direita
+  // Data de emissão
   doc.setFont('helvetica', 'bold')
-  doc.text('DATA:', pageWidth / 2, yPos)
+  doc.text('EMISSÃO:', pageWidth / 2, yPos)
   doc.setFont('helvetica', 'normal')
   const dataEmissao = new Date(venda.created_at).toLocaleDateString('pt-BR')
-  doc.text(dataEmissao, pageWidth / 2 + 15, yPos)
+  doc.text(dataEmissao, pageWidth / 2 + 20, yPos)
   yPos += 5
 
-  // Segunda linha
+  // Segunda linha - Vendedor e Pagamento
   doc.setFont('helvetica', 'bold')
-  doc.text('VENDEDOR:', margin, yPos)
+  doc.text('VENDEDORA:', margin, yPos)
   doc.setFont('helvetica', 'normal')
-  doc.text(venda.vendedor?.nome || 'N/A', margin + 25, yPos)
+  doc.text(venda.vendedor?.nome || 'N/A', margin + 28, yPos)
 
-  // Forma de pagamento
+  // Prazo de pagamento (em dias)
   doc.setFont('helvetica', 'bold')
   doc.text('PAGAMENTO:', pageWidth / 2, yPos)
   doc.setFont('helvetica', 'normal')
-  doc.text(getPaymentMethodName(venda), pageWidth / 2 + 30, yPos)
+  const pagamento = venda.prazo_pagamento 
+    ? `${venda.prazo_pagamento} dias` 
+    : getPaymentMethodName(venda)
+  doc.text(pagamento, pageWidth / 2 + 30, yPos)
+  yPos += 5
+
+  // Terceira linha - Data de entrega (placeholder)
+  doc.setFont('helvetica', 'bold')
+  doc.text('DATA DE ENTREGA:', margin, yPos)
+  doc.setFont('helvetica', 'normal')
+  // Deixar em branco para preenchimento manual ou usar observacoes
+  doc.text('___/___/___', margin + 40, yPos)
   yPos += 8
 
   // ==================== TABELA DE PRODUTOS ====================
   const tableData = (venda.itens || []).map((item) => [
     item.produto?.id?.toString() || '',
     item.produto?.nome || 'Produto sem nome',
-    item.quantidade.toString(),
-    `R$ ${item.preco_unitario.toFixed(2)}`,
-    `R$ ${item.subtotal.toFixed(2)}`
+    item.quantidade.toString().replace('.', ','),
+    `R$ ${item.preco_unitario.toFixed(2).replace('.', ',')}`,
+    `R$ ${item.subtotal.toFixed(2).replace('.', ',')}`
   ])
 
   autoTable(doc, {
@@ -174,26 +197,26 @@ export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
   yPos += 8
 
   // ==================== TOTAIS ====================
-  const totalsX = pageWidth - margin - 50
+  const totalsX = pageWidth - margin - 60
   
   // Valor total
   if (venda.valor_total !== venda.valor_final && venda.desconto > 0) {
     doc.setFontSize(9)
     doc.setFont('helvetica', 'normal')
     doc.text('Subtotal:', totalsX, yPos)
-    doc.text(`R$ ${venda.valor_total.toFixed(2)}`, totalsX + 35, yPos, { align: 'right' })
+    doc.text(`R$ ${venda.valor_total.toFixed(2).replace('.', ',')}`, totalsX + 45, yPos, { align: 'right' })
     yPos += 5
 
     doc.text('Desconto:', totalsX, yPos)
-    doc.text(`R$ ${venda.desconto.toFixed(2)}`, totalsX + 35, yPos, { align: 'right' })
+    doc.text(`R$ ${venda.desconto.toFixed(2).replace('.', ',')}`, totalsX + 45, yPos, { align: 'right' })
     yPos += 5
   }
 
-  // Total final
+  // Total final - com espaçamento adequado
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
-  doc.text('TOTAL PEDIDO:', totalsX, yPos)
-  doc.text(`R$ ${venda.valor_final.toFixed(2)}`, totalsX + 35, yPos, { align: 'right' })
+  doc.text('TOTAL PEDIDO: R$', totalsX, yPos)
+  doc.text(venda.valor_final.toFixed(2).replace('.', ','), totalsX + 50, yPos, { align: 'right' })
   yPos += 8
 
   // ==================== OBSERVAÇÕES ====================
