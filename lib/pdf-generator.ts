@@ -3,6 +3,15 @@ import autoTable from 'jspdf-autotable'
 import type { Venda } from '@/types'
 
 /**
+ * Helper function to extract payment method name from venda
+ */
+const getPaymentMethodName = (venda: Venda): string => {
+  return venda.forma_pagamento_detalhe?.nome || 
+         (typeof venda.forma_pagamento === 'string' ? venda.forma_pagamento : '') || 
+         'N/A'
+}
+
+/**
  * Gera PDF de pedido de venda em formato profissional
  * Layout simples, preto e branco, sem efeitos
  */
@@ -108,9 +117,7 @@ export const generateOrderPDF = (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
   doc.setFont('helvetica', 'bold')
   doc.text('PAGAMENTO:', pageWidth / 2, yPos)
   doc.setFont('helvetica', 'normal')
-  const formaPagamento = venda.forma_pagamento_detalhe?.nome || 
-                         (typeof venda.forma_pagamento === 'string' ? venda.forma_pagamento : 'N/A')
-  doc.text(formaPagamento, pageWidth / 2 + 30, yPos)
+  doc.text(getPaymentMethodName(venda), pageWidth / 2 + 30, yPos)
   yPos += 8
 
   // ==================== TABELA DE PRODUTOS ====================

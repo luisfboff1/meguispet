@@ -24,7 +24,7 @@ Este documento descreve a implementação da funcionalidade de geração e expor
 - Leve e compatível com navegadores modernos
 - Sem dependências de servidor
 
-**jsPDF-AutoTable v3.8.4**
+**jsPDF-AutoTable v5.0.2**
 - Plugin para criação de tabelas profissionais
 - Suporte a múltiplas colunas e estilização
 - Quebra automática de página

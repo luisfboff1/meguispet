@@ -254,18 +254,20 @@ export default function VendasPage() {
   const handleExportarPDF = async (venda: Venda) => {
     try {
       // Se a venda não tem itens, buscar a venda completa
+      let vendaCompleta = venda
       if (!venda.itens || venda.itens.length === 0) {
         const response = await vendasService.getById(venda.id)
         if (response.success && response.data) {
-          downloadOrderPDF(response.data, 'MEGUISPET')
-          setToast({ message: 'PDF gerado com sucesso!', type: 'success' })
+          vendaCompleta = response.data
         } else {
           setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
+          return
         }
-      } else {
-        downloadOrderPDF(venda, 'MEGUISPET')
-        setToast({ message: 'PDF gerado com sucesso!', type: 'success' })
       }
+      
+      // Gerar e baixar o PDF
+      downloadOrderPDF(vendaCompleta, 'MEGUISPET')
+      setToast({ message: 'PDF gerado com sucesso!', type: 'success' })
     } catch (error) {
       console.error('Erro ao gerar PDF:', error)
       setToast({ message: 'Erro ao gerar PDF do pedido', type: 'error' })
