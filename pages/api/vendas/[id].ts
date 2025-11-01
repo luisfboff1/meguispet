@@ -19,7 +19,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .from('vendas')
         .select(`
           *,
-          cliente:clientes_fornecedores(id, nome, email),
+          cliente:clientes_fornecedores(id, nome, email, documento, endereco, cidade, estado, cep),
           vendedor:vendedores(id, nome, email),
           estoque:estoques(id, nome),
           forma_pagamento_detalhe:formas_pagamento(id, nome),
