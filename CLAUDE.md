@@ -4,33 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MeguisPet is a modern pet shop management system built with Next.js 15, React 19, TypeScript, and Tailwind CSS 4. The frontend is statically exported and deployed to Hostinger alongside a PHP/MariaDB backend.
+MeguisPet is a modern pet shop management system built with Next.js 15, React 19, TypeScript, and Tailwind CSS 4. The frontend uses server-side rendering (SSR) and is deployed to Vercel with Supabase as the backend.
 
 ## Development Commands
 
 ```bash
 # Development
 pnpm install          # Install dependencies
-pnpm dev              # Start dev server with API proxy to PHP backend
+pnpm dev              # Start dev server (port 3000)
 
 # Building
-pnpm build            # Production build (SSG + copies PHP API)
-pnpm build:analyze    # Build with bundle analysis
-pnpm preview          # Serve static build locally
+pnpm build            # Production build (SSR)
+pnpm build:analyze    # Build with bundle analysis (requires ANALYZE=true env)
+pnpm start            # Start production server
+pnpm preview          # Alias for pnpm start
 
 # Linting
 pnpm lint             # Check for linting errors
 pnpm lint:fix         # Auto-fix linting issues
 
 # Cleaning
-pnpm clean            # Full clean (removes node_modules/.cache too)
-pnpm clean:build      # Clean build artifacts only (.next, out, dist)
+pnpm clean            # Clean .next and cache directories
+pnpm clean:build      # Clean .next build artifacts only
 ```
 
 ## Architecture Overview
 
 ### Frontend Stack
-- **Next.js 15**: Pages router with static export (`output: 'export'`)
+- **Next.js 15**: Pages router with SSR (server-side rendering)
 - **React 19**: Latest React with hooks and concurrent features
 - **TypeScript**: Strict mode enabled
 - **Tailwind CSS 4**: Utility-first styling with PostCSS
@@ -39,10 +40,11 @@ pnpm clean:build      # Clean build artifacts only (.next, out, dist)
 - **Zustand 5**: State management with persistence
 
 ### Backend Integration
-- **PHP APIs**: RESTful endpoints at `/api/*.php`
-- **MariaDB**: Database backend
-- **JWT Authentication**: Token-based auth with Bearer tokens
-- **Axios**: HTTP client with interceptors for auth
+- **Supabase**: PostgreSQL database with real-time capabilities
+- **Supabase Auth**: JWT authentication with automatic token refresh
+- **Edge Middleware**: Route protection running on Edge runtime
+- **Legacy PHP APIs**: Some endpoints still at `/api/*.php` (being migrated)
+- **Axios**: HTTP client with interceptors for legacy API calls
 
 ### Directory Structure
 
@@ -69,19 +71,17 @@ public/                  # Static assets
 ### 1. Global Layout System
 The `MainLayout` component is automatically applied to all pages via `_app.tsx`, except for pages in the `noLayoutPages` array (e.g., `/login`). No need to wrap pages individually.
 
-### 2. Authentication Flow
-- **Store**: `store/auth.ts` (Zustand with localStorage persistence)
+### 2. Authentication Flow (Supabase Auth)
+- **Edge Middleware**: `middleware.ts` runs on Edge runtime, protects all routes except `/login` and static files
+- **Cookie Management**: Uses `@supabase/ssr` package's `createServerClient` for secure cookie handling
+- **Session Refresh**: Automatic token refresh via `supabase.auth.getSession()` in middleware
+- **Redirects**: Unauthenticated users → `/login`, authenticated users on `/login` → `/dashboard`
+- **Store**: `store/auth.ts` (Zustand with localStorage persistence for client-side state)
 - **Hook**: `hooks/useAuth.ts` provides `login()`, `logout()`, `checkAuth()`
-- **Auth Method**: Supabase Auth with JWT tokens (access + refresh tokens)
-- **Session Storage**: Supabase session in localStorage (automatic token refresh)
-- **Edge Middleware**: `middleware.ts` runs on Edge runtime for route protection
-- **Protection**: Edge middleware checks auth status and redirects to `/login` if unauthenticated
-- **Client Protection**: MainLayout double-checks auth status on client side
-- **API Integration**: Request interceptor auto-adds `Authorization: Bearer {token}` header
-- **API Middleware**: API routes protected with `withSupabaseAuth` from `lib/supabase-middleware.ts`
+- **Client Protection**: MainLayout double-checks auth status on client side for defense-in-depth
 - **User Profiles**: Custom `usuarios` table stores app-specific metadata (role, permissoes)
-- **Security**: No hardcoded secrets, 1-hour token expiry with automatic refresh, MFA-ready
-- **Cookie Handling**: Uses `@supabase/ssr` for secure cookie management
+- **Security**: Token auto-refresh, secure httpOnly cookies via @supabase/ssr, MFA-ready
+- **Important**: Never write logic between `createServerClient` and `supabase.auth.getUser()` in middleware
 
 ### 3. State Management (Zustand)
 Four main stores with SSR-safe persistence:
@@ -180,39 +180,45 @@ interface ClienteFormProps {
 
 ## Important Development Notes
 
-### Static Export Configuration
-- `next.config.js` has `output: 'export'` for static HTML generation
-- Build output goes to `dist/` directory
-- Images are unoptimized (`images.unoptimized = true`)
-- No `getServerSideProps` support (use `getStaticProps` or client-side fetch)
-- Each route generates `.html` + `.json` files in `dist/_next/data/<buildId>/`
+### Build Configuration
+- `next.config.js` uses SSR mode (no `output: 'export'`) for Vercel deployment
+- Build output goes to `.next/` directory
+- Images are unoptimized (`images.unoptimized = true`) for performance
+- Production build removes console logs via compiler option
+- Supports both `getServerSideProps` and `getStaticProps`
 
 ### Environment Variables
 Required in `.env.local`:
 ```bash
-# Supabase (authentication and database) - Required for middleware
+# Supabase (authentication and database) - REQUIRED
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # For server-side operations
 
-# Database (legacy, migrating to Supabase)
+# API URL (defaults to /api if not set)
+NEXT_PUBLIC_API_URL=/api
+
+# Legacy environment variables (if still using PHP APIs)
 DB_HOST=localhost
 DB_NAME=u123456_meguispet
 DB_USER=u123456_admin
 DB_PASSWORD=your_password
-
-# API URL (for static export)
-NEXT_PUBLIC_API_URL=/api
-
-# SMTP (for notifications)
 SMTP_HOST=smtp.hostinger.com
 SMTP_PORT=587
 SMTP_USER=your_email
 SMTP_PASSWORD=your_password
 ```
 
-### Development Proxy
-`next.config.js` includes dev rewrites to proxy `/api/*` requests to local PHP backend during development.
+**Note**: Supabase env vars are required for middleware to function. Without them, all routes will fail authentication.
+
+### Edge Runtime Constraints (Middleware)
+The `middleware.ts` file runs on Edge runtime, which has limitations:
+- **No Node.js APIs**: Cannot use `fs`, `path`, `crypto` (Node.js version), etc.
+- **No dynamic require**: Use ESM imports only
+- **Lightweight only**: Keep middleware code minimal for cold start performance
+- **Cookie handling**: Must use the exact pattern from `@supabase/ssr` docs
+- **Response handling**: Always return the `supabaseResponse` object to preserve cookies
+- **Matcher config**: Define in `config.matcher` to avoid running on static files
 
 ### SSR-Safe Patterns
 - All localStorage access wrapped in `typeof window !== 'undefined'` checks
@@ -257,23 +263,28 @@ SMTP_PASSWORD=your_password
 
 ## Common Gotchas
 
-- **API URL**: In production, `NEXT_PUBLIC_API_URL=/api` routes to same domain. In dev, proxied to PHP backend.
-- **Trailing Slashes**: Next.js config has `trailingSlash: true` for Hostinger compatibility
-- **Image Optimization**: Disabled for static export - use `<img>` or `<Image unoptimized />`
-- **Token Expiry**: JWT tokens expire after 7 days - `checkAuth()` validates on app load
+- **Middleware Execution**: Runs on Edge runtime - avoid Node.js-specific APIs (fs, path, etc.)
+- **Cookie Management**: Always return the `supabaseResponse` from middleware unchanged to preserve auth cookies
+- **Token Refresh**: Handled automatically by middleware - don't manually refresh tokens
+- **Image Optimization**: Disabled (`images.unoptimized = true`) - use `<img>` or `<Image unoptimized />`
 - **Modal State**: Always close modals after successful operations to prevent stale data
 - **Form Reset**: Reset form state after create/edit operations
 - **Sidebar State**: Desktop collapse state persists, mobile state resets on close
 - **Theme Flash**: Theme hook waits for `mounted` state to prevent SSR/client mismatch
+- **Console Logs**: Automatically removed in production builds
 
 ## Deployment
 
-The project uses GitHub Actions for automated deployment to Hostinger:
-1. Build static export (`pnpm build`)
-2. Copy PHP API files
-3. FTP upload to Hostinger
-4. Configure secrets in GitHub repo settings (FTP credentials, env vars)
+### Current Setup (Vercel)
+The project is deployed to Vercel with the following configuration:
+1. Push to main branch triggers automatic deployment
+2. Environment variables configured in Vercel dashboard
+3. Supabase handles database and authentication
+4. Edge middleware runs automatically on Vercel Edge Network
 
-Production URLs:
-- Frontend: `https://gestao.meguispet.com`
-- API: `https://gestao.meguispet.com/api`
+### Environment Variables Required in Vercel
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Production URL: TBD (configure in Vercel)
