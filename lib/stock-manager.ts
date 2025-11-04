@@ -90,7 +90,9 @@ export async function adjustProductStock(
       };
     }
 
-    console.log(`✅ Stock adjusted for product ${produto_id}: ${oldQuantity} → ${newQuantity} (change: ${quantityChange > 0 ? '+' : ''}${quantityChange})`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ Stock adjusted for product ${produto_id}: ${oldQuantity} → ${newQuantity} (change: ${quantityChange > 0 ? '+' : ''}${quantityChange})`);
+    }
     
     return { success: true, oldQuantity, newQuantity };
   } catch (error) {

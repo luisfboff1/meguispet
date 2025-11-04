@@ -3,6 +3,13 @@ import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 import { applySaleStock, revertSaleStock, calculateStockDelta, applyStockDeltas } from '@/lib/stock-manager';
 
+interface VendaItemInput {
+  produto_id: number;
+  quantidade: number;
+  preco_unitario: number;
+  subtotal?: number;
+}
+
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
 
@@ -73,13 +80,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       if (!itens || !Array.isArray(itens) || itens.length === 0) {
         return res.status(400).json({ success: false, message: '❌ A venda deve conter pelo menos um item' });
-      }
-
-      interface VendaItemInput {
-        produto_id: number;
-        quantidade: number;
-        preco_unitario: number;
-        subtotal: number;
       }
 
       // 🔍 VALIDAR ESTOQUE DISPONÍVEL ANTES DE CRIAR A VENDA
@@ -253,12 +253,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       let valor_final_calculado = 0;
 
       if (itens && Array.isArray(itens) && itens.length > 0) {
-        interface VendaItemInput {
-          produto_id: number;
-          quantidade: number;
-          preco_unitario: number;
-        }
-
         const subtotalItens = (itens as VendaItemInput[]).reduce((sum, item) => {
           return sum + (item.quantidade * item.preco_unitario);
         }, 0);
@@ -310,20 +304,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       // 🔄 AJUSTAR ESTOQUE se os itens foram atualizados
       if (itens && Array.isArray(itens) && itens.length > 0 && estoque_id && oldEstoqueId) {
-        interface VendaItemInput {
-          produto_id: number;
-          quantidade: number;
-          preco_unitario: number;
-        }
-
         // Se o estoque mudou, reverter do antigo e aplicar no novo
         if (oldEstoqueId !== estoque_id) {
-          console.log(`📦 Mudança de estoque detectada: ${oldEstoqueId} → ${estoque_id}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`📦 Mudança de estoque detectada: ${oldEstoqueId} → ${estoque_id}`);
+          }
           
           // Reverter do estoque antigo
           const revertResult = await revertSaleStock(oldItems, oldEstoqueId);
           if (!revertResult.success) {
             console.error('⚠️ Erro ao reverter estoque antigo:', revertResult.errors);
+            // Return error to client to maintain data consistency awareness
+            return res.status(500).json({
+              success: false,
+              message: '❌ Erro ao reverter estoque do local antigo:\n' + revertResult.errors.join('\n'),
+              data: data[0],
+              stock_details: revertResult.adjustments,
+            });
           }
 
           // Aplicar no estoque novo
