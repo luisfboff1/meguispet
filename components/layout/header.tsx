@@ -214,18 +214,6 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
               <h1 className="text-xl font-semibold text-slate-900 drop-shadow-sm dark:text-white md:text-2xl">
                 {pageInfo.title}
               </h1>
-              <AnimatePresence>
-                <motion.span
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.25 }}
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50/80 px-2.5 py-1 text-xs font-semibold uppercase tracking-widest text-amber-600 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
-                >
-                  <Sparkles size={12} />
-                  {router.locale === 'pt-BR' ? 'Visão' : 'Overview'}
-                </motion.span>
-              </AnimatePresence>
             </div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{pageInfo.description}</p>
           </div>
@@ -245,79 +233,6 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
 
         <div className="flex items-center gap-2">
           <ThemeToggle variant="icon-only" />
-
-          <div className="relative" ref={notificationsRef}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-11 w-11 rounded-2xl border border-transparent text-slate-500 transition hover:-translate-y-0.5 hover:text-slate-900 dark:text-slate-300"
-              onClick={handleNotifications}
-            >
-              <Bell size={18} />
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-xs font-semibold text-white shadow-sm">
-                  {unreadCount}
-                </span>
-              )}
-            </Button>
-
-            <AnimatePresence>
-              {showNotifications && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-3 w-80 overflow-hidden rounded-3xl border border-white/40 bg-white/95 p-4 shadow-2xl backdrop-blur-2xl dark:border-slate-800/60 dark:bg-slate-950/90"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Notificações</span>
-                    <span className="text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                      {unreadCount} novas
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    {notifications.map((notification) => (
-                      <button
-                        key={notification.id}
-                        onClick={() => markNotificationAsRead(notification.id)}
-                        className={cn(
-                          'group relative flex w-full items-start gap-3 rounded-2xl border border-transparent p-3 text-left transition',
-                          notification.type === 'warning' && 'bg-amber-50/80 dark:bg-amber-500/10',
-                          notification.type === 'success' && 'bg-emerald-50/80 dark:bg-emerald-500/10',
-                          notification.type === 'info' && 'bg-sky-50/80 dark:bg-sky-500/10',
-                          notification.read && 'opacity-60'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'mt-1 h-2 w-2 rounded-full',
-                            notification.type === 'warning' && 'bg-amber-500',
-                            notification.type === 'success' && 'bg-emerald-500',
-                            notification.type === 'info' && 'bg-sky-500'
-                          )}
-                        />
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-100">
-                            {notification.title}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{notification.message}</p>
-                          <p className="text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                            {notification.time}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={handleVerTodasNotificacoes}>
-                      Ver todas
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
 
           <div className="relative" ref={userMenuRef}>
             <button

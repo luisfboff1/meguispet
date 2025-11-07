@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
 import { useModal } from '@/hooks/useModal'
+import { useAuth } from '@/hooks/useAuth'
 import { 
   Plus, 
   Search, 
@@ -30,6 +31,7 @@ export default function UsuariosPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const { toast } = useToast()
   const { open: openModal, close: closeModal } = useModal()
+  const { user: currentUser } = useAuth()
 
   useEffect(() => {
     loadUsuarios()
@@ -122,6 +124,125 @@ export default function UsuariosPage() {
     })
   }
 
+  const handleViewUser = (usuario: Usuario) => {
+    // Open a generic modal with user details
+    openModal('generic', {
+      title: 'Detalhes do Usuário',
+      content: (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Nome</p>
+              <p className="text-base font-semibold text-slate-900 dark:text-white">{usuario.nome}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Email</p>
+              <p className="text-base font-semibold text-slate-900 dark:text-white">{usuario.email}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Função</p>
+              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(usuario.role)}`}>
+                {usuario.role}
+              </span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Status</p>
+              <span className={`text-sm font-medium ${usuario.ativo ? 'text-green-600' : 'text-red-600'}`}>
+                {usuario.ativo ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Criado em</p>
+              <p className="text-base text-slate-900 dark:text-white">{formatDate(usuario.created_at)}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Atualizado em</p>
+              <p className="text-base text-slate-900 dark:text-white">{formatDate(usuario.updated_at)}</p>
+            </div>
+          </div>
+          {usuario.permissoes && Object.keys(usuario.permissoes).length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Permissões</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(usuario.permissoes).map(([key, value]) => (
+                  value && (
+                    <span key={key} className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                      {key}
+                    </span>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ),
+      actions: (
+        <Button onClick={() => closeModal()}>Fechar</Button>
+      )
+    })
+  }
+
+  const handleEditUser = async (usuario: Usuario) => {
+    // TODO: Implement edit user modal with existing data
+    toast({
+      title: 'Em desenvolvimento',
+      description: 'A funcionalidade de edição de usuários está em desenvolvimento',
+      variant: 'default',
+    })
+  }
+
+  const handleDeleteUser = async (usuario: Usuario) => {
+    // Check if current user is admin
+    if (!currentUser || currentUser.role !== 'admin') {
+      toast({
+        title: 'Acesso negado',
+        description: 'Apenas administradores podem excluir usuários',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Prevent deleting self
+    if (currentUser.id === usuario.id) {
+      toast({
+        title: 'Operação não permitida',
+        description: 'Você não pode excluir seu próprio usuário',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Confirm deletion
+    if (!window.confirm(`Tem certeza que deseja excluir o usuário "${usuario.nome}"?`)) {
+      return
+    }
+
+    try {
+      const response = await usuariosService.delete(usuario.id)
+      if (response.success) {
+        toast({
+          title: 'Sucesso',
+          description: 'Usuário excluído com sucesso',
+          variant: 'default',
+        })
+        await loadUsuarios()
+      } else {
+        toast({
+          title: 'Erro',
+          description: response.message || 'Erro ao excluir usuário',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao excluir usuário:', error)
+      toast({
+        title: 'Erro',
+        description: 'Erro ao excluir usuário',
+        variant: 'destructive',
+      })
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
@@ -199,17 +320,38 @@ export default function UsuariosPage() {
       header: "Ações",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" title="Ver detalhes">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            title="Ver detalhes"
+            onClick={() => handleViewUser(row.original)}
+          >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" title="Editar usuário">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            title="Editar usuário"
+            onClick={() => handleEditUser(row.original)}
+          >
             <Edit className="h-4 w-4" />
           </Button>
+          {currentUser?.role === 'admin' && currentUser?.id !== row.original.id && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              title="Excluir usuário"
+              onClick={() => handleDeleteUser(row.original)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       ),
     },
   ]
-  }, [])
+  }, [currentUser])
 
   return (
     <div className="space-y-6">
