@@ -23,6 +23,15 @@ export default function FeedbackPage() {
   })
 
   const isAdmin = user?.role === 'admin'
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('=== FEEDBACK PAGE DEBUG ===')
+    console.log('User object:', user)
+    console.log('User role:', user?.role)
+    console.log('isAdmin:', isAdmin)
+    console.log('========================')
+  }, [user, isAdmin])
 
   const loadTickets = async () => {
     try {
@@ -89,10 +98,18 @@ export default function FeedbackPage() {
   }
 
   const handleTicketClick = async (ticket: FeedbackTicket) => {
+    console.log('=== TICKET CLICK DEBUG ===')
+    console.log('isAdmin:', isAdmin)
+    console.log('user:', user)
+    console.log('ticket:', ticket)
+    
     // Fetch fresh data to ensure we have the latest
     const freshTicket = await feedbackService.getById(ticket.id)
     const ticketData = freshTicket.success && freshTicket.data ? freshTicket.data : ticket
 
+    console.log('Opening modal with isAdmin:', isAdmin)
+    console.log('Modal onDelete defined:', true)
+    
     openModal('feedbackDetails', {
       ticket: ticketData,
       isAdmin,
@@ -100,6 +117,7 @@ export default function FeedbackPage() {
         loadTickets()
       },
       onDelete: async (ticketId: string) => {
+        console.log('onDelete called for ticket:', ticketId)
         if (!user) return
         
         const result = await feedbackService.delete(ticketId)
@@ -150,6 +168,13 @@ export default function FeedbackPage() {
   }
 
   const handleStatusChange = async (ticketId: string, newStatus: FeedbackStatus) => {
+    console.log('=== STATUS CHANGE DEBUG ===')
+    console.log('ticketId:', ticketId)
+    console.log('newStatus:', newStatus)
+    console.log('isAdmin:', isAdmin)
+    console.log('user:', user)
+    console.log('=========================')
+    
     if (!isAdmin || !user) {
       toast({
         title: 'Acesso negado',
@@ -179,11 +204,14 @@ export default function FeedbackPage() {
         newTickets[newStatus] = [...newTickets[newStatus], movedTicket]
       }
 
+      console.log('Optimistic update complete, new tickets:', newTickets)
       return newTickets
     })
 
     // Persist to database
+    console.log('Calling feedbackService.update...')
     const result = await feedbackService.update(ticketId, { status: newStatus }, user.id)
+    console.log('feedbackService.update result:', result)
 
     if (result.success) {
       toast({
@@ -191,6 +219,7 @@ export default function FeedbackPage() {
         description: 'O status do ticket foi atualizado com sucesso'
       })
       // Reload to ensure we have the latest data
+      console.log('Reloading tickets...')
       await loadTickets()
     } else {
       toast({
@@ -199,6 +228,7 @@ export default function FeedbackPage() {
         variant: 'destructive'
       })
       // Revert optimistic update on error
+      console.log('Reverting optimistic update due to error')
       await loadTickets()
     }
   }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { X, Trash2, Edit2, Send } from 'lucide-react'
@@ -22,6 +22,17 @@ export default function FeedbackDetailsModal({
   const [isDeleting, setIsDeleting] = useState(false)
   const [newComment, setNewComment] = useState('')
   const [isAddingComment, setIsAddingComment] = useState(false)
+
+  // Debug logging
+  useEffect(() => {
+    console.log('=== FEEDBACK DETAILS MODAL DEBUG ===')
+    console.log('isAdmin prop:', isAdmin)
+    console.log('onDelete defined:', !!onDelete)
+    console.log('onAddComment defined:', !!onAddComment)
+    console.log('ticket:', ticket)
+    console.log('Should show delete button:', isAdmin && !!onDelete)
+    console.log('====================================')
+  }, [isAdmin, onDelete, onAddComment, ticket])
 
   const handleDelete = async () => {
     if (!onDelete) return
