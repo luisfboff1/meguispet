@@ -10,13 +10,17 @@ import ProdutoForm from '@/components/forms/ProdutoForm'
 import ClienteForm from '@/components/forms/ClienteForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import UsuarioForm from '@/components/forms/UsuarioForm'
+import FeedbackForm from '@/components/forms/FeedbackForm'
+import FeedbackDetailsModal from '@/components/modals/FeedbackDetailsModal'
 import type {
   ClienteForm as ClienteFormValues,
   MovimentacaoForm as MovimentacaoFormValues,
   MovimentacaoEstoque,
   Produto,
   ProdutoForm as ProdutoFormValues,
-  VendaForm as VendaFormValues
+  VendaForm as VendaFormValues,
+  FeedbackTicketForm,
+  FeedbackTicket
 } from '@/types'
 
 interface VendaModalPayload {
@@ -59,12 +63,28 @@ interface UsuarioModalPayload {
   loading?: boolean
 }
 
+interface FeedbackModalPayload {
+  onSubmit: (values: FeedbackTicketForm) => Promise<void> | void
+  onCancel?: () => void
+  loading?: boolean
+}
+
+interface FeedbackDetailsModalPayload {
+  ticket: FeedbackTicket
+  onClose?: () => void
+  onDelete?: (ticketId: string) => Promise<void>
+  onAddComment?: (ticketId: string, comment: string) => Promise<void>
+  isAdmin?: boolean
+}
+
 type ModalPayloadMap = {
   venda: VendaModalPayload
   produto: ProdutoModalPayload
   cliente: ClienteModalPayload
   movimentacao: MovimentacaoModalPayload
   usuario: UsuarioModalPayload
+  feedback: FeedbackModalPayload
+  feedbackDetails: FeedbackDetailsModalPayload
   generic: {
     title?: string
     description?: string
@@ -255,6 +275,40 @@ export function ModalHost() {
               close()
             }}
             loading={payload.loading}
+          />
+        )
+      }
+      case 'feedback': {
+        const payload = (data as ModalPayloadMap['feedback']) ?? {
+          onSubmit: () => undefined
+        }
+        return (
+          <FeedbackForm
+            onSubmit={async (values) => {
+              await payload.onSubmit(values)
+            }}
+            onCancel={() => {
+              payload.onCancel?.()
+              close()
+            }}
+            loading={payload.loading}
+          />
+        )
+      }
+      case 'feedbackDetails': {
+        const payload = (data as ModalPayloadMap['feedbackDetails']) ?? {
+          ticket: {} as FeedbackTicket
+        }
+        return (
+          <FeedbackDetailsModal
+            ticket={payload.ticket}
+            onClose={() => {
+              payload.onClose?.()
+              close()
+            }}
+            onDelete={payload.onDelete}
+            onAddComment={payload.onAddComment}
+            isAdmin={payload.isAdmin}
           />
         )
       }

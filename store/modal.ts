@@ -6,6 +6,8 @@ type ModalId =
   | 'venda'
   | 'movimentacao'
   | 'usuario'
+  | 'feedback'
+  | 'feedbackDetails'
   | 'generic'
 
 interface ModalState {
