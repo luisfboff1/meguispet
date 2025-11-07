@@ -10,13 +10,16 @@ import ProdutoForm from '@/components/forms/ProdutoForm'
 import ClienteForm from '@/components/forms/ClienteForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import UsuarioForm from '@/components/forms/UsuarioForm'
+import FeedbackForm from '@/components/forms/FeedbackForm'
 import type {
   ClienteForm as ClienteFormValues,
   MovimentacaoForm as MovimentacaoFormValues,
   MovimentacaoEstoque,
   Produto,
   ProdutoForm as ProdutoFormValues,
-  VendaForm as VendaFormValues
+  VendaForm as VendaFormValues,
+  FeedbackTicketForm,
+  FeedbackTicket
 } from '@/types'
 
 interface VendaModalPayload {
@@ -59,12 +62,25 @@ interface UsuarioModalPayload {
   loading?: boolean
 }
 
+interface FeedbackModalPayload {
+  onSubmit: (values: FeedbackTicketForm) => Promise<void> | void
+  onCancel?: () => void
+  loading?: boolean
+}
+
+interface FeedbackDetailsModalPayload {
+  ticket: FeedbackTicket
+  onClose?: () => void
+}
+
 type ModalPayloadMap = {
   venda: VendaModalPayload
   produto: ProdutoModalPayload
   cliente: ClienteModalPayload
   movimentacao: MovimentacaoModalPayload
   usuario: UsuarioModalPayload
+  feedback: FeedbackModalPayload
+  feedbackDetails: FeedbackDetailsModalPayload
   generic: {
     title?: string
     description?: string
@@ -256,6 +272,60 @@ export function ModalHost() {
             }}
             loading={payload.loading}
           />
+        )
+      }
+      case 'feedback': {
+        const payload = (data as ModalPayloadMap['feedback']) ?? {
+          onSubmit: () => undefined
+        }
+        return (
+          <FeedbackForm
+            onSubmit={async (values) => {
+              await payload.onSubmit(values)
+            }}
+            onCancel={() => {
+              payload.onCancel?.()
+              close()
+            }}
+            loading={payload.loading}
+          />
+        )
+      }
+      case 'feedbackDetails': {
+        const payload = (data as ModalPayloadMap['feedbackDetails']) ?? {
+          ticket: {} as FeedbackTicket
+        }
+        return (
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+              {payload.ticket.titulo}
+            </h3>
+            <div className="space-y-2">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {payload.ticket.descricao}
+              </p>
+              {payload.ticket.anexos && payload.ticket.anexos.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-slate-900 dark:text-white">Anexos:</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {payload.ticket.anexos.map((anexo) => (
+                      <div key={anexo.id} className="text-sm">
+                        {anexo.conteudo_base64 ? (
+                          <img
+                            src={`data:${anexo.tipo_arquivo};base64,${anexo.conteudo_base64}`}
+                            alt={anexo.nome_arquivo}
+                            className="rounded-lg"
+                          />
+                        ) : (
+                          <p>{anexo.nome_arquivo}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )
       }
       case 'generic': {

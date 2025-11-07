@@ -558,3 +558,69 @@ export interface CalculoImpostoResult {
   mva_aplicado: number
   aliquota_icms: number
 }
+
+// ============================================================================
+// TIPOS PARA SISTEMA DE FEEDBACK/SUPORTE
+// ============================================================================
+
+export type FeedbackTipo = 'bug' | 'melhoria' | 'funcionalidade' | 'outro'
+export type FeedbackPrioridade = 'baixa' | 'media' | 'alta' | 'critica'
+export type FeedbackStatus = 'backlog' | 'em_andamento' | 'em_teste' | 'concluido' | 'cancelado'
+
+export interface FeedbackTicket {
+  id: string // UUID
+  titulo: string
+  descricao: string
+  tipo: FeedbackTipo
+  prioridade: FeedbackPrioridade
+  status: FeedbackStatus
+  usuario_id: number
+  created_at: string
+  updated_at: string
+  updated_by?: number | null
+  usuario?: Usuario
+  anexos?: FeedbackAnexo[]
+  comentarios?: FeedbackComentario[]
+}
+
+export interface FeedbackAnexo {
+  id: string // UUID
+  ticket_id: string // UUID
+  nome_arquivo: string
+  tipo_arquivo: string
+  tamanho_bytes: number
+  conteudo_base64?: string | null
+  url?: string | null
+  created_at: string
+}
+
+export interface FeedbackComentario {
+  id: string // UUID
+  ticket_id: string // UUID
+  usuario_id: number
+  comentario: string
+  created_at: string
+  usuario?: Usuario
+}
+
+export interface FeedbackTicketForm {
+  titulo: string
+  descricao: string
+  tipo: FeedbackTipo
+  prioridade: FeedbackPrioridade
+  anexos?: File[]
+  imagens_coladas?: string[] // Base64 images from paste
+}
+
+export interface FeedbackTicketUpdate {
+  titulo?: string
+  descricao?: string
+  tipo?: FeedbackTipo
+  prioridade?: FeedbackPrioridade
+  status?: FeedbackStatus
+}
+
+export interface FeedbackComentarioForm {
+  ticket_id: string
+  comentario: string
+}
