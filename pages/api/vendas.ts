@@ -327,9 +327,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           const applyResult = await applySaleStock(itens as VendaItemInput[], estoque_id);
           if (!applyResult.success) {
             console.error('⚠️ Erro ao aplicar no novo estoque:', applyResult.errors);
+
+            // Tentar desfazer o revert no estoque antigo para manter consistência
+            const compensateResult = await applySaleStock(oldItems, oldEstoqueId);
+            if (!compensateResult.success) {
+              console.error('⚠️ Falha ao desfazer o revert no estoque antigo:', compensateResult.errors);
+            } else {
+              console.log('✅ Revertido o revert no estoque antigo com sucesso.');
+            }
+
             return res.status(500).json({
               success: false,
-              message: '❌ Venda atualizada, mas erro ao ajustar estoque:\n' + applyResult.errors.join('\n'),
+              message:
+                '❌ Venda atualizada, mas erro ao ajustar estoque:\n' +
+                applyResult.errors.join('\n') +
+                (compensateResult.success
+                  ? '\n✔️ O estoque antigo foi restaurado ao estado original.'
+                  : '\n❌ Falha ao restaurar o estoque antigo:\n' + (compensateResult.errors?.join('\n') || 'Erro desconhecido')),
               data: data[0],
             });
           }
