@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,7 @@ import {
   Calendar
 } from 'lucide-react'
 import { usuariosService, authService } from '@/services/api'
+import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import type { Usuario } from '@/types'
 
 export default function UsuariosPage() {
@@ -137,6 +139,78 @@ export default function UsuariosPage() {
     }
   }
 
+  const filteredUsuarios = usuarios.filter(usuario =>
+    usuario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    usuario.email.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  // Column definitions for usuarios table
+  const usuariosColumns = useMemo<ColumnDef<Usuario>[]>(() => {
+    return [
+    {
+      accessorKey: "nome",
+      header: ({ column }) => <SortableHeader column={column}>Usuário</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[200px]">
+          <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-meguispet-primary">
+              {getInitials(row.original.nome)}
+            </span>
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{row.original.nome}</div>
+            <div className="text-sm text-gray-500">
+              Desde {formatDate(row.original.created_at)}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: ({ column }) => <SortableHeader column={column}>Email</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2">
+          <Mail className="h-4 w-4 text-gray-400" />
+          <span className="text-sm text-gray-600">{row.original.email}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "role",
+      header: ({ column }) => <SortableHeader column={column}>Função</SortableHeader>,
+      cell: ({ row }) => (
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(row.original.role)}`}>
+          {row.original.role}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "ativo",
+      header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
+      cell: ({ row }) => (
+        <span className={`text-sm font-medium ${row.original.ativo ? 'text-green-600' : 'text-red-600'}`}>
+          {row.original.ativo ? 'Ativo' : 'Inativo'}
+        </span>
+      ),
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" title="Ver detalhes">
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" title="Editar usuário">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [])
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -238,86 +312,28 @@ export default function UsuariosPage() {
         </CardContent>
       </Card>
 
-      {/* Usuários List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          <div className="col-span-full flex items-center justify-center py-8">
+      {/* Usuários Table */}
+      {loading ? (
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
-          </div>
-        ) : (
-          usuarios.filter(usuario =>
-            usuario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            usuario.email.toLowerCase().includes(searchTerm.toLowerCase())
-          ).map((usuario) => (
-            <Card key={usuario.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-meguispet-primary">
-                        {getInitials(usuario.nome)}
-                      </span>
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{usuario.nome}</CardTitle>
-                      <CardDescription>
-                        Usuário desde {formatDate(usuario.created_at)}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex space-x-1">
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">{usuario.email}</span>
-                </div>
-                
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Função:</span>
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(usuario.role)}`}>
-                    {usuario.role}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Status:</span>
-                  <span className={`text-sm font-medium ${usuario.ativo ? 'text-green-600' : 'text-red-600'}`}>
-                    {usuario.ativo ? 'Ativo' : 'Inativo'}
-                  </span>
-                </div>
-
-                <div className="pt-2 flex space-x-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Editar
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Permissões
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {!loading && usuarios.length === 0 && (
+          </CardContent>
+        </Card>
+      ) : filteredUsuarios.length > 0 ? (
+        <DataTable 
+          columns={usuariosColumns} 
+          data={filteredUsuarios}
+          enableColumnResizing={true}
+          enableSorting={true}
+          enableColumnVisibility={true}
+        />
+      ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
             <User className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum usuário encontrado</h3>
             <p className="text-gray-600 text-center">
-              Comece adicionando usuários ao sistema
+              {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando usuários ao sistema'}
             </p>
           </CardContent>
         </Card>
