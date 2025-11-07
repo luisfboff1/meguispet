@@ -1,6 +1,14 @@
 import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import { applySaleStock, revertSaleStock, calculateStockDelta, applyStockDeltas } from '@/lib/stock-manager';
+
+interface VendaItemInput {
+  produto_id: number;
+  quantidade: number;
+  preco_unitario: number;
+  subtotal?: number;
+}
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
@@ -72,13 +80,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       if (!itens || !Array.isArray(itens) || itens.length === 0) {
         return res.status(400).json({ success: false, message: '❌ A venda deve conter pelo menos um item' });
-      }
-
-      interface VendaItemInput {
-        produto_id: number;
-        quantidade: number;
-        preco_unitario: number;
-        subtotal: number;
       }
 
       // 🔍 VALIDAR ESTOQUE DISPONÍVEL ANTES DE CRIAR A VENDA
@@ -191,34 +192,22 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }
 
       // ✅ DAR BAIXA NO ESTOQUE
-      const estoqueAtualizacoes = [];
-      for (const item of itens as VendaItemInput[]) {
-        const { data: produtoEstoque } = await supabase
-          .from('produtos_estoques')
-          .select('quantidade')
-          .eq('produto_id', item.produto_id)
-          .eq('estoque_id', estoque_id)
-          .single();
-
-        if (produtoEstoque) {
-          const novaQuantidade = produtoEstoque.quantidade - item.quantidade;
-
-          const { error: updateError } = await supabase
-            .from('produtos_estoques')
-            .update({ quantidade: novaQuantidade, updated_at: new Date().toISOString() })
-            .eq('produto_id', item.produto_id)
-            .eq('estoque_id', estoque_id);
-
-          if (updateError) {
-            console.error('Erro ao atualizar estoque:', updateError);
-            estoqueAtualizacoes.push({ produto_id: item.produto_id, erro: updateError.message });
-          } else {
-            estoqueAtualizacoes.push({ produto_id: item.produto_id, sucesso: true });
-          }
-        }
+      const stockResult = await applySaleStock(itens as VendaItemInput[], estoque_id);
+      
+      if (!stockResult.success) {
+        // Rollback: Delete sale and items if stock update fails
+        await supabase.from('vendas_itens').delete().eq('venda_id', venda.id);
+        await supabase.from('vendas').delete().eq('id', venda.id);
+        
+        console.error('Erro ao dar baixa no estoque:', stockResult.errors);
+        return res.status(500).json({
+          success: false,
+          message: '❌ Erro ao dar baixa no estoque:\n' + stockResult.errors.join('\n'),
+          stock_details: stockResult.adjustments,
+        });
       }
 
-      const algumErroEstoque = estoqueAtualizacoes.some((a: { produto_id: number; sucesso?: boolean; erro?: string }) => a.erro);
+      const algumErroEstoque = stockResult.errors.length > 0;
 
       return res.status(201).json({
         success: true,
@@ -226,7 +215,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           ? '⚠️ Venda criada com sucesso, mas houve problemas ao atualizar o estoque de alguns produtos'
           : '✅ Venda realizada com sucesso! Estoque atualizado.',
         data: venda,
-        estoque_info: algumErroEstoque ? estoqueAtualizacoes : undefined,
+        estoque_info: stockResult.adjustments,
       });
     }
 
@@ -237,17 +226,33 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         return res.status(400).json({ success: false, message: 'ID da venda é obrigatório' });
       }
 
+      // 🔍 Buscar venda atual para comparar os itens (se estoque_id estiver sendo atualizado)
+      let oldItems: Array<{ produto_id: number; quantidade: number }> = [];
+      let oldEstoqueId: number | null = null;
+
+      if (itens && Array.isArray(itens) && itens.length > 0 && estoque_id) {
+        const { data: vendaAtual, error: vendaError } = await supabase
+          .from('vendas')
+          .select('estoque_id, itens:vendas_itens(produto_id, quantidade)')
+          .eq('id', id)
+          .single();
+
+        if (vendaError) {
+          console.error('Erro ao buscar venda atual:', vendaError);
+          return res.status(404).json({ success: false, message: 'Venda não encontrada' });
+        }
+
+        if (vendaAtual) {
+          oldEstoqueId = vendaAtual.estoque_id;
+          oldItems = vendaAtual.itens || [];
+        }
+      }
+
       // Se vier com itens, recalcular os valores
       let valor_total_calculado = 0;
       let valor_final_calculado = 0;
 
       if (itens && Array.isArray(itens) && itens.length > 0) {
-        interface VendaItemInput {
-          produto_id: number;
-          quantidade: number;
-          preco_unitario: number;
-        }
-
         const subtotalItens = (itens as VendaItemInput[]).reduce((sum, item) => {
           return sum + (item.quantidade * item.preco_unitario);
         }, 0);
@@ -297,6 +302,99 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         return res.status(404).json({ success: false, message: 'Venda não encontrada' });
       }
 
+      // 🔄 AJUSTAR ESTOQUE se os itens foram atualizados
+      if (itens && Array.isArray(itens) && itens.length > 0 && estoque_id && oldEstoqueId) {
+        // Se o estoque mudou, reverter do antigo e aplicar no novo
+        if (oldEstoqueId !== estoque_id) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`📦 Mudança de estoque detectada: ${oldEstoqueId} → ${estoque_id}`);
+          }
+          
+          // Reverter do estoque antigo
+          const revertResult = await revertSaleStock(oldItems, oldEstoqueId);
+          if (!revertResult.success) {
+            console.error('⚠️ Erro ao reverter estoque antigo:', revertResult.errors);
+            // Return error to client to maintain data consistency awareness
+            return res.status(500).json({
+              success: false,
+              message: '❌ Erro ao reverter estoque do local antigo:\n' + revertResult.errors.join('\n'),
+              data: data[0],
+              stock_details: revertResult.adjustments,
+            });
+          }
+
+          // Aplicar no estoque novo
+          const applyResult = await applySaleStock(itens as VendaItemInput[], estoque_id);
+          if (!applyResult.success) {
+            console.error('⚠️ Erro ao aplicar no novo estoque:', applyResult.errors);
+
+            // Tentar desfazer o revert no estoque antigo para manter consistência
+            const compensateResult = await applySaleStock(oldItems, oldEstoqueId);
+            if (!compensateResult.success) {
+              console.error('⚠️ Falha ao desfazer o revert no estoque antigo:', compensateResult.errors);
+            } else {
+              console.log('✅ Revertido o revert no estoque antigo com sucesso.');
+            }
+
+            return res.status(500).json({
+              success: false,
+              message:
+                '❌ Venda atualizada, mas erro ao ajustar estoque:\n' +
+                applyResult.errors.join('\n') +
+                (compensateResult.success
+                  ? '\n✔️ O estoque antigo foi restaurado ao estado original.'
+                  : '\n❌ Falha ao restaurar o estoque antigo:\n' + (compensateResult.errors?.join('\n') || 'Erro desconhecido')),
+              data: data[0],
+            });
+          }
+        } else {
+          // Mesmo estoque, calcular delta
+          const deltas = calculateStockDelta(oldItems, itens as VendaItemInput[]);
+          
+          if (deltas.length > 0) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('📊 Ajustes de estoque necessários:', deltas);
+            }
+            const deltaResult = await applyStockDeltas(deltas, estoque_id);
+            
+            if (!deltaResult.success) {
+              console.error('⚠️ Erro ao ajustar estoque:', deltaResult.errors);
+              return res.status(500).json({
+                success: false,
+                message: '❌ Venda atualizada, mas erro ao ajustar estoque:\n' + deltaResult.errors.join('\n'),
+                data: data[0],
+              });
+            }
+
+            console.log('✅ Estoque ajustado com sucesso:', deltaResult.adjustments);
+          }
+        }
+
+        // 🗑️ Atualizar itens da venda no banco
+        // Deletar itens antigos
+        await supabase.from('vendas_itens').delete().eq('venda_id', id);
+
+        // Inserir novos itens
+        const itensInsert = (itens as VendaItemInput[]).map((item) => ({
+          venda_id: parseInt(id as string, 10),
+          produto_id: item.produto_id,
+          quantidade: item.quantidade,
+          preco_unitario: item.preco_unitario,
+          subtotal: item.quantidade * item.preco_unitario,
+        }));
+
+        const { error: itensError } = await supabase.from('vendas_itens').insert(itensInsert);
+        
+        if (itensError) {
+          console.error('Erro ao atualizar itens da venda:', itensError);
+          return res.status(500).json({
+            success: false,
+            message: '❌ Venda atualizada, mas erro ao atualizar itens: ' + itensError.message,
+            data: data[0],
+          });
+        }
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Venda atualizada com sucesso',
@@ -329,24 +427,18 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       // 2️⃣ Reverter estoque - devolver os produtos ao estoque
       if (venda.itens && Array.isArray(venda.itens) && venda.itens.length > 0 && venda.estoque_id) {
-        for (const item of venda.itens) {
-          const { data: produtoEstoque } = await supabase
-            .from('produtos_estoques')
-            .select('quantidade')
-            .eq('produto_id', item.produto_id)
-            .eq('estoque_id', venda.estoque_id)
-            .single();
-
-          if (produtoEstoque) {
-            const novaQuantidade = produtoEstoque.quantidade + item.quantidade;
-
-            await supabase
-              .from('produtos_estoques')
-              .update({ quantidade: novaQuantidade, updated_at: new Date().toISOString() })
-              .eq('produto_id', item.produto_id)
-              .eq('estoque_id', venda.estoque_id);
-          }
+        const stockResult = await revertSaleStock(venda.itens, venda.estoque_id);
+        
+        if (!stockResult.success) {
+          console.error('Erro ao reverter estoque:', stockResult.errors);
+          return res.status(500).json({
+            success: false,
+            message: '❌ Erro ao reverter estoque:\n' + stockResult.errors.join('\n'),
+            stock_details: stockResult.adjustments,
+          });
         }
+
+        console.log('✅ Estoque revertido com sucesso:', stockResult.adjustments);
       }
 
       // 3️⃣ Deletar itens da venda
