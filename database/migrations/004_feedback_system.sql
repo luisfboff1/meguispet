@@ -83,7 +83,7 @@ CREATE POLICY feedback_tickets_update_policy ON feedback_tickets
     FOR UPDATE USING (
         EXISTS (
             SELECT 1 FROM usuarios 
-            WHERE usuarios.id = auth.uid()::bigint 
+            WHERE usuarios.supabase_user_id = auth.uid() 
             AND usuarios.role = 'admin'
         )
     );
