@@ -265,15 +265,13 @@ export const feedbackService = {
         }
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('feedback_tickets')
         .update({
           ...updates,
           updated_by: usuarioId
         })
         .eq('id', id)
-        .select()
-        .single()
 
       if (error) {
         console.error('Error updating ticket:', error)
@@ -283,6 +281,7 @@ export const feedbackService = {
         }
       }
 
+      // Fetch the updated ticket with all relations
       return await this.getById(id)
     } catch (error) {
       console.error('Error in update:', error)

@@ -11,6 +11,7 @@ import ClienteForm from '@/components/forms/ClienteForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import UsuarioForm from '@/components/forms/UsuarioForm'
 import FeedbackForm from '@/components/forms/FeedbackForm'
+import FeedbackDetailsModal from '@/components/modals/FeedbackDetailsModal'
 import type {
   ClienteForm as ClienteFormValues,
   MovimentacaoForm as MovimentacaoFormValues,
@@ -71,6 +72,9 @@ interface FeedbackModalPayload {
 interface FeedbackDetailsModalPayload {
   ticket: FeedbackTicket
   onClose?: () => void
+  onDelete?: (ticketId: string) => Promise<void>
+  onAddComment?: (ticketId: string, comment: string) => Promise<void>
+  isAdmin?: boolean
 }
 
 type ModalPayloadMap = {
@@ -296,36 +300,16 @@ export function ModalHost() {
           ticket: {} as FeedbackTicket
         }
         return (
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-              {payload.ticket.titulo}
-            </h3>
-            <div className="space-y-2">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                {payload.ticket.descricao}
-              </p>
-              {payload.ticket.anexos && payload.ticket.anexos.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium text-slate-900 dark:text-white">Anexos:</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {payload.ticket.anexos.map((anexo) => (
-                      <div key={anexo.id} className="text-sm">
-                        {anexo.conteudo_base64 ? (
-                          <img
-                            src={`data:${anexo.tipo_arquivo};base64,${anexo.conteudo_base64}`}
-                            alt={anexo.nome_arquivo}
-                            className="rounded-lg"
-                          />
-                        ) : (
-                          <p>{anexo.nome_arquivo}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <FeedbackDetailsModal
+            ticket={payload.ticket}
+            onClose={() => {
+              payload.onClose?.()
+              close()
+            }}
+            onDelete={payload.onDelete}
+            onAddComment={payload.onAddComment}
+            isAdmin={payload.isAdmin}
+          />
         )
       }
       case 'generic': {

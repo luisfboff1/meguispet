@@ -88,12 +88,63 @@ export default function FeedbackPage() {
     })
   }
 
-  const handleTicketClick = (ticket: FeedbackTicket) => {
+  const handleTicketClick = async (ticket: FeedbackTicket) => {
+    // Fetch fresh data to ensure we have the latest
+    const freshTicket = await feedbackService.getById(ticket.id)
+    const ticketData = freshTicket.success && freshTicket.data ? freshTicket.data : ticket
+
     openModal('feedbackDetails', {
-      ticket,
+      ticket: ticketData,
+      isAdmin,
       onClose: () => {
-        // Reload tickets when modal closes
         loadTickets()
+      },
+      onDelete: async (ticketId: string) => {
+        if (!user) return
+        
+        const result = await feedbackService.delete(ticketId)
+        
+        if (result.success) {
+          toast({
+            title: 'Ticket excluído',
+            description: 'O ticket foi excluído com sucesso'
+          })
+          await loadTickets()
+        } else {
+          toast({
+            title: 'Erro ao excluir ticket',
+            description: result.error || 'Erro desconhecido',
+            variant: 'destructive'
+          })
+          throw new Error(result.error || 'Erro ao excluir')
+        }
+      },
+      onAddComment: async (ticketId: string, comment: string) => {
+        if (!user) return
+        
+        const result = await feedbackService.addComment(
+          { ticket_id: ticketId, comentario: comment },
+          user.id
+        )
+        
+        if (result.success) {
+          toast({
+            title: 'Comentário adicionado',
+            description: 'Seu comentário foi adicionado com sucesso'
+          })
+          // Refresh the ticket to show the new comment
+          const updatedTicket = await feedbackService.getById(ticketId)
+          if (updatedTicket.success && updatedTicket.data) {
+            handleTicketClick(updatedTicket.data)
+          }
+        } else {
+          toast({
+            title: 'Erro ao adicionar comentário',
+            description: result.error || 'Erro desconhecido',
+            variant: 'destructive'
+          })
+          throw new Error(result.error || 'Erro ao adicionar comentário')
+        }
       }
     })
   }
