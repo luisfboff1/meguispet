@@ -19,25 +19,9 @@ export default function FeedbackDetailsModal({
   onAddComment,
   isAdmin = false
 }: FeedbackDetailsModalProps) {
-  console.log('[FEEDBACK DETAILS MODAL] Rendering with props:')
-  console.log('[FEEDBACK DETAILS MODAL] isAdmin:', isAdmin)
-  console.log('[FEEDBACK DETAILS MODAL] onDelete defined:', !!onDelete)
-  console.log('[FEEDBACK DETAILS MODAL] Should show delete button:', isAdmin && !!onDelete)
-  
   const [isDeleting, setIsDeleting] = useState(false)
   const [newComment, setNewComment] = useState('')
   const [isAddingComment, setIsAddingComment] = useState(false)
-
-  // Debug logging
-  useEffect(() => {
-    console.log('======= FEEDBACK DETAILS MODAL useEffect =======')
-    console.log('isAdmin prop:', isAdmin)
-    console.log('onDelete defined:', !!onDelete)
-    console.log('onAddComment defined:', !!onAddComment)
-    console.log('ticket:', JSON.stringify(ticket, null, 2))
-    console.log('Should show delete button:', isAdmin && !!onDelete)
-    console.log('================================================')
-  }, [isAdmin, onDelete, onAddComment, ticket])
 
   const handleDelete = async () => {
     if (!onDelete) return
