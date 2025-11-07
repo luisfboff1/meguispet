@@ -352,7 +352,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           const deltas = calculateStockDelta(oldItems, itens as VendaItemInput[]);
           
           if (deltas.length > 0) {
-            console.log('📊 Ajustes de estoque necessários:', deltas);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('📊 Ajustes de estoque necessários:', deltas);
+            }
             const deltaResult = await applyStockDeltas(deltas, estoque_id);
             
             if (!deltaResult.success) {
