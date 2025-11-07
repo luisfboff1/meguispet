@@ -25,7 +25,8 @@ import VendaForm from '@/components/forms/VendaForm'
 import Toast from '@/components/ui/Toast'
 import AlertDialog from '@/components/ui/AlertDialog'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
-import { downloadOrderPDF } from '@/lib/pdf-generator'
+import { downloadOrderPDF, PDFGeneratorOptions } from '@/lib/pdf-generator'
+import VendaPDFPreviewModal, { PDFPreviewOptions } from '@/components/modals/VendaPDFPreviewModal'
 
 export default function VendasPage() {
   const [vendas, setVendas] = useState<Venda[]>([])
@@ -39,6 +40,8 @@ export default function VendasPage() {
   const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
   const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [showPDFPreview, setShowPDFPreview] = useState(false)
+  const [vendaParaPDF, setVendaParaPDF] = useState<Venda | null>(null)
 
   useEffect(() => {
     loadVendas()
@@ -264,7 +267,7 @@ export default function VendasPage() {
           return
         }
       }
-      
+
       // Sempre buscar dados completos do cliente se houver cliente_id e não tiver cliente
       if (vendaCompleta.cliente_id && !vendaCompleta.cliente) {
         try {
@@ -280,9 +283,31 @@ export default function VendasPage() {
           // Continua mesmo se falhar ao buscar cliente
         }
       }
-      
-      // Gerar e baixar o PDF
-      await downloadOrderPDF(vendaCompleta, 'MEGUISPET')
+
+      // Abrir modal de pré-visualização ao invés de baixar diretamente
+      setVendaParaPDF(vendaCompleta)
+      setShowPDFPreview(true)
+    } catch (error) {
+      console.error('Erro ao preparar PDF:', error)
+      setToast({ message: 'Erro ao preparar visualização do PDF', type: 'error' })
+    }
+  }
+
+  const handleConfirmPDFDownload = async (options: PDFPreviewOptions) => {
+    if (!vendaParaPDF) return
+
+    try {
+      // Converter as opções do modal para as opções do gerador de PDF
+      const pdfOptions: PDFGeneratorOptions = {
+        incluirObservacoes: options.incluirObservacoes,
+        incluirDetalhesCliente: options.incluirDetalhesCliente,
+        incluirEnderecoCompleto: options.incluirEnderecoCompleto,
+        incluirImpostos: options.incluirImpostos,
+        observacoesAdicionais: options.observacoesAdicionais
+      }
+
+      // Gerar e baixar o PDF com as opções selecionadas
+      await downloadOrderPDF(vendaParaPDF, 'MEGUISPET', pdfOptions)
       setToast({ message: 'PDF gerado com sucesso!', type: 'success' })
     } catch (error) {
       console.error('Erro ao gerar PDF:', error)
@@ -476,6 +501,16 @@ export default function VendasPage() {
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
+      {/* Modal de Pré-visualização do PDF */}
+      <VendaPDFPreviewModal
+        venda={vendaParaPDF}
+        open={showPDFPreview}
+        onClose={() => {
+          setShowPDFPreview(false)
+          setVendaParaPDF(null)
+        }}
+        onConfirmDownload={handleConfirmPDFDownload}
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

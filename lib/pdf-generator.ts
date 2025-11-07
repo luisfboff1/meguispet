@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { Venda } from '@/types'
+import type { Venda, ItemVenda } from '@/types'
 
 /**
  * Helper function to extract payment method name from venda
@@ -20,11 +20,33 @@ const getPaymentMethodName = (venda: Venda): string => {
   return 'N/A'
 }
 
+export interface PDFGeneratorOptions {
+  incluirObservacoes?: boolean
+  incluirDetalhesCliente?: boolean
+  incluirEnderecoCompleto?: boolean
+  incluirImpostos?: boolean
+  observacoesAdicionais?: string
+  itensOrdenados?: ItemVenda[]
+}
+
 /**
  * Gera PDF de pedido de venda em formato profissional
  * Layout simples, preto e branco, sem efeitos
  */
-export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') => {
+export const generateOrderPDF = async (
+  venda: Venda,
+  nomeEmpresa = 'MEGUISPET',
+  options: PDFGeneratorOptions = {}
+) => {
+  // Opções padrão
+  const opts = {
+    incluirObservacoes: true,
+    incluirDetalhesCliente: true,
+    incluirEnderecoCompleto: true,
+    incluirImpostos: venda.imposto_percentual ? venda.imposto_percentual > 0 : false,
+    observacoesAdicionais: '',
+    ...options
+  }
   // Criar documento PDF (A4)
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -86,59 +108,60 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
   yPos += 8
 
   // ==================== INFORMAÇÕES DO CLIENTE ====================
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'bold')
-  doc.text('NOME:', margin, yPos)
-  doc.setFont('helvetica', 'normal')
-  // Garantir que temos um nome válido
-  const clienteNome = venda.cliente?.nome || 'N/A'
-  doc.text(clienteNome, margin + 20, yPos)
-  yPos += 6
-  
-  // CNPJ/CPF abaixo do nome - sempre exibir o campo
-  doc.setFont('helvetica', 'bold')
-  doc.text('CNPJ:', margin, yPos)
-  doc.setFont('helvetica', 'normal')
-  const clienteDocumento = venda.cliente?.documento || ''
-  doc.text(clienteDocumento, margin + 20, yPos)
-  yPos += 6
-
-  // Endereço do cliente
-  if (venda.cliente?.endereco) {
+  if (opts.incluirDetalhesCliente) {
+    doc.setFontSize(10)
     doc.setFont('helvetica', 'bold')
-    doc.text('ENDEREÇO:', margin, yPos)
+    doc.text('NOME:', margin, yPos)
     doc.setFont('helvetica', 'normal')
-    doc.text(venda.cliente.endereco, margin + 25, yPos)
+    // Garantir que temos um nome válido
+    const clienteNome = venda.cliente?.nome || 'N/A'
+    doc.text(clienteNome, margin + 20, yPos)
     yPos += 6
-  }
 
-  // Nome do contato (se disponível no campo nome_contato ou similar)
-  // Linha vazia para contato - pode ser preenchido manualmente
-
-  // Bairro e Cidade na mesma linha
-  const hasBairro = venda.cliente?.bairro
-  const hasCidade = venda.cliente?.cidade
-  
-  if (hasBairro || hasCidade) {
-    if (hasBairro) {
-      doc.setFont('helvetica', 'bold')
-      doc.text('BAIRRO:', margin, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(venda.cliente!.bairro!, margin + 20, yPos)
-    }
-    
-    if (hasCidade) {
-      const cidadeX = hasBairro ? pageWidth / 2 : margin
-      const cidadeLabel = hasBairro ? pageWidth / 2 : margin
-      doc.setFont('helvetica', 'bold')
-      doc.text('CIDADE:', cidadeX, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(venda.cliente!.cidade!, cidadeX + 20, yPos)
-    }
+    // CNPJ/CPF abaixo do nome - sempre exibir o campo
+    doc.setFont('helvetica', 'bold')
+    doc.text('CNPJ:', margin, yPos)
+    doc.setFont('helvetica', 'normal')
+    const clienteDocumento = venda.cliente?.documento || ''
+    doc.text(clienteDocumento, margin + 20, yPos)
     yPos += 6
-  }
 
-  yPos += 3
+    // Endereço do cliente (somente se incluirEnderecoCompleto)
+    if (opts.incluirEnderecoCompleto) {
+      if (venda.cliente?.endereco) {
+        doc.setFont('helvetica', 'bold')
+        doc.text('ENDEREÇO:', margin, yPos)
+        doc.setFont('helvetica', 'normal')
+        doc.text(venda.cliente.endereco, margin + 25, yPos)
+        yPos += 6
+      }
+
+      // Bairro e Cidade na mesma linha
+      const hasBairro = venda.cliente?.bairro
+      const hasCidade = venda.cliente?.cidade
+
+      if (hasBairro || hasCidade) {
+        if (hasBairro) {
+          doc.setFont('helvetica', 'bold')
+          doc.text('BAIRRO:', margin, yPos)
+          doc.setFont('helvetica', 'normal')
+          doc.text(venda.cliente!.bairro!, margin + 20, yPos)
+        }
+
+        if (hasCidade) {
+          const cidadeX = hasBairro ? pageWidth / 2 : margin
+          const cidadeLabel = hasBairro ? pageWidth / 2 : margin
+          doc.setFont('helvetica', 'bold')
+          doc.text('CIDADE:', cidadeX, yPos)
+          doc.setFont('helvetica', 'normal')
+          doc.text(venda.cliente!.cidade!, cidadeX + 20, yPos)
+        }
+        yPos += 6
+      }
+    }
+
+    yPos += 3
+  }
 
   // Linha separadora
   doc.setLineWidth(0.3)
@@ -165,9 +188,9 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
 
   // Segunda linha - Vendedor e Pagamento
   doc.setFont('helvetica', 'bold')
-  doc.text('VENDEDORA:', margin, yPos)
+  doc.text('VENDEDOR(A):', margin, yPos)
   doc.setFont('helvetica', 'normal')
-  doc.text(venda.vendedor?.nome || 'N/A', margin + 28, yPos)
+  doc.text(venda.vendedor?.nome || 'N/A', margin + 32, yPos)
 
   // Prazo de pagamento (em dias)
   doc.setFont('helvetica', 'bold')
@@ -188,7 +211,9 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
   yPos += 8
 
   // ==================== TABELA DE PRODUTOS ====================
-  const tableData = (venda.itens || []).map((item) => [
+  // Usar itensOrdenados se fornecido, caso contrário usar venda.itens
+  const itensParaPDF = options?.itensOrdenados || venda.itens || []
+  const tableData = itensParaPDF.map((item) => [
     item.produto?.id?.toString() || '',
     item.produto?.nome || 'Produto sem nome',
     item.quantidade.toString().replace('.', ','),
@@ -235,33 +260,41 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
   // Ajustar posição baseada no tamanho da página para ser responsivo
   const totalsX = pageWidth - margin - 70
   const valueX = pageWidth - margin - 5 // Valores sempre alinhados à direita com margem fixa
-  
-  // Calcular total de produtos (soma dos subtotais dos itens)
-  const totalProdutos = (venda.itens || []).reduce((sum, item) => sum + item.subtotal, 0)
-  
+
+  // Calcular total de produtos (soma dos subtotais dos itens ordenados)
+  const totalProdutos = itensParaPDF.reduce((sum, item) => sum + item.subtotal, 0)
+  const valorDesconto = venda.desconto || 0
+  const hasImposto = venda.imposto_percentual && venda.imposto_percentual > 0
+
+  // Calcular total final corretamente baseado nas opções
+  const incluirImpostosNoPDF = opts.incluirImpostos
+  const totalFinal = incluirImpostosNoPDF && hasImposto
+    ? totalProdutos - valorDesconto + ((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100
+    : totalProdutos - valorDesconto
+
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
-  
+
   // Total de Produtos
   doc.text('Total de Produtos:', totalsX, yPos)
   doc.text(`R$ ${totalProdutos.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
   yPos += 5
 
   // Desconto (se aplicável)
-  if (venda.desconto > 0) {
+  if (valorDesconto > 0) {
     doc.text('Desconto:', totalsX, yPos)
-    doc.text(`R$ ${venda.desconto.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+    doc.text(`R$ ${valorDesconto.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
     yPos += 5
   }
 
-  // Total com Imposto (valor final) - mesmo tamanho mas em negrito
+  // Total final - mostrar "TOTAL COM IMPOSTO" apenas se houver imposto e incluirImpostos estiver ativo
   doc.setFont('helvetica', 'bold')
-  doc.text('TOTAL COM IMPOSTO:', totalsX, yPos)
-  doc.text(`R$ ${venda.valor_final.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+  doc.text(hasImposto && incluirImpostosNoPDF ? 'TOTAL COM IMPOSTO:' : 'TOTAL:', totalsX, yPos)
+  doc.text(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
   yPos += 8
 
   // ==================== OBSERVAÇÕES ====================
-  if (venda.observacoes) {
+  if (opts.incluirObservacoes && (venda.observacoes || opts.observacoesAdicionais)) {
     doc.setLineWidth(0.3)
     doc.line(margin, yPos, pageWidth - margin, yPos)
     yPos += 6
@@ -272,8 +305,19 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
     yPos += 5
 
     doc.setFont('helvetica', 'normal')
-    const obsLines = doc.splitTextToSize(venda.observacoes, pageWidth - 2 * margin)
-    doc.text(obsLines, margin, yPos)
+
+    // Observações originais da venda
+    if (venda.observacoes) {
+      const obsLines = doc.splitTextToSize(venda.observacoes, pageWidth - 2 * margin)
+      doc.text(obsLines, margin, yPos)
+      yPos += (obsLines.length * 4) + 3
+    }
+
+    // Observações adicionais do modal
+    if (opts.observacoesAdicionais) {
+      const obsAdicionaisLines = doc.splitTextToSize(opts.observacoesAdicionais, pageWidth - 2 * margin)
+      doc.text(obsAdicionaisLines, margin, yPos)
+    }
   }
 
   // ==================== RODAPÉ ====================
@@ -291,8 +335,8 @@ export const generateOrderPDF = async (venda: Venda, nomeEmpresa = 'MEGUISPET') 
 /**
  * Baixa o PDF gerado
  */
-export const downloadOrderPDF = async (venda: Venda, nomeEmpresa?: string) => {
-  const doc = await generateOrderPDF(venda, nomeEmpresa)
+export const downloadOrderPDF = async (venda: Venda, nomeEmpresa?: string, options?: PDFGeneratorOptions) => {
+  const doc = await generateOrderPDF(venda, nomeEmpresa, options)
   const filename = `pedido-${venda.numero_venda || venda.id}.pdf`
   doc.save(filename)
 }
@@ -300,8 +344,8 @@ export const downloadOrderPDF = async (venda: Venda, nomeEmpresa?: string) => {
 /**
  * Abre o PDF em nova aba para visualização
  */
-export const previewOrderPDF = async (venda: Venda, nomeEmpresa?: string) => {
-  const doc = await generateOrderPDF(venda, nomeEmpresa)
+export const previewOrderPDF = async (venda: Venda, nomeEmpresa?: string, options?: PDFGeneratorOptions) => {
+  const doc = await generateOrderPDF(venda, nomeEmpresa, options)
   const blob = doc.output('blob')
   const url = URL.createObjectURL(blob)
   window.open(url, '_blank')

@@ -1,0 +1,478 @@
+import React, { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FileText, Download, Eye, X, ArrowUpDown, GripVertical } from 'lucide-react'
+import type { Venda, ItemVenda } from '@/types'
+
+export interface PDFPreviewOptions {
+  incluirObservacoes: boolean
+  incluirDetalhesCliente: boolean
+  incluirEnderecoCompleto: boolean
+  incluirImpostos: boolean
+  observacoesAdicionais: string
+  itensOrdenados?: ItemVenda[]
+}
+
+type SortField = 'codigo' | 'descricao' | 'quantidade' | 'preco' | 'total'
+type SortDirection = 'asc' | 'desc'
+
+interface VendaPDFPreviewModalProps {
+  venda: Venda | null
+  open: boolean
+  onClose: () => void
+  onConfirmDownload: (options: PDFPreviewOptions) => void
+}
+
+export default function VendaPDFPreviewModal({
+  venda,
+  open,
+  onClose,
+  onConfirmDownload
+}: VendaPDFPreviewModalProps) {
+  const [options, setOptions] = useState<PDFPreviewOptions>({
+    incluirObservacoes: true,
+    incluirDetalhesCliente: true,
+    incluirEnderecoCompleto: true,
+    incluirImpostos: venda?.imposto_percentual ? venda.imposto_percentual > 0 : false,
+    observacoesAdicionais: ''
+  })
+
+  const [itensOrdenados, setItensOrdenados] = useState<ItemVenda[]>([])
+  const [sortField, setSortField] = useState<SortField | null>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+
+  // Atualizar itens quando venda mudar
+  useEffect(() => {
+    if (venda?.itens) {
+      setItensOrdenados(venda.itens)
+    }
+  }, [venda])
+
+  if (!open || !venda) return null
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR')
+  }
+
+  const totalProdutos = itensOrdenados.reduce((sum, item) => sum + item.subtotal, 0)
+  const hasImposto = venda.imposto_percentual && venda.imposto_percentual > 0
+  const valorDesconto = venda.desconto || 0
+
+  // Calcular total final corretamente baseado nas opções
+  const totalFinal = options.incluirImpostos && hasImposto
+    ? totalProdutos - valorDesconto + ((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100
+    : totalProdutos - valorDesconto
+
+  // Função de ordenação
+  const handleSort = (field: SortField) => {
+    const newDirection = sortField === field && sortDirection === 'asc' ? 'desc' : 'asc'
+    setSortField(field)
+    setSortDirection(newDirection)
+
+    const sorted = [...itensOrdenados].sort((a, b) => {
+      let aValue: string | number
+      let bValue: string | number
+
+      switch (field) {
+        case 'codigo':
+          aValue = a.produto?.id || 0
+          bValue = b.produto?.id || 0
+          break
+        case 'descricao':
+          aValue = a.produto?.nome || ''
+          bValue = b.produto?.nome || ''
+          break
+        case 'quantidade':
+          aValue = a.quantidade
+          bValue = b.quantidade
+          break
+        case 'preco':
+          aValue = a.preco_unitario
+          bValue = b.preco_unitario
+          break
+        case 'total':
+          aValue = a.subtotal
+          bValue = b.subtotal
+          break
+        default:
+          return 0
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return newDirection === 'asc'
+          ? aValue.localeCompare(bValue, 'pt-BR')
+          : bValue.localeCompare(aValue, 'pt-BR')
+      }
+
+      return newDirection === 'asc' ? (aValue as number) - (bValue as number) : (bValue as number) - (aValue as number)
+    })
+
+    setItensOrdenados(sorted)
+  }
+
+  // Funções de drag and drop
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === index) return
+
+    const newItens = [...itensOrdenados]
+    const draggedItem = newItens[draggedIndex]
+    newItens.splice(draggedIndex, 1)
+    newItens.splice(index, 0, draggedItem)
+
+    setItensOrdenados(newItens)
+    setDraggedIndex(index)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+  }
+
+  const handleConfirm = () => {
+    onConfirmDownload({
+      ...options,
+      itensOrdenados
+    })
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl my-8 animate-fade-in">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText className="h-6 w-6 text-meguispet-primary" />
+              <h2 className="text-2xl font-semibold text-gray-900">
+                Pré-visualização do Pedido #{venda.numero_venda || venda.id}
+              </h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Preview do PDF - Coluna Esquerda/Principal */}
+            <div className="lg:col-span-2 space-y-4">
+              <Card>
+                <CardHeader className="bg-gray-50">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">MEGUISPET Produtos Pets LTDA</p>
+                      <p className="text-xs text-muted-foreground">CNPJ: 60.826.400/0001-82</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">Pedido: {venda.numero_venda || `#${venda.id}`}</p>
+                      <p className="text-xs text-muted-foreground">Emissão: {formatDate(venda.created_at)}</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Cliente */}
+                  {options.incluirDetalhesCliente && (
+                    <div className="border-b pb-4">
+                      <h4 className="text-sm font-semibold mb-2">DADOS DO CLIENTE</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="font-medium">Nome:</span> {venda.cliente?.nome || 'N/A'}
+                        </div>
+                        {venda.cliente?.documento && (
+                          <div>
+                            <span className="font-medium">CNPJ/CPF:</span> {venda.cliente.documento}
+                          </div>
+                        )}
+                        {options.incluirEnderecoCompleto && (
+                          <>
+                            {venda.cliente?.endereco && (
+                              <div className="col-span-2">
+                                <span className="font-medium">Endereço:</span> {venda.cliente.endereco}
+                              </div>
+                            )}
+                            {venda.cliente?.bairro && (
+                              <div>
+                                <span className="font-medium">Bairro:</span> {venda.cliente.bairro}
+                              </div>
+                            )}
+                            {venda.cliente?.cidade && (
+                              <div>
+                                <span className="font-medium">Cidade:</span> {venda.cliente.cidade}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Informações do Pedido */}
+                  <div className="grid grid-cols-2 gap-2 text-sm border-b pb-4">
+                    <div>
+                      <span className="font-medium">Vendedor(a):</span> {venda.vendedor?.nome || 'N/A'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Pagamento:</span>{' '}
+                      {venda.prazo_pagamento ? `${venda.prazo_pagamento} dias` : venda.forma_pagamento_detalhe?.nome || 'N/A'}
+                    </div>
+                  </div>
+
+                  {/* Produtos */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold">PRODUTOS</h4>
+                      <p className="text-xs text-muted-foreground">Arraste para reordenar ou clique nos cabeçalhos para ordenar</p>
+                    </div>
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="w-8 px-2 py-2"></th>
+                            <th
+                              className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                              onClick={() => handleSort('codigo')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Código
+                                <ArrowUpDown className="h-3 w-3" />
+                              </div>
+                            </th>
+                            <th
+                              className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                              onClick={() => handleSort('descricao')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Descrição
+                                <ArrowUpDown className="h-3 w-3" />
+                              </div>
+                            </th>
+                            <th
+                              className="text-center px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                              onClick={() => handleSort('quantidade')}
+                            >
+                              <div className="flex items-center justify-center gap-1">
+                                Qtd
+                                <ArrowUpDown className="h-3 w-3" />
+                              </div>
+                            </th>
+                            <th
+                              className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                              onClick={() => handleSort('preco')}
+                            >
+                              <div className="flex items-center justify-end gap-1">
+                                Preço Unit.
+                                <ArrowUpDown className="h-3 w-3" />
+                              </div>
+                            </th>
+                            <th
+                              className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                              onClick={() => handleSort('total')}
+                            >
+                              <div className="flex items-center justify-end gap-1">
+                                Total
+                                <ArrowUpDown className="h-3 w-3" />
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {itensOrdenados.map((item, index) => (
+                            <tr
+                              key={index}
+                              draggable
+                              onDragStart={() => handleDragStart(index)}
+                              onDragOver={(e) => handleDragOver(e, index)}
+                              onDragEnd={handleDragEnd}
+                              className={`border-t transition-all cursor-move hover:bg-gray-50 ${
+                                draggedIndex === index ? 'opacity-50 bg-blue-50' : ''
+                              }`}
+                            >
+                              <td className="px-2 py-2">
+                                <GripVertical className="h-4 w-4 text-gray-400" />
+                              </td>
+                              <td className="px-3 py-2">{item.produto?.id || '-'}</td>
+                              <td className="px-3 py-2">{item.produto?.nome || 'Produto sem nome'}</td>
+                              <td className="text-center px-3 py-2">{item.quantidade}</td>
+                              <td className="text-right px-3 py-2">{formatCurrency(item.preco_unitario)}</td>
+                              <td className="text-right px-3 py-2">{formatCurrency(item.subtotal)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Totais */}
+                  <div className="border-t pt-4">
+                    <div className="flex justify-end">
+                      <div className="w-64 space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Total de Produtos:</span>
+                          <span className="font-medium">{formatCurrency(totalProdutos)}</span>
+                        </div>
+                        {valorDesconto > 0 && (
+                          <div className="flex justify-between">
+                            <span>Desconto:</span>
+                            <span className="font-medium text-red-600">- {formatCurrency(valorDesconto)}</span>
+                          </div>
+                        )}
+                        {options.incluirImpostos && hasImposto && (
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Imposto ({venda.imposto_percentual}%):</span>
+                            <span>
+                              {formatCurrency(((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-base font-bold border-t pt-2">
+                          <span>{hasImposto && options.incluirImpostos ? 'TOTAL COM IMPOSTO:' : 'TOTAL:'}</span>
+                          <span>{formatCurrency(totalFinal)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Observações */}
+                  {options.incluirObservacoes && (venda.observacoes || options.observacoesAdicionais) && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold mb-2">OBSERVAÇÕES</h4>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        {venda.observacoes && <p>{venda.observacoes}</p>}
+                        {options.observacoesAdicionais && (
+                          <p className="text-blue-600 italic">{options.observacoesAdicionais}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Opções de Customização - Coluna Direita */}
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Opções de Exibição</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Switch: Detalhes do Cliente */}
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="incluir-cliente" className="text-sm cursor-pointer">
+                      Dados do cliente
+                    </Label>
+                    <Switch
+                      id="incluir-cliente"
+                      checked={options.incluirDetalhesCliente}
+                      onCheckedChange={(checked) => setOptions({ ...options, incluirDetalhesCliente: checked })}
+                    />
+                  </div>
+
+                  {/* Switch: Endereço Completo */}
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="incluir-endereco" className="text-sm cursor-pointer">
+                      Endereço completo
+                    </Label>
+                    <Switch
+                      id="incluir-endereco"
+                      checked={options.incluirEnderecoCompleto}
+                      onCheckedChange={(checked) => setOptions({ ...options, incluirEnderecoCompleto: checked })}
+                      disabled={!options.incluirDetalhesCliente}
+                    />
+                  </div>
+
+                  {/* Switch: Impostos */}
+                  {hasImposto && (
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="incluir-impostos" className="text-sm cursor-pointer">
+                        Informações de impostos
+                      </Label>
+                      <Switch
+                        id="incluir-impostos"
+                        checked={options.incluirImpostos}
+                        onCheckedChange={(checked) => setOptions({ ...options, incluirImpostos: checked })}
+                      />
+                    </div>
+                  )}
+
+                  {/* Switch: Observações */}
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="incluir-obs" className="text-sm cursor-pointer">
+                      Observações
+                    </Label>
+                    <Switch
+                      id="incluir-obs"
+                      checked={options.incluirObservacoes}
+                      onCheckedChange={(checked) => setOptions({ ...options, incluirObservacoes: checked })}
+                    />
+                  </div>
+
+                  {/* Observações Adicionais */}
+                  {options.incluirObservacoes && (
+                    <div className="space-y-2 pt-2 border-t">
+                      <Label htmlFor="obs-adicionais" className="text-sm">
+                        Observações adicionais
+                      </Label>
+                      <textarea
+                        id="obs-adicionais"
+                        value={options.observacoesAdicionais}
+                        onChange={(e) => setOptions({ ...options, observacoesAdicionais: e.target.value })}
+                        placeholder="Digite observações que aparecerão no PDF..."
+                        rows={4}
+                        className="w-full text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-meguispet-primary"
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Info Card */}
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-2">
+                    <Eye className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-blue-900">
+                      As alterações na pré-visualização são aplicadas apenas ao PDF gerado. Os dados originais da venda não
+                      serão modificados.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-200 flex items-center justify-end gap-3">
+          <Button variant="outline" onClick={onClose}>
+            <X className="mr-2 h-4 w-4" />
+            Cancelar
+          </Button>
+          <Button onClick={handleConfirm} className="bg-meguispet-primary hover:bg-meguispet-primary/90">
+            <Download className="mr-2 h-4 w-4" />
+            Gerar e Baixar PDF
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

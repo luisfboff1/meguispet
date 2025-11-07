@@ -1,7 +1,13 @@
 import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
-import { applySaleStock, revertSaleStock, calculateStockDelta, applyStockDeltas } from '@/lib/stock-manager';
+import {
+  applySaleStock,
+  revertSaleStock,
+  calculateStockDelta,
+  applyStockDeltas,
+  validateStockAvailability,
+} from '@/lib/stock-manager';
 
 interface VendaItemInput {
   produto_id: number;
@@ -82,39 +88,17 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         return res.status(400).json({ success: false, message: '❌ A venda deve conter pelo menos um item' });
       }
 
-      // 🔍 VALIDAR ESTOQUE DISPONÍVEL ANTES DE CRIAR A VENDA
-      const produtosComEstoqueInsuficiente: string[] = [];
+      // 🔍 VALIDAR ESTOQUE DISPONÍVEL ANTES DE CRIAR A VENDA (com locking para prevenir race conditions)
+      const validation = await validateStockAvailability(itens as VendaItemInput[], estoque_id);
 
-      for (const item of itens as VendaItemInput[]) {
-        const { data: produtoEstoque } = await supabase
-          .from('produtos_estoques')
-          .select('quantidade, produto:produtos(nome)')
-          .eq('produto_id', item.produto_id)
-          .eq('estoque_id', estoque_id)
-          .single();
-
-        if (!produtoEstoque) {
-          const { data: produto } = await supabase
-            .from('produtos')
-            .select('nome')
-            .eq('id', item.produto_id)
-            .single();
-
-          produtosComEstoqueInsuficiente.push(`${produto?.nome || 'Produto'} (estoque não configurado)`);
-        } else if (produtoEstoque.quantidade < item.quantidade) {
-          // Type assertion para lidar com a estrutura de produto do Supabase
-          const produtoData = produtoEstoque.produto as { nome?: string } | null;
-          const nomeProduto = produtoData?.nome || 'Produto';
-          produtosComEstoqueInsuficiente.push(
-            `${nomeProduto} (disponível: ${produtoEstoque.quantidade}, solicitado: ${item.quantidade})`
-          );
-        }
-      }
-
-      if (produtosComEstoqueInsuficiente.length > 0) {
+      if (!validation.valid) {
+        const insufficientMessages = validation.insufficientStock.map(
+          (item) => `${item.produto_nome} (disponível: ${item.disponivel}, solicitado: ${item.solicitado})`
+        );
         return res.status(400).json({
           success: false,
-          message: '❌ Estoque insuficiente para os seguintes produtos:\n' + produtosComEstoqueInsuficiente.join('\n'),
+          message: '❌ Estoque insuficiente para os seguintes produtos:\n' + insufficientMessages.join('\n'),
+          insufficient_stock: validation.insufficientStock,
         });
       }
 
@@ -191,18 +175,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         });
       }
 
-      // ✅ DAR BAIXA NO ESTOQUE
-      const stockResult = await applySaleStock(itens as VendaItemInput[], estoque_id);
-      
+      // ✅ DAR BAIXA NO ESTOQUE (com transação e histórico automático)
+      const stockResult = await applySaleStock(
+        itens as VendaItemInput[],
+        estoque_id,
+        venda.id, // Sale ID for audit trail
+        req.user?.id // User ID from authenticated request
+      );
+
       if (!stockResult.success) {
         // Rollback: Delete sale and items if stock update fails
         await supabase.from('vendas_itens').delete().eq('venda_id', venda.id);
         await supabase.from('vendas').delete().eq('id', venda.id);
-        
-        console.error('Erro ao dar baixa no estoque:', stockResult.errors);
+
+        console.error('❌ Erro ao dar baixa no estoque (após retry automático):', stockResult.errors);
         return res.status(500).json({
           success: false,
-          message: '❌ Erro ao dar baixa no estoque:\n' + stockResult.errors.join('\n'),
+          message: '❌ Erro ao dar baixa no estoque após múltiplas tentativas:\n' + stockResult.errors.join('\n'),
           stock_details: stockResult.adjustments,
         });
       }
@@ -311,10 +300,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           }
           
           // Reverter do estoque antigo
-          const revertResult = await revertSaleStock(oldItems, oldEstoqueId);
+          const revertResult = await revertSaleStock(
+            oldItems,
+            oldEstoqueId,
+            parseInt(id as string, 10),
+            req.user?.id
+          );
           if (!revertResult.success) {
-            console.error('⚠️ Erro ao reverter estoque antigo:', revertResult.errors);
-            // Return error to client to maintain data consistency awareness
+            console.error('⚠️ Erro ao reverter estoque antigo (após retry):', revertResult.errors);
             return res.status(500).json({
               success: false,
               message: '❌ Erro ao reverter estoque do local antigo:\n' + revertResult.errors.join('\n'),
@@ -324,14 +317,24 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           }
 
           // Aplicar no estoque novo
-          const applyResult = await applySaleStock(itens as VendaItemInput[], estoque_id);
+          const applyResult = await applySaleStock(
+            itens as VendaItemInput[],
+            estoque_id,
+            parseInt(id as string, 10),
+            req.user?.id
+          );
           if (!applyResult.success) {
-            console.error('⚠️ Erro ao aplicar no novo estoque:', applyResult.errors);
+            console.error('⚠️ Erro ao aplicar no novo estoque (após retry):', applyResult.errors);
 
             // Tentar desfazer o revert no estoque antigo para manter consistência
-            const compensateResult = await applySaleStock(oldItems, oldEstoqueId);
+            const compensateResult = await applySaleStock(
+              oldItems,
+              oldEstoqueId,
+              parseInt(id as string, 10),
+              req.user?.id
+            );
             if (!compensateResult.success) {
-              console.error('⚠️ Falha ao desfazer o revert no estoque antigo:', compensateResult.errors);
+              console.error('⚠️ Falha crítica ao desfazer o revert no estoque antigo:', compensateResult.errors);
             } else {
               console.log('✅ Revertido o revert no estoque antigo com sucesso.');
             }
@@ -343,26 +346,32 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 applyResult.errors.join('\n') +
                 (compensateResult.success
                   ? '\n✔️ O estoque antigo foi restaurado ao estado original.'
-                  : '\n❌ Falha ao restaurar o estoque antigo:\n' + (compensateResult.errors?.join('\n') || 'Erro desconhecido')),
+                  : '\n❌ ATENÇÃO: Falha ao restaurar o estoque antigo:\n' + (compensateResult.errors?.join('\n') || 'Erro desconhecido')),
               data: data[0],
             });
           }
         } else {
           // Mesmo estoque, calcular delta
           const deltas = calculateStockDelta(oldItems, itens as VendaItemInput[]);
-          
+
           if (deltas.length > 0) {
             if (process.env.NODE_ENV === 'development') {
               console.log('📊 Ajustes de estoque necessários:', deltas);
             }
-            const deltaResult = await applyStockDeltas(deltas, estoque_id);
-            
+            const deltaResult = await applyStockDeltas(
+              deltas,
+              estoque_id,
+              parseInt(id as string, 10),
+              req.user?.id
+            );
+
             if (!deltaResult.success) {
-              console.error('⚠️ Erro ao ajustar estoque:', deltaResult.errors);
+              console.error('⚠️ Erro ao ajustar estoque (após retry):', deltaResult.errors);
               return res.status(500).json({
                 success: false,
                 message: '❌ Venda atualizada, mas erro ao ajustar estoque:\n' + deltaResult.errors.join('\n'),
                 data: data[0],
+                stock_details: deltaResult.adjustments,
               });
             }
 
@@ -425,15 +434,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         return res.status(404).json({ success: false, message: 'Venda não encontrada' });
       }
 
-      // 2️⃣ Reverter estoque - devolver os produtos ao estoque
+      // 2️⃣ Reverter estoque - devolver os produtos ao estoque (com transação e histórico)
       if (venda.itens && Array.isArray(venda.itens) && venda.itens.length > 0 && venda.estoque_id) {
-        const stockResult = await revertSaleStock(venda.itens, venda.estoque_id);
-        
+        const stockResult = await revertSaleStock(
+          venda.itens,
+          venda.estoque_id,
+          parseInt(id as string, 10),
+          req.user?.id
+        );
+
         if (!stockResult.success) {
-          console.error('Erro ao reverter estoque:', stockResult.errors);
+          console.error('❌ Erro ao reverter estoque (após retry):', stockResult.errors);
           return res.status(500).json({
             success: false,
-            message: '❌ Erro ao reverter estoque:\n' + stockResult.errors.join('\n'),
+            message: '❌ Erro ao reverter estoque após múltiplas tentativas:\n' + stockResult.errors.join('\n'),
             stock_details: stockResult.adjustments,
           });
         }
