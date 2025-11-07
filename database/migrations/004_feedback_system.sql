@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS feedback_tickets (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_by BIGINT,
-    CONSTRAINT fk_feedback_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    CONSTRAINT fk_feedback_updated_by FOREIGN KEY (updated_by) REFERENCES usuarios(id) ON DELETE SET NULL
+    CONSTRAINT feedback_tickets_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT feedback_tickets_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES usuarios(id) ON DELETE SET NULL
 );
 
 -- Feedback attachments table (for images and files)
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS feedback_anexos (
     conteudo_base64 TEXT,
     url TEXT,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_anexo_ticket FOREIGN KEY (ticket_id) REFERENCES feedback_tickets(id) ON DELETE CASCADE
+    CONSTRAINT feedback_anexos_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES feedback_tickets(id) ON DELETE CASCADE
 );
 
 -- Feedback comments table (for updates and discussions)
@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS feedback_comentarios (
     usuario_id BIGINT NOT NULL,
     comentario TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_comentario_ticket FOREIGN KEY (ticket_id) REFERENCES feedback_tickets(id) ON DELETE CASCADE,
-    CONSTRAINT fk_comentario_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+    CONSTRAINT feedback_comentarios_ticket_id_fkey FOREIGN KEY (ticket_id) REFERENCES feedback_tickets(id) ON DELETE CASCADE,
+    CONSTRAINT feedback_comentarios_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
 -- Indexes for performance
