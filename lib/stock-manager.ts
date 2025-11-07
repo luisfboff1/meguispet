@@ -52,12 +52,6 @@ export async function adjustProductStock(
       };
     }
 
-    if (!produtoEstoque) {
-      return { 
-        success: false, 
-        error: `Stock not configured for product ${produto_id} in stock location ${estoque_id}` 
-      };
-    }
 
     const oldQuantity = produtoEstoque.quantidade;
     const newQuantity = oldQuantity + quantityChange;
