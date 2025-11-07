@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,16 @@ import {
   FileText,
   Eye
 } from 'lucide-react'
+import { DataTable, SortableHeader } from '@/components/ui/data-table'
+
+interface ReportData {
+  id: string
+  tipo: string
+  nome: string
+  periodo: string
+  dataGeracao: string
+  status: 'disponivel' | 'processando' | 'erro'
+}
 
 export default function RelatoriosPage() {
   const [dateRange, setDateRange] = useState({
@@ -56,6 +67,123 @@ export default function RelatoriosPage() {
       color: 'text-orange-600'
     }
   ]
+
+  // Sample data for recent reports - in production this would come from an API
+  const recentReports: ReportData[] = [
+    {
+      id: '1',
+      tipo: 'vendas',
+      nome: 'Relatório de Vendas - Mensal',
+      periodo: 'Dezembro 2024',
+      dataGeracao: '2024-12-15',
+      status: 'disponivel'
+    },
+    {
+      id: '2',
+      tipo: 'produtos',
+      nome: 'Relatório de Produtos Mais Vendidos',
+      periodo: 'Novembro 2024',
+      dataGeracao: '2024-12-01',
+      status: 'disponivel'
+    },
+    {
+      id: '3',
+      tipo: 'clientes',
+      nome: 'Análise de Clientes',
+      periodo: 'Outubro-Dezembro 2024',
+      dataGeracao: '2024-12-10',
+      status: 'disponivel'
+    },
+    {
+      id: '4',
+      tipo: 'financeiro',
+      nome: 'Relatório Financeiro - Trimestral',
+      periodo: 'Q4 2024',
+      dataGeracao: '2024-12-20',
+      status: 'disponivel'
+    }
+  ]
+
+  const getStatusColor = (status: ReportData['status']) => {
+    switch (status) {
+      case 'disponivel': return 'text-green-600'
+      case 'processando': return 'text-yellow-600'
+      case 'erro': return 'text-red-600'
+      default: return 'text-gray-600'
+    }
+  }
+
+  const getStatusLabel = (status: ReportData['status']) => {
+    switch (status) {
+      case 'disponivel': return 'Disponível'
+      case 'processando': return 'Processando'
+      case 'erro': return 'Erro'
+      default: return 'Desconhecido'
+    }
+  }
+
+  // Column definitions for reports table
+  const reportsColumns = useMemo<ColumnDef<ReportData>[]>(() => {
+    return [
+    {
+      accessorKey: "nome",
+      header: ({ column }) => <SortableHeader column={column}>Relatório</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="min-w-[250px]">
+          <div className="font-medium text-gray-900">{row.original.nome}</div>
+          <div className="text-sm text-gray-500">{row.original.tipo}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "periodo",
+      header: ({ column }) => <SortableHeader column={column}>Período</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2">
+          <Calendar className="h-4 w-4 text-gray-400" />
+          <span className="text-sm text-gray-600">{row.original.periodo}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "dataGeracao",
+      header: ({ column }) => <SortableHeader column={column}>Data de Geração</SortableHeader>,
+      cell: ({ row }) => (
+        <span className="text-sm text-gray-600">
+          {new Date(row.original.dataGeracao).toLocaleDateString('pt-BR')}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
+      cell: ({ row }) => (
+        <span className={`text-sm font-medium ${getStatusColor(row.original.status)}`}>
+          {getStatusLabel(row.original.status)}
+        </span>
+      ),
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" title="Visualizar">
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            title="Download PDF"
+            disabled={row.original.status !== 'disponivel'}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -217,14 +345,21 @@ export default function RelatoriosPage() {
           <CardDescription>Últimos relatórios gerados</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {/* Relatórios serão carregados do banco de dados */}
+          {recentReports.length > 0 ? (
+            <DataTable 
+              columns={reportsColumns} 
+              data={recentReports}
+              enableColumnResizing={true}
+              enableSorting={true}
+              enableColumnVisibility={true}
+            />
+          ) : (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum relatório gerado</h3>
               <p className="text-gray-600">Os relatórios aparecerão aqui quando forem gerados</p>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

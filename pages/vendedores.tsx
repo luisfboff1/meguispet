@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/router'
+import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +21,7 @@ import {
 import { vendedoresService } from '@/services/api'
 import VendedorForm from '@/components/forms/VendedorForm'
 import AlertDialog from '@/components/ui/AlertDialog'
+import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import type { Vendedor, VendedorForm as VendedorFormValues } from '@/types'
 
 export default function VendedoresPage() {
@@ -227,6 +229,128 @@ export default function VendedoresPage() {
     document.body.removeChild(link)
   }
 
+  const filteredVendedores = vendedores.filter(vendedor =>
+    vendedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    vendedor.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  // Column definitions for vendedores table
+  const vendedoresColumns = useMemo<ColumnDef<Vendedor>[]>(() => {
+    return [
+    {
+      accessorKey: "nome",
+      header: ({ column }) => <SortableHeader column={column}>Vendedor</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[200px]">
+          <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-medium text-meguispet-primary">
+              {getInitials(row.original.nome)}
+            </span>
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">{row.original.nome}</div>
+            <div className="text-sm text-gray-500">
+              Desde {formatDate(row.original.created_at)}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: ({ column }) => <SortableHeader column={column}>Email</SortableHeader>,
+      cell: ({ row }) => (
+        row.original.email ? (
+          <div className="flex items-center space-x-2">
+            <Mail className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{row.original.email}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      accessorKey: "telefone",
+      header: ({ column }) => <SortableHeader column={column}>Telefone</SortableHeader>,
+      cell: ({ row }) => (
+        row.original.telefone ? (
+          <div className="flex items-center space-x-2">
+            <Phone className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{row.original.telefone}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      ),
+    },
+    {
+      accessorKey: "comissao",
+      header: ({ column }) => <SortableHeader column={column}>Comissão</SortableHeader>,
+      cell: ({ row }) => (
+        <span className="text-sm font-medium text-gray-900">
+          {row.original.comissao}%
+        </span>
+      ),
+    },
+    {
+      accessorKey: "total_vendas",
+      header: ({ column }) => <SortableHeader column={column}>Vendas</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <div className="text-lg font-semibold text-meguispet-primary">
+            {row.original.total_vendas || 0}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "total_faturamento",
+      header: ({ column }) => <SortableHeader column={column}>Faturamento</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <div className="text-lg font-semibold text-green-600">
+            {formatCurrency(row.original.total_faturamento || 0)}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleVerVendas(row.original)}
+            title="Ver vendas"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleEditarVendedor(row.original)}
+            title="Editar vendedor"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleExcluirVendedor(row.original)}
+            title="Excluir vendedor"
+            className="text-red-600 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [])
+
   if (showForm) {
     return (
       <div className="space-y-6">
@@ -357,115 +481,28 @@ export default function VendedoresPage() {
         </CardContent>
       </Card>
 
-      {/* Vendedores List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-          <div className="col-span-full flex items-center justify-center py-8">
+      {/* Vendedores Table */}
+      {loading ? (
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
-          </div>
-        ) : (
-          vendedores.filter(vendedor =>
-            vendedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            vendedor.email?.toLowerCase().includes(searchTerm.toLowerCase())
-          ).map((vendedor) => (
-            <Card key={vendedor.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-meguispet-primary">
-                        {getInitials(vendedor.nome)}
-                      </span>
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{vendedor.nome}</CardTitle>
-                      <CardDescription>
-                        Vendedor desde {formatDate(vendedor.created_at)}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditarVendedor(vendedor)}
-                      title="Editar vendedor"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleExcluirVendedor(vendedor)}
-                      title="Excluir vendedor"
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-3">
-                {vendedor.email && (
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{vendedor.email}</span>
-                  </div>
-                )}
-                
-                {vendedor.telefone && (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{vendedor.telefone}</span>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-meguispet-primary">
-                      {vendedor.total_vendas || 0}
-                    </div>
-                    <div className="text-xs text-gray-500">Vendas</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-green-600">
-                      {formatCurrency(vendedor.total_faturamento || 0)}
-                    </div>
-                    <div className="text-xs text-gray-500">Faturamento</div>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => handleVerVendas(vendedor)}
-                  >
-                    Ver Vendas
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => handleVerRelatorio(vendedor)}
-                  >
-                    Relatório
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {!loading && vendedores.length === 0 && (
+          </CardContent>
+        </Card>
+      ) : filteredVendedores.length > 0 ? (
+        <DataTable 
+          columns={vendedoresColumns} 
+          data={filteredVendedores}
+          enableColumnResizing={true}
+          enableSorting={true}
+          enableColumnVisibility={true}
+        />
+      ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
             <User className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum vendedor encontrado</h3>
             <p className="text-gray-600 text-center">
-              Comece adicionando seu primeiro vendedor
+              {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando seu primeiro vendedor'}
             </p>
           </CardContent>
         </Card>
