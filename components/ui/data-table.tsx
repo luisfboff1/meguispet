@@ -107,7 +107,7 @@ export function DataTable<TData, TValue>({
 
       {/* Table */}
       <div className="rounded-md border overflow-auto">
-        <Table style={{ width: table.getTotalSize() }}>
+        <Table style={{ width: '100%', tableLayout: 'fixed' }}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -116,7 +116,6 @@ export function DataTable<TData, TValue>({
                     <TableHead
                       key={header.id}
                       style={{
-                        width: header.getSize(),
                         position: 'relative',
                       }}
                     >
@@ -156,9 +155,6 @@ export function DataTable<TData, TValue>({
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      style={{
-                        width: cell.column.getSize(),
-                      }}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
