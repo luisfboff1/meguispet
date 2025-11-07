@@ -129,6 +129,14 @@ export interface ItemVenda {
   preco_unitario: number
   subtotal: number
   produto?: Produto
+
+  // Campos de impostos ICMS-ST
+  base_calculo_st?: number
+  icms_proprio?: number
+  icms_st_total?: number
+  icms_st_recolher?: number
+  mva_aplicado?: number
+  aliquota_icms?: number
 }
 
 export interface Fornecedor {
@@ -437,4 +445,116 @@ export interface FinanceiroMetrics {
   lucro: number
   margem: number
   grafico_mensal: FinanceiroMetricMonthly[]
+}
+
+// ============================================================================
+// TIPOS PARA SISTEMA DE ICMS-ST
+// ============================================================================
+
+export interface TabelaMva {
+  id: string // UUID
+  uf: string // 'SP', 'RJ', etc
+  ncm: string // '2309'
+  descricao: string | null
+  aliquota_interna: number | null // 0.18 (18%)
+  aliquota_fundo: number | null // 0.02 (2%)
+  aliquota_efetiva: number | null // 0.20 (20%)
+  mva: number | null // 0.7304 (73,04%)
+  sujeito_st: boolean
+  ativo: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface TabelaMvaForm {
+  uf: string
+  ncm: string
+  descricao?: string
+  aliquota_interna?: number
+  aliquota_fundo?: number
+  aliquota_efetiva?: number
+  mva?: number
+  sujeito_st: boolean
+  ativo: boolean
+}
+
+export interface ImpostoProduto {
+  id: string // UUID
+  produto_id: number
+  ncm: string | null
+  cest: string | null
+  origem_mercadoria: number // 0=Nacional, 1=Estrangeira
+  uf_destino: string // 'SP'
+  tabela_mva_id: string | null // UUID
+  mva_manual: number | null
+  aliquota_icms_manual: number | null
+  frete_padrao: number
+  outras_despesas: number
+  ativo: boolean
+  created_at: string
+  updated_at: string
+
+  // Relações
+  tabela_mva?: TabelaMva | null
+  produto?: Produto
+}
+
+export interface ImpostoProdutoForm {
+  produto_id: number
+  ncm?: string
+  cest?: string
+  origem_mercadoria: number
+  uf_destino: string
+  tabela_mva_id?: string | null
+  mva_manual?: number | null
+  aliquota_icms_manual?: number | null
+  frete_padrao: number
+  outras_despesas: number
+  ativo: boolean
+}
+
+export interface VendaImposto {
+  id: string // UUID
+  venda_id: number
+  valor_produtos: number
+  valor_frete: number
+  outras_despesas: number
+  total_base_calculo_st: number
+  total_icms_proprio: number
+  total_icms_st: number
+  total_icms_recolher: number
+  exibir_no_pdf: boolean
+  exibir_detalhamento: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface VendaImpostoForm {
+  venda_id: number
+  valor_produtos: number
+  valor_frete: number
+  outras_despesas: number
+  total_base_calculo_st: number
+  total_icms_proprio: number
+  total_icms_st: number
+  total_icms_recolher: number
+  exibir_no_pdf: boolean
+  exibir_detalhamento: boolean
+}
+
+export interface CalculoImpostoInput {
+  valor_mercadoria: number
+  frete: number
+  outras_despesas: number
+  mva: number // Ex: 0.40 (40%)
+  aliquota_icms: number // Ex: 0.18 (18%)
+}
+
+export interface CalculoImpostoResult {
+  base_calculo_st: number
+  icms_proprio: number
+  icms_st_total: number
+  icms_st_recolher: number
+  mva_aplicado: number
+  aliquota_icms: number
 }
