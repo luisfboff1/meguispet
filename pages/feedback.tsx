@@ -9,9 +9,15 @@ import { feedbackService } from '@/services/feedbackService'
 import type { FeedbackTicket, FeedbackStatus, FeedbackTicketForm } from '@/types'
 
 export default function FeedbackPage() {
+  console.log('[FEEDBACK PAGE] Component rendering...')
+  
   const { toast } = useToast()
   const { open: openModal } = useModal()
   const { user } = useAuth()
+  
+  console.log('[FEEDBACK PAGE] user from useAuth:', user)
+  console.log('[FEEDBACK PAGE] user?.role:', user?.role)
+  
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [tickets, setTickets] = useState<Record<FeedbackStatus, FeedbackTicket[]>>({
@@ -24,13 +30,15 @@ export default function FeedbackPage() {
 
   const isAdmin = user?.role === 'admin'
   
+  console.log('[FEEDBACK PAGE] isAdmin calculated:', isAdmin)
+  
   // Debug logging
   useEffect(() => {
-    console.log('=== FEEDBACK PAGE DEBUG ===')
-    console.log('User object:', user)
+    console.log('===== FEEDBACK PAGE useEffect DEBUG =====')
+    console.log('User object:', JSON.stringify(user, null, 2))
     console.log('User role:', user?.role)
     console.log('isAdmin:', isAdmin)
-    console.log('========================')
+    console.log('=========================================')
   }, [user, isAdmin])
 
   const loadTickets = async () => {
