@@ -88,7 +88,7 @@ export default function KanbanBoard({
     })
   }
 
-  const handleDragStart = (e: React.DragEvent, ticket: FeedbackTicket) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, ticket: FeedbackTicket) => {
     if (!isAdmin) {
       e.preventDefault()
       return
@@ -121,14 +121,10 @@ export default function KanbanBoard({
     const hasComments = (ticket.comentarios?.length || 0) > 0
 
     return (
-      <motion.div
+      <div
         key={ticket.id}
-        layout
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
         draggable={isAdmin}
-        onDragStart={(e) => handleDragStart(e as any, ticket)}
+        onDragStart={(e) => handleDragStart(e, ticket)}
         onClick={() => onTicketClick?.(ticket)}
         className={cn(
           'group cursor-pointer rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md dark:bg-slate-900',
@@ -188,7 +184,7 @@ export default function KanbanBoard({
         <div className="mt-2 text-xs text-slate-400">
           {formatDate(ticket.created_at)}
         </div>
-      </motion.div>
+      </div>
     )
   }
 
