@@ -164,12 +164,10 @@ export default function UsuariosPage() {
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Permissões</p>
               <div className="flex flex-wrap gap-2">
-                {Object.entries(usuario.permissoes).map(([key, value]) => (
-                  value && (
-                    <span key={key} className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                      {key}
-                    </span>
-                  )
+                {Object.entries(usuario.permissoes).filter(([_, value]) => value).map(([key]) => (
+                  <span key={key} className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                    {key}
+                  </span>
                 ))}
               </div>
             </div>
