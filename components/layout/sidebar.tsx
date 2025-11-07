@@ -167,24 +167,6 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
               )
             })}
           </div>
-
-          {!isCollapsed && (
-            <div className="rounded-3xl border border-white/40 bg-white/70 p-4 shadow-md shadow-amber-500/10 backdrop-blur-sm dark:border-slate-800/70 dark:bg-slate-950/60">
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-amber-500/10 p-3 text-amber-500">
-                  <Truck size={20} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-amber-600/80 dark:text-amber-300/90">
-                    Insights rápidos
-                  </p>
-                  <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Organização de estoque em tempo real
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

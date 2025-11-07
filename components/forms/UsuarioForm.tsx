@@ -25,22 +25,30 @@ interface UsuarioFormProps {
   onSubmit: (data: UsuarioFormData) => Promise<void> | void
   onCancel: () => void
   loading?: boolean
+  initialData?: {
+    id?: number
+    nome: string
+    email: string
+    role: 'admin' | 'convidado'
+    permissoes?: Record<string, unknown>
+  }
+  mode?: 'create' | 'edit'
 }
 
-export default function UsuarioForm({ onSubmit, onCancel, loading = false }: UsuarioFormProps) {
+export default function UsuarioForm({ onSubmit, onCancel, loading = false, initialData, mode = 'create' }: UsuarioFormProps) {
   const [formData, setFormData] = useState<UsuarioFormData>({
-    nome: '',
-    email: '',
+    nome: initialData?.nome || '',
+    email: initialData?.email || '',
     password: '',
-    role: 'convidado',
+    role: initialData?.role || 'convidado',
     permissoes: {
-      clientes: false,
-      produtos: false,
-      vendas: false,
-      estoque: false,
-      financeiro: false,
-      relatorios: false,
-      configuracoes: false,
+      clientes: (initialData?.permissoes?.clientes as boolean) || false,
+      produtos: (initialData?.permissoes?.produtos as boolean) || false,
+      vendas: (initialData?.permissoes?.vendas as boolean) || false,
+      estoque: (initialData?.permissoes?.estoque as boolean) || false,
+      financeiro: (initialData?.permissoes?.financeiro as boolean) || false,
+      relatorios: (initialData?.permissoes?.relatorios as boolean) || false,
+      configuracoes: (initialData?.permissoes?.configuracoes as boolean) || false,
     },
   })
 
@@ -59,9 +67,15 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false }: Usu
       newErrors.email = 'Email inválido'
     }
 
-    if (!formData.password) {
-      newErrors.password = 'Senha é obrigatória'
-    } else if (formData.password.length < 6) {
+    // Password is required for create mode, optional for edit mode
+    if (mode === 'create') {
+      if (!formData.password) {
+        newErrors.password = 'Senha é obrigatória'
+      } else if (formData.password.length < 6) {
+        newErrors.password = 'A senha deve ter pelo menos 6 caracteres'
+      }
+    } else if (mode === 'edit' && formData.password && formData.password.length < 6) {
+      // For edit mode, password is optional but if provided must be at least 6 characters
       newErrors.password = 'A senha deve ter pelo menos 6 caracteres'
     }
 
@@ -122,9 +136,14 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false }: Usu
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Novo Usuário</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {mode === 'edit' ? 'Editar Usuário' : 'Novo Usuário'}
+        </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          Crie um novo usuário e defina suas permissões de acesso
+          {mode === 'edit' 
+            ? 'Atualize as informações do usuário e suas permissões de acesso'
+            : 'Crie um novo usuário e defina suas permissões de acesso'
+          }
         </p>
       </div>
 
@@ -169,18 +188,23 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false }: Usu
 
           <div className="space-y-2">
             <Label htmlFor="password">
-              Senha <span className="text-red-500">*</span>
+              Senha {mode === 'create' && <span className="text-red-500">*</span>}
             </Label>
             <Input
               id="password"
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Mínimo 6 caracteres"
+              placeholder={mode === 'edit' ? 'Deixe em branco para manter a senha atual' : 'Mínimo 6 caracteres'}
               className={errors.password ? 'border-red-500' : ''}
               disabled={loading}
             />
             {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+            {mode === 'edit' && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Deixe em branco para manter a senha atual
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -273,7 +297,10 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false }: Usu
         </Button>
         <Button type="submit" disabled={loading} className="bg-meguispet-primary hover:bg-meguispet-primary/90">
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {loading ? 'Criando...' : 'Criar Usuário'}
+          {loading 
+            ? (mode === 'edit' ? 'Salvando...' : 'Criando...')
+            : (mode === 'edit' ? 'Salvar Alterações' : 'Criar Usuário')
+          }
         </Button>
       </div>
     </form>
