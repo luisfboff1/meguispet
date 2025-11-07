@@ -159,6 +159,30 @@ export default function FeedbackPage() {
       return
     }
 
+    // Optimistic update - update UI immediately
+    setTickets((prevTickets) => {
+      const newTickets = { ...prevTickets }
+      let movedTicket: FeedbackTicket | null = null
+
+      // Find and remove the ticket from its current status
+      for (const status in newTickets) {
+        const index = newTickets[status as FeedbackStatus].findIndex(t => t.id === ticketId)
+        if (index !== -1) {
+          movedTicket = { ...newTickets[status as FeedbackStatus][index], status: newStatus }
+          newTickets[status as FeedbackStatus] = newTickets[status as FeedbackStatus].filter(t => t.id !== ticketId)
+          break
+        }
+      }
+
+      // Add to new status column
+      if (movedTicket) {
+        newTickets[newStatus] = [...newTickets[newStatus], movedTicket]
+      }
+
+      return newTickets
+    })
+
+    // Persist to database
     const result = await feedbackService.update(ticketId, { status: newStatus }, user.id)
 
     if (result.success) {
@@ -166,6 +190,7 @@ export default function FeedbackPage() {
         title: 'Status atualizado',
         description: 'O status do ticket foi atualizado com sucesso'
       })
+      // Reload to ensure we have the latest data
       await loadTickets()
     } else {
       toast({
@@ -173,6 +198,8 @@ export default function FeedbackPage() {
         description: result.error || 'Erro desconhecido',
         variant: 'destructive'
       })
+      // Revert optimistic update on error
+      await loadTickets()
     }
   }
 
