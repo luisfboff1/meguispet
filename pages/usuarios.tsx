@@ -181,11 +181,77 @@ export default function UsuariosPage() {
   }
 
   const handleEditUser = async (usuario: Usuario) => {
-    // TODO: Implement edit user modal with existing data
-    toast({
-      title: 'Em desenvolvimento',
-      description: 'A funcionalidade de edição de usuários está em desenvolvimento',
-      variant: 'default',
+    openModal('usuario', {
+      mode: 'edit',
+      initialData: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        role: usuario.role,
+        permissoes: usuario.permissoes,
+      },
+      onSubmit: async (userData: {
+        nome: string
+        email: string
+        password: string
+        role: 'admin' | 'convidado'
+        permissoes: Record<string, boolean>
+      }) => {
+        try {
+          // Prepare update data - only include password if it was changed
+          const updateData: Partial<Usuario> = {
+            nome: userData.nome,
+            email: userData.email,
+            role: userData.role,
+            permissoes: userData.permissoes as Record<string, unknown>,
+          }
+
+          // Only include password if it was provided
+          if (userData.password && userData.password.trim()) {
+            // Note: The API should hash the password on the backend
+            updateData.password_hash = userData.password
+          }
+
+          const response = await usuariosService.update(usuario.id, updateData)
+
+          if (response.success) {
+            // Close modal first
+            closeModal()
+
+            // Show success toast
+            toast({
+              title: 'Sucesso',
+              description: 'Usuário atualizado com sucesso',
+              variant: 'default',
+            })
+
+            // Reload the usuarios list
+            await loadUsuarios()
+          } else {
+            toast({
+              title: 'Erro',
+              description: response.message || 'Erro ao atualizar usuário',
+              variant: 'destructive',
+            })
+          }
+        } catch (error) {
+          console.error('Erro ao atualizar usuário:', error)
+
+          let errorMessage = 'Erro ao atualizar usuário'
+          if (error instanceof Error) {
+            errorMessage = error.message
+          } else if (error && typeof error === 'object' && 'response' in error) {
+            const response = (error as { response?: { data?: { message?: string } } }).response
+            errorMessage = response?.data?.message || errorMessage
+          }
+
+          toast({
+            title: 'Erro',
+            description: errorMessage,
+            variant: 'destructive',
+          })
+        }
+      },
     })
   }
 

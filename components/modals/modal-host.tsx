@@ -61,6 +61,14 @@ interface UsuarioModalPayload {
   }) => Promise<void> | void
   onCancel?: () => void
   loading?: boolean
+  initialData?: {
+    id?: number
+    nome: string
+    email: string
+    role: 'admin' | 'convidado'
+    permissoes?: Record<string, unknown>
+  }
+  mode?: 'create' | 'edit'
 }
 
 interface FeedbackModalPayload {
@@ -275,6 +283,8 @@ export function ModalHost() {
               close()
             }}
             loading={payload.loading}
+            initialData={payload.initialData}
+            mode={payload.mode}
           />
         )
       }
