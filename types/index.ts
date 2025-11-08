@@ -188,12 +188,49 @@ export interface ItemMovimentacao {
   produto?: Produto
 }
 
+export interface CategoriaFinanceira {
+  id: number
+  nome: string
+  tipo: 'receita' | 'despesa' | 'ambos'
+  cor?: string
+  icone?: string
+  descricao?: string
+  ativo: boolean
+  ordem: number
+  created_at: string
+  updated_at: string
+}
+
+export interface TransacaoRecorrente {
+  id: number
+  tipo: 'receita' | 'despesa'
+  categoria_id?: number
+  categoria?: CategoriaFinanceira
+  descricao: string
+  valor: number
+  frequencia: 'diaria' | 'semanal' | 'quinzenal' | 'mensal' | 'bimestral' | 'trimestral' | 'semestral' | 'anual'
+  dia_vencimento?: number
+  data_inicio: string
+  data_fim?: string
+  proxima_geracao: string
+  observacoes?: string
+  ativo: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface TransacaoFinanceira {
   id: number
   tipo: 'receita' | 'despesa'
   valor: number
   descricao: string
-  categoria: string
+  categoria: string // Legacy text-based category
+  categoria_id?: number
+  categoria_detalhe?: CategoriaFinanceira
+  venda_id?: number
+  venda?: Venda
+  transacao_recorrente_id?: number
+  transacao_recorrente?: TransacaoRecorrente
   data_transacao: string
   observacoes?: string
   created_at: string
@@ -353,9 +390,34 @@ export interface TransacaoForm {
   tipo: 'receita' | 'despesa'
   valor: number
   descricao: string
-  categoria: string
+  categoria?: string // Legacy support
+  categoria_id?: number
+  venda_id?: number
   data_transacao: string
   observacoes?: string
+}
+
+export interface CategoriaFinanceiraForm {
+  nome: string
+  tipo: 'receita' | 'despesa' | 'ambos'
+  cor?: string
+  icone?: string
+  descricao?: string
+  ativo?: boolean
+  ordem?: number
+}
+
+export interface TransacaoRecorrenteForm {
+  tipo: 'receita' | 'despesa'
+  categoria_id?: number
+  descricao: string
+  valor: number
+  frequencia: 'diaria' | 'semanal' | 'quinzenal' | 'mensal' | 'bimestral' | 'trimestral' | 'semestral' | 'anual'
+  dia_vencimento?: number
+  data_inicio: string
+  data_fim?: string
+  observacoes?: string
+  ativo?: boolean
 }
 
 export interface VendedorForm {
