@@ -3,9 +3,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Package } from 'lucide-react'
-import type { Produto, ProdutoEstoqueInput, ProdutoForm as ProdutoFormValues } from '@/types'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Loader2, Package, FileText } from 'lucide-react'
+import type { Produto, ProdutoEstoqueInput, ProdutoForm as ProdutoFormValues, ImpostoProduto, ImpostoProdutoForm as ImpostoProdutoFormValues } from '@/types'
 import ProdutoEstoqueDistribution from './ProdutoEstoqueDistribution'
+import ImpostoProdutoForm from './ImpostoProdutoForm'
+import { impostosService } from '@/services/impostosService'
 
 interface ProdutoFormProps {
   produto?: Produto
@@ -15,6 +18,7 @@ interface ProdutoFormProps {
 }
 
 export default function ProdutoForm({ produto, onSubmit, onCancel, loading = false }: ProdutoFormProps) {
+  const [activeTab, setActiveTab] = useState('dados-basicos')
   const [formData, setFormData] = useState<ProdutoFormValues>({
     nome: produto?.nome || '',
     descricao: produto?.descricao || '',
@@ -34,6 +38,11 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
     })) ?? []
   )
 
+  const [impostoProduto, setImpostoProduto] = useState<ImpostoProduto | null>(null)
+  const [impostoFormData, setImpostoFormData] = useState<ImpostoProdutoFormValues | null>(null)
+  const [loadingImposto, setLoadingImposto] = useState(false)
+  const [savingImposto, setSavingImposto] = useState(false)
+
   useEffect(() => {
     setEstoquesDistribuidos(
       produto?.estoques?.map((item) => ({
@@ -42,6 +51,24 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
       })) ?? []
     )
   }, [produto])
+
+  useEffect(() => {
+    if (produto?.id) {
+      loadImpostoConfig(produto.id)
+    }
+  }, [produto?.id])
+
+  const loadImpostoConfig = async (produtoId: number) => {
+    setLoadingImposto(true)
+    try {
+      const config = await impostosService.getByProdutoId(produtoId)
+      setImpostoProduto(config)
+    } catch (error) {
+      console.error('[ProdutoForm] Error loading imposto config:', error)
+    } finally {
+      setLoadingImposto(false)
+    }
+  }
 
   const totalEstoque = useMemo(
     () =>
@@ -53,7 +80,11 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
     setFormData(prev => ({ ...prev, estoque: totalEstoque }))
   }, [totalEstoque])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImpostoSubmit = async (impostoData: ImpostoProdutoFormValues) => {
+    setImpostoFormData(impostoData)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Validação: exigir ao menos uma quantidade em estoques distribuidos
     if (!estoquesDistribuidos || estoquesDistribuidos.length === 0 || totalEstoque <= 0) {
@@ -68,11 +99,29 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
     }
     // Debug: print payload before sending
     console.log('[produto-form] submit payload', payload)
-    onSubmit(payload)
+
+    try {
+      await onSubmit(payload)
+
+      if (impostoFormData && produto?.id) {
+        setSavingImposto(true)
+        try {
+          await impostosService.upsert(impostoFormData)
+          console.log('[produto-form] Imposto config saved successfully')
+        } catch (error) {
+          console.error('[produto-form] Error saving imposto config:', error)
+          window.alert('Produto salvo, mas houve erro ao salvar configuração fiscal.')
+        } finally {
+          setSavingImposto(false)
+        }
+      }
+    } catch (error) {
+      console.error('[produto-form] Error saving product:', error)
+    }
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Package className="mr-2 h-5 w-5" />
@@ -80,7 +129,21 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="dados-basicos" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Dados Básicos
+            </TabsTrigger>
+            <TabsTrigger value="configuracao-fiscal" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Configuração Fiscal
+              {impostoFormData && <span className="ml-1 text-xs text-green-600">●</span>}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados-basicos">
+            <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nome do Produto */}
           <div>
             <Label htmlFor="nome">Nome do Produto *</Label>
@@ -214,8 +277,8 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? (
+            <Button type="submit" disabled={loading || savingImposto}>
+              {loading || savingImposto ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Salvando...
@@ -226,6 +289,44 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
             </Button>
           </div>
         </form>
+          </TabsContent>
+
+          <TabsContent value="configuracao-fiscal">
+            {produto?.id ? (
+              loadingImposto ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  <span className="ml-2 text-gray-500">Carregando configuração fiscal...</span>
+                </div>
+              ) : (
+                <ImpostoProdutoForm
+                  produtoId={produto.id}
+                  produtoNome={formData.nome}
+                  imposto={impostoProduto || undefined}
+                  onSubmit={handleImpostoSubmit}
+                  onCancel={() => setActiveTab('dados-basicos')}
+                  loading={savingImposto}
+                />
+              )
+            ) : (
+              <div className="p-6 text-center text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                <p className="font-medium">Salve o produto primeiro</p>
+                <p className="text-sm mt-1">
+                  A configuração fiscal estará disponível após salvar os dados básicos do produto.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab('dados-basicos')}
+                  className="mt-4"
+                >
+                  Voltar para Dados Básicos
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   )

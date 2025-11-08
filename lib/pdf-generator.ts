@@ -25,6 +25,7 @@ export interface PDFGeneratorOptions {
   incluirDetalhesCliente?: boolean
   incluirEnderecoCompleto?: boolean
   incluirImpostos?: boolean
+  incluirImpostosICMSST?: boolean
   observacoesAdicionais?: string
   itensOrdenados?: ItemVenda[]
 }
@@ -38,12 +39,18 @@ export const generateOrderPDF = async (
   nomeEmpresa = 'MEGUISPET',
   options: PDFGeneratorOptions = {}
 ) => {
+  // Verificar se a venda tem impostos ICMS-ST calculados
+  const hasICMSST = venda.itens?.some(item =>
+    item.icms_st_recolher != null && item.icms_st_recolher > 0
+  ) || false
+
   // Opções padrão
   const opts = {
     incluirObservacoes: true,
     incluirDetalhesCliente: true,
     incluirEnderecoCompleto: true,
     incluirImpostos: venda.imposto_percentual ? venda.imposto_percentual > 0 : false,
+    incluirImpostosICMSST: hasICMSST,
     observacoesAdicionais: '',
     ...options
   }
@@ -317,7 +324,73 @@ export const generateOrderPDF = async (
     if (opts.observacoesAdicionais) {
       const obsAdicionaisLines = doc.splitTextToSize(opts.observacoesAdicionais, pageWidth - 2 * margin)
       doc.text(obsAdicionaisLines, margin, yPos)
+      yPos += (obsAdicionaisLines.length * 4) + 3
     }
+  }
+
+  // ==================== ICMS-ST ====================
+  if (opts.incluirImpostosICMSST && hasICMSST) {
+    // Calcular totais de ICMS-ST
+    const totaisICMSST = {
+      total_base_calculo_st: itensParaPDF.reduce((sum, item) => sum + (item.base_calculo_st || 0), 0),
+      total_icms_proprio: itensParaPDF.reduce((sum, item) => sum + (item.icms_proprio || 0), 0),
+      total_icms_st_total: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_total || 0), 0),
+      total_icms_st_recolher: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0)
+    }
+
+    // Adicionar espaçamento
+    yPos += 3
+
+    // Linha separadora
+    doc.setLineWidth(0.3)
+    doc.line(margin, yPos, pageWidth - margin, yPos)
+    yPos += 6
+
+    // Título da seção
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.text('INFORMAÇÕES FISCAIS - ICMS-ST', margin, yPos)
+    yPos += 5
+
+    // Criar tabela com os totalizadores
+    const icmsTableData = [
+      ['Base de Cálculo ST', `R$ ${totaisICMSST.total_base_calculo_st.toFixed(2).replace('.', ',')}`],
+      ['ICMS Próprio', `R$ ${totaisICMSST.total_icms_proprio.toFixed(2).replace('.', ',')}`],
+      ['ICMS-ST Total', `R$ ${totaisICMSST.total_icms_st_total.toFixed(2).replace('.', ',')}`],
+      ['ICMS-ST a Recolher', `R$ ${totaisICMSST.total_icms_st_recolher.toFixed(2).replace('.', ',')}`]
+    ]
+
+    autoTable(doc, {
+      startY: yPos,
+      body: icmsTableData,
+      theme: 'plain',
+      styles: {
+        fontSize: 9,
+        cellPadding: 2,
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0],
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto', fontStyle: 'bold' },
+        1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+      },
+      didDrawPage: (data) => {
+        yPos = data.cursor?.y || yPos
+      }
+    })
+
+    yPos += 3
+
+    // Nota explicativa
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'italic')
+    const notaText = 'Nota: Os valores de ICMS-ST são para controle fiscal e não estão incluídos no total da venda.'
+    const notaLines = doc.splitTextToSize(notaText, pageWidth - 2 * margin)
+    doc.text(notaLines, margin, yPos)
+    yPos += (notaLines.length * 3) + 5
   }
 
   // ==================== RODAPÉ ====================

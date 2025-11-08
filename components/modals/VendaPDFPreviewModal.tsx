@@ -11,6 +11,7 @@ export interface PDFPreviewOptions {
   incluirDetalhesCliente: boolean
   incluirEnderecoCompleto: boolean
   incluirImpostos: boolean
+  incluirImpostosICMSST: boolean
   observacoesAdicionais: string
   itensOrdenados?: ItemVenda[]
 }
@@ -31,11 +32,17 @@ export default function VendaPDFPreviewModal({
   onClose,
   onConfirmDownload
 }: VendaPDFPreviewModalProps) {
+  // Verificar se a venda tem impostos ICMS-ST calculados
+  const hasICMSST = venda?.itens?.some(item =>
+    item.icms_st_recolher != null && item.icms_st_recolher > 0
+  ) || false
+
   const [options, setOptions] = useState<PDFPreviewOptions>({
     incluirObservacoes: true,
     incluirDetalhesCliente: true,
     incluirEnderecoCompleto: true,
     incluirImpostos: venda?.imposto_percentual ? venda.imposto_percentual > 0 : false,
+    incluirImpostosICMSST: hasICMSST,
     observacoesAdicionais: ''
   })
 
@@ -72,6 +79,14 @@ export default function VendaPDFPreviewModal({
   const totalFinal = options.incluirImpostos && hasImposto
     ? totalProdutos - valorDesconto + ((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100
     : totalProdutos - valorDesconto
+
+  // Calcular totais de ICMS-ST
+  const totaisICMSST = hasICMSST ? {
+    total_base_calculo_st: itensOrdenados.reduce((sum, item) => sum + (item.base_calculo_st || 0), 0),
+    total_icms_proprio: itensOrdenados.reduce((sum, item) => sum + (item.icms_proprio || 0), 0),
+    total_icms_st_total: itensOrdenados.reduce((sum, item) => sum + (item.icms_st_total || 0), 0),
+    total_icms_st_recolher: itensOrdenados.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0)
+  } : null
 
   // Função de ordenação
   const handleSort = (field: SortField) => {
@@ -364,6 +379,50 @@ export default function VendaPDFPreviewModal({
                       </div>
                     </div>
                   )}
+
+                  {/* ICMS-ST */}
+                  {options.incluirImpostosICMSST && hasICMSST && totaisICMSST && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        INFORMAÇÕES FISCAIS - ICMS-ST
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-xs text-blue-600 font-medium uppercase mb-1">Base de Cálculo ST</p>
+                          <p className="text-lg font-bold text-blue-700">
+                            {formatCurrency(totaisICMSST.total_base_calculo_st)}
+                          </p>
+                        </div>
+
+                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                          <p className="text-xs text-purple-600 font-medium uppercase mb-1">ICMS Próprio</p>
+                          <p className="text-lg font-bold text-purple-700">
+                            {formatCurrency(totaisICMSST.total_icms_proprio)}
+                          </p>
+                        </div>
+
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                          <p className="text-xs text-orange-600 font-medium uppercase mb-1">ICMS-ST Total</p>
+                          <p className="text-lg font-bold text-orange-700">
+                            {formatCurrency(totaisICMSST.total_icms_st_total)}
+                          </p>
+                        </div>
+
+                        <div className="bg-green-50 border border-green-300 rounded-lg p-3">
+                          <p className="text-xs text-green-600 font-medium uppercase mb-1">ICMS-ST a Recolher</p>
+                          <p className="text-xl font-bold text-green-700">
+                            {formatCurrency(totaisICMSST.total_icms_st_recolher)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                        <p className="text-xs text-blue-900">
+                          <strong>Nota:</strong> Os valores de ICMS-ST são para controle fiscal e não estão incluídos no total da venda.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -410,6 +469,20 @@ export default function VendaPDFPreviewModal({
                         id="incluir-impostos"
                         checked={options.incluirImpostos}
                         onCheckedChange={(checked) => setOptions({ ...options, incluirImpostos: checked })}
+                      />
+                    </div>
+                  )}
+
+                  {/* Switch: ICMS-ST */}
+                  {hasICMSST && (
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="incluir-icms-st" className="text-sm cursor-pointer">
+                        Impostos ICMS-ST
+                      </Label>
+                      <Switch
+                        id="incluir-icms-st"
+                        checked={options.incluirImpostosICMSST}
+                        onCheckedChange={(checked) => setOptions({ ...options, incluirImpostosICMSST: checked })}
                       />
                     </div>
                   )}

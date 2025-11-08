@@ -5,7 +5,9 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Plus, Trash2, ShoppingCart, AlertTriangle } from 'lucide-react'
 import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService } from '@/services/api'
+import { vendasImpostosService } from '@/services/vendasImpostosService'
 import AlertDialog from '@/components/ui/AlertDialog'
+import VendaImpostosCard, { VendaImpostosResult } from '@/components/vendas/VendaImpostosCard'
 import type {
   Venda,
   Cliente,
@@ -97,6 +99,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const [estoques, setEstoques] = useState<Estoque[]>([])
   const [loadingData, setLoadingData] = useState(false)
   const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
+  const [impostos, setImpostos] = useState<VendaImpostosResult | null>(null)
 
   useEffect(() => {
     if (!venda) {
@@ -305,19 +308,49 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       forma_pagamento: formaSelecionada.nome,
       prazo_pagamento: formData.prazo_pagamento,
       imposto_percentual: formData.imposto_percentual,
-      itens: itens.map(item => ({
-        produto_id: item.produto_id,
-        quantidade: item.quantidade,
-        preco_unitario: item.preco_unitario,
-        subtotal: item.quantidade * item.preco_unitario
-      }))
+      itens: itens.map((item, index) => {
+        const itemData: VendaItemInput = {
+          produto_id: item.produto_id,
+          quantidade: item.quantidade,
+          preco_unitario: item.preco_unitario,
+          subtotal: item.quantidade * item.preco_unitario
+        }
+
+        // Se impostos estiverem habilitados, incluir valores calculados
+        if (impostos && impostos.enabled && impostos.itens[index]) {
+          const impostoItem = impostos.itens[index]
+          itemData.base_calculo_st = impostoItem.base_calculo_st
+          itemData.icms_proprio = impostoItem.icms_proprio
+          itemData.icms_st_total = impostoItem.icms_st_total
+          itemData.icms_st_recolher = impostoItem.icms_st_recolher
+          itemData.mva_aplicado = impostoItem.mva_aplicado
+          itemData.aliquota_icms = impostoItem.aliquota_icms
+        }
+
+        return itemData
+      })
     }
 
     if (process.env.NODE_ENV === 'development') {
       console.log('[VendaForm] submit payload', vendaData)
+      console.log('[VendaForm] impostos', impostos)
     }
 
-    onSubmit(vendaData)
+    // Passar os totais de impostos como metadata adicional se necessário
+    // Isso será salvo em vendas_impostos após a venda ser criada
+    const vendaDataComImpostos = {
+      ...vendaData,
+      _impostos_totais: impostos ? {
+        total_base_calculo_st: impostos.total_base_calculo_st,
+        total_icms_proprio: impostos.total_icms_proprio,
+        total_icms_st_total: impostos.total_icms_st_total,
+        total_icms_st_recolher: impostos.total_icms_st_recolher,
+        exibir_no_pdf: false,
+        exibir_detalhamento: false
+      } : null
+    }
+
+    onSubmit(vendaDataComImpostos as VendaFormValues)
   }
 
   if (loadingData) {
@@ -559,6 +592,19 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               </div>
             </div>
           </div>
+
+          {/* Componente de Impostos - Modular e Opcional */}
+          <VendaImpostosCard
+            itens={itens.map(item => ({
+              produto_id: item.produto_id,
+              produto_nome: item.produto_nome,
+              quantidade: item.quantidade,
+              preco_unitario: item.preco_unitario,
+              subtotal: item.subtotal
+            }))}
+            enabled={false}
+            onChange={(result) => setImpostos(result)}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

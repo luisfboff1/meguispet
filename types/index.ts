@@ -289,6 +289,14 @@ export interface VendaItemInput {
   quantidade: number
   preco_unitario: number
   subtotal: number
+
+  // Campos opcionais de impostos ICMS-ST
+  base_calculo_st?: number
+  icms_proprio?: number
+  icms_st_total?: number
+  icms_st_recolher?: number
+  mva_aplicado?: number
+  aliquota_icms?: number
 }
 
 export interface VendaForm {

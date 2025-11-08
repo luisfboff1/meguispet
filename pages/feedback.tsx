@@ -258,14 +258,14 @@ export default function FeedbackPage() {
       )}
 
       {/* Admin Banner */}
-      {isAdmin && (
+      {/* {isAdmin && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
           <p className="text-sm text-amber-800 dark:text-amber-300">
             🎯 Como administrador, você pode arrastar os tickets entre as colunas para
             atualizar o status.
           </p>
         </div>
-      )}
+      )} */}
 
       {/* Kanban Board */}
       <KanbanBoard
