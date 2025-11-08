@@ -1,6 +1,6 @@
 # 🚀 MeguisPet Next.js - Sistema de Gestão
 
-Sistema de gestão profissional com **Next.js + TypeScript + Shadcn/ui** para hospedagem no Hostinger.
+Sistema de gestão profissional com **Next.js + TypeScript + Shadcn/ui** hospedado na **Vercel**.
 
 Agora com **animações suaves em todas as seções**, **modais ainda mais acessíveis** e **otimizações de performance** para carregamento ultra-rápido.
 
@@ -13,74 +13,41 @@ Agora com **animações suaves em todas as seções**, **modais ainda mais acess
 - ✅ **Shadcn/ui Components** - Componentes modernos e acessíveis
 - ✅ **Animações Framer Motion** - Cards animam automaticamente respeitando *prefers-reduced-motion*
 - ✅ **Modais Acessíveis** - Foco preso, retorno ao elemento anterior e tecla *Esc* out-of-the-box
-- ✅ **SSG para Hostinger** - Export estático compatível
-- ✅ **Deploy Automático** - GitHub Actions para Hostinger
-✅ **APIs Node.js (Next API routes)** - O projeto agora usa rotas de API em Node/Next.js
-│      BACKEND (Node + Postgres/DB)   │
-├─────────────────────────────────────┤
-│   Rotas de API em Next.js (Node)    │
-- O projeto não depende de APIs PHP; use rotas de API Node ou um backend separado
-# Build otimizado (SSG)
-│      FRONTEND (Next.js SSG)         │
--- Buildar Next.js (SSG) e publicar artefatos
-│  Shadcn/ui + Tailwind + TypeScript  │
-└─────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────┐
-│      BACKEND (PHP + MySQL)          │
-├─────────────────────────────────────┤
-│   Suas APIs existentes mantidas     │
-└─────────────────────────────────────┘
-```
+- ✅ **Deploy Vercel** - SSR otimizado com Edge Middleware
+- ✅ **Supabase Backend** - PostgreSQL com autenticação JWT e real-time
 
-## 🚀 Deploy Automático
+## 🚀 Deploy na Vercel
 
-### 1. Configure os Secrets no GitHub
+### 1. Configure as Variáveis de Ambiente na Vercel
+
+Acesse o dashboard da Vercel e configure:
 
 ```bash
-# Deploy
-FTP_SERVER=ftp.seudominio.com
-FTP_USERNAME=seu_usuario
-FTP_PASSWORD=sua_senha
-
-# URLs
-NEXT_PUBLIC_API_URL=/api
-API_BASE_URL=https://gestao.meguispet.com/api
-NEXT_PRIVATE_API_PROXY_TARGET=https://gestao.meguispet.com/api
-
-# Supabase (for authentication and database)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+# Supabase (obrigatório)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Banco (para queries legadas, migrar para Supabase)
-DB_HOST=localhost
-DB_NAME=u123456_meguispet  
-DB_USER=u123456_admin
-DB_PASSWORD=sua_senha
-
-# SMTP (para notificações)
-SMTP_HOST=smtp.hostinger.com
-SMTP_PORT=587
-# ... etc
+# API (opcional, padrão é /api)
+NEXT_PUBLIC_API_URL=/api
 ```
 
-### 2. Faça o Push
+### 2. Deploy
 
 ```bash
 git add .
-git commit -m "Deploy inicial Next.js"
-git push origin main
+git commit -m "Update feature"
+git push origin master
 ```
 
 ### 3. ✅ Deploy Automático!
 
-O GitHub Actions vai:
-- Instalar dependências
-- Buildar Next.js (SSG)
-- Copiar suas APIs PHP
-- Fazer deploy no Hostinger
+A Vercel automaticamente:
+- Detecta o push no branch `master`
+- Instala dependências com pnpm
+- Executa `pnpm build` (SSR mode)
+- Faz deploy com Edge Middleware ativo
+- URL de produção: `https://gestao.meguispet.com` (ou URL da Vercel)
 
 ## 🧩 Como Usar
 
@@ -168,10 +135,10 @@ To apply the database performance indexes:
 # 3. Execute the SQL
 ```
 
-### 🚀 Scripts Otimizados
+### 🚀 Scripts Disponíveis
 
 ```bash
-# Build otimizado (SSG + cópia da API PHP)
+# Build otimizado (SSR)
 pnpm build
 
 # Build com análise de bundle
@@ -182,28 +149,16 @@ pnpm clean
 pnpm clean:build
 ```
 
-### 🗂️ Export estático e arquivos JSON
-
-Este projeto usa `output: 'export'` no `next.config.js`, gerando HTML estático em `dist/` e, para cada rota, um arquivo JSON em `dist/_next/data/<buildId>/<rota>.json` extraído do `__NEXT_DATA__` do HTML. Exemplos:
-
-- Página: `dist/login/index.html`
-- Dados: `dist/_next/data/<buildId>/login.json`
-
-Observações importantes:
-
-- Páginas sem `getStaticProps` continuam tendo um JSON correspondente (conteúdo deriva do `__NEXT_DATA__`), útil para compatibilidade com clientes que esperam `_next/data`.
-- Como usamos export estático, `getServerSideProps` não é suportado; use `getStaticProps`/client-side fetch.
-- Imagens Next estão com `images.unoptimized = true` para funcionar em hospedagem estática.
-
 ### 👀 Preview local do build
 
-Para servir o resultado estático de `dist/` localmente (sem Node server do Next):
+Para testar o build de produção localmente:
 
 ```bash
-pnpm preview
+pnpm build
+pnpm start
 ```
 
-Isso inicia um servidor estático simples apontando para `dist/`.
+Isso inicia o servidor Next.js em modo produção (SSR) em `http://localhost:3000`.
 
 ### 🎨 Tailwind sem DaisyUI
 
@@ -231,9 +186,10 @@ Isso inicia um servidor estático simples apontando para `dist/`.
 
 ## 🌐 Produção
 
-- **Frontend**: `https://gestao.meguispet.com`
-- **APIs**: `https://gestao.meguispet.com/api`
+- **URL**: `https://gestao.meguispet.com` (Vercel)
+- **Backend**: Supabase (PostgreSQL + Auth)
+- **Edge Middleware**: Proteção de rotas via Vercel Edge Network
 
 ---
 
-**Arquitetura melhorada implementada com sucesso! 🎉**
+**Sistema em produção na Vercel com Supabase! 🎉**
