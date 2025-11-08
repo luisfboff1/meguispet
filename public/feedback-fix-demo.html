@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeguisPet - Feedback Mobile Fix Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-md mx-auto p-4 space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">Feedback Mobile Fix</h1>
+      <p class="text-gray-600">Demonstração da correção do overflow em mobile</p>
+    </div>
+
+    <!-- Before/After Comparison -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-blue-800">Problema Identificado</h3>
+          <div class="mt-2 text-sm text-blue-700">
+            <p>O botão "Criar Feedback" estava saindo da viewport em dispositivos móveis.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solution -->
+    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-green-800">Solução Aplicada</h3>
+          <div class="mt-2 text-sm text-green-700">
+            <ul class="list-disc list-inside space-y-1">
+              <li>Layout flex alterado para flex-col em mobile</li>
+              <li>Botões com largura completa (w-full) em telas pequenas</li>
+              <li>Gap reduzido de 3 para 2 em mobile</li>
+              <li>Padding do container reduzido (p-4 em mobile vs p-6 desktop)</li>
+              <li>Título responsivo (text-2xl mobile vs text-3xl desktop)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo Section: Before -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="bg-red-100 border-b-2 border-red-200 p-3">
+        <h2 class="text-sm font-semibold text-red-800">❌ ANTES (Com overflow)</h2>
+      </div>
+      <div class="p-6 bg-white">
+        <!-- Simulating old layout -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Feedback & Suporte</h1>
+            <p class="mt-1 text-sm text-gray-600">Gerencie bugs e melhorias</p>
+          </div>
+          <div class="flex gap-3">
+            <button class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm whitespace-nowrap">
+              <span>🔄</span>
+              <span>Atualizar</span>
+            </button>
+            <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm whitespace-nowrap">
+              <span>➕</span>
+              <span>Criar Feedback</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="bg-red-50 border-t border-red-200 p-3">
+        <p class="text-xs text-red-700">⚠️ Botões ultrapassam a largura da tela em mobile</p>
+      </div>
+    </div>
+
+    <!-- Demo Section: After -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <div class="bg-green-100 border-b-2 border-green-200 p-3">
+        <h2 class="text-sm font-semibold text-green-800">✅ DEPOIS (Responsivo)</h2>
+      </div>
+      <div class="p-4 bg-white">
+        <!-- Simulating new layout -->
+        <div class="flex flex-col gap-4">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Feedback & Suporte</h1>
+            <p class="mt-1 text-sm text-gray-600">Gerencie bugs e melhorias</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button class="flex items-center justify-center gap-2 w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+              <span>🔄</span>
+              <span>Atualizar</span>
+            </button>
+            <button class="flex items-center justify-center gap-2 w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">
+              <span>➕</span>
+              <span>Criar Feedback</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="bg-green-50 border-t border-green-200 p-3">
+        <p class="text-xs text-green-700">✓ Botões se ajustam perfeitamente à largura da tela</p>
+      </div>
+    </div>
+
+    <!-- Additional Improvements -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3">Melhorias Adicionais</h2>
+      <div class="space-y-2 text-sm text-gray-600">
+        <div class="flex items-start gap-2">
+          <span class="text-green-500">✓</span>
+          <span>Colunas do Kanban com largura mínima reduzida (280px em mobile)</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-green-500">✓</span>
+          <span>Cards com padding responsivo (p-3 em mobile vs p-4 desktop)</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-green-500">✓</span>
+          <span>Texto com break-words para evitar overflow</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-green-500">✓</span>
+          <span>Espaçamento negativo no container para aproveitar toda a largura</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <span class="text-green-500">✓</span>
+          <span>Badges e ícones com tamanho responsivo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Files Changed -->
+    <div class="bg-gray-100 rounded-lg p-4">
+      <h2 class="text-sm font-semibold text-gray-900 mb-2">Arquivos Modificados</h2>
+      <ul class="space-y-1 text-xs font-mono text-gray-700">
+        <li>📄 pages/feedback.tsx</li>
+        <li>📄 components/KanbanBoard.tsx</li>
+      </ul>
+    </div>
+
+    <!-- Test Instructions -->
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <span class="text-2xl">💡</span>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-yellow-800">Como Verificar</h3>
+          <div class="mt-2 text-sm text-yellow-700">
+            <ol class="list-decimal list-inside space-y-1">
+              <li>Abra a página /feedback em um dispositivo móvel</li>
+              <li>Verifique que os botões não ultrapassam a tela</li>
+              <li>Teste o scroll horizontal do Kanban board</li>
+              <li>Confirme que o texto dos cards não causa overflow</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

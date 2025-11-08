@@ -126,22 +126,22 @@ export default function KanbanBoard({
         onDragStart={(e) => handleDragStart(e, ticket)}
         onClick={() => onTicketClick?.(ticket)}
         className={cn(
-          'group cursor-pointer rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md dark:bg-slate-900',
+          'group cursor-pointer rounded-xl border bg-white p-3 sm:p-4 shadow-sm transition-all hover:shadow-md dark:bg-slate-900',
           'border-slate-200 dark:border-slate-700',
           isAdmin && 'hover:scale-[1.02]'
         )}
       >
         {/* Header */}
-        <div className="mb-3 flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <TipoIcon size={16} className={tipoConfig[ticket.tipo].color} />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="mb-2 sm:mb-3 flex items-start justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <TipoIcon size={14} className={tipoConfig[ticket.tipo].color} />
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
               {tipoConfig[ticket.tipo].label}
             </span>
           </div>
           <span
             className={cn(
-              'rounded-full px-2 py-0.5 text-xs font-medium',
+              'rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap flex-shrink-0',
               prioridadeColors[ticket.prioridade]
             )}
           >
@@ -150,29 +150,29 @@ export default function KanbanBoard({
         </div>
 
         {/* Title */}
-        <h4 className="mb-2 line-clamp-2 text-sm font-semibold text-slate-900 dark:text-white">
+        <h4 className="mb-2 line-clamp-2 text-sm font-semibold text-slate-900 dark:text-white break-words">
           {ticket.titulo}
         </h4>
 
         {/* Description Preview */}
-        <p className="mb-3 line-clamp-2 text-xs text-slate-600 dark:text-slate-400">
+        <p className="mb-2 sm:mb-3 line-clamp-2 text-xs text-slate-600 dark:text-slate-400 break-words">
           {ticket.descricao}
         </p>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <User size={12} />
+        <div className="flex items-center justify-between border-t border-slate-100 pt-2 sm:pt-3 dark:border-slate-800">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-slate-500 dark:text-slate-400 min-w-0 flex-1">
+            <User size={12} className="flex-shrink-0" />
             <span className="truncate">{ticket.usuario?.nome || 'Usuário'}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {hasAttachments && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+              <span className="rounded-full bg-slate-100 px-1.5 sm:px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400 whitespace-nowrap">
                 📎 {ticket.anexos?.length}
               </span>
             )}
             {hasComments && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+              <span className="rounded-full bg-slate-100 px-1.5 sm:px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400 whitespace-nowrap">
                 💬 {ticket.comentarios?.length}
               </span>
             )}
@@ -195,7 +195,7 @@ export default function KanbanBoard({
     return (
       <div
         key={status}
-        className="flex min-w-[320px] flex-col rounded-2xl border border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/50"
+        className="flex w-full min-w-[280px] sm:min-w-[320px] flex-col rounded-2xl border border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/50"
         onDragOver={handleDragOver}
         onDrop={(e) => handleDrop(e, status)}
       >
@@ -233,7 +233,7 @@ export default function KanbanBoard({
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
       {renderColumn('backlog')}
       {renderColumn('em_andamento')}
       {renderColumn('em_teste')}
