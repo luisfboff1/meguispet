@@ -296,6 +296,7 @@ export function ModalHost() {
           <FeedbackForm
             onSubmit={async (values) => {
               await payload.onSubmit(values)
+              close()
             }}
             onCancel={() => {
               payload.onCancel?.()

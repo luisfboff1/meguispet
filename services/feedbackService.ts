@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 import type {
   FeedbackTicket,
   FeedbackTicketForm,
@@ -9,14 +9,21 @@ import type {
   ApiResponse
 } from '@/types'
 
-// Initialize Supabase client only if environment variables are available
+// Initialize Supabase client with browser client that maintains auth session
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null
+/**
+ * Get a Supabase client with current auth session
+ * This ensures RLS policies work correctly with authenticated user
+ */
+const getSupabaseClient = () => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null
+  }
+
+  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+}
 
 /**
  * Convert File to base64 string
@@ -52,6 +59,7 @@ export const feedbackService = {
     usuario_id?: number
   }): Promise<ApiResponse<FeedbackTicket[]>> {
     try {
+      const supabase = getSupabaseClient()
       if (!supabase) {
         return {
           success: false,
@@ -112,6 +120,7 @@ export const feedbackService = {
    */
   async getById(id: string): Promise<ApiResponse<FeedbackTicket>> {
     try {
+      const supabase = getSupabaseClient()
       if (!supabase) {
         return {
           success: false,
@@ -162,6 +171,7 @@ export const feedbackService = {
     usuarioId: number
   ): Promise<ApiResponse<FeedbackTicket>> {
     try {
+      const supabase = getSupabaseClient()
       if (!supabase) {
         return {
           success: false,
@@ -258,33 +268,104 @@ export const feedbackService = {
     usuarioId: number
   ): Promise<ApiResponse<FeedbackTicket>> {
     try {
+      const supabase = getSupabaseClient()
       if (!supabase) {
+        console.error('[feedbackService.update] Supabase client not initialized')
         return {
           success: false,
           error: 'Supabase client not initialized'
         }
       }
 
-      const { error } = await supabase
-        .from('feedback_tickets')
-        .update({
-          ...updates,
-          updated_by: usuarioId
-        })
-        .eq('id', id)
+      console.log('[feedbackService.update] Updating ticket:', { id, updates, usuarioId })
 
-      if (error) {
-        console.error('Error updating ticket:', error)
+      // Check current auth session
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError) {
+        console.error('[feedbackService.update] Auth error:', authError)
+      }
+      console.log('[feedbackService.update] Current authenticated user (supabase UUID):', user?.id)
+
+      // Check if the usuario has the supabase_user_id set
+      const { data: usuario, error: usuarioError } = await supabase
+        .from('usuarios')
+        .select('id, nome, email, role, supabase_user_id')
+        .eq('id', usuarioId)
+        .single()
+
+      if (usuarioError) {
+        console.error('[feedbackService.update] Error fetching usuario:', usuarioError)
+      } else {
+        console.log('[feedbackService.update] Usuario info:', usuario)
+        console.log('[feedbackService.update] Usuario role:', usuario?.role)
+        console.log('[feedbackService.update] Usuario supabase_user_id:', usuario?.supabase_user_id)
+        console.log('[feedbackService.update] MATCH?', usuario?.supabase_user_id === user?.id)
+      }
+
+      // First, verify the ticket exists
+      const { data: existingTicket, error: fetchError } = await supabase
+        .from('feedback_tickets')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (fetchError) {
+        console.error('[feedbackService.update] Error fetching existing ticket:', fetchError)
         return {
           success: false,
-          error: error.message
+          error: `Erro ao buscar ticket: ${fetchError.message}`
         }
       }
 
-      // Fetch the updated ticket with all relations
-      return await this.getById(id)
+      if (!existingTicket) {
+        console.error('[feedbackService.update] Ticket not found:', id)
+        return {
+          success: false,
+          error: 'Ticket não encontrado'
+        }
+      }
+
+      console.log('[feedbackService.update] Existing ticket found:', existingTicket)
+      console.log('[feedbackService.update] BEFORE UPDATE - Status:', existingTicket.status)
+
+      const updateData = {
+        ...updates,
+        updated_by: usuarioId,
+        updated_at: new Date().toISOString()
+      }
+
+      console.log('[feedbackService.update] Update data:', updateData)
+
+      // Try update without .select() first (RLS might block select on update)
+      const { error: updateError, count } = await supabase
+        .from('feedback_tickets')
+        .update(updateData)
+        .eq('id', id)
+
+      if (updateError) {
+        console.error('[feedbackService.update] Supabase update error:', updateError)
+        return {
+          success: false,
+          error: updateError.message
+        }
+      }
+
+      console.log('[feedbackService.update] Update completed, count:', count)
+
+      // Now fetch the updated ticket with all relations
+      const result = await this.getById(id)
+
+      if (result.success && result.data) {
+        console.log('[feedbackService.update] Successfully fetched updated ticket:', result.data)
+        console.log('[feedbackService.update] AFTER UPDATE - Status:', result.data.status)
+        console.log('[feedbackService.update] STATUS CHANGED?', existingTicket.status, '→', result.data.status)
+      } else {
+        console.error('[feedbackService.update] Failed to fetch updated ticket:', result.error)
+      }
+
+      return result
     } catch (error) {
-      console.error('Error in update:', error)
+      console.error('[feedbackService.update] Exception:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -297,6 +378,7 @@ export const feedbackService = {
    */
   async delete(id: string): Promise<ApiResponse<void>> {
     try {
+      const supabase = getSupabaseClient()
       if (!supabase) {
         return {
           success: false,
@@ -337,6 +419,7 @@ export const feedbackService = {
     usuarioId: number
   ): Promise<ApiResponse<FeedbackComentario>> {
     try {
+      const supabase = getSupabaseClient()
       if (!supabase) {
         return {
           success: false,
