@@ -131,3 +131,6 @@ jspm_packages/
 # Test files
 test-pdf-generation.js
 public/test-pdf.html
+
+# Backups do banco de dados (não versionar)
+database/backup/
