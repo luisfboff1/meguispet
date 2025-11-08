@@ -34,7 +34,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     if (method === 'PUT') {
       // Atualizar transação
-      const { tipo, categoria, descricao, valor, data_transacao, forma_pagamento, status, observacoes } = req.body;
+      const { tipo, categoria, categoria_id, descricao, valor, data_transacao, forma_pagamento, status, venda_id, observacoes } = req.body;
 
       // Verificar se a transação existe
       const { data: existingTransacao, error: checkError } = await supabase
@@ -51,11 +51,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       const updateData = {
         ...(tipo !== undefined && { tipo }),
         ...(categoria !== undefined && { categoria }),
+        ...(categoria_id !== undefined && { categoria_id }),
         ...(descricao !== undefined && { descricao }),
         ...(valor !== undefined && { valor }),
         ...(data_transacao !== undefined && { data_transacao }),
         ...(forma_pagamento !== undefined && { forma_pagamento }),
         ...(status !== undefined && { status }),
+        ...(venda_id !== undefined && { venda_id }),
         ...(observacoes !== undefined && { observacoes }),
         updated_at: new Date().toISOString()
       };

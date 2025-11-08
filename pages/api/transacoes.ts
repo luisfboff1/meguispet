@@ -32,19 +32,21 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'POST') {
-      const { tipo, categoria, descricao, valor, data_transacao, forma_pagamento, status, venda_id, observacoes } = req.body;
+      const { tipo, categoria, categoria_id, descricao, valor, data_transacao, forma_pagamento, status, venda_id, observacoes, transacao_recorrente_id } = req.body;
 
       const { data, error } = await supabase
         .from('transacoes')
         .insert({
           tipo,
           categoria: categoria || null,
+          categoria_id: categoria_id || null,
           descricao: descricao || null,
           valor,
           data_transacao: data_transacao || new Date().toISOString(),
           forma_pagamento: forma_pagamento || null,
           status: status || 'pendente',
           venda_id: venda_id || null,
+          transacao_recorrente_id: transacao_recorrente_id || null,
           observacoes: observacoes || null,
         })
         .select()
