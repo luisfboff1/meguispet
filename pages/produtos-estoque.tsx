@@ -991,6 +991,7 @@ export default function ProdutosEstoquePage() {
               enableColumnResizing={true}
               enableSorting={true}
               enableColumnVisibility={true}
+              mobileVisibleColumns={['nome', 'preco_venda', 'estoque_total', 'acoes']}
             />
           ) : (
             <Card>
@@ -1085,6 +1086,7 @@ export default function ProdutosEstoquePage() {
               enableColumnResizing={true}
               enableSorting={true}
               enableColumnVisibility={true}
+              mobileVisibleColumns={['nome', 'estoque_total', 'acoes']}
             />
           ) : (
             <Card>
@@ -1115,6 +1117,7 @@ export default function ProdutosEstoquePage() {
               enableColumnResizing={true}
               enableSorting={true}
               enableColumnVisibility={true}
+              mobileVisibleColumns={['tipo_movimentacao', 'valor_total', 'created_at', 'acoes']}
             />
           ) : (
             <Card>

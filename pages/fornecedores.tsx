@@ -382,6 +382,7 @@ export default function FornecedoresPage() {
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
+          mobileVisibleColumns={['nome', 'telefone', 'acoes']}
         />
       ) : (
         <Card>

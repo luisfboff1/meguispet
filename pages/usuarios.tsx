@@ -532,6 +532,7 @@ export default function UsuariosPage() {
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
+          mobileVisibleColumns={['nome', 'email', 'role', 'acoes']}
         />
       ) : (
         <Card>

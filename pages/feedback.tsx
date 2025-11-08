@@ -216,11 +216,11 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="h-full space-y-6 p-6">
+    <div className="h-full space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
             Feedback & Suporte
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -228,11 +228,12 @@ export default function FeedbackPage() {
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <Button
             variant="outline"
             onClick={loadTickets}
             disabled={refreshing}
+            className="w-full sm:w-auto"
           >
             <RefreshCw
               size={16}
@@ -240,7 +241,7 @@ export default function FeedbackPage() {
             />
             <span className="ml-2">Atualizar</span>
           </Button>
-          <Button onClick={handleCreateFeedback}>
+          <Button onClick={handleCreateFeedback} className="w-full sm:w-auto">
             <Plus size={16} />
             <span className="ml-2">Criar Feedback</span>
           </Button>
