@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { DollarSign, Calendar, FileText, Tag, MessageSquare } from 'lucide-react'
-import { TransacaoForm as TransacaoFormType } from '@/types'
+import { DollarSign, Calendar, FileText, Tag, MessageSquare, ShoppingBag } from 'lucide-react'
+import { TransacaoForm as TransacaoFormType, CategoriaFinanceira, Venda } from '@/types'
+import { categoriasFinanceirasService, vendasService } from '@/services/api'
 
 interface TransacaoFormProps {
   initialData?: Partial<TransacaoFormType>
@@ -14,18 +15,6 @@ interface TransacaoFormProps {
   title?: string
 }
 
-const categorias = [
-  { value: 'Vendas', label: 'Vendas' },
-  { value: 'Compras', label: 'Compras' },
-  { value: 'Utilidades', label: 'Utilidades' },
-  { value: 'Aluguel', label: 'Aluguel' },
-  { value: 'Folha', label: 'Folha de Pagamento' },
-  { value: 'Marketing', label: 'Marketing' },
-  { value: 'Manutenção', label: 'Manutenção' },
-  { value: 'Transporte', label: 'Transporte' },
-  { value: 'Outros', label: 'Outros' }
-]
-
 export function TransacaoForm({ 
   initialData, 
   onSubmit, 
@@ -33,16 +22,77 @@ export function TransacaoForm({
   loading = false,
   title = 'Nova Transação'
 }: TransacaoFormProps) {
+  const [categorias, setCategorias] = useState<CategoriaFinanceira[]>([])
+  const [vendas, setVendas] = useState<Venda[]>([])
+  const [loadingCategorias, setLoadingCategorias] = useState(false)
+  const [loadingVendas, setLoadingVendas] = useState(false)
+  
   const [formData, setFormData] = useState<TransacaoFormType>({
     tipo: initialData?.tipo || 'receita',
     valor: initialData?.valor || 0,
     descricao: initialData?.descricao || '',
     categoria: initialData?.categoria || '',
+    categoria_id: initialData?.categoria_id,
+    venda_id: initialData?.venda_id,
     data_transacao: initialData?.data_transacao || new Date().toISOString().split('T')[0],
     observacoes: initialData?.observacoes || ''
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    loadCategorias()
+    if (formData.tipo === 'receita') {
+      loadVendas()
+    }
+  }, [formData.tipo])
+
+  const loadCategorias = async () => {
+    try {
+      setLoadingCategorias(true)
+      const response = await categoriasFinanceirasService.getAll(formData.tipo)
+      if (response.success && response.data) {
+        setCategorias(response.data.filter(c => c.ativo))
+      }
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error)
+    } finally {
+      setLoadingCategorias(false)
+    }
+  }
+
+  const loadVendas = async () => {
+    try {
+      setLoadingVendas(true)
+      // Load recent sales (last 30 days)
+      const response = await vendasService.getAll(1, 50)
+      if (response.success && response.data) {
+        // Filter sales from last 30 days
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        const recentSales = response.data.filter(v => 
+          new Date(v.data_venda) >= thirtyDaysAgo && v.status === 'pago'
+        )
+        setVendas(recentSales)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar vendas:', error)
+    } finally {
+      setLoadingVendas(false)
+    }
+  }
+
+  const handleVendaSelect = (vendaId: string) => {
+    const venda = vendas.find(v => v.id === parseInt(vendaId))
+    if (venda) {
+      handleChange('venda_id', parseInt(vendaId))
+      handleChange('valor', venda.valor_final)
+      handleChange('descricao', `Receita da venda ${venda.numero_venda}`)
+      handleChange('data_transacao', venda.data_venda.split('T')[0])
+    } else {
+      handleChange('venda_id', undefined)
+    }
+  }
 
   const handleChange = <Key extends keyof TransacaoFormType>(field: Key, value: TransacaoFormType[Key]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -64,7 +114,7 @@ export function TransacaoForm({
       newErrors.valor = 'Valor deve ser maior que zero'
     }
 
-    if (!formData.categoria) {
+    if (!formData.categoria_id && !formData.categoria) {
       newErrors.categoria = 'Categoria é obrigatória'
     }
 
@@ -136,12 +186,40 @@ export function TransacaoForm({
                 onChange={(e) => handleChange('valor', parseFloat(e.target.value) || 0)}
                 className="pl-10"
                 required
+                disabled={!!formData.venda_id}
               />
             </div>
             {errors.valor && (
               <p className="text-sm text-red-600">{errors.valor}</p>
             )}
           </div>
+
+          {/* Link to Sale (only for receita) */}
+          {formData.tipo === 'receita' && (
+            <div className="space-y-2">
+              <Label htmlFor="venda_id">Vincular à Venda (opcional)</Label>
+              <div className="relative">
+                <ShoppingBag className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+                <select
+                  id="venda_id"
+                  value={formData.venda_id || ''}
+                  onChange={(e) => handleVendaSelect(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  disabled={loadingVendas}
+                >
+                  <option value="">Nenhuma venda selecionada</option>
+                  {vendas.map((venda) => (
+                    <option key={venda.id} value={venda.id}>
+                      {venda.numero_venda} - R$ {venda.valor_final.toFixed(2)} - {new Date(venda.data_venda).toLocaleDateString('pt-BR')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-xs text-gray-500">
+                {loadingVendas ? 'Carregando vendas...' : 'Selecione uma venda recente (últimos 30 dias) para vincular automaticamente valor e data'}
+              </p>
+            </div>
+          )}
 
           {/* Descrição */}
           <div className="space-y-2">
@@ -164,26 +242,38 @@ export function TransacaoForm({
 
           {/* Categoria */}
           <div className="space-y-2">
-            <Label htmlFor="categoria">Categoria *</Label>
+            <Label htmlFor="categoria_id">Categoria *</Label>
             <div className="relative">
-              <Tag className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Tag className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
               <select
-                id="categoria"
-                value={formData.categoria}
-                onChange={(e) => handleChange('categoria', e.target.value)}
+                id="categoria_id"
+                value={formData.categoria_id || ''}
+                onChange={(e) => {
+                  const catId = e.target.value ? parseInt(e.target.value) : undefined
+                  handleChange('categoria_id', catId)
+                  // Also update legacy categoria field with name
+                  const cat = categorias.find(c => c.id === catId)
+                  if (cat) {
+                    handleChange('categoria', cat.nome)
+                  }
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 required
+                disabled={loadingCategorias}
               >
                 <option value="">Selecione uma categoria</option>
                 {categorias.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
+                  <option key={cat.id} value={cat.id}>
+                    {cat.nome}
                   </option>
                 ))}
               </select>
             </div>
             {errors.categoria && (
               <p className="text-sm text-red-600">{errors.categoria}</p>
+            )}
+            {loadingCategorias && (
+              <p className="text-xs text-gray-500">Carregando categorias...</p>
             )}
           </div>
 

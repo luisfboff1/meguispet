@@ -13,6 +13,10 @@ import type {
   MovimentacaoForm as MovimentacaoFormPayload,
   FinanceiroMetrics,
   TransacaoFinanceira,
+  CategoriaFinanceira,
+  CategoriaFinanceiraForm,
+  TransacaoRecorrente,
+  TransacaoRecorrenteForm,
   ApiResponse,
   PaginatedResponse,
   DashboardMetric,
@@ -469,12 +473,12 @@ export const transacoesService = {
     return response.data
   },
 
-  async create(transacao: Omit<TransacaoFinanceira, 'id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<TransacaoFinanceira>> {
+  async create(transacao: any): Promise<ApiResponse<TransacaoFinanceira>> {
     const response = await api.post('/transacoes', transacao)
     return response.data
   },
 
-  async update(id: number, transacao: Partial<TransacaoFinanceira>): Promise<ApiResponse<TransacaoFinanceira>> {
+  async update(id: number, transacao: any): Promise<ApiResponse<TransacaoFinanceira>> {
     const response = await api.put(`/transacoes/${id}`, { ...transacao, id })
     return response.data
   },
@@ -486,6 +490,70 @@ export const transacoesService = {
 
   async getMetricas(): Promise<ApiResponse<FinanceiroMetrics>> {
     const response = await api.get('/transacoes/metricas')
+    return response.data
+  }
+}
+
+// 📊 CATEGORIAS FINANCEIRAS
+export const categoriasFinanceirasService = {
+  async getAll(tipo?: string): Promise<ApiResponse<CategoriaFinanceira[]>> {
+    let url = '/categorias-financeiras'
+    if (tipo) url += `?tipo=${tipo}`
+    
+    const response = await api.get(url)
+    return response.data
+  },
+
+  async getById(id: number): Promise<ApiResponse<CategoriaFinanceira>> {
+    const response = await api.get(`/categorias-financeiras/${id}`)
+    return response.data
+  },
+
+  async create(categoria: CategoriaFinanceiraForm): Promise<ApiResponse<CategoriaFinanceira>> {
+    const response = await api.post('/categorias-financeiras', categoria)
+    return response.data
+  },
+
+  async update(id: number, categoria: Partial<CategoriaFinanceiraForm>): Promise<ApiResponse<CategoriaFinanceira>> {
+    const response = await api.put(`/categorias-financeiras/${id}`, { ...categoria, id })
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/categorias-financeiras/${id}`)
+    return response.data
+  }
+}
+
+// 🔄 TRANSAÇÕES RECORRENTES
+export const transacoesRecorrentesService = {
+  async getAll(): Promise<ApiResponse<TransacaoRecorrente[]>> {
+    const response = await api.get('/transacoes-recorrentes')
+    return response.data
+  },
+
+  async getById(id: number): Promise<ApiResponse<TransacaoRecorrente>> {
+    const response = await api.get(`/transacoes-recorrentes/${id}`)
+    return response.data
+  },
+
+  async create(transacao: TransacaoRecorrenteForm): Promise<ApiResponse<TransacaoRecorrente>> {
+    const response = await api.post('/transacoes-recorrentes', transacao)
+    return response.data
+  },
+
+  async update(id: number, transacao: Partial<TransacaoRecorrenteForm>): Promise<ApiResponse<TransacaoRecorrente>> {
+    const response = await api.put(`/transacoes-recorrentes/${id}`, { ...transacao, id })
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/transacoes-recorrentes/${id}`)
+    return response.data
+  },
+
+  async gerarTransacoes(): Promise<ApiResponse> {
+    const response = await api.post('/transacoes-recorrentes/gerar')
     return response.data
   }
 }
