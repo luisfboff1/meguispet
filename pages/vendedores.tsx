@@ -495,6 +495,7 @@ export default function VendedoresPage() {
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
+          mobileVisibleColumns={['nome', 'telefone', 'comissao', 'acoes']}
         />
       ) : (
         <Card>

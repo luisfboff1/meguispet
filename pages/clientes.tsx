@@ -360,6 +360,7 @@ export default function ClientesPage() {
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
+          mobileVisibleColumns={['nome', 'tipo', 'acoes']}
         />
       ) : (
         <Card>

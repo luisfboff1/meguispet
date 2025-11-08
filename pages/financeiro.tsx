@@ -448,6 +448,7 @@ export default function FinanceiroPage() {
               enableColumnResizing={true}
               enableSorting={true}
               enableColumnVisibility={true}
+              mobileVisibleColumns={['descricao', 'tipo', 'valor', 'data', 'acoes']}
             />
           ) : (
             <div className="text-center py-8">

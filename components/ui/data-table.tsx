@@ -11,7 +11,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { MoreHorizontal, ArrowUpDown, ChevronDown } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, ChevronDown, Columns } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -35,6 +35,7 @@ interface DataTableProps<TData, TValue> {
   enableColumnResizing?: boolean
   enableSorting?: boolean
   enableColumnVisibility?: boolean
+  mobileVisibleColumns?: string[] // IDs of columns to show on mobile by default
 }
 
 export function DataTable<TData, TValue>({
@@ -43,11 +44,43 @@ export function DataTable<TData, TValue>({
   enableColumnResizing = true,
   enableSorting = true,
   enableColumnVisibility = true,
+  mobileVisibleColumns = [],
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnResizeMode] = React.useState<ColumnResizeMode>("onChange")
+  const [isMobile, setIsMobile] = React.useState(false)
+
+  // Detect mobile screen size
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Initialize column visibility based on screen size
+  React.useEffect(() => {
+    if (isMobile && mobileVisibleColumns.length > 0) {
+      const initialVisibility: VisibilityState = {}
+      columns.forEach((column) => {
+        const columnDef = column as { id?: string; accessorKey?: string | number | symbol }
+        const columnId = typeof column.id === 'string' ? column.id : 
+                        columnDef.accessorKey?.toString() || ''
+        if (columnId && !mobileVisibleColumns.includes(columnId)) {
+          initialVisibility[columnId] = false
+        }
+      })
+      setColumnVisibility(initialVisibility)
+    } else if (!isMobile) {
+      // Reset visibility on desktop
+      setColumnVisibility({})
+    }
+  }, [isMobile, mobileVisibleColumns, columns])
 
   const table = useReactTable({
     data,
@@ -74,13 +107,17 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center justify-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                <MoreHorizontal className="mr-2 h-4 w-4" />
-                Colunas
+              <Button 
+                variant="outline" 
+                className="ml-auto"
+                size={isMobile ? "default" : "default"}
+              >
+                <Columns className="mr-2 h-4 w-4" />
+                {isMobile ? 'Colunas' : 'Selecionar Colunas'}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
+            <DropdownMenuContent align="end" className="w-[200px] max-h-[400px] overflow-y-auto">
               {table
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
@@ -106,8 +143,8 @@ export function DataTable<TData, TValue>({
       )}
 
       {/* Table */}
-      <div className="rounded-md border overflow-auto">
-        <Table style={{ width: '100%', tableLayout: 'fixed' }}>
+      <div className="rounded-md border overflow-x-auto">
+        <Table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto' }}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -117,16 +154,21 @@ export function DataTable<TData, TValue>({
                       key={header.id}
                       style={{
                         position: 'relative',
+                        minWidth: '100px',
+                        maxWidth: isMobile ? '200px' : 'none',
                       }}
+                      className="whitespace-nowrap"
                     >
                       {header.isPlaceholder ? null : (
                         <>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          <div className="truncate">
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </div>
                           {/* Resize Handle */}
-                          {enableColumnResizing && header.column.getCanResize() && (
+                          {enableColumnResizing && header.column.getCanResize() && !isMobile && (
                             <div
                               onMouseDown={header.getResizeHandler()}
                               onTouchStart={header.getResizeHandler()}
@@ -155,11 +197,17 @@ export function DataTable<TData, TValue>({
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
+                      style={{
+                        minWidth: '100px',
+                        maxWidth: isMobile ? '200px' : 'none',
+                      }}
                     >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      <div className={isMobile ? 'truncate' : ''}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>

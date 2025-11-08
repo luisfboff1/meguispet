@@ -352,6 +352,7 @@ export default function RelatoriosPage() {
               enableColumnResizing={true}
               enableSorting={true}
               enableColumnVisibility={true}
+              mobileVisibleColumns={['nome', 'tipo', 'periodo', 'acoes']}
             />
           ) : (
             <div className="text-center py-8">

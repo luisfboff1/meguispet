@@ -296,16 +296,16 @@ export default function EstoquePage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[600px]">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Produto</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Categoria</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Estoque</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Preço</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Valor Total</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Ações</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Produto</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap hidden md:table-cell">Categoria</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Estoque</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap hidden lg:table-cell">Preço</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap hidden lg:table-cell">Valor Total</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -317,31 +317,33 @@ export default function EstoquePage() {
                     return (
                       <tr key={produto.id} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                          <div className="flex items-center space-x-3 min-w-[180px]">
+                            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
                               <Package className="h-4 w-4 text-gray-600" />
                             </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{produto.nome}</div>
+                            <div className="overflow-hidden">
+                              <div className="font-medium text-gray-900 truncate">{produto.nome}</div>
                               <div className="text-sm text-gray-500">ID: #{produto.id}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-900">{produto.categoria || 'N/A'}</td>
+                        <td className="py-3 px-4 text-sm text-gray-900 hidden md:table-cell">
+                          <span className="truncate block max-w-[150px]">{produto.categoria || 'N/A'}</span>
+                        </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">{produto.estoque}</span>
-                            <StockIcon className={`h-4 w-4 ${stockStatus.color}`} />
+                            <span className="text-sm font-medium whitespace-nowrap">{produto.estoque}</span>
+                            <StockIcon className={`h-4 w-4 ${stockStatus.color} flex-shrink-0`} />
                           </div>
                         </td>
-                            <td className="py-3 px-4 text-sm text-gray-900">
+                            <td className="py-3 px-4 text-sm text-gray-900 hidden lg:table-cell whitespace-nowrap">
                               {formatCurrency(produto.preco_venda)}
                             </td>
-                            <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                            <td className="py-3 px-4 text-sm font-medium text-gray-900 hidden lg:table-cell whitespace-nowrap">
                               {formatCurrency(produto.preco_venda * produto.estoque)}
                             </td>
                         <td className="py-3 px-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${stockStatus.bgColor} ${stockStatus.color}`}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${stockStatus.bgColor} ${stockStatus.color}`}>
                             {stockStatus.text}
                           </span>
                         </td>
@@ -350,7 +352,7 @@ export default function EstoquePage() {
                             <Button variant="ghost" size="sm">
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-meguispet-primary">
+                            <Button variant="ghost" size="sm" className="text-meguispet-primary hidden sm:inline-flex">
                               Ajustar
                             </Button>
                           </div>

@@ -828,6 +828,7 @@ export default function VendasPage() {
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
+          mobileVisibleColumns={['numero_venda', 'valor_final', 'status', 'acoes']}
         />
       ) : (
         <Card>
