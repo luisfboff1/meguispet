@@ -29,6 +29,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             quantidade,
             preco_unitario,
             subtotal,
+            base_calculo_st,
+            icms_proprio,
+            icms_st_total,
+            icms_st_recolher,
+            mva_aplicado,
+            aliquota_icms,
             produto:produtos(id, nome, preco_venda)
           )
         `)

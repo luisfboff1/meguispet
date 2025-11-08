@@ -111,6 +111,7 @@ export interface Venda {
   estoque_id?: number | null
   estoque?: Estoque | null
   origem_venda: 'loja_fisica' | 'mercado_livre' | 'shopee' | 'magazine_luiza' | 'americanas' | 'outros'
+  uf_destino?: string // UF de destino da venda (para cálculo ICMS-ST)
   observacoes?: string
   prazo_pagamento?: string | number
   imposto_percentual?: number
@@ -311,6 +312,7 @@ export interface VendaForm {
   imposto_percentual?: number
   forma_pagamento: FormaPagamento
   origem_venda: OrigemVenda
+  uf_destino?: string // UF de destino da venda (para cálculo ICMS-ST)
   observacoes?: string
 }
 
@@ -492,8 +494,6 @@ export interface ImpostoProduto {
   ncm: string | null
   cest: string | null
   origem_mercadoria: number // 0=Nacional, 1=Estrangeira
-  uf_destino: string // 'SP'
-  tabela_mva_id: string | null // UUID
   mva_manual: number | null
   aliquota_icms_manual: number | null
   frete_padrao: number
@@ -503,7 +503,6 @@ export interface ImpostoProduto {
   updated_at: string
 
   // Relações
-  tabela_mva?: TabelaMva | null
   produto?: Produto
 }
 
@@ -512,8 +511,6 @@ export interface ImpostoProdutoForm {
   ncm?: string
   cest?: string
   origem_mercadoria: number
-  uf_destino: string
-  tabela_mva_id?: string | null
   mva_manual?: number | null
   aliquota_icms_manual?: number | null
   frete_padrao: number

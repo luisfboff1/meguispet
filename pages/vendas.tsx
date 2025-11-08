@@ -42,6 +42,8 @@ export default function VendasPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [showPDFPreview, setShowPDFPreview] = useState(false)
   const [vendaParaPDF, setVendaParaPDF] = useState<Venda | null>(null)
+  const [showPrintConfirmation, setShowPrintConfirmation] = useState(false)
+  const [vendaRecemSalva, setVendaRecemSalva] = useState<Venda | null>(null)
 
   useEffect(() => {
     loadVendas()
@@ -141,6 +143,19 @@ export default function VendasPage() {
         setShowForm(false)
         setEditingVenda(null)
 
+        // Buscar venda completa para impressão
+        const vendaId = editingVenda?.id || (response.data as any)?.id
+        if (vendaId) {
+          try {
+            const vendaCompleta = await vendasService.getById(vendaId)
+            if (vendaCompleta.success && vendaCompleta.data) {
+              setVendaRecemSalva(vendaCompleta.data)
+            }
+          } catch (error) {
+            console.error('Erro ao buscar venda completa:', error)
+          }
+        }
+
         // Mostrar mensagem de sucesso detalhada
         setAlert({
           title: editingVenda ? '✅ Venda Atualizada' : '✅ Venda Realizada com Sucesso',
@@ -149,6 +164,9 @@ export default function VendasPage() {
             : 'A venda foi registrada com sucesso e o estoque foi atualizado automaticamente.'),
           type: 'success',
         })
+
+        // Abrir modal de confirmação de impressão
+        setShowPrintConfirmation(true)
       } else {
         setAlert({
           title: '❌ Erro ao Salvar Venda',
@@ -180,6 +198,20 @@ export default function VendasPage() {
   const handleCancelarForm = () => {
   setShowForm(false)
   setEditingVenda(null)
+  }
+
+  const handleConfirmPrint = () => {
+    if (vendaRecemSalva) {
+      setShowPrintConfirmation(false)
+      setVendaParaPDF(vendaRecemSalva)
+      setShowPDFPreview(true)
+      setVendaRecemSalva(null)
+    }
+  }
+
+  const handleCancelPrint = () => {
+    setShowPrintConfirmation(false)
+    setVendaRecemSalva(null)
   }
 
   const handleVisualizarVenda = (venda: Venda) => {
@@ -501,6 +533,40 @@ export default function VendasPage() {
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
+      {/* Modal de Confirmação de Impressão */}
+      {showPrintConfirmation && (
+        <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
+          <Card className="w-full max-w-md shadow-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Imprimir Pedido
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-700">
+                Você deseja imprimir o pedido agora?
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelPrint}
+                >
+                  Não, obrigado
+                </Button>
+                <Button
+                  onClick={handleConfirmPrint}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Sim, visualizar PDF
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Modal de Pré-visualização do PDF */}
       <VendaPDFPreviewModal
         venda={vendaParaPDF}
@@ -591,9 +657,83 @@ export default function VendasPage() {
                 <p className="text-base text-gray-900">{selectedVenda.observacoes || 'Sem observações'}</p>
               </div>
             </div>
+
+            {/* Impostos ICMS-ST - Seção compacta */}
+            {selectedVenda.itens && selectedVenda.itens.length > 0 && selectedVenda.itens.some(item => item.icms_st_recolher && item.icms_st_recolher > 0) ? (
+              <div className="mt-6 pt-6 border-t">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Impostos ICMS-ST
+                    {selectedVenda.uf_destino && (
+                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-mono ml-2">
+                        UF: {selectedVenda.uf_destino}
+                      </span>
+                    )}
+                  </h3>
+                  {(() => {
+                    const totais = selectedVenda.itens.reduce((acc, item) => ({
+                      icms_st_recolher: acc.icms_st_recolher + (item.icms_st_recolher || 0)
+                    }), { icms_st_recolher: 0 })
+                    return (
+                      <span className="text-sm font-bold text-green-700">
+                        Total a Recolher: {formatCurrency(totais.icms_st_recolher)}
+                      </span>
+                    )
+                  })()}
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produto</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Qtd</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">MVA</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Alíq.</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Base ST</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">ICMS Próprio</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">ICMS-ST Total</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase bg-green-50">A Recolher</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedVenda.itens.filter(item => item.icms_st_recolher && item.icms_st_recolher > 0).map((item, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-sm text-gray-900">
+                            {item.produto?.nome || `Produto #${item.produto_id}`}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600 text-right">{item.quantidade}</td>
+                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                            {item.mva_aplicado ? `${(item.mva_aplicado * 100).toFixed(2)}%` : '-'}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                            {item.aliquota_icms ? `${(item.aliquota_icms * 100).toFixed(2)}%` : '-'}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                            {formatCurrency(item.base_calculo_st || 0)}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                            {formatCurrency(item.icms_proprio || 0)}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                            {formatCurrency(item.icms_st_total || 0)}
+                          </td>
+                          <td className="px-3 py-2 text-sm font-semibold text-green-700 text-right bg-green-50">
+                            {formatCurrency(item.icms_st_recolher || 0)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
+
           </CardContent>
         </Card>
       ) : null}
+
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

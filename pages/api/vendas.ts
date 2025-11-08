@@ -14,6 +14,14 @@ interface VendaItemInput {
   quantidade: number;
   preco_unitario: number;
   subtotal?: number;
+
+  // Campos de impostos ICMS-ST
+  base_calculo_st?: number;
+  icms_proprio?: number;
+  icms_st_total?: number;
+  icms_st_recolher?: number;
+  mva_aplicado?: number;
+  aliquota_icms?: number;
 }
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
@@ -35,7 +43,21 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           cliente:clientes_fornecedores(nome, email),
           vendedor:vendedores(nome, email),
           estoque:estoques(id, nome),
-          forma_pagamento_detalhe:formas_pagamento(id, nome)
+          forma_pagamento_detalhe:formas_pagamento(id, nome),
+          itens:vendas_itens(
+            id,
+            produto_id,
+            quantidade,
+            preco_unitario,
+            subtotal,
+            base_calculo_st,
+            icms_proprio,
+            icms_st_total,
+            icms_st_recolher,
+            mva_aplicado,
+            aliquota_icms,
+            produto:produtos(id, nome, preco_venda)
+          )
         `, { count: 'exact' });
 
       if (search) {
@@ -74,7 +96,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'POST') {
-      const { numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, valor_total, valor_final, desconto, prazo_pagamento, imposto_percentual, status, observacoes, itens } = req.body;
+      const { numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, valor_total, valor_final, desconto, prazo_pagamento, imposto_percentual, status, observacoes, uf_destino, itens } = req.body;
 
       if (!numero_venda) {
         return res.status(400).json({ success: false, message: '❌ Número da venda é obrigatório' });
@@ -140,6 +162,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           desconto: descontoValor,
           prazo_pagamento: prazo_pagamento || null,
           imposto_percentual: impostoPercentual,
+          uf_destino: uf_destino || null,
           status: status || 'pendente',
           observacoes: observacoes || null,
         })
@@ -161,6 +184,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         quantidade: item.quantidade,
         preco_unitario: item.preco_unitario,
         subtotal: item.subtotal,
+        // Campos de impostos ICMS-ST (opcionais)
+        base_calculo_st: item.base_calculo_st || null,
+        icms_proprio: item.icms_proprio || null,
+        icms_st_total: item.icms_st_total || null,
+        icms_st_recolher: item.icms_st_recolher || null,
+        mva_aplicado: item.mva_aplicado || null,
+        aliquota_icms: item.aliquota_icms || null,
       }));
 
       const { error: itensError } = await supabase.from('vendas_itens').insert(itensInsert);
@@ -209,7 +239,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'PUT') {
-      const { id, numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, desconto, prazo_pagamento, imposto_percentual, status, observacoes, itens } = req.body;
+      const { id, numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, desconto, prazo_pagamento, imposto_percentual, uf_destino, status, observacoes, itens } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'ID da venda é obrigatório' });
@@ -278,6 +308,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           desconto: desconto || 0,
           prazo_pagamento: prazo_pagamento || null,
           imposto_percentual: imposto_percentual || 0,
+          uf_destino: uf_destino || null,
           status,
           observacoes: observacoes || null,
           updated_at: new Date().toISOString(),
@@ -390,6 +421,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           quantidade: item.quantidade,
           preco_unitario: item.preco_unitario,
           subtotal: item.quantidade * item.preco_unitario,
+          // Campos de impostos ICMS-ST (opcionais)
+          base_calculo_st: item.base_calculo_st || null,
+          icms_proprio: item.icms_proprio || null,
+          icms_st_total: item.icms_st_total || null,
+          icms_st_recolher: item.icms_st_recolher || null,
+          mva_aplicado: item.mva_aplicado || null,
+          aliquota_icms: item.aliquota_icms || null,
         }));
 
         const { error: itensError } = await supabase.from('vendas_itens').insert(itensInsert);

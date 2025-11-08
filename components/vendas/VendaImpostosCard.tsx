@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { FileText, Calculator, AlertCircle, Info, Loader2 } from 'lucide-react'
 import { formatCurrency, formatPercentage, calcularICMSSTVendaCompleta } from '@/lib/icms-calculator'
 import { impostosService } from '@/services/impostosService'
+import { tabelaMvaService } from '@/services/tabelaMvaService'
 import type { ImpostoProduto, CalculoImpostoInput } from '@/types'
 
 export interface VendaItem {
@@ -41,6 +42,7 @@ export interface VendaImpostosResult {
 
 export interface VendaImpostosCardProps {
   itens: VendaItem[]
+  uf_destino: string
   enabled?: boolean
   onChange: (result: VendaImpostosResult | null) => void
   className?: string
@@ -48,6 +50,7 @@ export interface VendaImpostosCardProps {
 
 export default function VendaImpostosCard({
   itens,
+  uf_destino,
   enabled = false,
   onChange,
   className = ''
@@ -111,24 +114,51 @@ export default function VendaImpostosCard({
         setConfigsFiscais(configs)
         setProdutosSemConfig(semConfig)
 
-        // Preparar itens para cálculo
-        const itensParaCalculo = itens.map(item => {
+        // Preparar itens para cálculo com busca dinâmica de MVA
+        const itensParaCalculo = await Promise.all(itens.map(async (item) => {
           const config = configs.get(item.produto_id)
           const freteUnitario = (config?.frete_padrao || 0) / item.quantidade
           const despesasUnitario = (config?.outras_despesas || 0) / item.quantidade
+
+          let mva = 0
+          let aliquotaIcms = 0.18 // Default 18%
+
+          // Se tiver valores manuais, usar eles
+          if (config?.mva_manual !== null && config?.mva_manual !== undefined) {
+            mva = config.mva_manual
+          }
+          if (config?.aliquota_icms_manual !== null && config?.aliquota_icms_manual !== undefined) {
+            aliquotaIcms = config.aliquota_icms_manual
+          }
+
+          // Se não tiver manual, buscar da tabela MVA usando NCM + UF
+          if (config?.ncm && (config.mva_manual === null || config.aliquota_icms_manual === null)) {
+            try {
+              const tabelaMva = await tabelaMvaService.getByUfNcm(uf_destino, config.ncm)
+              if (tabelaMva) {
+                if (config.mva_manual === null && tabelaMva.mva !== null) {
+                  mva = tabelaMva.mva
+                }
+                if (config.aliquota_icms_manual === null && tabelaMva.aliquota_interna !== null) {
+                  // Usar aliquota_interna ou aliquota_interestadual dependendo da origem
+                  // Por enquanto usando aliquota_interna como padrão
+                  aliquotaIcms = tabelaMva.aliquota_interna
+                }
+              }
+            } catch (error) {
+              console.error(`[VendaImpostosCard] Erro ao buscar MVA para NCM ${config.ncm}:`, error)
+            }
+          }
 
           return {
             valor: item.preco_unitario,
             quantidade: item.quantidade,
             frete_unitario: freteUnitario,
             outras_despesas_unitario: despesasUnitario,
-            mva: config?.mva_manual ?? config?.tabela_mva?.mva ?? 0,
-            aliquota_icms: config?.aliquota_icms_manual ??
-                          config?.tabela_mva?.aliquota_efetiva ??
-                          config?.tabela_mva?.aliquota_interna ??
-                          0.18
+            mva,
+            aliquota_icms: aliquotaIcms
           }
-        })
+        }))
 
         // Calcular impostos
         const calculado = calcularICMSSTVendaCompleta(itensParaCalculo)
@@ -164,7 +194,7 @@ export default function VendaImpostosCard({
     }
 
     void calcularImpostos()
-  }, [impostoEnabled, itensKey])
+  }, [impostoEnabled, itensKey, uf_destino])
 
   return (
     <Card className={className}>

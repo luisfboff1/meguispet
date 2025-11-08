@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatPercentage, formatCurrency } from '@/lib/icms-calculator'
 import type { ImpostoProduto } from '@/types'
-import { FileText, MapPin, Package, Calculator, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { FileText, Package, Calculator, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export interface ImpostoProdutoCardProps {
   imposto: ImpostoProduto
@@ -22,13 +22,10 @@ export default function ImpostoProdutoCard({
   showProduct = true,
   className = ''
 }: ImpostoProdutoCardProps) {
-  const mvaValue = imposto.mva_manual ?? imposto.tabela_mva?.mva
-  const aliquotaValue =
-    imposto.aliquota_icms_manual ??
-    imposto.tabela_mva?.aliquota_efetiva ??
-    imposto.tabela_mva?.aliquota_interna
+  const mvaValue = imposto.mva_manual
+  const aliquotaValue = imposto.aliquota_icms_manual
 
-  const sujeitoST = imposto.tabela_mva?.sujeito_st ?? true
+  const sujeitoST = true  // Will be determined dynamically based on UF+NCM in sales
   const isManual = imposto.mva_manual !== null || imposto.aliquota_icms_manual !== null
 
   return (
@@ -80,21 +77,12 @@ export default function ImpostoProdutoCard({
           </div>
         </div>
 
-        {/* Origin and Destination */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-medium text-gray-500 uppercase">Origem</label>
-            <p className="text-sm">
-              {imposto.origem_mercadoria === 0 ? 'Nacional' : 'Estrangeira'}
-            </p>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              UF Destino
-            </label>
-            <p className="text-sm font-semibold">{imposto.uf_destino}</p>
-          </div>
+        {/* Origin */}
+        <div>
+          <label className="text-xs font-medium text-gray-500 uppercase">Origem da Mercadoria</label>
+          <p className="text-sm">
+            {imposto.origem_mercadoria === 0 ? 'Nacional' : 'Estrangeira'}
+          </p>
         </div>
 
         {/* Tax Rates */}
@@ -151,23 +139,6 @@ export default function ImpostoProdutoCard({
                 {formatCurrency(imposto.outras_despesas)}
               </p>
             </div>
-          </div>
-        )}
-
-        {/* Tabela MVA Info */}
-        {imposto.tabela_mva && (
-          <div className="pt-3 border-t">
-            <label className="text-xs font-medium text-gray-500 uppercase mb-1 block">
-              Tabela MVA Vinculada
-            </label>
-            <p className="text-sm text-gray-700">
-              {imposto.tabela_mva.uf} - {imposto.tabela_mva.ncm}
-            </p>
-            {imposto.tabela_mva.descricao && (
-              <p className="text-xs text-gray-500 mt-1">
-                {imposto.tabela_mva.descricao}
-              </p>
-            )}
           </div>
         )}
 

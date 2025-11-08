@@ -40,6 +40,7 @@ interface VendaFormState {
   vendedor_id: string
   forma_pagamento_id: string
   origem_venda: OrigemVenda
+  uf_destino: string
   estoque_id: string
   observacoes: string
   desconto: number
@@ -86,6 +87,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     vendedor_id: venda?.vendedor_id ? String(venda.vendedor_id) : '',
     forma_pagamento_id: getFormaPagamentoIdFromVenda(venda),
     origem_venda: venda?.origem_venda || 'loja_fisica',
+    uf_destino: venda?.uf_destino || 'SP',
     estoque_id: getEstoqueIdFromVenda(venda),
     observacoes: venda?.observacoes || '',
     desconto: venda?.desconto || 0
@@ -100,6 +102,17 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const [loadingData, setLoadingData] = useState(false)
   const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
   const [impostos, setImpostos] = useState<VendaImpostosResult | null>(null)
+  const [impostosEnabled, setImpostosEnabled] = useState(false)
+
+  // Detectar se a venda sendo editada tem impostos
+  useEffect(() => {
+    if (venda?.itens && venda.itens.length > 0) {
+      const temImpostos = venda.itens.some(
+        item => item.icms_st_recolher && item.icms_st_recolher > 0
+      )
+      setImpostosEnabled(temImpostos)
+    }
+  }, [venda])
 
   useEffect(() => {
     if (!venda) {
@@ -110,6 +123,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         vendedor_id: '',
         forma_pagamento_id: '',
         origem_venda: 'loja_fisica',
+        uf_destino: 'SP',
         estoque_id: '',
         observacoes: '',
         desconto: 0,
@@ -125,6 +139,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       vendedor_id: venda.vendedor_id ? String(venda.vendedor_id) : '',
       forma_pagamento_id: getFormaPagamentoIdFromVenda(venda),
       origem_venda: venda.origem_venda,
+      uf_destino: venda.uf_destino || 'SP',
       estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0,
@@ -471,7 +486,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
               <select
@@ -500,6 +515,43 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                 <option value="magazine_luiza">Magazine Luiza</option>
                 <option value="americanas">Americanas</option>
                 <option value="outros">Outros</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="uf_destino">UF de Destino</Label>
+              <select
+                id="uf_destino"
+                value={formData.uf_destino}
+                onChange={(e) => setFormData(prev => ({ ...prev, uf_destino: e.target.value }))}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="AC">AC - Acre</option>
+                <option value="AL">AL - Alagoas</option>
+                <option value="AP">AP - Amapá</option>
+                <option value="AM">AM - Amazonas</option>
+                <option value="BA">BA - Bahia</option>
+                <option value="CE">CE - Ceará</option>
+                <option value="DF">DF - Distrito Federal</option>
+                <option value="ES">ES - Espírito Santo</option>
+                <option value="GO">GO - Goiás</option>
+                <option value="MA">MA - Maranhão</option>
+                <option value="MT">MT - Mato Grosso</option>
+                <option value="MS">MS - Mato Grosso do Sul</option>
+                <option value="MG">MG - Minas Gerais</option>
+                <option value="PA">PA - Pará</option>
+                <option value="PB">PB - Paraíba</option>
+                <option value="PR">PR - Paraná</option>
+                <option value="PE">PE - Pernambuco</option>
+                <option value="PI">PI - Piauí</option>
+                <option value="RJ">RJ - Rio de Janeiro</option>
+                <option value="RN">RN - Rio Grande do Norte</option>
+                <option value="RS">RS - Rio Grande do Sul</option>
+                <option value="RO">RO - Rondônia</option>
+                <option value="RR">RR - Roraima</option>
+                <option value="SC">SC - Santa Catarina</option>
+                <option value="SP">SP - São Paulo</option>
+                <option value="SE">SE - Sergipe</option>
+                <option value="TO">TO - Tocantins</option>
               </select>
             </div>
           </div>
@@ -602,7 +654,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               preco_unitario: item.preco_unitario,
               subtotal: item.subtotal
             }))}
-            enabled={false}
+            uf_destino={formData.uf_destino}
+            enabled={impostosEnabled}
             onChange={(result) => setImpostos(result)}
           />
 

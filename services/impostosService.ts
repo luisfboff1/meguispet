@@ -27,7 +27,6 @@ export const impostosService = {
       .from('impostos_produto')
       .select(`
         *,
-        tabela_mva(*),
         produto:produtos(id, nome, codigo_barras)
       `, { count: 'exact' })
       .eq('ativo', true)
@@ -57,7 +56,6 @@ export const impostosService = {
       .from('impostos_produto')
       .select(`
         *,
-        tabela_mva(*),
         produto:produtos(id, nome, codigo_barras, preco_venda, preco_custo)
       `)
       .eq('id', id)
@@ -84,7 +82,6 @@ export const impostosService = {
       .from('impostos_produto')
       .select(`
         *,
-        tabela_mva(*),
         produto:produtos(id, nome, codigo_barras, preco_venda, preco_custo)
       `)
       .eq('produto_id', produtoId)
@@ -112,7 +109,6 @@ export const impostosService = {
       .from('impostos_produto')
       .select(`
         *,
-        tabela_mva(*),
         produto:produtos(id, nome, codigo_barras)
       `)
       .eq('ncm', ncm)
@@ -140,7 +136,6 @@ export const impostosService = {
       .insert(formData)
       .select(`
         *,
-        tabela_mva(*),
         produto:produtos(id, nome, codigo_barras)
       `)
       .single()
@@ -170,13 +165,12 @@ export const impostosService = {
 
     console.log('[impostosService.update] Updating id:', id, 'with data:', formData)
 
-    const { data, error } = await supabase
+    const { data, error} = await supabase
       .from('impostos_produto')
       .update(formData)
       .eq('id', id)
       .select(`
         *,
-        tabela_mva(*),
         produto:produtos(id, nome, codigo_barras)
       `)
       .single()
@@ -210,7 +204,6 @@ export const impostosService = {
       .eq('produto_id', produtoId)
       .select(`
         *,
-        tabela_mva(*),
         produto:produtos(id, nome, codigo_barras)
       `)
       .single()
@@ -322,7 +315,6 @@ export const impostosService = {
       .insert(formDataArray)
       .select(`
         *,
-        tabela_mva(*),
         produto:produtos(id, nome, codigo_barras)
       `)
 
