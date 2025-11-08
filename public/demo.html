@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeguisPet - Table Mobile Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+    }
+    .responsive-table {
+      width: 100%;
+      min-width: 600px;
+    }
+    .responsive-table th,
+    .responsive-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .responsive-table th {
+      background-color: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+    }
+    .responsive-table td {
+      min-width: 100px;
+    }
+    .truncate-cell {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      max-width: 200px;
+    }
+    @media (max-width: 768px) {
+      .hide-mobile {
+        display: none !important;
+      }
+    }
+    @media (max-width: 1024px) {
+      .hide-tablet {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">MeguisPet - Tabelas Responsivas</h1>
+      <p class="text-gray-600">Demonstração das melhorias de UX mobile para tabelas</p>
+    </div>
+
+    <!-- Controls -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="flex items-center justify-between">
+        <div class="flex gap-2">
+          <button onclick="setViewport('mobile')" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            📱 Mobile (375px)
+          </button>
+          <button onclick="setViewport('tablet')" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+            📱 Tablet (768px)
+          </button>
+          <button onclick="setViewport('desktop')" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
+            💻 Desktop (1024px)
+          </button>
+        </div>
+        <div class="text-sm text-gray-600">
+          Viewport atual: <span id="current-width" class="font-mono font-bold"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-blue-800">Recursos Implementados</h3>
+          <div class="mt-2 text-sm text-blue-700">
+            <ul class="list-disc list-inside space-y-1">
+              <li>✅ Scroll horizontal automático quando necessário</li>
+              <li>✅ Colunas secundárias ocultadas em mobile (< 768px)</li>
+              <li>✅ Botão "Colunas" para selecionar quais exibir</li>
+              <li>✅ Texto truncado com ellipsis para prevenir overflow</li>
+              <li>✅ Largura mínima de 100px por coluna</li>
+              <li>✅ Largura máxima de 200px em mobile para melhor leitura</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table 1: Clientes -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold text-gray-900">Clientes</h2>
+          <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">
+            <span class="inline-flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+              Colunas
+            </span>
+          </button>
+        </div>
+      </div>
+      <div class="table-container">
+        <table class="responsive-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th class="hide-mobile">Tipo</th>
+              <th class="hide-mobile">Email</th>
+              <th class="hide-mobile">Telefone</th>
+              <th class="hide-mobile">Endereço</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm font-medium text-purple-600">JS</span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900 truncate-cell">João Silva</div>
+                    <div class="text-sm text-gray-500">Cliente desde 01/01/2024</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile">
+                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                  Cliente
+                </span>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">joao.silva@email.com</div>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">(11) 98765-4321</div>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">Rua das Flores, 123, São Paulo - SP</div>
+              </td>
+              <td>
+                <div class="flex gap-2">
+                  <button class="p-2 text-gray-600 hover:text-gray-900">👁️</button>
+                  <button class="p-2 text-gray-600 hover:text-gray-900">✏️</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm font-medium text-purple-600">MS</span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900 truncate-cell">Maria Santos</div>
+                    <div class="text-sm text-gray-500">Cliente desde 15/02/2024</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile">
+                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                  Cliente
+                </span>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">maria.santos@email.com</div>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">(21) 91234-5678</div>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">Av. Paulista, 1000, São Paulo - SP</div>
+              </td>
+              <td>
+                <div class="flex gap-2">
+                  <button class="p-2 text-gray-600 hover:text-gray-900">👁️</button>
+                  <button class="p-2 text-gray-600 hover:text-gray-900">✏️</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm font-medium text-purple-600">PO</span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900 truncate-cell">Pedro Oliveira com nome muito longo</div>
+                    <div class="text-sm text-gray-500">Cliente desde 20/03/2024</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile">
+                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                  Fornecedor
+                </span>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">pedro.oliveira.nome.muito.longo@empresa.com.br</div>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">(11) 99999-8888</div>
+              </td>
+              <td class="hide-mobile">
+                <div class="truncate-cell">Rua Muito Longa Com Muitos Caracteres, 9999, Bairro Com Nome Extenso, São Paulo - SP, CEP 01234-567</div>
+              </td>
+              <td>
+                <div class="flex gap-2">
+                  <button class="p-2 text-gray-600 hover:text-gray-900">👁️</button>
+                  <button class="p-2 text-gray-600 hover:text-gray-900">✏️</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table 2: Vendas -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold text-gray-900">Vendas</h2>
+          <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">
+            <span class="inline-flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+              Colunas
+            </span>
+          </button>
+        </div>
+      </div>
+      <div class="table-container">
+        <table class="responsive-table">
+          <thead>
+            <tr>
+              <th>Venda</th>
+              <th class="hide-mobile">Cliente</th>
+              <th class="hide-mobile">Vendedor</th>
+              <th>Total</th>
+              <th class="hide-mobile">Pagamento</th>
+              <th>Status</th>
+              <th class="hide-mobile">Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center flex-shrink-0">
+                    <span class="text-xs">🛒</span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900">#V001</div>
+                    <div class="text-sm text-gray-500">ID: #1</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile truncate-cell">João Silva</td>
+              <td class="hide-mobile truncate-cell">Carlos Vendas</td>
+              <td class="font-medium text-green-600">R$ 250,00</td>
+              <td class="hide-mobile truncate-cell">Cartão de Crédito</td>
+              <td>
+                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                  Pago
+                </span>
+              </td>
+              <td class="hide-mobile">08/11/2024</td>
+              <td>
+                <div class="flex gap-1">
+                  <button class="p-1 text-gray-600">👁️</button>
+                  <button class="p-1 text-blue-600">📄</button>
+                  <button class="p-1 text-gray-600">✏️</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center flex-shrink-0">
+                    <span class="text-xs">🛒</span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900">#V002</div>
+                    <div class="text-sm text-gray-500">ID: #2</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile truncate-cell">Maria Santos</td>
+              <td class="hide-mobile truncate-cell">Ana Comercial</td>
+              <td class="font-medium text-green-600">R$ 450,00</td>
+              <td class="hide-mobile truncate-cell">PIX</td>
+              <td>
+                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                  Pendente
+                </span>
+              </td>
+              <td class="hide-mobile">07/11/2024</td>
+              <td>
+                <div class="flex gap-1">
+                  <button class="p-1 text-gray-600">👁️</button>
+                  <button class="p-1 text-blue-600">📄</button>
+                  <button class="p-1 text-gray-600">✏️</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table 3: Estoque -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">Controle de Estoque</h2>
+      </div>
+      <div class="table-container">
+        <table class="responsive-table">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th class="hide-mobile">Categoria</th>
+              <th>Estoque</th>
+              <th class="hide-tablet">Preço</th>
+              <th class="hide-tablet">Valor Total</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                    <span class="text-xs">📦</span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900 truncate-cell">Ração Premium 15kg</div>
+                    <div class="text-sm text-gray-500">ID: #101</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile truncate-cell">Alimentos</td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">25</span>
+                  <span class="text-green-600">✓</span>
+                </div>
+              </td>
+              <td class="hide-tablet">R$ 89,90</td>
+              <td class="hide-tablet font-medium">R$ 2.247,50</td>
+              <td>
+                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-600 whitespace-nowrap">
+                  Em estoque
+                </span>
+              </td>
+              <td>
+                <button class="p-2 text-gray-600">✏️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                    <span class="text-xs">📦</span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900 truncate-cell">Brinquedo Interativo</div>
+                    <div class="text-sm text-gray-500">ID: #102</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile truncate-cell">Brinquedos</td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">3</span>
+                  <span class="text-yellow-600">⚠️</span>
+                </div>
+              </td>
+              <td class="hide-tablet">R$ 45,00</td>
+              <td class="hide-tablet font-medium">R$ 135,00</td>
+              <td>
+                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-600 whitespace-nowrap">
+                  Estoque baixo
+                </span>
+              </td>
+              <td>
+                <button class="p-2 text-gray-600">✏️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                    <span class="text-xs">📦</span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900 truncate-cell">Shampoo Pet 500ml</div>
+                    <div class="text-sm text-gray-500">ID: #103</div>
+                  </div>
+                </div>
+              </td>
+              <td class="hide-mobile truncate-cell">Higiene</td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">0</span>
+                  <span class="text-red-600">❌</span>
+                </div>
+              </td>
+              <td class="hide-tablet">R$ 32,90</td>
+              <td class="hide-tablet font-medium">R$ 0,00</td>
+              <td>
+                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-600 whitespace-nowrap">
+                  Sem estoque
+                </span>
+              </td>
+              <td>
+                <button class="p-2 text-gray-600">✏️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <span class="text-2xl">💡</span>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-yellow-800">Como Testar</h3>
+          <div class="mt-2 text-sm text-yellow-700">
+            <ol class="list-decimal list-inside space-y-1">
+              <li>Use os botões acima para simular diferentes tamanhos de tela</li>
+              <li>Em mobile (< 768px): Colunas secundárias ficam ocultas automaticamente</li>
+              <li>Role horizontalmente para ver todas as colunas quando necessário</li>
+              <li>Observe que o texto NUNCA ultrapassa o limite da coluna</li>
+              <li>O botão "Colunas" permite selecionar quais colunas exibir</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateWidth() {
+      document.getElementById('current-width').textContent = window.innerWidth + 'px';
+    }
+
+    function setViewport(size) {
+      const container = document.querySelector('.max-w-7xl');
+      let width;
+      
+      switch(size) {
+        case 'mobile':
+          width = '375px';
+          break;
+        case 'tablet':
+          width = '768px';
+          break;
+        case 'desktop':
+          width = '1024px';
+          break;
+        default:
+          width = '100%';
+      }
+      
+      container.style.maxWidth = width;
+      container.style.margin = '0 auto';
+      
+      // Simulate window resize
+      setTimeout(updateWidth, 100);
+    }
+
+    // Update width on page load and resize
+    window.addEventListener('load', updateWidth);
+    window.addEventListener('resize', updateWidth);
+  </script>
+</body>
+</html>
