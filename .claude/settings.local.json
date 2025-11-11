@@ -33,7 +33,8 @@
       "Bash(timeout 5 pnpm start:*)",
       "Bash(pnpm lint:*)",
       "Bash(pnpm build:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(pnpm run typecheck:*)"
     ],
     "deny": [],
     "ask": []

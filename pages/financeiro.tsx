@@ -326,6 +326,102 @@ export default function FinanceiroPage() {
     return matchesSearch && matchesTipo
   })
 
+  // Column definitions for categorias table
+  const categoriasColumns = useMemo<ColumnDef<CategoriaFinanceira>[]>(() => {
+    return [
+    {
+      accessorKey: "nome",
+      header: ({ column }) => <SortableHeader column={column}>Categoria</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-3 min-w-[180px]">
+          <div
+            className="w-4 h-4 rounded-full flex-shrink-0"
+            style={{ backgroundColor: row.original.cor }}
+          />
+          <span className="font-medium text-gray-900 dark:text-white truncate">
+            {row.original.nome}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "tipo",
+      header: ({ column }) => <SortableHeader column={column}>Tipo</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2">
+          <div className={`w-3 h-3 rounded-full ${
+            row.original.tipo === 'receita' ? 'bg-green-500' : 'bg-red-500'
+          }`}></div>
+          <span className={`text-sm font-medium capitalize ${
+            row.original.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {row.original.tipo}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "descricao",
+      header: ({ column }) => <SortableHeader column={column}>Descrição</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="min-w-[200px] max-w-[300px]">
+          {row.original.descricao ? (
+            <span
+              className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 break-words"
+              title={row.original.descricao}
+            >
+              {row.original.descricao}
+            </span>
+          ) : (
+            <span className="text-sm text-gray-400">-</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "ativo",
+      header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
+      cell: ({ row }) => (
+        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+          row.original.ativo
+            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+        }`}>
+          {row.original.ativo ? 'Ativa' : 'Inativa'}
+        </span>
+      ),
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setEditingCategoria(row.original)
+              setShowCategoriaForm(true)
+            }}
+            title="Editar"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteCategoria(row.original.id)}
+            title="Excluir"
+            className="text-red-600 hover:text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
+  }, [])
+
   // Column definitions for transacoes table
   const transacoesColumns = useMemo<ColumnDef<TransacaoFinanceira>[]>(() => {
     return [
@@ -784,71 +880,20 @@ export default function FinanceiroPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {categorias.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categorias.map((categoria) => (
-                    <div
-                      key={categoria.id}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div
-                              className="w-4 h-4 rounded-full"
-                              style={{ backgroundColor: categoria.cor }}
-                            />
-                            <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                              {categoria.nome}
-                            </h3>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Tipo: <span className="font-medium">{categoria.tipo}</span>
-                            </p>
-                            {categoria.descricao && (
-                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
-                                {categoria.descricao}
-                              </p>
-                            )}
-                            <p className="text-xs">
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                categoria.ativo 
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                              }`}>
-                                {categoria.ativo ? 'Ativa' : 'Inativa'}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingCategoria(categoria)
-                              setShowCategoriaForm(true)
-                            }}
-                            title="Editar"
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteCategoria(categoria.id)}
-                            title="Excluir"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-500">Carregando categorias...</p>
                 </div>
+              ) : categorias.length > 0 ? (
+                <DataTable
+                  columns={categoriasColumns}
+                  data={categorias}
+                  enableColumnResizing={true}
+                  enableSorting={true}
+                  enableColumnVisibility={true}
+                  mobileVisibleColumns={['nome', 'tipo', 'ativo', 'acoes']}
+                />
               ) : (
                 <div className="text-center py-12">
                   <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -858,7 +903,7 @@ export default function FinanceiroPage() {
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
                     Crie categorias para organizar melhor suas transações financeiras
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => {
                       setEditingCategoria(null)
                       setShowCategoriaForm(true)
