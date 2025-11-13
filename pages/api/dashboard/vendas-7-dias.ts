@@ -61,7 +61,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       impostos: number;
     }
 
-    const groupedByDate = (vendas || []).reduce((acc: Record<string, DayData>, venda: VendaRaw) => {
+    const groupedByDate = ((vendas || []) as unknown as VendaRaw[]).reduce((acc: Record<string, DayData>, venda: VendaRaw) => {
       const date = new Date(venda.data_venda).toISOString().split('T')[0];
       if (!acc[date]) {
         acc[date] = { data: date, vendas: 0, receita: 0, despesas: 0, impostos: 0 };
