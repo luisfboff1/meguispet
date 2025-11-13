@@ -34,7 +34,8 @@
       "Bash(pnpm lint:*)",
       "Bash(pnpm build:*)",
       "Bash(npm install:*)",
-      "Bash(pnpm run typecheck:*)"
+      "Bash(pnpm run typecheck:*)",
+      "Bash(pnpm run build:local:*)"
     ],
     "deny": [],
     "ask": []

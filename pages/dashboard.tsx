@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   DollarSign,
@@ -12,7 +12,8 @@ import {
   Package2
 } from 'lucide-react'
 import { dashboardService, produtosService, clientesService, movimentacoesService, vendasService } from '@/services/api'
-import VendasChart from '@/components/charts/VendasChart'
+import DashboardChart from '@/components/charts/DashboardChart'
+import TopProductsTable from '@/components/tables/TopProductsTable'
 import { useModal } from '@/hooks/useModal'
 import { AnimatedCard } from '@/components/ui/animated-card'
 import type {
@@ -269,6 +270,62 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Quick Actions - Botões de Acesso Rápido */}
+      <AnimatedCard>
+        <CardHeader>
+          <CardTitle>Ações Rápidas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Button
+              className="bg-meguispet-primary hover:bg-meguispet-primary/90 h-20 flex-col"
+              onClick={handleNovaVenda}
+            >
+              <ShoppingCart className="h-6 w-6 mb-2" />
+              <span className="text-sm">Nova Venda</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleNovoProduto}
+              className="h-20 flex-col"
+            >
+              <Package className="h-6 w-6 mb-2" />
+              <span className="text-sm">Cadastrar Produto</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleNovoCliente}
+              className="h-20 flex-col"
+            >
+              <Users className="h-6 w-6 mb-2" />
+              <span className="text-sm">Novo Cliente</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleNovaMovimentacao}
+              className="h-20 flex-col"
+            >
+              <Package2 className="h-6 w-6 mb-2" />
+              <span className="text-sm">Nova Movimentação</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleVerRelatorios}
+              className="h-20 flex-col"
+            >
+              <Eye className="h-6 w-6 mb-2" />
+              <span className="text-sm">Ver Relatórios</span>
+            </Button>
+          </div>
+        </CardContent>
+      </AnimatedCard>
+
+      {/* Customizable Chart - Full Width */}
+      <DashboardChart data={vendas7Dias} loading={loading} />
+
+      {/* Top Products Table - Full Width */}
+      <TopProductsTable data={topProducts} loading={loading} />
+
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? (
@@ -306,8 +363,8 @@ export default function DashboardPage() {
                       <TrendingDown className="mr-1 h-3 w-3 text-red-600" />
                     )}
                     <span className={
-                      metric.changeType === 'positive' 
-                        ? 'text-green-600' 
+                      metric.changeType === 'positive'
+                        ? 'text-green-600'
                         : 'text-red-600'
                     }>
                       {metric.change}
@@ -333,118 +390,6 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Vendas Chart */}
-        <AnimatedCard>
-          <CardHeader>
-            <CardTitle>Vendas dos Últimos 7 Dias</CardTitle>
-            <CardDescription>
-              Acompanhe o desempenho das suas vendas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <VendasChart data={vendas7Dias} loading={loading} />
-          </CardContent>
-        </AnimatedCard>
-
-        {/* Produtos Mais Vendidos */}
-        <AnimatedCard>
-          <CardHeader>
-            <CardTitle>Produtos Mais Vendidos</CardTitle>
-            <CardDescription>
-              Top 5 produtos mais vendidos hoje
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-4">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                ))}
-              </div>
-            ) : topProducts.length > 0 ? (
-              <div className="space-y-4">
-                {topProducts.map((product, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">{product.nome}</p>
-                      <p className="text-sm text-gray-500">{product.vendas} vendas</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-meguispet-primary">
-                        {formatCurrency(product.receita)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Nenhum produto vendido ainda</p>
-              </div>
-            )}
-          </CardContent>
-        </AnimatedCard>
-      </div>
-
-      {/* Quick Actions - Botões de Acesso Rápido */}
-      <AnimatedCard>
-        <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
-          <CardDescription>
-            Acesso rápido às principais funcionalidades
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Button 
-              className="bg-meguispet-primary hover:bg-meguispet-primary/90 h-20 flex-col"
-              onClick={handleNovaVenda}
-            >
-              <ShoppingCart className="h-6 w-6 mb-2" />
-              <span className="text-sm">Nova Venda</span>
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={handleNovoProduto}
-              className="h-20 flex-col"
-            >
-              <Package className="h-6 w-6 mb-2" />
-              <span className="text-sm">Cadastrar Produto</span>
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={handleNovoCliente}
-              className="h-20 flex-col"
-            >
-              <Users className="h-6 w-6 mb-2" />
-              <span className="text-sm">Novo Cliente</span>
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={handleNovaMovimentacao}
-              className="h-20 flex-col"
-            >
-              <Package2 className="h-6 w-6 mb-2" />
-              <span className="text-sm">Nova Movimentação</span>
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={handleVerRelatorios}
-              className="h-20 flex-col"
-            >
-              <Eye className="h-6 w-6 mb-2" />
-              <span className="text-sm">Ver Relatórios</span>
-            </Button>
-          </div>
-        </CardContent>
-      </AnimatedCard>
     </div>
   )
 }

@@ -522,6 +522,8 @@ export interface DashboardVendasDia {
   data: string
   vendas: number
   receita: number
+  despesas?: number
+  impostos?: number
 }
 
 // Tipos para financeiro
