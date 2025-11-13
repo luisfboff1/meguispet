@@ -71,14 +71,33 @@ export default function VendaPDFPreviewModal({
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
-  const totalProdutos = itensOrdenados.reduce((sum, item) => sum + item.subtotal, 0)
-  const hasImposto = venda.imposto_percentual && venda.imposto_percentual > 0
-  const valorDesconto = venda.desconto || 0
+  // Verificar se tem os novos campos de impostos (IPI, ICMS, ST)
+  const hasNovosImpostos = venda.total_ipi != null || venda.total_icms != null || venda.total_st != null
 
-  // Calcular total final corretamente baseado nas opções
-  const totalFinal = options.incluirImpostos && hasImposto
-    ? totalProdutos - valorDesconto + ((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100
-    : totalProdutos - valorDesconto
+  const totalProdutos = hasNovosImpostos
+    ? (venda.total_produtos_bruto || 0)
+    : itensOrdenados.reduce((sum, item) => sum + item.subtotal, 0)
+
+  const valorDesconto = hasNovosImpostos
+    ? (venda.desconto_total || 0)
+    : (venda.desconto || 0)
+
+  const totalProdutosLiquido = hasNovosImpostos
+    ? (venda.total_produtos_liquido || totalProdutos - valorDesconto)
+    : (totalProdutos - valorDesconto)
+
+  const totalIPI = venda.total_ipi || 0
+  const totalICMS = venda.total_icms || 0
+  const totalST = venda.total_st || 0
+
+  const hasImposto = venda.imposto_percentual && venda.imposto_percentual > 0
+
+  // Calcular total final
+  const totalFinal = hasNovosImpostos
+    ? (venda.valor_final || totalProdutosLiquido + totalIPI + totalST)
+    : (options.incluirImpostos && hasImposto
+        ? totalProdutos - valorDesconto + ((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100
+        : totalProdutos - valorDesconto)
 
   // Calcular totais de ICMS-ST
   const totaisICMSST = hasICMSST ? {
@@ -259,110 +278,230 @@ export default function VendaPDFPreviewModal({
                       <p className="text-xs text-muted-foreground">Arraste para reordenar ou clique nos cabeçalhos para ordenar</p>
                     </div>
                     <div className="border rounded-lg overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="w-8 px-2 py-2"></th>
-                            <th
-                              className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
-                              onClick={() => handleSort('codigo')}
-                            >
-                              <div className="flex items-center gap-1">
-                                Código
-                                <ArrowUpDown className="h-3 w-3" />
-                              </div>
-                            </th>
-                            <th
-                              className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
-                              onClick={() => handleSort('descricao')}
-                            >
-                              <div className="flex items-center gap-1">
-                                Descrição
-                                <ArrowUpDown className="h-3 w-3" />
-                              </div>
-                            </th>
-                            <th
-                              className="text-center px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
-                              onClick={() => handleSort('quantidade')}
-                            >
-                              <div className="flex items-center justify-center gap-1">
-                                Qtd
-                                <ArrowUpDown className="h-3 w-3" />
-                              </div>
-                            </th>
-                            <th
-                              className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
-                              onClick={() => handleSort('preco')}
-                            >
-                              <div className="flex items-center justify-end gap-1">
-                                Preço Unit.
-                                <ArrowUpDown className="h-3 w-3" />
-                              </div>
-                            </th>
-                            <th
-                              className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
-                              onClick={() => handleSort('total')}
-                            >
-                              <div className="flex items-center justify-end gap-1">
-                                Total
-                                <ArrowUpDown className="h-3 w-3" />
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {itensOrdenados.map((item, index) => (
-                            <tr
-                              key={index}
-                              draggable
-                              onDragStart={() => handleDragStart(index)}
-                              onDragOver={(e) => handleDragOver(e, index)}
-                              onDragEnd={handleDragEnd}
-                              className={`border-t transition-all cursor-move hover:bg-gray-50 ${
-                                draggedIndex === index ? 'opacity-50 bg-blue-50' : ''
-                              }`}
-                            >
-                              <td className="px-2 py-2">
-                                <GripVertical className="h-4 w-4 text-gray-400" />
-                              </td>
-                              <td className="px-3 py-2">{item.produto?.id || '-'}</td>
-                              <td className="px-3 py-2">{item.produto?.nome || 'Produto sem nome'}</td>
-                              <td className="text-center px-3 py-2">{item.quantidade}</td>
-                              <td className="text-right px-3 py-2">{formatCurrency(item.preco_unitario)}</td>
-                              <td className="text-right px-3 py-2">{formatCurrency(item.subtotal)}</td>
+                      {hasNovosImpostos ? (
+                        /* Tabela com novos campos de impostos */
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="w-6 px-2 py-2"></th>
+                                <th className="text-left px-2 py-2 font-medium">Produto</th>
+                                <th className="text-right px-2 py-2 font-medium">Qtd</th>
+                                <th className="text-right px-2 py-2 font-medium">Preço</th>
+                                <th className="text-right px-2 py-2 font-medium">Subtotal</th>
+                                {valorDesconto > 0 && <th className="text-right px-2 py-2 font-medium text-red-600">Desc.</th>}
+                                <th className="text-right px-2 py-2 font-medium">Líquido</th>
+                                {totalIPI > 0 && <th className="text-right px-2 py-2 font-medium">IPI</th>}
+                                {totalICMS > 0 && <th className="text-right px-2 py-2 font-medium text-blue-600">ICMS*</th>}
+                                {totalST > 0 && <th className="text-right px-2 py-2 font-medium">ST</th>}
+                                <th className="text-right px-2 py-2 font-medium">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {itensOrdenados.map((item, index) => (
+                                <tr
+                                  key={index}
+                                  draggable
+                                  onDragStart={() => handleDragStart(index)}
+                                  onDragOver={(e) => handleDragOver(e, index)}
+                                  onDragEnd={handleDragEnd}
+                                  className={`border-t transition-all cursor-move hover:bg-gray-50 ${
+                                    draggedIndex === index ? 'opacity-50 bg-blue-50' : ''
+                                  }`}
+                                >
+                                  <td className="px-2 py-2">
+                                    <GripVertical className="h-3 w-3 text-gray-400" />
+                                  </td>
+                                  <td className="px-2 py-2">{item.produto?.nome || 'Produto sem nome'}</td>
+                                  <td className="text-right px-2 py-2">{item.quantidade}</td>
+                                  <td className="text-right px-2 py-2">{formatCurrency(item.preco_unitario)}</td>
+                                  <td className="text-right px-2 py-2">{formatCurrency(item.subtotal_bruto || item.subtotal)}</td>
+                                  {valorDesconto > 0 && (
+                                    <td className="text-right px-2 py-2 text-red-600">
+                                      {item.desconto_proporcional ? `-${formatCurrency(item.desconto_proporcional)}` : '-'}
+                                    </td>
+                                  )}
+                                  <td className="text-right px-2 py-2 font-medium">
+                                    {formatCurrency(item.subtotal_liquido || (item.subtotal - (item.desconto_proporcional || 0)))}
+                                  </td>
+                                  {totalIPI > 0 && (
+                                    <td className="text-right px-2 py-2">{item.ipi_valor ? formatCurrency(item.ipi_valor) : '-'}</td>
+                                  )}
+                                  {totalICMS > 0 && (
+                                    <td className="text-right px-2 py-2 text-blue-600">
+                                      {item.icms_valor ? formatCurrency(item.icms_valor) : '-'}
+                                    </td>
+                                  )}
+                                  {totalST > 0 && (
+                                    <td className="text-right px-2 py-2">{item.st_valor ? formatCurrency(item.st_valor) : '-'}</td>
+                                  )}
+                                  <td className="text-right px-2 py-2 font-bold">
+                                    {formatCurrency(item.total_item || item.subtotal)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        /* Tabela original simplificada */
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="w-8 px-2 py-2"></th>
+                              <th
+                                className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => handleSort('codigo')}
+                              >
+                                <div className="flex items-center gap-1">
+                                  Código
+                                  <ArrowUpDown className="h-3 w-3" />
+                                </div>
+                              </th>
+                              <th
+                                className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => handleSort('descricao')}
+                              >
+                                <div className="flex items-center gap-1">
+                                  Descrição
+                                  <ArrowUpDown className="h-3 w-3" />
+                                </div>
+                              </th>
+                              <th
+                                className="text-center px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => handleSort('quantidade')}
+                              >
+                                <div className="flex items-center justify-center gap-1">
+                                  Qtd
+                                  <ArrowUpDown className="h-3 w-3" />
+                                </div>
+                              </th>
+                              <th
+                                className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => handleSort('preco')}
+                              >
+                                <div className="flex items-center justify-end gap-1">
+                                  Preço Unit.
+                                  <ArrowUpDown className="h-3 w-3" />
+                                </div>
+                              </th>
+                              <th
+                                className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => handleSort('total')}
+                              >
+                                <div className="flex items-center justify-end gap-1">
+                                  Total
+                                  <ArrowUpDown className="h-3 w-3" />
+                                </div>
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {itensOrdenados.map((item, index) => (
+                              <tr
+                                key={index}
+                                draggable
+                                onDragStart={() => handleDragStart(index)}
+                                onDragOver={(e) => handleDragOver(e, index)}
+                                onDragEnd={handleDragEnd}
+                                className={`border-t transition-all cursor-move hover:bg-gray-50 ${
+                                  draggedIndex === index ? 'opacity-50 bg-blue-50' : ''
+                                }`}
+                              >
+                                <td className="px-2 py-2">
+                                  <GripVertical className="h-4 w-4 text-gray-400" />
+                                </td>
+                                <td className="px-3 py-2">{item.produto?.id || '-'}</td>
+                                <td className="px-3 py-2">{item.produto?.nome || 'Produto sem nome'}</td>
+                                <td className="text-center px-3 py-2">{item.quantidade}</td>
+                                <td className="text-right px-3 py-2">{formatCurrency(item.preco_unitario)}</td>
+                                <td className="text-right px-3 py-2">{formatCurrency(item.subtotal)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
                     </div>
                   </div>
 
                   {/* Totais */}
                   <div className="border-t pt-4">
                     <div className="flex justify-end">
-                      <div className="w-64 space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Total de Produtos:</span>
-                          <span className="font-medium">{formatCurrency(totalProdutos)}</span>
-                        </div>
-                        {valorDesconto > 0 && (
-                          <div className="flex justify-between">
-                            <span>Desconto:</span>
-                            <span className="font-medium text-red-600">- {formatCurrency(valorDesconto)}</span>
-                          </div>
+                      <div className="w-80 space-y-2 text-sm">
+                        {hasNovosImpostos ? (
+                          /* Resumo com novos impostos */
+                          <>
+                            <div className="flex justify-between">
+                              <span>Total Bruto:</span>
+                              <span className="font-medium">{formatCurrency(totalProdutos)}</span>
+                            </div>
+                            {valorDesconto > 0 && (
+                              <div className="flex justify-between text-red-600">
+                                <span>Desconto:</span>
+                                <span className="font-medium">- {formatCurrency(valorDesconto)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between">
+                              <span>Subtotal Líquido:</span>
+                              <span className="font-medium">{formatCurrency(totalProdutosLiquido)}</span>
+                            </div>
+                            <div className="border-t pt-2 space-y-1">
+                              {totalIPI > 0 && (
+                                <div className="flex justify-between">
+                                  <span>IPI:</span>
+                                  <span className="font-medium">{formatCurrency(totalIPI)}</span>
+                                </div>
+                              )}
+                              {totalST > 0 && (
+                                <div className="flex justify-between">
+                                  <span>ST:</span>
+                                  <span className="font-medium">{formatCurrency(totalST)}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex justify-between text-base font-bold border-t pt-2">
+                              <span>TOTAL GERAL:</span>
+                              <span className="text-green-600">{formatCurrency(totalFinal)}</span>
+                            </div>
+                            {totalICMS > 0 && (
+                              <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                                <div className="flex justify-between text-blue-700 font-medium mb-1">
+                                  <span>ICMS (Informativo):</span>
+                                  <span>{formatCurrency(totalICMS)}</span>
+                                </div>
+                                <p className="text-blue-600">
+                                  * Este valor NÃO está incluído no total. É apenas informativo (pode ser creditado).
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          /* Resumo original */
+                          <>
+                            <div className="flex justify-between">
+                              <span>Total de Produtos:</span>
+                              <span className="font-medium">{formatCurrency(totalProdutos)}</span>
+                            </div>
+                            {valorDesconto > 0 && (
+                              <div className="flex justify-between">
+                                <span>Desconto:</span>
+                                <span className="font-medium text-red-600">- {formatCurrency(valorDesconto)}</span>
+                              </div>
+                            )}
+                            {options.incluirImpostos && hasImposto && (
+                              <div className="flex justify-between text-xs text-muted-foreground">
+                                <span>Imposto ({venda.imposto_percentual}%):</span>
+                                <span>
+                                  {formatCurrency(((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex justify-between text-base font-bold border-t pt-2">
+                              <span>{hasImposto && options.incluirImpostos ? 'TOTAL COM IMPOSTO:' : 'TOTAL:'}</span>
+                              <span>{formatCurrency(totalFinal)}</span>
+                            </div>
+                          </>
                         )}
-                        {options.incluirImpostos && hasImposto && (
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Imposto ({venda.imposto_percentual}%):</span>
-                            <span>
-                              {formatCurrency(((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100)}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex justify-between text-base font-bold border-t pt-2">
-                          <span>{hasImposto && options.incluirImpostos ? 'TOTAL COM IMPOSTO:' : 'TOTAL:'}</span>
-                          <span>{formatCurrency(totalFinal)}</span>
-                        </div>
                       </div>
                     </div>
                   </div>

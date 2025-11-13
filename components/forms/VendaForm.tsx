@@ -3,11 +3,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Plus, Trash2, ShoppingCart, AlertTriangle } from 'lucide-react'
+import { Loader2, Plus, Trash2, ShoppingCart, Settings } from 'lucide-react'
 import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService } from '@/services/api'
-import { vendasImpostosService } from '@/services/vendasImpostosService'
+import { calcularItensVenda, calcularTotaisVenda, formatCurrency } from '@/services/vendaCalculations'
 import AlertDialog from '@/components/ui/AlertDialog'
-import VendaImpostosCard, { VendaImpostosResult } from '@/components/vendas/VendaImpostosCard'
+import VendaTabelaColunas from './VendaTabelaColunas'
 import type {
   Venda,
   Cliente,
@@ -17,13 +17,20 @@ import type {
   VendaItemInput,
   OrigemVenda,
   FormaPagamentoRegistro,
-  Estoque
+  Estoque,
+  ItemCalculado,
+  TotaisVenda,
+  VendaTabelaColunasVisiveis
 } from '@/types'
 
-interface ItemVenda extends VendaItemInput {
+interface ItemVenda {
+  produto_id: number
   produto_nome: string
-  subtotal: number
-  desconto?: number
+  quantidade: number
+  preco_unitario: number
+  ipi_aliquota: number
+  icms_aliquota: number
+  st_aliquota: number
 }
 
 interface VendaFormProps {
@@ -45,7 +52,6 @@ interface VendaFormState {
   observacoes: string
   desconto: number
   prazo_pagamento?: string | number
-  imposto_percentual?: number
 }
 
 const getFormaPagamentoIdFromVenda = (dados?: Venda): string => {
@@ -94,6 +100,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   })
 
   const [itens, setItens] = useState<ItemVenda[]>([])
+  const [itensCalculados, setItensCalculados] = useState<ItemCalculado[]>([])
+  const [totais, setTotais] = useState<TotaisVenda | null>(null)
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [produtos, setProdutos] = useState<Produto[]>([])
@@ -101,18 +109,23 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const [estoques, setEstoques] = useState<Estoque[]>([])
   const [loadingData, setLoadingData] = useState(false)
   const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
-  const [impostos, setImpostos] = useState<VendaImpostosResult | null>(null)
-  const [impostosEnabled, setImpostosEnabled] = useState(false)
-
-  // Detectar se a venda sendo editada tem impostos
-  useEffect(() => {
-    if (venda?.itens && venda.itens.length > 0) {
-      const temImpostos = venda.itens.some(
-        item => item.icms_st_recolher && item.icms_st_recolher > 0
-      )
-      setImpostosEnabled(temImpostos)
-    }
-  }, [venda])
+  const [mostrarConfiguracaoColunas, setMostrarConfiguracaoColunas] = useState(false)
+  const [colunasVisiveis, setColunasVisiveis] = useState<VendaTabelaColunasVisiveis>({
+    produto: true,
+    quantidade: true,
+    precoUnitario: true,
+    subtotalBruto: true,
+    descontoProporcional: false,
+    subtotalLiquido: true,
+    ipiAliquota: false,
+    ipiValor: true,
+    icmsAliquota: false,
+    icmsValor: false,
+    stAliquota: false,
+    stValor: true,
+    totalItem: true,
+    acoes: true
+  })
 
   useEffect(() => {
     if (!venda) {
@@ -127,8 +140,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         estoque_id: '',
         observacoes: '',
         desconto: 0,
-        prazo_pagamento: '',
-        imposto_percentual: 0
+        prazo_pagamento: ''
       })
       return
     }
@@ -143,28 +155,54 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0,
-      prazo_pagamento: venda.prazo_pagamento || '',
-      imposto_percentual: venda.imposto_percentual || 0
+      prazo_pagamento: venda.prazo_pagamento || ''
     })
 
     if (venda.itens?.length) {
-      setItens(
-        venda.itens.map(item => ({
+      // Carregar itens com alíquotas de impostos
+      const itensComImpostos = venda.itens.map(item => {
+        const produto = produtos.find(p => p.id === item.produto_id)
+        return {
           produto_id: item.produto_id,
           produto_nome: item.produto?.nome || '',
           quantidade: item.quantidade,
           preco_unitario: item.preco_unitario,
-          subtotal: item.subtotal
-        }))
-      )
+          ipi_aliquota: produto?.ipi || 0,
+          icms_aliquota: produto?.icms || 0,
+          st_aliquota: produto?.st || 0
+        }
+      })
+      setItens(itensComImpostos)
     } else {
       setItens([])
     }
-  }, [venda])
+  }, [venda, produtos])
 
   useEffect(() => {
     void loadData()
   }, [])
+
+  // Recalcular itens e totais sempre que os itens ou desconto mudarem
+  useEffect(() => {
+    if (itens.length === 0) {
+      setItensCalculados([])
+      setTotais(null)
+      return
+    }
+
+    const itensComDados = itens.filter(item => item.produto_id > 0 && item.quantidade > 0)
+    if (itensComDados.length === 0) {
+      setItensCalculados([])
+      setTotais(null)
+      return
+    }
+
+    const calculados = calcularItensVenda(itensComDados, formData.desconto)
+    setItensCalculados(calculados)
+
+    const totaisCalculados = calcularTotaisVenda(calculados, formData.desconto)
+    setTotais(totaisCalculados)
+  }, [itens, formData.desconto])
 
   const loadData = async () => {
     try {
@@ -197,8 +235,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         produto_nome: '',
         quantidade: 1,
         preco_unitario: 0,
-        subtotal: 0
-        ,desconto: 0
+        ipi_aliquota: 0,
+        icms_aliquota: 0,
+        st_aliquota: 0
       }
     ]))
   }
@@ -217,7 +256,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         const precoVenda = Number(produto.preco_venda) || 0
         newItens[index].produto_nome = produto.nome
         newItens[index].preco_unitario = precoVenda
-        newItens[index].subtotal = newItens[index].quantidade * precoVenda
+        newItens[index].ipi_aliquota = produto.ipi || 0
+        newItens[index].icms_aliquota = produto.icms || 0
+        newItens[index].st_aliquota = produto.st || 0
 
         // Verificar estoque disponível
         if (formData.estoque_id && produto.estoques) {
@@ -231,17 +272,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
           }
         }
       }
-    } else if (field === 'quantidade' || field === 'preco_unitario') {
-      const preco = Number(newItens[index].preco_unitario) || 0
-      const qtd = Number(newItens[index].quantidade) || 0
-      newItens[index].preco_unitario = preco
-      newItens[index].quantidade = qtd
-      newItens[index].subtotal = qtd * preco
-
+    } else if (field === 'quantidade') {
       // Verificar estoque ao alterar quantidade
-      if (field === 'quantidade' && formData.estoque_id && newItens[index].produto_id) {
+      if (formData.estoque_id && newItens[index].produto_id) {
         const produto = produtos.find(p => p.id === newItens[index].produto_id)
         if (produto && produto.estoques) {
+          const qtd = Number(value) || 0
           const estoqueItem = produto.estoques.find(e => Number(e.estoque_id) === Number(formData.estoque_id))
           if (estoqueItem && estoqueItem.quantidade < qtd) {
             setAlert({
@@ -257,14 +293,6 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     setItens(newItens)
   }
 
-  const calcularTotal = () => {
-    const subtotal = itens.reduce((sum, item) => sum + item.subtotal, 0)
-    const desconto = Number(formData.desconto) || 0
-    const imposto = Number(formData.imposto_percentual) || 0
-    const valorComDesconto = Math.max(0, subtotal - desconto)
-    const valorImposto = (valorComDesconto * imposto) / 100
-    return valorComDesconto + valorImposto
-  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -319,53 +347,33 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       cliente_id: formData.cliente_id ? Number(formData.cliente_id) : null,
       vendedor_id: formData.vendedor_id ? Number(formData.vendedor_id) : null,
       forma_pagamento_id: Number(formData.forma_pagamento_id),
-  estoque_id: Number(formData.estoque_id),
+      estoque_id: Number(formData.estoque_id),
       forma_pagamento: formaSelecionada.nome,
       prazo_pagamento: formData.prazo_pagamento,
-      imposto_percentual: formData.imposto_percentual,
-      itens: itens.map((item, index) => {
-        const itemData: VendaItemInput = {
-          produto_id: item.produto_id,
-          quantidade: item.quantidade,
-          preco_unitario: item.preco_unitario,
-          subtotal: item.quantidade * item.preco_unitario
-        }
-
-        // Se impostos estiverem habilitados, incluir valores calculados
-        if (impostos && impostos.enabled && impostos.itens[index]) {
-          const impostoItem = impostos.itens[index]
-          itemData.base_calculo_st = impostoItem.base_calculo_st
-          itemData.icms_proprio = impostoItem.icms_proprio
-          itemData.icms_st_total = impostoItem.icms_st_total
-          itemData.icms_st_recolher = impostoItem.icms_st_recolher
-          itemData.mva_aplicado = impostoItem.mva_aplicado
-          itemData.aliquota_icms = impostoItem.aliquota_icms
-        }
-
-        return itemData
-      })
+      itens: itensCalculados.map(itemCalc => ({
+        produto_id: itemCalc.produto_id,
+        quantidade: itemCalc.quantidade,
+        preco_unitario: itemCalc.preco_unitario,
+        subtotal: itemCalc.subtotal_bruto,
+        subtotal_bruto: itemCalc.subtotal_bruto,
+        desconto_proporcional: itemCalc.desconto_proporcional,
+        subtotal_liquido: itemCalc.subtotal_liquido,
+        ipi_aliquota: itemCalc.ipi_aliquota,
+        ipi_valor: itemCalc.ipi_valor,
+        icms_aliquota: itemCalc.icms_aliquota,
+        icms_valor: itemCalc.icms_valor,
+        st_aliquota: itemCalc.st_aliquota,
+        st_valor: itemCalc.st_valor,
+        total_item: itemCalc.total_item
+      }))
     }
 
     if (process.env.NODE_ENV === 'development') {
       console.log('[VendaForm] submit payload', vendaData)
-      console.log('[VendaForm] impostos', impostos)
+      console.log('[VendaForm] totais', totais)
     }
 
-    // Passar os totais de impostos como metadata adicional se necessário
-    // Isso será salvo em vendas_impostos após a venda ser criada
-    const vendaDataComImpostos = {
-      ...vendaData,
-      _impostos_totais: impostos ? {
-        total_base_calculo_st: impostos.total_base_calculo_st,
-        total_icms_proprio: impostos.total_icms_proprio,
-        total_icms_st_total: impostos.total_icms_st_total,
-        total_icms_st_recolher: impostos.total_icms_st_recolher,
-        exibir_no_pdf: false,
-        exibir_detalhamento: false
-      } : null
-    }
-
-    onSubmit(vendaDataComImpostos as VendaFormValues)
+    onSubmit(vendaData)
   }
 
   if (loadingData) {
@@ -390,7 +398,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         />
       )}
 
-      <Card className="w-full max-w-4xl mx-auto max-h-[90vh] overflow-y-auto">
+      <Card className="w-full max-w-[1400px] mx-auto max-h-[90vh] overflow-y-auto">
         <CardHeader>
           <CardTitle className="flex items-center">
             <ShoppingCart className="mr-2 h-5 w-5" />
@@ -556,84 +564,145 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-2">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <Label>Itens da Venda</Label>
-              <Button type="button" onClick={addItem} size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar Item
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={() => setMostrarConfiguracaoColunas(!mostrarConfiguracaoColunas)}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  {mostrarConfiguracaoColunas ? 'Ocultar' : 'Configurar'} Colunas
+                </Button>
+                <Button type="button" onClick={addItem} size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar Item
+                </Button>
+              </div>
             </div>
 
+            {mostrarConfiguracaoColunas && (
+              <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
+                <VendaTabelaColunas
+                  visibleColumns={colunasVisiveis}
+                  onChange={setColunasVisiveis}
+                />
+              </div>
+            )}
+
             <div className="border rounded-md overflow-hidden">
-              <div className="max-h-[280px] overflow-y-auto">
-                <table className="w-full">
+              <div className="max-h-[400px] overflow-x-auto overflow-y-auto">
+                <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b sticky top-0 z-10">
                     <tr>
-                      <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Produto</th>
-                      <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 w-20">Qtd</th>
-                      <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 w-28">Preço Unit.</th>
-                      <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 w-28">Subtotal</th>
-                      <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 w-12"></th>
+                      {colunasVisiveis.produto && <th className="text-left py-2 px-2 text-xs font-medium text-gray-700 min-w-[180px]">Produto</th>}
+                      {colunasVisiveis.quantidade && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-16">Qtd</th>}
+                      {colunasVisiveis.precoUnitario && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-24">Preço</th>}
+                      {colunasVisiveis.subtotalBruto && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-24">Subtotal</th>}
+                      {colunasVisiveis.descontoProporcional && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-24">Desc.</th>}
+                      {colunasVisiveis.subtotalLiquido && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-24">Líquido</th>}
+                      {colunasVisiveis.ipiAliquota && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-16">IPI%</th>}
+                      {colunasVisiveis.ipiValor && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-20">IPI</th>}
+                      {colunasVisiveis.icmsAliquota && <th className="text-right py-2 px-2 text-xs font-medium text-blue-700 w-16">ICMS%</th>}
+                      {colunasVisiveis.icmsValor && <th className="text-right py-2 px-2 text-xs font-medium text-blue-700 w-20">ICMS</th>}
+                      {colunasVisiveis.stAliquota && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-16">ST%</th>}
+                      {colunasVisiveis.stValor && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-20">ST</th>}
+                      {colunasVisiveis.totalItem && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-28">Total</th>}
+                      {colunasVisiveis.acoes && <th className="text-center py-2 px-2 text-xs font-medium text-gray-700 w-12"></th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {itens.map((item, index) => (
-                      <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
-                        <td className="py-2 px-3">
-                          <select
-                            value={item.produto_id}
-                            onChange={(e) => updateItem(index, 'produto_id', Number(e.target.value))}
-                            className="w-full p-1.5 border rounded text-sm"
-                          >
-                            <option value={0}>Selecione um produto</option>
-                            {produtos.map(produto => {
-                              const precoVenda = Number(produto.preco_venda)
-                              const precoFormatado = Number.isFinite(precoVenda) ? precoVenda.toFixed(2) : '0.00'
-                              return (
-                                <option key={produto.id} value={produto.id}>
-                                  {produto.nome} - R$ {precoFormatado}
-                                </option>
-                              )
-                            })}
-                          </select>
-                        </td>
-                        <td className="py-2 px-3">
-                          <Input
-                            type="number"
-                            min="1"
-                            value={item.quantidade}
-                            onChange={(e) => updateItem(index, 'quantidade', Number(e.target.value))}
-                            className="w-full text-sm p-1.5"
-                          />
-                        </td>
-                        <td className="py-2 px-3">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.preco_unitario}
-                            onChange={(e) => updateItem(index, 'preco_unitario', Number(e.target.value))}
-                            className="w-full text-sm p-1.5"
-                          />
-                        </td>
-                        <td className="py-2 px-3">
-                          <div className="text-sm font-medium bg-gray-50 px-2 py-1.5 rounded">
-                            R$ {item.subtotal.toFixed(2)}
-                          </div>
-                        </td>
-                        <td className="py-2 px-3 text-center">
-                          <Button
-                            type="button"
-                            onClick={() => removeItem(index)}
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {itens.map((item, index) => {
+                      const itemCalc = itensCalculados[index]
+                      return (
+                        <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                          {colunasVisiveis.produto && (
+                            <td className="py-1.5 px-2">
+                              <select
+                                value={item.produto_id}
+                                onChange={(e) => updateItem(index, 'produto_id', Number(e.target.value))}
+                                className="w-full p-1 border rounded text-xs"
+                              >
+                                <option value={0}>Selecione</option>
+                                {produtos.map(produto => (
+                                  <option key={produto.id} value={produto.id}>
+                                    {produto.nome}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                          )}
+                          {colunasVisiveis.quantidade && (
+                            <td className="py-1.5 px-2">
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.quantidade}
+                                onChange={(e) => updateItem(index, 'quantidade', Number(e.target.value))}
+                                className="w-full text-xs p-1 text-right"
+                              />
+                            </td>
+                          )}
+                          {colunasVisiveis.precoUnitario && (
+                            <td className="py-1.5 px-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.preco_unitario}
+                                onChange={(e) => updateItem(index, 'preco_unitario', Number(e.target.value))}
+                                className="w-full text-xs p-1 text-right"
+                              />
+                            </td>
+                          )}
+                          {colunasVisiveis.subtotalBruto && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs">{formatCurrency(itemCalc.subtotal_bruto)}</td>
+                          )}
+                          {colunasVisiveis.descontoProporcional && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs text-red-600">-{formatCurrency(itemCalc.desconto_proporcional)}</td>
+                          )}
+                          {colunasVisiveis.subtotalLiquido && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs font-medium">{formatCurrency(itemCalc.subtotal_liquido)}</td>
+                          )}
+                          {colunasVisiveis.ipiAliquota && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs">{itemCalc.ipi_aliquota.toFixed(2)}%</td>
+                          )}
+                          {colunasVisiveis.ipiValor && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs">{formatCurrency(itemCalc.ipi_valor)}</td>
+                          )}
+                          {colunasVisiveis.icmsAliquota && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs text-blue-600">{itemCalc.icms_aliquota.toFixed(2)}%</td>
+                          )}
+                          {colunasVisiveis.icmsValor && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs text-blue-600">{formatCurrency(itemCalc.icms_valor)}</td>
+                          )}
+                          {colunasVisiveis.stAliquota && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs">{itemCalc.st_aliquota.toFixed(2)}%</td>
+                          )}
+                          {colunasVisiveis.stValor && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs">{formatCurrency(itemCalc.st_valor)}</td>
+                          )}
+                          {colunasVisiveis.totalItem && itemCalc && (
+                            <td className="py-1.5 px-2 text-right text-xs font-bold">{formatCurrency(itemCalc.total_item)}</td>
+                          )}
+                          {colunasVisiveis.acoes && (
+                            <td className="py-1.5 px-2 text-center">
+                              <Button
+                                type="button"
+                                onClick={() => removeItem(index)}
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-600 h-6 w-6 p-0"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
                 {itens.length === 0 && (
@@ -645,44 +714,24 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             </div>
           </div>
 
-          {/* Componente de Impostos - Modular e Opcional */}
-          <VendaImpostosCard
-            itens={itens.map(item => ({
-              produto_id: item.produto_id,
-              produto_nome: item.produto_nome,
-              quantidade: item.quantidade,
-              preco_unitario: item.preco_unitario,
-              subtotal: item.subtotal
-            }))}
-            uf_destino={formData.uf_destino}
-            enabled={impostosEnabled}
-            onChange={(result) => setImpostos(result)}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="desconto">Desconto (R$)</Label>
-              <Input
-                id="desconto"
-                type="number"
-                step="0.01"
-                value={formData.desconto}
-                onChange={(e) => setFormData(prev => ({ ...prev, desconto: Number(e.target.value) }))}
-                placeholder="0,00"
-              />
-            </div>
-
-            <div className="space-y-3">
+          {/* Card de Resumo dos Totais */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Desconto e Prazo */}
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="imposto_percentual">Imposto (%)</Label>
+                <Label htmlFor="desconto">Desconto Total (R$)</Label>
                 <Input
-                  id="imposto_percentual"
+                  id="desconto"
                   type="number"
                   step="0.01"
-                  value={formData.imposto_percentual}
-                  onChange={(e) => setFormData(prev => ({ ...prev, imposto_percentual: Number(e.target.value) }))}
-                  placeholder="0.00"
+                  min="0"
+                  value={formData.desconto}
+                  onChange={(e) => setFormData(prev => ({ ...prev, desconto: Number(e.target.value) }))}
+                  placeholder="0,00"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Será distribuído proporcionalmente entre os produtos
+                </p>
               </div>
 
               <div>
@@ -695,16 +744,65 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   placeholder="Ex: 30 dias ou À vista"
                 />
               </div>
+            </div>
 
-              <div>
-                <Label>Total da Venda</Label>
-                <Input
-                  type="text"
-                  value={`R$ ${calcularTotal().toFixed(2)}`}
-                  readOnly
-                  className="bg-gray-50 font-bold text-lg"
-                />
-              </div>
+            {/* Resumo dos Totais */}
+            <div className="lg:col-span-2">
+              <Label className="mb-2 block">Resumo da Venda</Label>
+              {totais ? (
+                <div className="space-y-3">
+                  {/* Totais Principais */}
+                  <div className="p-4 bg-gray-50 rounded-md space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Total Bruto:</span>
+                      <span className="font-medium">{formatCurrency(totais.total_produtos_bruto)}</span>
+                    </div>
+                    {totais.desconto_total > 0 && (
+                      <div className="flex justify-between text-red-600">
+                        <span>Desconto:</span>
+                        <span className="font-medium">-{formatCurrency(totais.desconto_total)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Subtotal Líquido:</span>
+                      <span className="font-medium">{formatCurrency(totais.total_produtos_liquido)}</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t">
+                      <span>IPI:</span>
+                      <span className="font-medium">{formatCurrency(totais.total_ipi)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>ST:</span>
+                      <span className="font-medium">{formatCurrency(totais.total_st)}</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t font-bold text-lg">
+                      <span>TOTAL GERAL:</span>
+                      <span className="text-green-600">{formatCurrency(totais.total_geral)}</span>
+                    </div>
+                  </div>
+
+                  {/* ICMS - Informativo (não incluído no total) */}
+                  {totais.total_icms > 0 && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <div className="flex items-start gap-2">
+                        <div className="text-blue-600 text-sm flex-grow">
+                          <div className="flex justify-between font-medium">
+                            <span>ICMS (Informativo):</span>
+                            <span>{formatCurrency(totais.total_icms)}</span>
+                          </div>
+                          <p className="text-xs mt-1 text-blue-600">
+                            Este valor NÃO está incluído no total da venda. É apenas informativo para o cliente (pode ser creditado).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-md text-center text-gray-500 text-sm">
+                  Adicione itens para visualizar o resumo
+                </div>
+              )}
             </div>
           </div>
 

@@ -28,7 +28,11 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
     estoque_minimo: produto?.estoque_minimo || 0,
     categoria: produto?.categoria || '',
     codigo_barras: produto?.codigo_barras || '',
-    ativo: produto?.ativo ?? true
+    ativo: produto?.ativo ?? true,
+    // Impostos
+    ipi: produto?.ipi || 0,
+    icms: produto?.icms || 0,
+    st: produto?.st || 0
   })
 
   const [estoquesDistribuidos, setEstoquesDistribuidos] = useState<ProdutoEstoqueInput[]>(() =>
@@ -210,6 +214,63 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                 onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
                 placeholder="Ex: Ração, Brinquedo, Medicamento"
               />
+            </div>
+          </div>
+
+          {/* Impostos */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-gray-700">Alíquotas de Impostos</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="ipi">IPI (%)</Label>
+                <Input
+                  id="ipi"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={formData.ipi}
+                  onChange={(e) => setFormData(prev => ({ ...prev, ipi: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                  placeholder="0,00"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Imposto sobre Produtos Industrializados
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="icms">ICMS (%) - Informativo</Label>
+                <Input
+                  id="icms"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={formData.icms}
+                  onChange={(e) => setFormData(prev => ({ ...prev, icms: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                  placeholder="0,00"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Não entra no total (informativo para o cliente)
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="st">ST (%)</Label>
+                <Input
+                  id="st"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={formData.st}
+                  onChange={(e) => setFormData(prev => ({ ...prev, st: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                  placeholder="0,00"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Substituição Tributária
+                </p>
+              </div>
             </div>
           </div>
 

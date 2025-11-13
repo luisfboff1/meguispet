@@ -47,6 +47,10 @@ export interface Produto {
   codigo_barras?: string
   ativo: boolean
   forma_pagamento_id?: number | null
+  // Impostos - NOVO
+  ipi: number // Alíquota de IPI (0-100)
+  icms: number // Alíquota de ICMS (0-100) - Informativo apenas
+  st: number // Alíquota de ST (0-100)
   created_at: string
   updated_at: string
   estoques?: ProdutoEstoqueDetalhe[]
@@ -102,7 +106,7 @@ export interface Venda {
   vendedor_id?: number
   data_venda: string
   valor_total: number
-  desconto: number
+  desconto: number // Deprecado - usar desconto_total
   valor_final: number
   status: 'pendente' | 'pago' | 'cancelado'
   forma_pagamento: FormaPagamento
@@ -115,6 +119,13 @@ export interface Venda {
   observacoes?: string
   prazo_pagamento?: string | number
   imposto_percentual?: number
+  // Impostos e Totais - NOVO
+  total_produtos_bruto: number // Total dos produtos sem desconto
+  desconto_total: number // Desconto total da venda
+  total_produtos_liquido: number // Total dos produtos após desconto
+  total_ipi: number // Total de IPI (incluído no total)
+  total_icms: number // Total de ICMS (informativo, NÃO incluído no total)
+  total_st: number // Total de ST (incluído no total)
   created_at: string
   updated_at: string
   cliente?: Cliente
@@ -128,10 +139,22 @@ export interface ItemVenda {
   produto_id: number
   quantidade: number
   preco_unitario: number
-  subtotal: number
+  subtotal: number // Deprecado - usar total_item
   produto?: Produto
 
-  // Campos de impostos ICMS-ST
+  // Impostos e Totais - NOVO
+  subtotal_bruto: number // Preço × Quantidade
+  desconto_proporcional: number // Desconto proporcional do item
+  subtotal_liquido: number // Subtotal após desconto
+  ipi_aliquota: number // Alíquota IPI no momento da venda
+  ipi_valor: number // Valor do IPI calculado
+  icms_aliquota: number // Alíquota ICMS no momento da venda
+  icms_valor: number // Valor do ICMS (informativo, NÃO no total)
+  st_aliquota: number // Alíquota ST no momento da venda
+  st_valor: number // Valor do ST calculado
+  total_item: number // Total do item (subtotal_liquido + IPI + ST, sem ICMS)
+
+  // Campos de impostos ICMS-ST - Deprecados (manter por compatibilidade)
   base_calculo_st?: number
   icms_proprio?: number
   icms_st_total?: number
@@ -275,6 +298,10 @@ export interface ProdutoForm {
   codigo_barras?: string
   ativo: boolean
   estoques?: ProdutoEstoqueInput[]
+  // Impostos - NOVO
+  ipi?: number // Alíquota de IPI (0-100)
+  icms?: number // Alíquota de ICMS (0-100)
+  st?: number // Alíquota de ST (0-100)
 }
 
 export type EstoqueOperacaoTipo = 'entrada' | 'saida' | 'ajuste' | 'transferencia'
@@ -517,6 +544,93 @@ export interface FinanceiroMetrics {
   lucro: number
   margem: number
   grafico_mensal: FinanceiroMetricMonthly[]
+}
+
+// ============================================================================
+// TIPOS PARA SISTEMA DE IMPOSTOS (IPI, ICMS, ST)
+// ============================================================================
+
+// Configuração de colunas visíveis na tabela de vendas
+export interface VendaTabelaColunasVisiveis {
+  produto: boolean
+  quantidade: boolean
+  precoUnitario: boolean
+  subtotalBruto: boolean
+  descontoProporcional: boolean
+  subtotalLiquido: boolean
+  ipiAliquota: boolean
+  ipiValor: boolean
+  icmsAliquota: boolean
+  icmsValor: boolean
+  stAliquota: boolean
+  stValor: boolean
+  totalItem: boolean
+  acoes: boolean
+}
+
+// Default de colunas visíveis
+export const COLUNAS_VISIVEIS_DEFAULT: VendaTabelaColunasVisiveis = {
+  produto: true,
+  quantidade: true,
+  precoUnitario: true,
+  subtotalBruto: true,
+  descontoProporcional: true,
+  subtotalLiquido: true,
+  ipiAliquota: false, // Oculta por padrão
+  ipiValor: true,
+  icmsAliquota: false, // Oculta por padrão
+  icmsValor: true,
+  stAliquota: false, // Oculta por padrão
+  stValor: true,
+  totalItem: true,
+  acoes: true
+}
+
+// Labels das colunas
+export const LABELS_COLUNAS: Record<keyof VendaTabelaColunasVisiveis, string> = {
+  produto: 'Produto',
+  quantidade: 'Quantidade',
+  precoUnitario: 'Preço Unitário',
+  subtotalBruto: 'Subtotal Bruto',
+  descontoProporcional: 'Desconto Prop.',
+  subtotalLiquido: 'Subtotal Líquido',
+  ipiAliquota: 'IPI %',
+  ipiValor: 'IPI R$',
+  icmsAliquota: 'ICMS %',
+  icmsValor: 'ICMS R$',
+  stAliquota: 'ST %',
+  stValor: 'ST R$',
+  totalItem: 'Total',
+  acoes: 'Ações'
+}
+
+// Item calculado para vendas (usado nas funções de cálculo)
+export interface ItemCalculado {
+  produto_id: number
+  produto_nome: string
+  quantidade: number
+  preco_unitario: number
+  subtotal_bruto: number
+  desconto_proporcional: number
+  subtotal_liquido: number
+  ipi_aliquota: number
+  ipi_valor: number
+  icms_aliquota: number
+  icms_valor: number
+  st_aliquota: number
+  st_valor: number
+  total_item: number
+}
+
+// Totais da venda (usado nas funções de cálculo)
+export interface TotaisVenda {
+  total_produtos_bruto: number
+  desconto_total: number
+  total_produtos_liquido: number
+  total_ipi: number
+  total_icms: number // Informativo, NÃO incluído no total
+  total_st: number
+  total_geral: number // Subtotal + IPI + ST (sem ICMS)
 }
 
 // ============================================================================

@@ -86,10 +86,21 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'POST') {
-      const { nome, descricao, preco_venda, preco_custo, estoque_minimo, categoria, codigo_barras, estoques } = req.body;
+      const { nome, descricao, preco_venda, preco_custo, estoque_minimo, categoria, codigo_barras, estoques, ipi, icms, st } = req.body;
 
       if (!nome) {
         return res.status(400).json({ success: false, message: 'Nome do produto é obrigatório' });
+      }
+
+      // Validar alíquotas de impostos (devem estar entre 0 e 100)
+      if (ipi !== undefined && (ipi < 0 || ipi > 100)) {
+        return res.status(400).json({ success: false, message: 'IPI deve estar entre 0 e 100' });
+      }
+      if (icms !== undefined && (icms < 0 || icms > 100)) {
+        return res.status(400).json({ success: false, message: 'ICMS deve estar entre 0 e 100' });
+      }
+      if (st !== undefined && (st < 0 || st > 100)) {
+        return res.status(400).json({ success: false, message: 'ST deve estar entre 0 e 100' });
       }
 
       if (codigo_barras) {
@@ -114,6 +125,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           estoque_minimo: estoque_minimo || 0,
           categoria: categoria || null,
           codigo_barras: codigo_barras || null,
+          ipi: ipi || 0, // Alíquota de IPI
+          icms: icms || 0, // Alíquota de ICMS (informativo)
+          st: st || 0, // Alíquota de ST
         })
         .select()
         .single();
@@ -138,10 +152,21 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'PUT') {
-      const { id, nome, descricao, preco_venda, preco_custo, estoque_minimo, categoria, codigo_barras, estoques } = req.body;
+      const { id, nome, descricao, preco_venda, preco_custo, estoque_minimo, categoria, codigo_barras, estoques, ipi, icms, st } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'ID do produto é obrigatório' });
+      }
+
+      // Validar alíquotas de impostos (devem estar entre 0 e 100)
+      if (ipi !== undefined && (ipi < 0 || ipi > 100)) {
+        return res.status(400).json({ success: false, message: 'IPI deve estar entre 0 e 100' });
+      }
+      if (icms !== undefined && (icms < 0 || icms > 100)) {
+        return res.status(400).json({ success: false, message: 'ICMS deve estar entre 0 e 100' });
+      }
+      if (st !== undefined && (st < 0 || st > 100)) {
+        return res.status(400).json({ success: false, message: 'ST deve estar entre 0 e 100' });
       }
 
       if (codigo_barras) {
@@ -167,6 +192,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           estoque_minimo: estoque_minimo || 0,
           categoria: categoria || null,
           codigo_barras: codigo_barras || null,
+          ipi: ipi !== undefined ? ipi : 0, // Alíquota de IPI
+          icms: icms !== undefined ? icms : 0, // Alíquota de ICMS (informativo)
+          st: st !== undefined ? st : 0, // Alíquota de ST
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)

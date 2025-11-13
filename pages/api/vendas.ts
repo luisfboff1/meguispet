@@ -8,6 +8,7 @@ import {
   applyStockDeltas,
   validateStockAvailability,
 } from '@/lib/stock-manager';
+import { processarVendaComImpostos } from '@/lib/venda-impostos-processor';
 
 interface VendaItemInput {
   produto_id: number;
@@ -50,6 +51,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             quantidade,
             preco_unitario,
             subtotal,
+            subtotal_bruto,
+            desconto_proporcional,
+            subtotal_liquido,
+            ipi_aliquota,
+            ipi_valor,
+            icms_aliquota,
+            icms_valor,
+            st_aliquota,
+            st_valor,
+            total_item,
             base_calculo_st,
             icms_proprio,
             icms_st_total,
@@ -124,27 +135,21 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         });
       }
 
-      // 💰 CALCULAR VALORES DA VENDA
-      const subtotalItens = (itens as VendaItemInput[]).reduce((sum, item) => {
-        return sum + (item.quantidade * item.preco_unitario);
-      }, 0);
-
+      // 💰 PROCESSAR VENDA COM IMPOSTOS (IPI, ICMS, ST)
       const descontoValor = desconto || 0;
-      const valorSemDesconto = subtotalItens;
-      const valorComDesconto = Math.max(0, subtotalItens - descontoValor);
-      
-      // Imposto é aplicado APÓS o desconto
-      const impostoPercentual = imposto_percentual || 0;
-      const valorImposto = (valorComDesconto * impostoPercentual) / 100;
-      const valorFinalCalculado = valorComDesconto + valorImposto;
+      const vendaProcessada = await processarVendaComImpostos(
+        itens as VendaItemInput[],
+        descontoValor
+      );
 
-      console.log('📊 Cálculo da venda:', {
-        subtotalItens,
-        desconto: descontoValor,
-        valorComDesconto,
-        impostoPercentual,
-        valorImposto,
-        valorFinal: valorFinalCalculado
+      console.log('📊 Venda processada com impostos:', {
+        total_produtos_bruto: vendaProcessada.totais.total_produtos_bruto,
+        desconto_total: vendaProcessada.totais.desconto_total,
+        total_produtos_liquido: vendaProcessada.totais.total_produtos_liquido,
+        total_ipi: vendaProcessada.totais.total_ipi,
+        total_icms: vendaProcessada.totais.total_icms, // Informativo
+        total_st: vendaProcessada.totais.total_st,
+        total_geral: vendaProcessada.totais.total_geral // Total a pagar (sem ICMS)
       });
 
       // ✅ CRIAR A VENDA
@@ -157,12 +162,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           estoque_id: estoque_id || null,
           forma_pagamento_id: forma_pagamento_id || null,
           data_venda: data_venda || new Date().toISOString(),
-          valor_total: valorSemDesconto, // Valor SEM desconto e SEM imposto (para comissão)
-          valor_final: valorFinalCalculado, // Valor COM desconto e COM imposto (valor real da venda)
+          // Campos antigos (manter compatibilidade)
+          valor_total: vendaProcessada.totais.total_produtos_bruto, // Total sem desconto
+          valor_final: vendaProcessada.totais.total_geral, // Total final (com IPI e ST, sem ICMS)
           desconto: descontoValor,
           prazo_pagamento: prazo_pagamento || null,
-          imposto_percentual: impostoPercentual,
+          imposto_percentual: imposto_percentual || 0,
           uf_destino: uf_destino || null,
+          // Novos campos de impostos
+          total_produtos_bruto: vendaProcessada.totais.total_produtos_bruto,
+          desconto_total: vendaProcessada.totais.desconto_total,
+          total_produtos_liquido: vendaProcessada.totais.total_produtos_liquido,
+          total_ipi: vendaProcessada.totais.total_ipi,
+          total_icms: vendaProcessada.totais.total_icms, // Informativo, NÃO no total
+          total_st: vendaProcessada.totais.total_st,
           status: status || 'pendente',
           observacoes: observacoes || null,
         })
@@ -177,20 +190,32 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         });
       }
 
-      // ✅ INSERIR ITENS DA VENDA
-      const itensInsert = (itens as VendaItemInput[]).map((item) => ({
+      // ✅ INSERIR ITENS DA VENDA (com impostos calculados)
+      const itensInsert = vendaProcessada.itens.map((item) => ({
         venda_id: venda.id,
         produto_id: item.produto_id,
         quantidade: item.quantidade,
         preco_unitario: item.preco_unitario,
-        subtotal: item.subtotal,
-        // Campos de impostos ICMS-ST (opcionais)
-        base_calculo_st: item.base_calculo_st || null,
-        icms_proprio: item.icms_proprio || null,
-        icms_st_total: item.icms_st_total || null,
-        icms_st_recolher: item.icms_st_recolher || null,
-        mva_aplicado: item.mva_aplicado || null,
-        aliquota_icms: item.aliquota_icms || null,
+        // Campos novos de impostos
+        subtotal_bruto: item.subtotal_bruto,
+        desconto_proporcional: item.desconto_proporcional,
+        subtotal_liquido: item.subtotal_liquido,
+        ipi_aliquota: item.ipi_aliquota,
+        ipi_valor: item.ipi_valor,
+        icms_aliquota: item.icms_aliquota,
+        icms_valor: item.icms_valor, // Informativo
+        st_aliquota: item.st_aliquota,
+        st_valor: item.st_valor,
+        total_item: item.total_item, // Total com IPI e ST (sem ICMS)
+        // Campo antigo (manter compatibilidade)
+        subtotal: item.total_item, // Usar total_item para compatibilidade
+        // Campos de impostos ICMS-ST (deprecados, manter para compatibilidade)
+        base_calculo_st: null,
+        icms_proprio: null,
+        icms_st_total: null,
+        icms_st_recolher: null,
+        mva_aplicado: null,
+        aliquota_icms: item.icms_aliquota,
       }));
 
       const { error: itensError } = await supabase.from('vendas_itens').insert(itensInsert);
