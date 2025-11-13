@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Plus, Trash2, ShoppingCart, Settings } from 'lucide-react'
 import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService } from '@/services/api'
+import { impostosService } from '@/services/impostosService'
 import { calcularItensVenda, calcularTotaisVenda, formatCurrency } from '@/services/vendaCalculations'
 import AlertDialog from '@/components/ui/AlertDialog'
 import VendaTabelaColunas from './VendaTabelaColunas'
@@ -246,7 +247,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     setItens(itens.filter((_, i) => i !== index))
   }
 
-  const updateItem = <Key extends keyof ItemVenda>(index: number, field: Key, value: ItemVenda[Key]) => {
+  const updateItem = async <Key extends keyof ItemVenda>(index: number, field: Key, value: ItemVenda[Key]) => {
     const newItens = [...itens]
     newItens[index] = { ...newItens[index], [field]: value }
 
@@ -256,9 +257,35 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         const precoVenda = Number(produto.preco_venda) || 0
         newItens[index].produto_nome = produto.nome
         newItens[index].preco_unitario = precoVenda
+
+        // IPI vem do produto
         newItens[index].ipi_aliquota = produto.ipi || 0
         newItens[index].icms_aliquota = produto.icms || 0
-        newItens[index].st_aliquota = produto.st || 0
+
+        // ST deve ser buscado da tabela MVA baseado no NCM do produto e UF de destino
+        try {
+          const fiscalConfig = await impostosService.getByProdutoId(produto.id)
+          if (fiscalConfig && fiscalConfig.ncm && formData.uf_destino) {
+            const mvaData = await impostosService.getMVA(formData.uf_destino, fiscalConfig.ncm)
+            if (mvaData && mvaData.sujeito_st && mvaData.mva) {
+              // Calcular ST baseado no MVA
+              // ST% = MVA% (já vem da tabela em decimal, ex: 0.8363 = 83.63%)
+              newItens[index].st_aliquota = (mvaData.mva * 100) || 0
+              console.log(`[VendaForm] ST calculado automaticamente: ${newItens[index].st_aliquota}% (MVA: ${mvaData.mva})`)
+            } else {
+              newItens[index].st_aliquota = 0
+              if (mvaData && !mvaData.sujeito_st) {
+                console.log('[VendaForm] Produto não sujeito a ST neste UF')
+              }
+            }
+          } else {
+            newItens[index].st_aliquota = 0
+            console.warn('[VendaForm] Configuração fiscal não encontrada para o produto')
+          }
+        } catch (error) {
+          console.error('[VendaForm] Erro ao buscar MVA:', error)
+          newItens[index].st_aliquota = 0
+        }
 
         // Verificar estoque disponível
         if (formData.estoque_id && produto.estoques) {
@@ -666,20 +693,53 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                           {colunasVisiveis.subtotalLiquido && itemCalc && (
                             <td className="py-1.5 px-2 text-right text-xs font-medium">{formatCurrency(itemCalc.subtotal_liquido)}</td>
                           )}
-                          {colunasVisiveis.ipiAliquota && itemCalc && (
-                            <td className="py-1.5 px-2 text-right text-xs">{itemCalc.ipi_aliquota.toFixed(2)}%</td>
+                          {colunasVisiveis.ipiAliquota && (
+                            <td className="py-1.5 px-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={item.ipi_aliquota}
+                                onChange={(e) => updateItem(index, 'ipi_aliquota', Number(e.target.value))}
+                                className="w-full text-xs p-1 text-right"
+                                title="IPI % - Editável"
+                              />
+                            </td>
                           )}
                           {colunasVisiveis.ipiValor && itemCalc && (
                             <td className="py-1.5 px-2 text-right text-xs">{formatCurrency(itemCalc.ipi_valor)}</td>
                           )}
-                          {colunasVisiveis.icmsAliquota && itemCalc && (
-                            <td className="py-1.5 px-2 text-right text-xs text-blue-600">{itemCalc.icms_aliquota.toFixed(2)}%</td>
+                          {colunasVisiveis.icmsAliquota && (
+                            <td className="py-1.5 px-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={item.icms_aliquota}
+                                onChange={(e) => updateItem(index, 'icms_aliquota', Number(e.target.value))}
+                                className="w-full text-xs p-1 text-right text-blue-600"
+                                title="ICMS % - Editável (Informativo)"
+                              />
+                            </td>
                           )}
                           {colunasVisiveis.icmsValor && itemCalc && (
                             <td className="py-1.5 px-2 text-right text-xs text-blue-600">{formatCurrency(itemCalc.icms_valor)}</td>
                           )}
-                          {colunasVisiveis.stAliquota && itemCalc && (
-                            <td className="py-1.5 px-2 text-right text-xs">{itemCalc.st_aliquota.toFixed(2)}%</td>
+                          {colunasVisiveis.stAliquota && (
+                            <td className="py-1.5 px-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={item.st_aliquota}
+                                onChange={(e) => updateItem(index, 'st_aliquota', Number(e.target.value))}
+                                className="w-full text-xs p-1 text-right"
+                                title="ST % - Editável"
+                              />
+                            </td>
                           )}
                           {colunasVisiveis.stValor && itemCalc && (
                             <td className="py-1.5 px-2 text-right text-xs">{formatCurrency(itemCalc.st_valor)}</td>

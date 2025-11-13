@@ -298,10 +298,9 @@ export interface ProdutoForm {
   codigo_barras?: string
   ativo: boolean
   estoques?: ProdutoEstoqueInput[]
-  // Impostos - NOVO
+  // Impostos
   ipi?: number // Alíquota de IPI (0-100)
-  icms?: number // Alíquota de ICMS (0-100)
-  st?: number // Alíquota de ST (0-100)
+  icms?: number // Alíquota de ICMS (0-100) - Informativo
 }
 
 export type EstoqueOperacaoTipo = 'entrada' | 'saida' | 'ajuste' | 'transferencia'

@@ -31,6 +31,11 @@ yarn-error.log*
 .env*.local
 .env
 
+# Doppler local overrides (user-specific, not the main .doppler.yaml)
+# The main .doppler.yaml is committed to ensure all devs use the right project
+.doppler.*.yaml
+.doppler.yaml
+
 # Vercel
 .vercel
 

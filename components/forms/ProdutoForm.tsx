@@ -3,11 +3,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Loader2, Package, FileText } from 'lucide-react'
+import { Loader2, Package } from 'lucide-react'
 import type { Produto, ProdutoEstoqueInput, ProdutoForm as ProdutoFormValues, ImpostoProduto, ImpostoProdutoForm as ImpostoProdutoFormValues } from '@/types'
 import ProdutoEstoqueDistribution from './ProdutoEstoqueDistribution'
-import ImpostoProdutoForm from './ImpostoProdutoForm'
 import { impostosService } from '@/services/impostosService'
 
 interface ProdutoFormProps {
@@ -18,7 +16,6 @@ interface ProdutoFormProps {
 }
 
 export default function ProdutoForm({ produto, onSubmit, onCancel, loading = false }: ProdutoFormProps) {
-  const [activeTab, setActiveTab] = useState('dados-basicos')
   const [formData, setFormData] = useState<ProdutoFormValues>({
     nome: produto?.nome || '',
     descricao: produto?.descricao || '',
@@ -31,8 +28,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
     ativo: produto?.ativo ?? true,
     // Impostos
     ipi: produto?.ipi || 0,
-    icms: produto?.icms || 0,
-    st: produto?.st || 0
+    icms: produto?.icms || 0
   })
 
   const [estoquesDistribuidos, setEstoquesDistribuidos] = useState<ProdutoEstoqueInput[]>(() =>
@@ -42,9 +38,20 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
     })) ?? []
   )
 
-  const [impostoProduto, setImpostoProduto] = useState<ImpostoProduto | null>(null)
-  const [impostoFormData, setImpostoFormData] = useState<ImpostoProdutoFormValues | null>(null)
-  const [loadingImposto, setLoadingImposto] = useState(false)
+  // Fiscal configuration fields
+  const [fiscalData, setFiscalData] = useState<ImpostoProdutoFormValues>({
+    produto_id: produto?.id || 0,
+    ncm: '',
+    cest: '',
+    origem_mercadoria: 0,
+    mva_manual: null,
+    aliquota_icms_manual: null,
+    frete_padrao: 0,
+    outras_despesas: 0,
+    ativo: true
+  })
+
+  const [loadingFiscal, setLoadingFiscal] = useState(false)
   const [savingImposto, setSavingImposto] = useState(false)
 
   useEffect(() => {
@@ -58,19 +65,31 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
 
   useEffect(() => {
     if (produto?.id) {
-      loadImpostoConfig(produto.id)
+      loadFiscalConfig(produto.id)
     }
   }, [produto?.id])
 
-  const loadImpostoConfig = async (produtoId: number) => {
-    setLoadingImposto(true)
+  const loadFiscalConfig = async (produtoId: number) => {
+    setLoadingFiscal(true)
     try {
       const config = await impostosService.getByProdutoId(produtoId)
-      setImpostoProduto(config)
+      if (config) {
+        setFiscalData({
+          produto_id: config.produto_id,
+          ncm: config.ncm || '',
+          cest: config.cest || '',
+          origem_mercadoria: config.origem_mercadoria ?? 0,
+          mva_manual: config.mva_manual ?? null,
+          aliquota_icms_manual: config.aliquota_icms_manual ?? null,
+          frete_padrao: config.frete_padrao || 0,
+          outras_despesas: config.outras_despesas || 0,
+          ativo: config.ativo ?? true
+        })
+      }
     } catch (error) {
-      console.error('[ProdutoForm] Error loading imposto config:', error)
+      console.error('[ProdutoForm] Error loading fiscal config:', error)
     } finally {
-      setLoadingImposto(false)
+      setLoadingFiscal(false)
     }
   }
 
@@ -83,10 +102,6 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
   useEffect(() => {
     setFormData(prev => ({ ...prev, estoque: totalEstoque }))
   }, [totalEstoque])
-
-  const handleImpostoSubmit = async (impostoData: ImpostoProdutoFormValues) => {
-    setImpostoFormData(impostoData)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,13 +122,18 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
     try {
       await onSubmit(payload)
 
-      if (impostoFormData && produto?.id) {
+      // Save fiscal configuration if produto exists (edit mode)
+      if (produto?.id) {
         setSavingImposto(true)
         try {
-          await impostosService.upsert(impostoFormData)
-          console.log('[produto-form] Imposto config saved successfully')
+          const fiscalPayload = {
+            ...fiscalData,
+            produto_id: produto.id
+          }
+          await impostosService.upsert(fiscalPayload)
+          console.log('[produto-form] Fiscal config saved successfully')
         } catch (error) {
-          console.error('[produto-form] Error saving imposto config:', error)
+          console.error('[produto-form] Error saving fiscal config:', error)
           window.alert('Produto salvo, mas houve erro ao salvar configuração fiscal.')
         } finally {
           setSavingImposto(false)
@@ -133,21 +153,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="dados-basicos" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Dados Básicos
-            </TabsTrigger>
-            <TabsTrigger value="configuracao-fiscal" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Configuração Fiscal
-              {impostoFormData && <span className="ml-1 text-xs text-green-600">●</span>}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dados-basicos">
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nome do Produto */}
           <div>
             <Label htmlFor="nome">Nome do Produto *</Label>
@@ -217,10 +223,56 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
             </div>
           </div>
 
-          {/* Impostos */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-gray-700">Alíquotas de Impostos</h3>
+          {/* Informações Fiscais */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700">Informações Fiscais</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="ncm">NCM *</Label>
+                <Input
+                  id="ncm"
+                  type="text"
+                  value={fiscalData.ncm}
+                  onChange={(e) => setFiscalData(prev => ({ ...prev, ncm: e.target.value }))}
+                  placeholder="Ex: 2309"
+                  maxLength={8}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Código NCM do produto (8 dígitos)
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="cest">CEST</Label>
+                <Input
+                  id="cest"
+                  type="text"
+                  value={fiscalData.cest}
+                  onChange={(e) => setFiscalData(prev => ({ ...prev, cest: e.target.value }))}
+                  placeholder="Ex: 1700100"
+                  maxLength={7}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Código Especificador (7 dígitos)
+                </p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="origem">Origem da Mercadoria *</Label>
+                <select
+                  id="origem"
+                  value={fiscalData.origem_mercadoria}
+                  onChange={(e) => setFiscalData(prev => ({ ...prev, origem_mercadoria: Number(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={0}>0 - Nacional</option>
+                  <option value={1}>1 - Estrangeira - Importação direta</option>
+                  <option value={2}>2 - Estrangeira - Adquirida no mercado interno</option>
+                </select>
+              </div>
+
               <div>
                 <Label htmlFor="ipi">IPI (%)</Label>
                 <Input
@@ -234,7 +286,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                   placeholder="0,00"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Imposto sobre Produtos Industrializados
+                  Alíquota de IPI do produto
                 </p>
               </div>
 
@@ -251,24 +303,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                   placeholder="0,00"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Não entra no total (informativo para o cliente)
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="st">ST (%)</Label>
-                <Input
-                  id="st"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={formData.st}
-                  onChange={(e) => setFormData(prev => ({ ...prev, st: Math.min(100, Math.max(0, Number(e.target.value))) }))}
-                  placeholder="0,00"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Substituição Tributária
+                  Não entra no total (informativo)
                 </p>
               </div>
             </div>
@@ -350,44 +385,6 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
             </Button>
           </div>
         </form>
-          </TabsContent>
-
-          <TabsContent value="configuracao-fiscal">
-            {produto?.id ? (
-              loadingImposto ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                  <span className="ml-2 text-gray-500">Carregando configuração fiscal...</span>
-                </div>
-              ) : (
-                <ImpostoProdutoForm
-                  produtoId={produto.id}
-                  produtoNome={formData.nome}
-                  imposto={impostoProduto || undefined}
-                  onSubmit={handleImpostoSubmit}
-                  onCancel={() => setActiveTab('dados-basicos')}
-                  loading={savingImposto}
-                />
-              )
-            ) : (
-              <div className="p-6 text-center text-gray-500">
-                <FileText className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                <p className="font-medium">Salve o produto primeiro</p>
-                <p className="text-sm mt-1">
-                  A configuração fiscal estará disponível após salvar os dados básicos do produto.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setActiveTab('dados-basicos')}
-                  className="mt-4"
-                >
-                  Voltar para Dados Básicos
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
       </CardContent>
     </Card>
   )

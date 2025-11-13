@@ -324,5 +324,42 @@ export const impostosService = {
     }
 
     return data || []
+  },
+
+  /**
+   * Get MVA (Margem de Valor Agregado) and tax rates by UF and NCM
+   * Used for ST (Substituição Tributária) calculation
+   */
+  async getMVA(uf: string, ncm: string): Promise<{
+    mva: number | null
+    aliquota_interna: number | null
+    aliquota_efetiva: number | null
+    sujeito_st: boolean
+  } | null> {
+    const supabase = getSupabaseBrowser()
+
+    const { data, error } = await supabase
+      .from('tabela_mva')
+      .select('mva, aliquota_interna, aliquota_fundo, aliquota_efetiva, sujeito_st')
+      .eq('uf', uf.toUpperCase())
+      .eq('ncm', ncm)
+      .eq('ativo', true)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.warn(`[impostosService.getMVA] No MVA found for UF=${uf}, NCM=${ncm}`)
+        return null // Not found
+      }
+      console.error('[impostosService.getMVA] Error:', error)
+      throw new Error(`Erro ao buscar MVA: ${error.message}`)
+    }
+
+    return {
+      mva: data.mva,
+      aliquota_interna: data.aliquota_interna,
+      aliquota_efetiva: data.aliquota_efetiva || data.aliquota_interna,
+      sujeito_st: data.sujeito_st
+    }
   }
 }

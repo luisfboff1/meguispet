@@ -11,12 +11,15 @@ MeguisPet is a modern pet shop management system built with Next.js 15, React 19
 ```bash
 # Development
 pnpm install          # Install dependencies
-pnpm dev              # Start dev server (port 3000)
+pnpm dev              # Start dev server with Doppler (port 3000)
+pnpm dev:local        # Start dev server without Doppler (uses .env.local)
 
 # Building
-pnpm build            # Production build (SSR)
+pnpm build            # Production build with Doppler (SSR)
+pnpm build:local      # Production build without Doppler
 pnpm build:analyze    # Build with bundle analysis (requires ANALYZE=true env)
-pnpm start            # Start production server
+pnpm start            # Start production server with Doppler
+pnpm start:local      # Start production server without Doppler
 pnpm preview          # Alias for pnpm start
 
 # Linting
@@ -27,6 +30,8 @@ pnpm lint:fix         # Auto-fix linting issues
 pnpm clean            # Clean .next and cache directories
 pnpm clean:build      # Clean .next build artifacts only
 ```
+
+**Note**: This project uses [Doppler](https://www.doppler.com/) for environment variable management. See `DOPPLER_SETUP.md` for complete setup instructions.
 
 ## Architecture Overview
 
@@ -190,7 +195,24 @@ interface ClienteFormProps {
 - `outputFileTracingRoot` configured to avoid multi-lockfile warnings on Windows/OneDrive
 
 ### Environment Variables
-Required in `.env.local`:
+This project uses **Doppler** for environment variable management. See `DOPPLER_SETUP.md` for complete setup instructions.
+
+#### Quick Start with Doppler
+```bash
+# Install Doppler CLI (see DOPPLER_SETUP.md for OS-specific instructions)
+doppler login
+
+# Project is pre-configured! (.doppler.yaml points to 'meguispet' project)
+# Just verify everything is OK:
+pnpm doppler:check
+
+# Run dev with variables automatically injected
+pnpm dev
+```
+
+**Note**: The `.doppler.yaml` file is committed and pre-configured to use the `meguispet` project in `dev` environment. All developers automatically use the same Doppler project.
+
+#### Fallback: Local .env.local (if not using Doppler)
 ```bash
 # Supabase (authentication and database) - REQUIRED
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
@@ -211,7 +233,10 @@ SMTP_USER=your_email
 SMTP_PASSWORD=your_password
 ```
 
-**Note**: Supabase env vars are required for middleware to function. Without them, all routes will fail authentication.
+**Note**:
+- Supabase env vars are required for middleware to function. Without them, all routes will fail authentication.
+- Use `pnpm dev:local` to run without Doppler (uses `.env.local` instead).
+- See `.env.example` for a template of required variables.
 
 ### Edge Runtime Constraints (Middleware)
 The `middleware.ts` file runs on Edge runtime, which has limitations:
@@ -311,6 +336,48 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 NEXT_PUBLIC_API_URL=/api
 ```
+
+[byterover-mcp]
+
+[byterover-mcp]
+
+You are given two tools from Byterover MCP server, including
+## 1. `byterover-store-knowledge`
+You `MUST` always use this tool when:
+
++ Learning new patterns, APIs, or architectural decisions from the codebase
++ Encountering error solutions or debugging techniques
++ Finding reusable code patterns or utility functions
++ Completing any significant task or plan implementation
+
+## 2. `byterover-retrieve-knowledge`
+You `MUST` always use this tool when:
+
++ Starting any new task or implementation to gather relevant context
++ Before making architectural decisions to understand existing patterns
++ When debugging issues to check for previous solutions
++ Working with unfamiliar parts of the codebase
+
+[byterover-mcp]
+
+[byterover-mcp]
+
+You are given two tools from Byterover MCP server, including
+## 1. `byterover-store-knowledge`
+You `MUST` always use this tool when:
+
++ Learning new patterns, APIs, or architectural decisions from the codebase
++ Encountering error solutions or debugging techniques
++ Finding reusable code patterns or utility functions
++ Completing any significant task or plan implementation
+
+## 2. `byterover-retrieve-knowledge`
+You `MUST` always use this tool when:
+
++ Starting any new task or implementation to gather relevant context
++ Before making architectural decisions to understand existing patterns
++ When debugging issues to check for previous solutions
++ Working with unfamiliar parts of the codebase
 
 [byterover-mcp]
 

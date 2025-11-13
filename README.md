@@ -15,6 +15,36 @@ Agora com **animações suaves em todas as seções**, **modais ainda mais acess
 - ✅ **Modais Acessíveis** - Foco preso, retorno ao elemento anterior e tecla *Esc* out-of-the-box
 - ✅ **Deploy Vercel** - SSR otimizado com Edge Middleware
 - ✅ **Supabase Backend** - PostgreSQL com autenticação JWT e real-time
+- ✅ **Doppler Integration** - Gerenciamento seguro de variáveis de ambiente
+
+## 🔐 Gerenciamento de Variáveis (Doppler)
+
+Este projeto usa **Doppler** para gerenciamento centralizado e seguro de variáveis de ambiente.
+
+### Quick Start
+```bash
+# 1. Instale o Doppler CLI
+# Windows (PowerShell como Admin): scoop install doppler
+# macOS: brew install dopplerhq/cli/doppler
+# Linux: veja DOPPLER_SETUP.md
+
+# 2. Autentique-se
+doppler login
+
+# 3. Projeto já está pré-configurado! ✅
+# O arquivo .doppler.yaml já aponta para o projeto 'meguispet'
+# Apenas verifique se está tudo OK:
+pnpm doppler:check
+
+# 4. Rode o projeto (variáveis injetadas automaticamente)
+pnpm dev
+```
+
+**Nota**: O projeto já vem configurado para usar o projeto Doppler `meguispet` no ambiente `dev`. Não precisa rodar `doppler setup` manualmente!
+
+**Documentação completa**: Veja `DOPPLER_SETUP.md` para instruções detalhadas, troubleshooting e integração com Vercel.
+
+**Fallback sem Doppler**: Use `pnpm dev:local` para rodar com `.env.local` (veja `.env.example` para template).
 
 ## 🚀 Deploy na Vercel
 
