@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,9 +17,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { Settings2, TrendingUp } from 'lucide-react'
 import type { ChartConfig } from '@/components/ui/chart'
+
+// Recharts imports (lazy loaded na página)
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, XAxis, YAxis } from 'recharts'
 
 export interface DashboardChartData {
   data: string

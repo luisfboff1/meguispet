@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,8 +13,13 @@ import {
   Package2
 } from 'lucide-react'
 import { dashboardService, produtosService, clientesService, movimentacoesService, vendasService } from '@/services/api'
-import DashboardChart from '@/components/charts/DashboardChart'
 import TopProductsTable from '@/components/tables/TopProductsTable'
+
+// Lazy load do gráfico para otimização (economiza ~100KB)
+const DashboardChart = dynamic(() => import('@/components/charts/DashboardChart'), {
+  ssr: false,
+  loading: () => <div className="h-80 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div></div>
+})
 import { useModal } from '@/hooks/useModal'
 import { AnimatedCard } from '@/components/ui/animated-card'
 import type {

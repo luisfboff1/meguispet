@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Download, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Download,
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -25,8 +26,13 @@ import { transacoesService, categoriasFinanceirasService, transacoesRecorrentesS
 import { TransacaoForm } from '@/components/forms/TransacaoForm'
 import { CategoriaFinanceiraForm } from '@/components/forms/CategoriaFinanceiraForm'
 import { TransacaoRecorrenteForm } from '@/components/forms/TransacaoRecorrenteForm'
-import CustomizableFinanceiroChart from '@/components/charts/CustomizableFinanceiroChart'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+
+// Lazy load do gráfico financeiro para otimização (economiza ~100KB)
+const CustomizableFinanceiroChart = dynamic(() => import('@/components/charts/CustomizableFinanceiroChart'), {
+  ssr: false,
+  loading: () => <div className="h-80 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div></div>
+})
 import { 
   TransacaoFinanceira, 
   TransacaoForm as TransacaoFormType, 

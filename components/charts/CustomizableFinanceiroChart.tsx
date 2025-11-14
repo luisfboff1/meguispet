@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,10 +19,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 import { Settings2, TrendingUp, Calendar, Eye, EyeOff, CalendarDays } from 'lucide-react'
 import type { ChartConfig } from '@/components/ui/chart'
 import type { FinanceiroMetrics } from '@/types'
+
+// Lazy loading de Recharts para otimização
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 
 interface CustomizableFinanceiroChartProps {
   data: FinanceiroMetrics['grafico_mensal'] | FinanceiroMetrics['grafico_diario']
