@@ -61,8 +61,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           }}
         >
           <option value="">Todas</option>
-          <option value="loja">Loja Física</option>
-          <option value="marketplace">Marketplace</option>
+          <option value="loja_fisica">Loja Física</option>
+          <option value="mercado_livre">Mercado Livre</option>
           <option value="online">Online</option>
         </select>
       </div>
