@@ -82,17 +82,9 @@ export default function CustomizableFinanceiroChart({ data, loading = false }: C
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return []
 
-    // Apply period filter
-    let filteredData = [...data]
-    if (periodFilter === 'month') {
-      filteredData = data.slice(-1) // Current month only
-    } else if (periodFilter === 'week') {
-      filteredData = data.slice(-1) // Approximate last week (needs daily data for true week)
-    }
-
-    // Calculate additional metrics
+    // FIRST: Calculate accumulated balance for ALL historical data
     let saldoAcumulado = 0
-    return filteredData.map((item) => {
+    const allProcessedData = data.map((item) => {
       const receitas = parseFloat(item.receitas?.toString() || '0')
       const despesas = parseFloat(item.despesas?.toString() || '0')
       const fluxoCaixa = receitas - despesas
@@ -107,6 +99,15 @@ export default function CustomizableFinanceiroChart({ data, loading = false }: C
         saldo: saldoAcumulado,
       }
     })
+
+    // THEN: Apply period filter to display
+    if (periodFilter === 'month') {
+      return allProcessedData.slice(-1) // Show only current month with accumulated balance
+    } else if (periodFilter === 'week') {
+      return allProcessedData.slice(-1) // Show only last period with accumulated balance
+    }
+
+    return allProcessedData // Show all data with accumulated balances
   }, [data, periodFilter])
 
   const toggleMetric = (metric: MetricKey) => {
