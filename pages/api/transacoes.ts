@@ -13,7 +13,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       const limitNum = parseInt(limit as string, 10);
       const offset = (pageNum - 1) * limitNum;
 
-      let query = supabase.from('transacoes').select('*', { count: 'exact' });
+      let query = supabase.from('transacoes').select(`
+        *,
+        categoria_detalhe:categorias_financeiras(id, nome, tipo, cor, icone),
+        venda:vendas(id, numero_venda, valor_final, data_venda),
+        venda_parcela:venda_parcelas(id, numero_parcela, valor_parcela, data_vencimento),
+        transacao_recorrente:transacoes_recorrentes(id, descricao, frequencia)
+      `, { count: 'exact' });
 
       if (tipo) query = query.eq('tipo', tipo);
       if (status) query = query.eq('status', status);

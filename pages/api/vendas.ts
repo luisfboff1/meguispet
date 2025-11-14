@@ -267,6 +267,17 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           console.warn(`⚠️ Total das parcelas (${totalParcelas}) difere do valor final da venda (${valorFinalVenda})`);
         }
 
+        // Buscar categoria "Vendas" para vincular transações
+        const { data: categoriaVendas } = await supabase
+          .from('categorias_financeiras')
+          .select('id')
+          .eq('nome', 'Vendas')
+          .eq('tipo', 'receita')
+          .eq('ativo', true)
+          .single();
+
+        const categoria_id = categoriaVendas?.id || null;
+
         // Inserir parcelas
         const parcelasToInsert = parcelas.map((p: any) => ({
           venda_id: venda.id,
@@ -292,6 +303,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             valor: parcela.valor_parcela,
             descricao: `Receita Venda ${numero_venda} - Parcela ${parcela.numero_parcela}/${parcelas.length}`,
             categoria: 'Vendas',
+            categoria_id: categoria_id,
             venda_id: venda.id,
             venda_parcela_id: parcela.id,
             data_transacao: parcela.data_vencimento,
@@ -309,6 +321,17 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           }
         }
       } else {
+        // Buscar categoria "Vendas" para vincular transação
+        const { data: categoriaVendas } = await supabase
+          .from('categorias_financeiras')
+          .select('id')
+          .eq('nome', 'Vendas')
+          .eq('tipo', 'receita')
+          .eq('ativo', true)
+          .single();
+
+        const categoria_id = categoriaVendas?.id || null;
+
         // Se não houver parcelas especificadas, criar uma transação única (comportamento antigo)
         const { error: transacaoError } = await supabase
           .from('transacoes')
@@ -317,6 +340,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             valor: venda.valor_final,
             descricao: `Receita Venda ${numero_venda}`,
             categoria: 'Vendas',
+            categoria_id: categoria_id,
             venda_id: venda.id,
             data_transacao: data_pagamento || data_venda || new Date().toISOString(),
             observacoes: observacoes || null,
