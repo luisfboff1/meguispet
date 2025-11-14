@@ -560,10 +560,14 @@ export interface FinanceiroMetricMonthly {
   despesas: number
 }
 
-export interface FinanceiroMetricMonthly {
-  mes: string
+export interface FinanceiroMetricDaily {
+  data: string
   receitas: number
-  despesas: number
+  despesas: number // Já vem negativo da API
+  fluxoCaixa: number
+  saldoAcumulado: number
+  temMovimentacao: boolean
+  ehProjecao: boolean // true se for projeção futura
 }
 
 export interface FinanceiroMetrics {
@@ -572,6 +576,7 @@ export interface FinanceiroMetrics {
   lucro: number
   margem: number
   grafico_mensal: FinanceiroMetricMonthly[]
+  grafico_diario: FinanceiroMetricDaily[]
 }
 
 // ============================================================================

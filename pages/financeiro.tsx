@@ -601,10 +601,10 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
-      {/* Customizable Financial Chart */}
-      {metrics?.grafico_mensal && (
+      {/* Customizable Financial Chart - usando dados diários */}
+      {metrics?.grafico_diario && (
         <CustomizableFinanceiroChart
-          data={metrics.grafico_mensal}
+          data={metrics.grafico_diario}
           loading={loading}
         />
       )}

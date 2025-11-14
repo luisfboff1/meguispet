@@ -19,16 +19,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }
 
       const supabase = getSupabase();
-      // Calcular data de 6 meses atrás
-      const dataInicio = new Date();
-      dataInicio.setMonth(dataInicio.getMonth() - 6);
-      dataInicio.setDate(1); // Primeiro dia do mês
-
-      // Buscar todas as transações dos últimos 6 meses
+      // Buscar TODAS as transações (histórico completo para fluxo de caixa acumulativo)
       const { data: transacoes, error } = await supabase
         .from('transacoes')
         .select('tipo, valor, data_transacao')
-        .gte('data_transacao', dataInicio.toISOString().split('T')[0])
         .order('data_transacao', { ascending: true });
 
       if (error) throw error;
@@ -53,45 +47,136 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       const lucro = receita - despesas;
       const margem = receita > 0 ? ((lucro / receita) * 100) : 0;
 
-      // Agrupar por mês para o gráfico
-      const graficoMensal: Record<string, { receitas: number; despesas: number }> = {};
+      // Agrupar por DIA para o gráfico (com fluxo de caixa acumulativo)
+      const graficoDiario: Record<string, { receitas: number; despesas: number }> = {};
 
       (transacoes || []).forEach(t => {
         const data = new Date(t.data_transacao);
-        const mes = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
-        
-        if (!graficoMensal[mes]) {
-          graficoMensal[mes] = { receitas: 0, despesas: 0 };
+        const dia = data.toISOString().split('T')[0]; // YYYY-MM-DD
+
+        if (!graficoDiario[dia]) {
+          graficoDiario[dia] = { receitas: 0, despesas: 0 };
         }
 
         const valor = parseFloat(t.valor.toString());
         if (t.tipo === 'receita') {
-          graficoMensal[mes].receitas += valor;
+          graficoDiario[dia].receitas += valor;
         } else {
-          graficoMensal[mes].despesas += valor;
+          graficoDiario[dia].despesas += valor;
         }
       });
 
-      // Garantir que temos os últimos 6 meses no gráfico
-      const grafico_mensal = [];
-      for (let i = 5; i >= 0; i--) {
-        const data = new Date();
-        data.setMonth(data.getMonth() - i);
-        const mes = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
-        
-        grafico_mensal.push({
-          mes,
-          receitas: graficoMensal[mes]?.receitas || 0,
-          despesas: graficoMensal[mes]?.despesas || 0
-        });
+      // Buscar transações recorrentes ativas para projeção futura
+      const { data: recorrentes } = await supabase
+        .from('transacoes_recorrentes')
+        .select('*')
+        .eq('ativo', true);
+
+      // Criar array com TODOS os dias desde a primeira transação até +90 dias no futuro
+      // Incluindo dias sem movimentação (para permitir customização no frontend)
+      const grafico_diario = [];
+
+      if (Object.keys(graficoDiario).length > 0) {
+        const primeiraData = new Date(Object.keys(graficoDiario)[0]);
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        // Projetar 90 dias para o futuro
+        const dataFinal = new Date(hoje);
+        dataFinal.setDate(dataFinal.getDate() + 90);
+
+        // Gerar transações recorrentes futuras
+        const transacoesProjetadas: Record<string, { receitas: number; despesas: number }> = {};
+
+        if (recorrentes && recorrentes.length > 0) {
+          for (const rec of recorrentes) {
+            const proximaGeracao = new Date(rec.proxima_geracao);
+            const dataFimRec = rec.data_fim ? new Date(rec.data_fim) : dataFinal;
+            let currentDate = new Date(proximaGeracao);
+
+            while (currentDate <= dataFinal && currentDate <= dataFimRec) {
+              const diaStr = currentDate.toISOString().split('T')[0];
+
+              if (currentDate > hoje) { // Apenas futuras
+                if (!transacoesProjetadas[diaStr]) {
+                  transacoesProjetadas[diaStr] = { receitas: 0, despesas: 0 };
+                }
+
+                const valor = parseFloat(rec.valor.toString());
+                if (rec.tipo === 'receita') {
+                  transacoesProjetadas[diaStr].receitas += valor;
+                } else {
+                  transacoesProjetadas[diaStr].despesas += valor;
+                }
+              }
+
+              // Calcular próxima data baseado na frequência
+              if (rec.frequencia === 'mensal') {
+                currentDate = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
+              } else if (rec.frequencia === 'semanal') {
+                currentDate = new Date(currentDate.setDate(currentDate.getDate() + 7));
+              } else if (rec.frequencia === 'anual') {
+                currentDate = new Date(currentDate.setFullYear(currentDate.getFullYear() + 1));
+              } else {
+                break; // Frequência não suportada
+              }
+            }
+          }
+        }
+
+        let saldoAcumulado = 0;
+
+        for (let d = new Date(primeiraData); d <= dataFinal; d.setDate(d.getDate() + 1)) {
+          const diaStr = d.toISOString().split('T')[0];
+          const ehFuturo = d > hoje;
+
+          // Dados históricos ou projetados
+          const receitas = ehFuturo
+            ? (transacoesProjetadas[diaStr]?.receitas || 0)
+            : (graficoDiario[diaStr]?.receitas || 0);
+          const despesas = ehFuturo
+            ? (transacoesProjetadas[diaStr]?.despesas || 0)
+            : (graficoDiario[diaStr]?.despesas || 0);
+
+          const fluxoDia = receitas - despesas;
+          saldoAcumulado += fluxoDia;
+
+          grafico_diario.push({
+            data: diaStr,
+            receitas,
+            despesas: -despesas, // NEGATIVO para despesas
+            fluxoCaixa: fluxoDia,
+            saldoAcumulado,
+            temMovimentacao: receitas > 0 || despesas > 0,
+            ehProjecao: ehFuturo
+          });
+        }
       }
+
+      // Também criar gráfico mensal para compatibilidade (agregando os dias)
+      const graficoMensal: Record<string, { receitas: number; despesas: number }> = {};
+      grafico_diario.forEach(dia => {
+        const mes = dia.data.substring(0, 7); // YYYY-MM
+        if (!graficoMensal[mes]) {
+          graficoMensal[mes] = { receitas: 0, despesas: 0 };
+        }
+        graficoMensal[mes].receitas += dia.receitas;
+        graficoMensal[mes].despesas += dia.despesas;
+      });
+
+      const grafico_mensal = Object.entries(graficoMensal).map(([mes, valores]) => ({
+        mes,
+        receitas: valores.receitas,
+        despesas: valores.despesas
+      }));
 
       console.log('📊 Métricas calculadas:', {
         receita,
         despesas,
         lucro,
         margem: margem.toFixed(2),
-        meses: grafico_mensal.length
+        meses: grafico_mensal.length,
+        dias: grafico_diario.length
       });
 
       const response = {
@@ -101,7 +186,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           despesas: parseFloat(despesas.toFixed(2)),
           lucro: parseFloat(lucro.toFixed(2)),
           margem: parseFloat(margem.toFixed(2)),
-          grafico_mensal
+          grafico_mensal,
+          grafico_diario
         }
       };
 
