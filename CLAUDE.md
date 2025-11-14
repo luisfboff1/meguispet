@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MeguisPet is a modern pet shop management system built with Next.js 15, React 19, TypeScript, and Tailwind CSS 4. The project is deployed to Vercel in SSR (server-side rendering) mode with Supabase as the backend for authentication and database.
 
+**📊 For complete architecture documentation with detailed Mermaid diagrams, see [ARQUITETURA.md](./ARQUITETURA.md)**
+
 ## Development Commands
 
 ```bash
