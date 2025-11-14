@@ -221,14 +221,24 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       const cliente = Array.isArray(venda.cliente) ? venda.cliente[0] : venda.cliente
       const vendedor = Array.isArray(venda.vendedor) ? venda.vendedor[0] : venda.vendedor
       
+      const ipi = venda.total_ipi || 0
+      const st = venda.total_st || 0
+      const icms = venda.total_icms || 0
+      const subtotal = venda.total_produtos_bruto || 0
+      const valorLiquido = venda.total_produtos_liquido || 0
+      
       return {
         id: venda.id,
         data: venda.data_venda,
         cliente: cliente?.nome || 'Cliente não informado',
         vendedor: vendedor?.nome || 'Vendedor não informado',
         produtos: venda.itens?.length || 0,
-        subtotal: venda.total_produtos_liquido || 0,
-        impostos: (venda.total_ipi || 0) + (venda.total_st || 0),
+        subtotal,
+        valorLiquido,
+        ipi,
+        icms,
+        st,
+        impostos: ipi + st,
         total: venda.valor_final || 0,
         status: venda.status,
       }

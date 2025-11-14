@@ -170,6 +170,10 @@ export interface VendasReportData {
     vendedor: string
     produtos: number
     subtotal: number
+    valorLiquido: number
+    ipi: number
+    icms: number
+    st: number
     impostos: number
     total: number
     status: string

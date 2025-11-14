@@ -231,18 +231,29 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                 <BarChart data={vendasPorVendedor.slice(0, 5)}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="vendedorNome" style={{ fontSize: 12 }} />
-                  <YAxis style={{ fontSize: 12 }} />
+                  <YAxis 
+                    yAxisId="left" 
+                    style={{ fontSize: 12 }}
+                    label={{ value: 'Quantidade', angle: -90, position: 'insideLeft' }}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    style={{ fontSize: 12 }}
+                    tickFormatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`}
+                    label={{ value: 'Faturamento (R$)', angle: 90, position: 'insideRight' }}
+                  />
                   <Tooltip
                     formatter={(value: number, name: string) => {
                       if (name === 'Faturamento') {
-                        return formatCurrency(value)
+                        return [formatCurrency(value), name]
                       }
-                      return value
+                      return [value, name]
                     }}
                   />
                   <Legend />
-                  <Bar dataKey="quantidade" fill="#3b82f6" name="Quantidade" />
-                  <Bar dataKey="faturamento" fill="#10b981" name="Faturamento" />
+                  <Bar yAxisId="left" dataKey="quantidade" fill="#3b82f6" name="Quantidade" />
+                  <Bar yAxisId="right" dataKey="faturamento" fill="#10b981" name="Faturamento" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -304,7 +315,12 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                     <th className="text-left p-2 text-sm font-medium">Cliente</th>
                     <th className="text-left p-2 text-sm font-medium">Vendedor</th>
                     <th className="text-right p-2 text-sm font-medium">Produtos</th>
-                    <th className="text-right p-2 text-sm font-medium">Total</th>
+                    <th className="text-right p-2 text-sm font-medium">Subtotal</th>
+                    <th className="text-right p-2 text-sm font-medium">Valor Líquido</th>
+                    <th className="text-right p-2 text-sm font-medium">IPI</th>
+                    <th className="text-right p-2 text-sm font-medium">ICMS</th>
+                    <th className="text-right p-2 text-sm font-medium">ST</th>
+                    <th className="text-right p-2 text-sm font-medium">Total c/ Impostos</th>
                     <th className="text-center p-2 text-sm font-medium">Status</th>
                   </tr>
                 </thead>
@@ -317,6 +333,21 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                       <td className="p-2 text-sm">{venda.cliente}</td>
                       <td className="p-2 text-sm">{venda.vendedor}</td>
                       <td className="p-2 text-sm text-right">{venda.produtos}</td>
+                      <td className="p-2 text-sm text-right">
+                        {formatCurrency(venda.subtotal)}
+                      </td>
+                      <td className="p-2 text-sm text-right">
+                        {formatCurrency(venda.valorLiquido)}
+                      </td>
+                      <td className="p-2 text-sm text-right">
+                        {formatCurrency(venda.ipi)}
+                      </td>
+                      <td className="p-2 text-sm text-right">
+                        {formatCurrency(venda.icms)}
+                      </td>
+                      <td className="p-2 text-sm text-right">
+                        {formatCurrency(venda.st)}
+                      </td>
                       <td className="p-2 text-sm text-right font-medium">
                         {formatCurrency(venda.total)}
                       </td>

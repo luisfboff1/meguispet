@@ -29,10 +29,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     // Buscar dados do relatório
-    const previewResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/relatorios/vendas/preview`, {
+    const protocol = req.headers['x-forwarded-proto'] || 'http'
+    const host = req.headers.host || 'localhost:3000'
+    const baseUrl = `${protocol}://${host}`
+    
+    const previewResponse = await fetch(`${baseUrl}/api/relatorios/vendas/preview`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Cookie': req.headers.cookie || '',
       },
       body: JSON.stringify(body),
     })
@@ -100,16 +105,21 @@ function exportPDF(data: VendasReportData, periodo: { startDate: string; endDate
   // Tabela de vendas detalhadas
   autoTable(doc, {
     startY: resumoY + 45,
-    head: [['Data', 'Cliente', 'Vendedor', 'Produtos', 'Total', 'Status']],
+    head: [['Data', 'Cliente', 'Vendedor', 'Qtd Prod', 'Subtotal', 'Líquido', 'IPI', 'ICMS', 'ST', 'Total', 'Status']],
     body: data.vendasDetalhadas.map(v => [
       new Date(v.data).toLocaleDateString('pt-BR'),
       v.cliente,
       v.vendedor,
       v.produtos.toString(),
+      `R$ ${v.subtotal.toFixed(2)}`,
+      `R$ ${v.valorLiquido.toFixed(2)}`,
+      `R$ ${v.ipi.toFixed(2)}`,
+      `R$ ${v.icms.toFixed(2)}`,
+      `R$ ${v.st.toFixed(2)}`,
       `R$ ${v.total.toFixed(2)}`,
       v.status,
     ]),
-    styles: { fontSize: 8 },
+    styles: { fontSize: 7 },
     headStyles: { fillColor: [41, 128, 185] },
   })
 
@@ -161,13 +171,17 @@ function exportExcel(data: VendasReportData, periodo: { startDate: string; endDa
 
   // Aba 2: Vendas Detalhadas
   const vendasData = [
-    ['Data', 'Cliente', 'Vendedor', 'Produtos', 'Subtotal', 'Impostos', 'Total', 'Status'],
+    ['Data', 'Cliente', 'Vendedor', 'Produtos', 'Subtotal', 'Valor Líquido', 'IPI', 'ICMS', 'ST', 'Total Impostos', 'Total', 'Status'],
     ...data.vendasDetalhadas.map(v => [
       new Date(v.data).toLocaleDateString('pt-BR'),
       v.cliente,
       v.vendedor,
       v.produtos,
       v.subtotal,
+      v.valorLiquido,
+      v.ipi,
+      v.icms,
+      v.st,
       v.impostos,
       v.total,
       v.status,
@@ -232,10 +246,10 @@ function exportCSV(data: VendasReportData, periodo: { startDate: string; endDate
 
   // Vendas
   csvLines.push('Vendas Detalhadas')
-  csvLines.push('Data,Cliente,Vendedor,Produtos,Subtotal,Impostos,Total,Status')
+  csvLines.push('Data,Cliente,Vendedor,Produtos,Subtotal,Valor Líquido,IPI,ICMS,ST,Total Impostos,Total,Status')
   data.vendasDetalhadas.forEach(v => {
     csvLines.push(
-      `${new Date(v.data).toLocaleDateString('pt-BR')},${v.cliente},${v.vendedor},${v.produtos},${v.subtotal},${v.impostos},${v.total},${v.status}`
+      `${new Date(v.data).toLocaleDateString('pt-BR')},${v.cliente},${v.vendedor},${v.produtos},${v.subtotal},${v.valorLiquido},${v.ipi},${v.icms},${v.st},${v.impostos},${v.total},${v.status}`
     )
   })
   csvLines.push('')

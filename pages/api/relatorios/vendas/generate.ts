@@ -29,11 +29,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     // Reutilizar a lógica da API de preview para gerar os dados
-    const previewResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/relatorios/vendas/preview`, {
+    const protocol = req.headers['x-forwarded-proto'] || 'http'
+    const host = req.headers.host || 'localhost:3000'
+    const baseUrl = `${protocol}://${host}`
+    
+    const previewResponse = await fetch(`${baseUrl}/api/relatorios/vendas/preview`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Passar headers de autenticação se necessário
+        'Cookie': req.headers.cookie || '',
       },
       body: JSON.stringify(body),
     })

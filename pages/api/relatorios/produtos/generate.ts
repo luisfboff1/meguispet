@@ -32,9 +32,16 @@ export default async function handler(
 
     // 2️⃣ Chamar a API de preview para obter os dados
     // Em produção, você pode fazer a lógica diretamente aqui ou reutilizar
-    const previewResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/relatorios/produtos/preview`, {
+    const protocol = req.headers['x-forwarded-proto'] || 'http'
+    const host = req.headers.host || 'localhost:3000'
+    const baseUrl = `${protocol}://${host}`
+    
+    const previewResponse = await fetch(`${baseUrl}/api/relatorios/produtos/preview`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Cookie': req.headers.cookie || '',
+      },
       body: JSON.stringify(config)
     })
 
