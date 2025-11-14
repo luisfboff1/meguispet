@@ -191,7 +191,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .sort((a, b) => b.faturamento - a.faturamento)
 
     // Vendas por produto (Top 10)
-    const vendasPorProdutoMap = new Map<number, { nome: string; quantidade: number; faturamento: number }>()
+    const vendasPorProdutoMap = new Map<number, { 
+      nome: string; 
+      quantidade: number; 
+      faturamento: number;
+      custoTotal: number;
+      precoCustoMedio: number;
+    }>()
     vendas.forEach(venda => {
       if (venda.itens) {
         venda.itens.forEach((item) => {
@@ -201,7 +207,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
             const produtoId = produto.id
             const produtoNome = produto.nome
-            const existing = vendasPorProdutoMap.get(produtoId) || { nome: produtoNome, quantidade: 0, faturamento: 0 }
+            const existing = vendasPorProdutoMap.get(produtoId) || { 
+              nome: produtoNome, 
+              quantidade: 0, 
+              faturamento: 0,
+              custoTotal: 0,
+              precoCustoMedio: 0
+            }
 
             // Calcular faturamento com fallbacks apropriados
             let faturamentoItem = 0
@@ -218,10 +230,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
               faturamentoItem = item.preco_unitario * item.quantidade
             }
 
+            // Calcular custo do item
+            const precoCusto = produto.preco_custo || 0
+            const custoItem = precoCusto * item.quantidade
+
             vendasPorProdutoMap.set(produtoId, {
               nome: produtoNome,
               quantidade: existing.quantidade + item.quantidade,
               faturamento: existing.faturamento + faturamentoItem,
+              custoTotal: existing.custoTotal + custoItem,
+              precoCustoMedio: precoCusto, // Mantém o preço de custo do produto
             })
           }
         })
@@ -229,12 +247,25 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     })
 
     const vendasPorProduto = Array.from(vendasPorProdutoMap.entries())
-      .map(([produtoId, valores]) => ({
-        produtoId,
-        produtoNome: valores.nome,
-        quantidade: valores.quantidade,
-        faturamento: valores.faturamento,
-      }))
+      .map(([produtoId, valores]) => {
+        // Calcular preço de venda médio (faturamento / quantidade)
+        const precoVendaMedio = valores.quantidade > 0 ? valores.faturamento / valores.quantidade : 0
+        
+        // Calcular margem de lucro percentual
+        const margemLucro = valores.faturamento > 0 
+          ? ((valores.faturamento - valores.custoTotal) / valores.faturamento) * 100 
+          : 0
+
+        return {
+          produtoId,
+          produtoNome: valores.nome,
+          quantidade: valores.quantidade,
+          faturamento: valores.faturamento,
+          precoCusto: valores.precoCustoMedio,
+          precoVenda: precoVendaMedio,
+          margemLucro: margemLucro,
+        }
+      })
       .sort((a, b) => b.quantidade - a.quantidade)
       .slice(0, 10)
 

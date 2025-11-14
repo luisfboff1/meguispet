@@ -162,6 +162,9 @@ export interface VendasReportData {
     produtoNome: string
     quantidade: number
     faturamento: number
+    precoCusto?: number
+    precoVenda?: number
+    margemLucro?: number
   }>
   vendasDetalhadas: Array<{
     id: number
