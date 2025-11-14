@@ -151,10 +151,17 @@ function calcularItemComImpostos(
  * Processa uma venda completa com cálculo de impostos
  */
 export async function processarVendaComImpostos(
-  itens: Array<{ produto_id: number; quantidade: number; preco_unitario: number }>,
+  itens: Array<{
+    produto_id: number;
+    quantidade: number;
+    preco_unitario: number;
+    ipi_aliquota?: number;
+    icms_aliquota?: number;
+    st_aliquota?: number;
+  }>,
   descontoTotal: number
 ): Promise<VendaProcessada> {
-  // 1. Buscar alíquotas de impostos dos produtos
+  // 1. Buscar alíquotas de impostos dos produtos (apenas se não vier no item)
   const produtoIds = itens.map(item => item.produto_id)
   const mapImpostos = await buscarImpostosProdutos(produtoIds)
 
@@ -163,16 +170,30 @@ export async function processarVendaComImpostos(
 
   // 3. Calcular cada item com impostos
   const itensCalculados: VendaItemComImpostos[] = itens.map((item, index) => {
-    const impostos = mapImpostos.get(item.produto_id) || { ipi: 0, icms: 0, st: 0 }
+    const impostosDb = mapImpostos.get(item.produto_id) || { ipi: 0, icms: 0, st: 0 }
+
+    // Usar alíquotas do item se já estiverem definidas, senão usa do produto
+    const ipiAliquota = item.ipi_aliquota !== undefined ? item.ipi_aliquota : impostosDb.ipi
+    const icmsAliquota = item.icms_aliquota !== undefined ? item.icms_aliquota : impostosDb.icms
+    const stAliquota = item.st_aliquota !== undefined ? item.st_aliquota : impostosDb.st
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📊 Produto ${item.produto_id}: IPI=${ipiAliquota}%, ICMS=${icmsAliquota}%, ST=${stAliquota}%`, {
+        item_ipi: item.ipi_aliquota,
+        db_ipi: impostosDb.ipi,
+        item_st: item.st_aliquota,
+        db_st: impostosDb.st
+      })
+    }
 
     return calcularItemComImpostos(
       item.produto_id,
       item.quantidade,
       item.preco_unitario,
       descontosProporcionais[index],
-      impostos.ipi,
-      impostos.icms,
-      impostos.st
+      ipiAliquota,
+      icmsAliquota,
+      stAliquota
     )
   })
 

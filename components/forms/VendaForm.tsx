@@ -122,7 +122,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     ipiValor: true,
     icmsAliquota: false,
     icmsValor: false,
-    stAliquota: true, // Mostrar ST% por padrão para ver valores da tabela MVA
+    stAliquota: false, // Ocultar ST% por padrão
     stValor: true,
     totalItem: true,
     acoes: true
@@ -160,17 +160,17 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     })
 
     if (venda.itens?.length) {
-      // Carregar itens com alíquotas de impostos
+      // Carregar itens com alíquotas de impostos SALVOS na venda (não do produto!)
       const itensComImpostos = venda.itens.map(item => {
-        const produto = produtos.find(p => p.id === item.produto_id)
         return {
           produto_id: item.produto_id,
           produto_nome: item.produto?.nome || '',
           quantidade: item.quantidade,
           preco_unitario: item.preco_unitario,
-          ipi_aliquota: produto?.ipi || 0,
-          icms_aliquota: produto?.icms || 0,
-          st_aliquota: produto?.st || 0
+          // Usar alíquotas SALVAS na venda, não do produto
+          ipi_aliquota: item.ipi_aliquota || 0,
+          icms_aliquota: item.icms_aliquota || 0,
+          st_aliquota: item.st_aliquota || 0
         }
       })
       setItens(itensComImpostos)
@@ -398,6 +398,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     if (process.env.NODE_ENV === 'development') {
       console.log('[VendaForm] submit payload', vendaData)
       console.log('[VendaForm] totais', totais)
+      console.log('[VendaForm] itensCalculados', itensCalculados)
+      console.log('[VendaForm] itens originais', itens)
     }
 
     onSubmit(vendaData)

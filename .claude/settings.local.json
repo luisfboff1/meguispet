@@ -38,7 +38,8 @@
       "Bash(pnpm run build:local:*)",
       "Bash(powershell -Command:*)",
       "Bash(tar:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "mcp__byterover-mcp__byterover-store-knowledge"
     ],
     "deny": [],
     "ask": []

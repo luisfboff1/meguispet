@@ -66,8 +66,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             icms_st_total,
             icms_st_recolher,
             mva_aplicado,
-            aliquota_icms,
-            produto:produtos(id, nome, preco_venda)
+            produto:produtos(id, nome, preco_venda, ipi, icms, st)
           )
         `, { count: 'exact' });
 
@@ -137,6 +136,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       // 💰 PROCESSAR VENDA COM IMPOSTOS (IPI, ICMS, ST)
       const descontoValor = desconto || 0;
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📦 POST /vendas - Itens recebidos:', JSON.stringify(itens, null, 2));
+      }
+
       const vendaProcessada = await processarVendaComImpostos(
         itens as VendaItemInput[],
         descontoValor
@@ -292,30 +296,34 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         }
       }
 
-      // Se vier com itens, recalcular os valores
+      // 💰 PROCESSAR VENDA COM IMPOSTOS (IPI, ICMS, ST)
+      let vendaProcessada = null;
       let valor_total_calculado = 0;
       let valor_final_calculado = 0;
 
       if (itens && Array.isArray(itens) && itens.length > 0) {
-        const subtotalItens = (itens as VendaItemInput[]).reduce((sum, item) => {
-          return sum + (item.quantidade * item.preco_unitario);
-        }, 0);
-
         const descontoValor = desconto || 0;
-        const valorComDesconto = Math.max(0, subtotalItens - descontoValor);
-        const impostoPercentual = imposto_percentual || 0;
-        const valorImposto = (valorComDesconto * impostoPercentual) / 100;
 
-        valor_total_calculado = subtotalItens;
-        valor_final_calculado = valorComDesconto + valorImposto;
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📦 PUT /vendas - Itens recebidos:', JSON.stringify(itens, null, 2));
+        }
+
+        vendaProcessada = await processarVendaComImpostos(
+          itens as VendaItemInput[],
+          descontoValor
+        );
+
+        valor_total_calculado = vendaProcessada.totais.total_produtos_bruto;
+        valor_final_calculado = vendaProcessada.totais.total_geral;
 
         console.log('📊 Recálculo da venda (PUT):', {
-          subtotalItens,
-          desconto: descontoValor,
-          valorComDesconto,
-          impostoPercentual,
-          valorImposto,
-          valorFinal: valor_final_calculado
+          total_produtos_bruto: vendaProcessada.totais.total_produtos_bruto,
+          desconto_total: vendaProcessada.totais.desconto_total,
+          total_produtos_liquido: vendaProcessada.totais.total_produtos_liquido,
+          total_ipi: vendaProcessada.totais.total_ipi,
+          total_icms: vendaProcessada.totais.total_icms,
+          total_st: vendaProcessada.totais.total_st,
+          total_geral: vendaProcessada.totais.total_geral
         });
       }
 
@@ -328,12 +336,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           estoque_id: estoque_id || null,
           forma_pagamento_id: forma_pagamento_id || null,
           data_venda,
+          // Campos antigos (manter compatibilidade)
           valor_total: valor_total_calculado,
           valor_final: valor_final_calculado,
           desconto: desconto || 0,
           prazo_pagamento: prazo_pagamento || null,
           imposto_percentual: imposto_percentual || 0,
           uf_destino: uf_destino || null,
+          // Novos campos de impostos (se vendaProcessada existir)
+          total_produtos_bruto: vendaProcessada?.totais.total_produtos_bruto || valor_total_calculado,
+          desconto_total: vendaProcessada?.totais.desconto_total || (desconto || 0),
+          total_produtos_liquido: vendaProcessada?.totais.total_produtos_liquido || valor_final_calculado,
+          total_ipi: vendaProcessada?.totais.total_ipi || 0,
+          total_icms: vendaProcessada?.totais.total_icms || 0,
+          total_st: vendaProcessada?.totais.total_st || 0,
           status,
           observacoes: observacoes || null,
           updated_at: new Date().toISOString(),
@@ -439,8 +455,33 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         // Deletar itens antigos
         await supabase.from('vendas_itens').delete().eq('venda_id', id);
 
-        // Inserir novos itens
-        const itensInsert = (itens as VendaItemInput[]).map((item) => ({
+        // Inserir novos itens com impostos calculados
+        const itensInsert = vendaProcessada ? vendaProcessada.itens.map((item) => ({
+          venda_id: parseInt(id as string, 10),
+          produto_id: item.produto_id,
+          quantidade: item.quantidade,
+          preco_unitario: item.preco_unitario,
+          // Campos novos de impostos
+          subtotal_bruto: item.subtotal_bruto,
+          desconto_proporcional: item.desconto_proporcional,
+          subtotal_liquido: item.subtotal_liquido,
+          ipi_aliquota: item.ipi_aliquota,
+          ipi_valor: item.ipi_valor,
+          icms_aliquota: item.icms_aliquota,
+          icms_valor: item.icms_valor,
+          st_aliquota: item.st_aliquota,
+          st_valor: item.st_valor,
+          total_item: item.total_item,
+          // Campo antigo (manter compatibilidade)
+          subtotal: item.total_item,
+          // Campos de impostos ICMS-ST (deprecados, manter para compatibilidade)
+          base_calculo_st: null,
+          icms_proprio: null,
+          icms_st_total: null,
+          icms_st_recolher: null,
+          mva_aplicado: null,
+          aliquota_icms: item.icms_aliquota,
+        })) : (itens as VendaItemInput[]).map((item) => ({
           venda_id: parseInt(id as string, 10),
           produto_id: item.produto_id,
           quantidade: item.quantidade,

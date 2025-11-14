@@ -422,8 +422,18 @@ export default function VendasPage() {
       ),
     },
     {
+      accessorKey: "total_produtos_liquido",
+      header: ({ column }) => <SortableHeader column={column}>Total Líquido</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-900">
+          {formatCurrency(row.original.total_produtos_liquido || (row.original.valor_final - (row.original.total_ipi || 0) - (row.original.total_st || 0)))}
+        </div>
+      ),
+      enableHiding: true,
+    },
+    {
       accessorKey: "valor_final",
-      header: ({ column }) => <SortableHeader column={column}>Total com Imposto</SortableHeader>,
+      header: ({ column }) => <SortableHeader column={column}>Total Final</SortableHeader>,
       cell: ({ row }) => (
         <div className="text-sm font-medium text-green-600">
           {formatCurrency(row.original.valor_final)}
@@ -860,6 +870,7 @@ export default function VendasPage() {
           enableColumnVisibility={true}
           mobileVisibleColumns={['numero_venda', 'valor_final', 'status', 'acoes']}
           initialColumnVisibility={{
+            total_produtos_liquido: false,
             total_ipi: false,
             total_icms: false,
             total_st: false,
