@@ -106,7 +106,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'POST') {
-      const { numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, valor_total, valor_final, desconto, prazo_pagamento, imposto_percentual, status, observacoes, uf_destino, itens } = req.body;
+      const { numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, valor_total, valor_final, desconto, data_pagamento, imposto_percentual, status, observacoes, uf_destino, itens, parcelas } = req.body;
 
       if (!numero_venda) {
         return res.status(400).json({ success: false, message: '❌ Número da venda é obrigatório' });
@@ -170,7 +170,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           valor_total: vendaProcessada.totais.total_produtos_bruto, // Total sem desconto
           valor_final: vendaProcessada.totais.total_geral, // Total final (com IPI e ST, sem ICMS)
           desconto: descontoValor,
-          prazo_pagamento: prazo_pagamento || null,
+          prazo_pagamento: data_pagamento || null, // Mantém o campo no banco por compatibilidade
           imposto_percentual: imposto_percentual || 0,
           uf_destino: uf_destino || null,
           // Novos campos de impostos
@@ -257,6 +257,100 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       const algumErroEstoque = stockResult.errors.length > 0;
 
+      // ✅ CRIAR PARCELAS E TRANSAÇÕES FINANCEIRAS (se parcelas forem especificadas)
+      if (parcelas && Array.isArray(parcelas) && parcelas.length > 0) {
+        // Validar que o total das parcelas corresponde ao valor final da venda
+        const totalParcelas = parcelas.reduce((sum: number, p: any) => sum + Number(p.valor_parcela), 0);
+        const valorFinalVenda = Number(venda.valor_final);
+        
+        if (Math.abs(totalParcelas - valorFinalVenda) > 0.10) {
+          console.warn(`⚠️ Total das parcelas (${totalParcelas}) difere do valor final da venda (${valorFinalVenda})`);
+        }
+
+        // Buscar categoria "Vendas" para vincular transações
+        const { data: categoriaVendas } = await supabase
+          .from('categorias_financeiras')
+          .select('id')
+          .eq('nome', 'Vendas')
+          .eq('tipo', 'receita')
+          .eq('ativo', true)
+          .single();
+
+        const categoria_id = categoriaVendas?.id || null;
+
+        // Inserir parcelas
+        const parcelasToInsert = parcelas.map((p: any) => ({
+          venda_id: venda.id,
+          numero_parcela: p.numero_parcela,
+          valor_parcela: p.valor_parcela,
+          data_vencimento: p.data_vencimento,
+          status: 'pendente',
+          observacoes: p.observacoes || null,
+        }));
+
+        const { data: parcelasCreated, error: parcelasError } = await supabase
+          .from('venda_parcelas')
+          .insert(parcelasToInsert)
+          .select();
+
+        if (parcelasError) {
+          console.error('⚠️ Erro ao criar parcelas:', parcelasError);
+          // Não faz rollback da venda, apenas loga o erro
+        } else if (parcelasCreated) {
+          // Criar transações financeiras para cada parcela
+          const transacoesToInsert = parcelasCreated.map((parcela: any) => ({
+            tipo: 'receita',
+            valor: parcela.valor_parcela,
+            descricao: `Receita Venda ${numero_venda} - Parcela ${parcela.numero_parcela}/${parcelas.length}`,
+            categoria: 'Vendas',
+            categoria_id: categoria_id,
+            venda_id: venda.id,
+            venda_parcela_id: parcela.id,
+            data_transacao: parcela.data_vencimento,
+            observacoes: parcela.observacoes || null,
+          }));
+
+          const { error: transacoesError } = await supabase
+            .from('transacoes')
+            .insert(transacoesToInsert);
+
+          if (transacoesError) {
+            console.error('⚠️ Erro ao criar transações financeiras:', transacoesError);
+          } else {
+            console.log(`✅ ${parcelas.length} transações financeiras criadas para a venda ${numero_venda}`);
+          }
+        }
+      } else {
+        // Buscar categoria "Vendas" para vincular transação
+        const { data: categoriaVendas } = await supabase
+          .from('categorias_financeiras')
+          .select('id')
+          .eq('nome', 'Vendas')
+          .eq('tipo', 'receita')
+          .eq('ativo', true)
+          .single();
+
+        const categoria_id = categoriaVendas?.id || null;
+
+        // Se não houver parcelas especificadas, criar uma transação única (comportamento antigo)
+        const { error: transacaoError } = await supabase
+          .from('transacoes')
+          .insert({
+            tipo: 'receita',
+            valor: venda.valor_final,
+            descricao: `Receita Venda ${numero_venda}`,
+            categoria: 'Vendas',
+            categoria_id: categoria_id,
+            venda_id: venda.id,
+            data_transacao: data_pagamento || data_venda || new Date().toISOString(),
+            observacoes: observacoes || null,
+          });
+
+        if (transacaoError) {
+          console.error('⚠️ Erro ao criar transação financeira:', transacaoError);
+        }
+      }
+
       return res.status(201).json({
         success: true,
         message: algumErroEstoque
@@ -268,7 +362,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'PUT') {
-      const { id, numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, desconto, prazo_pagamento, imposto_percentual, uf_destino, status, observacoes, itens } = req.body;
+      const { id, numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, desconto, data_pagamento, imposto_percentual, uf_destino, status, observacoes, itens } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'ID da venda é obrigatório' });
@@ -340,7 +434,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           valor_total: valor_total_calculado,
           valor_final: valor_final_calculado,
           desconto: desconto || 0,
-          prazo_pagamento: prazo_pagamento || null,
+          prazo_pagamento: data_pagamento || null, // Mantém o campo no banco por compatibilidade
           imposto_percentual: imposto_percentual || 0,
           uf_destino: uf_destino || null,
           // Novos campos de impostos (se vendaProcessada existir)
@@ -559,7 +653,31 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         console.log('✅ Estoque revertido com sucesso:', stockResult.adjustments);
       }
 
-      // 3️⃣ Deletar itens da venda
+      // 3️⃣ Deletar transações financeiras relacionadas à venda
+      const { error: deleteTransacoesError } = await supabase
+        .from('transacoes')
+        .delete()
+        .eq('venda_id', id);
+
+      if (deleteTransacoesError) {
+        console.error('⚠️ Erro ao deletar transações financeiras:', deleteTransacoesError);
+        // Não impede a exclusão da venda, apenas loga o erro
+      } else {
+        console.log('✅ Transações financeiras da venda deletadas com sucesso');
+      }
+
+      // 4️⃣ Deletar parcelas da venda (se existirem)
+      const { error: deleteParcelasError } = await supabase
+        .from('venda_parcelas')
+        .delete()
+        .eq('venda_id', id);
+
+      if (deleteParcelasError) {
+        console.error('⚠️ Erro ao deletar parcelas:', deleteParcelasError);
+        // Não impede a exclusão da venda, apenas loga o erro
+      }
+
+      // 5️⃣ Deletar itens da venda
       const { error: deleteItensError } = await supabase
         .from('vendas_itens')
         .delete()
@@ -573,7 +691,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         });
       }
 
-      // 4️⃣ Deletar a venda
+      // 6️⃣ Deletar a venda
       const { error: deleteVendaError } = await supabase
         .from('vendas')
         .delete()
@@ -589,7 +707,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       return res.status(200).json({
         success: true,
-        message: 'Venda excluída com sucesso e estoque foi revertido',
+        message: 'Venda excluída com sucesso (estoque revertido e transações financeiras removidas)',
       });
     }
 

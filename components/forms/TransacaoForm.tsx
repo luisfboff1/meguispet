@@ -64,15 +64,32 @@ export function TransacaoForm({
   const loadVendas = async () => {
     try {
       setLoadingVendas(true)
-      // Load recent sales (last 30 days)
-      const response = await vendasService.getAll(1, 50)
+      // Load recent sales (last 90 days, all statuses)
+      const response = await vendasService.getAll(1, 100)
       if (response.success && response.data) {
-        // Filter sales from last 30 days
-        const thirtyDaysAgo = new Date()
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        // Filter sales from last 90 days (any status)
+        const ninetyDaysAgo = new Date()
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
         const recentSales = response.data.filter(v => 
-          new Date(v.data_venda) >= thirtyDaysAgo && v.status === 'pago'
+          new Date(v.data_venda) >= ninetyDaysAgo
         )
+        
+        // If editing and has a venda_id, ensure that sale is included
+        if (initialData?.venda_id) {
+          const hasVenda = recentSales.some(v => v.id === initialData.venda_id)
+          if (!hasVenda) {
+            // Load the specific sale
+            try {
+              const vendaResponse = await vendasService.getById(initialData.venda_id)
+              if (vendaResponse.success && vendaResponse.data) {
+                recentSales.unshift(vendaResponse.data)
+              }
+            } catch (error) {
+              console.error('Erro ao carregar venda vinculada:', error)
+            }
+          }
+        }
+        
         setVendas(recentSales)
       }
     } catch (error) {
@@ -216,7 +233,7 @@ export function TransacaoForm({
                 </select>
               </div>
               <p className="text-xs text-gray-500">
-                {loadingVendas ? 'Carregando vendas...' : 'Selecione uma venda recente (últimos 30 dias) para vincular automaticamente valor e data'}
+                {loadingVendas ? 'Carregando vendas...' : 'Selecione uma venda recente (últimos 90 dias) para vincular automaticamente valor e data'}
               </p>
             </div>
           )}

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Plus, Trash2, ShoppingCart, Settings } from 'lucide-react'
+import { Loader2, Plus, Trash2, ShoppingCart, Settings, Calendar } from 'lucide-react'
 import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService } from '@/services/api'
 import { impostosService } from '@/services/impostosService'
 import { calcularItensVenda, calcularTotaisVenda, formatCurrency } from '@/services/vendaCalculations'
@@ -16,6 +16,7 @@ import type {
   Produto,
   VendaForm as VendaFormValues,
   VendaItemInput,
+  VendaParcelaInput,
   OrigemVenda,
   FormaPagamentoRegistro,
   Estoque,
@@ -52,7 +53,7 @@ interface VendaFormState {
   estoque_id: string
   observacoes: string
   desconto: number
-  prazo_pagamento?: string | number
+  data_pagamento?: string // Data de pagamento
 }
 
 const getFormaPagamentoIdFromVenda = (dados?: Venda): string => {
@@ -127,6 +128,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     totalItem: true,
     acoes: true
   })
+  
+  // Installments state
+  const [usarParcelas, setUsarParcelas] = useState(false)
+  const [numeroParcelas, setNumeroParcelas] = useState(1)
+  const [primeiraParcela, setPrimeiraParcela] = useState<string>('')
+  const [parcelas, setParcelas] = useState<VendaParcelaInput[]>([])
 
   useEffect(() => {
     if (!venda) {
@@ -141,7 +148,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         estoque_id: '',
         observacoes: '',
         desconto: 0,
-        prazo_pagamento: ''
+        data_pagamento: ''
       })
       return
     }
@@ -156,7 +163,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0,
-      prazo_pagamento: venda.prazo_pagamento || ''
+      data_pagamento: venda.prazo_pagamento ? String(venda.prazo_pagamento) : ''
     })
 
     if (venda.itens?.length) {
@@ -320,6 +327,57 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     setItens(newItens)
   }
 
+  // Function to generate installments automatically
+  const gerarParcelas = () => {
+    if (!totais || !numeroParcelas || numeroParcelas < 1) return
+
+    const valorPorParcela = totais.total_geral / numeroParcelas
+    const novasParcelas: VendaParcelaInput[] = []
+    
+    // Get first installment date or use today + 30 days
+    const dataBase = primeiraParcela 
+      ? new Date(primeiraParcela + 'T00:00:00')
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
+    for (let i = 0; i < numeroParcelas; i++) {
+      const dataVencimento = new Date(dataBase)
+      dataVencimento.setMonth(dataVencimento.getMonth() + i)
+      
+      novasParcelas.push({
+        numero_parcela: i + 1,
+        valor_parcela: Number(valorPorParcela.toFixed(2)),
+        data_vencimento: dataVencimento.toISOString().split('T')[0]
+      })
+    }
+
+    // Adjust last installment to account for rounding differences
+    const totalParcelas = novasParcelas.reduce((sum, p) => sum + p.valor_parcela, 0)
+    const diferenca = totais.total_geral - totalParcelas
+    if (Math.abs(diferenca) > 0.01) {
+      novasParcelas[novasParcelas.length - 1].valor_parcela += diferenca
+      novasParcelas[novasParcelas.length - 1].valor_parcela = Number(novasParcelas[novasParcelas.length - 1].valor_parcela.toFixed(2))
+    }
+
+    setParcelas(novasParcelas)
+  }
+
+  // Update installment value
+  const atualizarParcela = (index: number, field: keyof VendaParcelaInput, value: any) => {
+    const novasParcelas = [...parcelas]
+    novasParcelas[index] = {
+      ...novasParcelas[index],
+      [field]: value
+    }
+    setParcelas(novasParcelas)
+  }
+
+  // Effect to regenerate installments when number changes or when usarParcelas is enabled
+  useEffect(() => {
+    if (usarParcelas && numeroParcelas > 0 && totais) {
+      gerarParcelas()
+    }
+  }, [usarParcelas, numeroParcelas, primeiraParcela, totais?.total_geral])
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -344,6 +402,16 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       setAlert({
         title: '❌ Erro de Validação',
         message: 'Selecione a forma de pagamento.',
+        type: 'error',
+      })
+      return
+    }
+
+    // Validate payment date when not using installments
+    if (!usarParcelas && !formData.data_pagamento) {
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Selecione a data de pagamento ou ative o parcelamento.',
         type: 'error',
       })
       return
@@ -376,7 +444,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       forma_pagamento_id: Number(formData.forma_pagamento_id),
       estoque_id: Number(formData.estoque_id),
       forma_pagamento: formaSelecionada.nome,
-      prazo_pagamento: formData.prazo_pagamento,
+      data_pagamento: formData.data_pagamento,
+      parcelas: usarParcelas ? parcelas : undefined,
       itens: itensCalculados.map(itemCalc => ({
         produto_id: itemCalc.produto_id,
         quantidade: itemCalc.quantidade,
@@ -796,15 +865,69 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                 </p>
               </div>
 
-              <div>
-                <Label htmlFor="prazo_pagamento">Prazo de Pagamento</Label>
-                <Input
-                  id="prazo_pagamento"
-                  type="text"
-                  value={String(formData.prazo_pagamento || '')}
-                  onChange={(e) => setFormData(prev => ({ ...prev, prazo_pagamento: e.target.value }))}
-                  placeholder="Ex: 30 dias ou À vista"
-                />
+              {/* Payment Date - Required when not using installments */}
+              {!usarParcelas && (
+                <div>
+                  <Label htmlFor="data_pagamento">
+                    Data de Pagamento <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="data_pagamento"
+                    type="date"
+                    value={formData.data_pagamento || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data_pagamento: e.target.value }))}
+                    className="w-full"
+                    required={!usarParcelas}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Data em que o pagamento será recebido
+                  </p>
+                </div>
+              )}
+
+              {/* Installments Configuration */}
+              <div className="pt-4 border-t">
+                <div className="flex items-center space-x-2 mb-3">
+                  <input
+                    type="checkbox"
+                    id="usar-parcelas"
+                    checked={usarParcelas}
+                    onChange={(e) => setUsarParcelas(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="usar-parcelas" className="cursor-pointer">
+                    Parcelar pagamento
+                  </Label>
+                </div>
+
+                {usarParcelas && (
+                  <div className="space-y-3 pl-6">
+                    <div>
+                      <Label htmlFor="numero-parcelas">Número de Parcelas</Label>
+                      <Input
+                        id="numero-parcelas"
+                        type="number"
+                        min="1"
+                        max="60"
+                        value={numeroParcelas}
+                        onChange={(e) => setNumeroParcelas(Number(e.target.value))}
+                        placeholder="Ex: 3"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="primeira-parcela">Data da Primeira Parcela</Label>
+                      <Input
+                        id="primeira-parcela"
+                        type="date"
+                        value={primeiraParcela}
+                        onChange={(e) => setPrimeiraParcela(e.target.value)}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Demais parcelas serão mensais após esta data
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -867,6 +990,78 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               )}
             </div>
           </div>
+
+          {/* Installments Table - Show generated installments */}
+          {usarParcelas && parcelas.length > 0 && (
+            <div className="space-y-2">
+              <Label className="mb-2 block">Parcelas Geradas</Label>
+              <div className="border rounded-md overflow-hidden">
+                <div className="max-h-[300px] overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b sticky top-0">
+                      <tr>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-700">Parcela</th>
+                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-700">Valor</th>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-700">Vencimento</th>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-700">Observações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {parcelas.map((parcela, index) => (
+                        <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                          <td className="py-2 px-3 text-sm font-medium">
+                            {parcela.numero_parcela}/{parcelas.length}
+                          </td>
+                          <td className="py-2 px-3">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={parcela.valor_parcela}
+                              onChange={(e) => atualizarParcela(index, 'valor_parcela', Number(e.target.value))}
+                              className="w-full text-xs p-1 text-right"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <Input
+                              type="date"
+                              value={parcela.data_vencimento}
+                              onChange={(e) => atualizarParcela(index, 'data_vencimento', e.target.value)}
+                              className="w-full text-xs p-1"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <Input
+                              type="text"
+                              value={parcela.observacoes || ''}
+                              onChange={(e) => atualizarParcela(index, 'observacoes', e.target.value)}
+                              placeholder="Opcional"
+                              className="w-full text-xs p-1"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-gray-50 border-t">
+                      <tr>
+                        <td className="py-2 px-3 text-xs font-bold">Total:</td>
+                        <td className="py-2 px-3 text-xs font-bold text-right">
+                          {formatCurrency(parcelas.reduce((sum, p) => sum + p.valor_parcela, 0))}
+                        </td>
+                        <td colSpan={2} className="py-2 px-3">
+                          {totais && Math.abs(parcelas.reduce((sum, p) => sum + p.valor_parcela, 0) - totais.total_geral) > 0.01 && (
+                            <span className="text-xs text-red-600">
+                              ⚠️ Total das parcelas difere do valor da venda
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="observacoes">Observações</Label>
