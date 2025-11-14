@@ -39,3 +39,21 @@ You `MUST` always use this tool when:
 + Before making architectural decisions to understand existing patterns
 + When debugging issues to check for previous solutions
 + Working with unfamiliar parts of the codebase
+
+---
+
+## 📊 Architecture Documentation
+
+**Complete system architecture with Mermaid diagrams**: See [ARQUITETURA.md](../ARQUITETURA.md)
+
+The ARQUITETURA.md file contains comprehensive documentation including:
+- Overall system architecture diagrams
+- Frontend/Backend/Database architecture
+- Authentication and authorization flows
+- API endpoints and communication patterns
+- State management with Zustand
+- Component hierarchy
+- Data flow diagrams
+- Technology stack overview
+
+**Always refer to ARQUITETURA.md when you need to understand the system architecture.**

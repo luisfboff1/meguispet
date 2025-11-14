@@ -4,6 +4,12 @@ Sistema de gestão profissional com **Next.js + TypeScript + Shadcn/ui** hospeda
 
 Agora com **animações suaves em todas as seções**, **modais ainda mais acessíveis** e **otimizações de performance** para carregamento ultra-rápido.
 
+## 📚 Documentação
+
+- **[ARQUITETURA.md](./ARQUITETURA.md)** - 📊 Documentação completa da arquitetura do sistema com diagramas Mermaid detalhados
+- **[CLAUDE.md](./CLAUDE.md)** - Guia para desenvolvimento com Claude Code
+- **[DOPPLER_SETUP.md](./DOPPLER_SETUP.md)** - Configuração de variáveis de ambiente
+
 ## ✨ Características
 
 - ✅ **Edge Middleware** - Autenticação otimizada no Edge runtime com latência mínima
