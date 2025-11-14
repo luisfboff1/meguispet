@@ -49,6 +49,24 @@ export default function CustomizableFinanceiroChart({ data, loading = false }: C
   const [chartType, setChartType] = useState<ChartType>('area')
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('month')
 
+  // Utility functions defined before use
+  const formatMes = (mes: string) => {
+    const [ano, mesNum] = mes.split('-')
+    const meses = [
+      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+    ]
+    return `${meses[parseInt(mesNum) - 1]} ${ano.slice(-2)}`
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+    }).format(value)
+  }
+
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {}
     selectedMetrics.forEach((metric) => {
@@ -103,23 +121,6 @@ export default function CustomizableFinanceiroChart({ data, loading = false }: C
       }
       return next
     })
-  }
-
-  const formatMes = (mes: string) => {
-    const [ano, mesNum] = mes.split('-')
-    const meses = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
-    ]
-    return `${meses[parseInt(mesNum) - 1]} ${ano.slice(-2)}`
-  }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-    }).format(value)
   }
 
   if (loading) {
