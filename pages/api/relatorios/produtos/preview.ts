@@ -1,17 +1,17 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { createClient } from '@supabase/supabase-js'
+import type { NextApiResponse } from 'next'
+import { getSupabase } from '@/lib/supabase'
+import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware'
 import type { ReportConfiguration, ProdutosReportData } from '@/types/reports'
-import type { Produto, ItemVenda, Venda } from '@/types'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-export default async function handler(
-  req: NextApiRequest,
+const handler = async (
+  req: AuthenticatedRequest,
   res: NextApiResponse
-) {
+) => {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({
+      success: false,
+      message: 'Método não permitido'
+    })
   }
 
   try {
@@ -19,10 +19,20 @@ export default async function handler(
     const { filtros } = config
 
     if (!filtros?.periodo?.startDate || !filtros?.periodo?.endDate) {
-      return res.status(400).json({ error: 'Período é obrigatório' })
+      return res.status(400).json({
+        success: false,
+        message: 'Período é obrigatório'
+      })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const { startDate, endDate } = filtros.periodo
+
+    // Adicionar 1 dia à data final para incluir todo o dia limite
+    const endDatePlusOne = new Date(endDate)
+    endDatePlusOne.setDate(endDatePlusOne.getDate() + 1)
+    const endDateAdjusted = endDatePlusOne.toISOString().split('T')[0]
+
+    const supabase = getSupabase()
 
     // 1️⃣ Buscar todos os produtos
     let produtosQuery = supabase
@@ -43,8 +53,11 @@ export default async function handler(
     const { data: produtos, error: produtosError } = await produtosQuery
 
     if (produtosError) {
-      console.error('Erro ao buscar produtos:', produtosError)
-      return res.status(500).json({ error: 'Erro ao buscar produtos' })
+      console.error('[produtos-preview] Erro ao buscar produtos:', produtosError)
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar produtos: ' + produtosError.message
+      })
     }
 
     // 2️⃣ Buscar vendas do período para calcular produtos vendidos
@@ -55,7 +68,7 @@ export default async function handler(
         data_venda,
         valor_final,
         status,
-        itens:itens_venda(
+        itens:vendas_itens(
           id,
           produto_id,
           quantidade,
@@ -70,13 +83,16 @@ export default async function handler(
           )
         )
       `)
-      .gte('data_venda', filtros.periodo.startDate)
-      .lte('data_venda', filtros.periodo.endDate)
+      .gte('data_venda', startDate)
+      .lt('data_venda', endDateAdjusted) // Incluir até o final do dia limite
       .neq('status', 'cancelado') // Não contar vendas canceladas
 
     if (vendasError) {
-      console.error('Erro ao buscar vendas:', vendasError)
-      return res.status(500).json({ error: 'Erro ao buscar vendas' })
+      console.error('[produtos-preview] Erro ao buscar vendas:', vendasError)
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar vendas: ' + vendasError.message
+      })
     }
 
     // 3️⃣ Calcular métricas
@@ -99,10 +115,12 @@ export default async function handler(
       categoria: string
     }>()
 
+    let itemsComProblema = 0
+
     vendas?.forEach((venda) => {
       venda.itens?.forEach((item) => {
         if (!item.produto) return
-        
+
         // Handle produto being an array (Supabase quirk)
         const produto = Array.isArray(item.produto) ? item.produto[0] : item.produto
         if (!produto) return
@@ -110,7 +128,41 @@ export default async function handler(
         const produtoId = item.produto_id
         const existing = vendasPorProduto.get(produtoId)
 
-        const faturamento = item.subtotal_liquido || item.preco_unitario * item.quantidade
+        // Calcular faturamento com fallbacks apropriados
+        let faturamento = 0
+        let caminho = ''
+
+        if (item.subtotal_liquido !== null && item.subtotal_liquido !== undefined) {
+          faturamento = item.subtotal_liquido
+          caminho = 'subtotal_liquido'
+        } else if (item.subtotal_bruto !== null && item.subtotal_bruto !== undefined) {
+          faturamento = item.subtotal_bruto
+          caminho = 'subtotal_bruto'
+        } else if (item.preco_unitario !== null && item.preco_unitario !== undefined) {
+          faturamento = item.preco_unitario * item.quantidade
+          caminho = 'preco_unitario'
+        } else {
+          caminho = 'SEM_PRECO'
+        }
+
+        // LOG DETALHADO para produtos com problema
+        if (faturamento === 0 && item.quantidade > 0) {
+          itemsComProblema++
+          console.log('🔍 [produtos-preview] Item com faturamento ZERO:', {
+            venda_id: venda.id,
+            produto_id: produtoId,
+            produto_nome: produto.nome,
+            quantidade: item.quantidade,
+            caminho_usado: caminho,
+            item_dados: {
+              subtotal_liquido: item.subtotal_liquido,
+              subtotal_bruto: item.subtotal_bruto,
+              preco_unitario: item.preco_unitario,
+            },
+            faturamento_calculado: faturamento
+          })
+        }
+
         const custo = (produto.preco_custo || 0) * item.quantidade
         const lucro = faturamento - custo
         const margem = faturamento > 0 ? (lucro / faturamento) * 100 : 0
@@ -135,6 +187,10 @@ export default async function handler(
         }
       })
     })
+
+    if (itemsComProblema > 0) {
+      console.warn(`⚠️ [produtos-preview] Total de itens com faturamento zero: ${itemsComProblema}`)
+    }
 
     // 5️⃣ Ordenar produtos
     const produtosVendidosArray = Array.from(vendasPorProduto.values())
@@ -228,10 +284,12 @@ export default async function handler(
     })
 
   } catch (error) {
-    console.error('Erro ao gerar preview de produtos:', error)
+    console.error('[produtos-preview] Erro:', error)
     return res.status(500).json({
-      error: 'Erro ao gerar preview de produtos',
-      message: error instanceof Error ? error.message : 'Erro desconhecido'
+      success: false,
+      message: error instanceof Error ? error.message : 'Erro ao gerar preview de produtos'
     })
   }
 }
+
+export default withSupabaseAuth(handler)

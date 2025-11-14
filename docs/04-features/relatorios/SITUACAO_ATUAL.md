@@ -1,172 +1,190 @@
 # Status do Sistema de Relatórios - MeguisPet
 
-## 📊 Situação Atual
+## 📊 Situação Atual - Atualizado em 2025-01-14
 
-### Problema Identificado
-O endpoint de relatório de vendas (`POST /api/relatorios/vendas/preview`) estava falhando com erro 500:
-```
-column vendas.origem_venda does not exist
-```
+### ✅ Fase 2: Relatório de Vendas - COMPLETA
 
-### Causa Raiz
-Durante a implementação da **Fase 2** (Relatório de Vendas) do plano geral, as colunas necessárias no banco de dados não foram criadas, embora o código TypeScript e a API já as utilizassem.
+#### Problemas Corrigidos Hoje
 
-### Colunas Faltantes
-- `origem_venda` - Origem da venda (loja_fisica, mercado_livre, etc.)
-- `uf_destino` - Estado de destino para análise geográfica
+**1. Vendas no Dia Limite não Apareciam**
+- ✅ Corrigido filtro de data em `pages/api/relatorios/vendas/preview.ts`
+- ✅ Agora inclui vendas até o final do dia limite (23:59:59)
 
-## ✅ Solução Implementada
+**2. Campos de Impostos e Totais Vazios**
+- ✅ Implementado fallback para vendas antigas
+- ✅ Calcula valores dos itens quando campos agregados não existem
+- ✅ Campos exibidos: `subtotal`, `valorLiquido`, `ipi`, `icms`, `st`, `impostos`, `total`
 
-### Migration Criada
-- **Arquivo**: `database/migrations/009_add_vendas_origem_uf_columns.sql`
-- **Descrição**: Adiciona as colunas `origem_venda` e `uf_destino` à tabela `vendas`
-- **Status**: ✅ Pronta para aplicar
-
-### Documentação
-- **Arquivo**: `database/migrations/009_APPLY_INSTRUCTIONS.md`
-- **Conteúdo**: Instruções detalhadas para aplicar a migration
-
-### Validações Realizadas
-- ✅ TypeScript compila sem erros
-- ✅ ESLint passa (apenas warnings não relacionados)
-- ✅ Sintaxe SQL validada
-- ✅ Segue padrão das migrations existentes
-
-## 🎯 Próximos Passos
-
-### 1. Aplicar a Migration
-Execute um dos seguintes comandos:
-
-#### Opção A: Via Supabase CLI (Recomendado)
-```bash
-cd /path/to/meguispet
-supabase db push
-```
-
-#### Opção B: Manual via Dashboard
-1. Abra o Supabase Dashboard
-2. Vá para SQL Editor
-3. Cole o conteúdo de `009_add_vendas_origem_uf_columns.sql`
-4. Execute
-
-### 2. Verificar Funcionamento
-Após aplicar a migration:
-1. Acesse a página de relatórios no sistema
-2. Selecione "Relatório de Vendas"
-3. Configure um período de datas
-4. Clique em "Preview"
-5. Verifique se o relatório é gerado sem erros
-
-### 3. Verificação SQL
-Execute esta query para confirmar:
-```sql
-SELECT column_name, data_type
-FROM information_schema.columns
-WHERE table_name = 'vendas'
-AND column_name IN ('origem_venda', 'uf_destino');
-```
-
-Deve retornar:
-```
-origem_venda | character varying
-uf_destino   | character varying
-```
-
-## 📋 Status das Fases do Plano Geral
-
-### Fase 1: Estrutura Base ✅ (Completo)
-- [x] Types criados
-- [x] Schema de banco implementado
-- [x] Componentes base criados
-- [x] Serviço base criado
-
-### Fase 2: Relatório de Vendas 🚧 (Quase Completo)
-#### Backend
+#### Backend - Completo ✅
 - [x] API `/api/relatorios/vendas/generate.ts`
-- [x] API `/api/relatorios/vendas/preview.ts` (código pronto)
+- [x] API `/api/relatorios/vendas/preview.ts`
 - [x] API `/api/relatorios/vendas/export.ts`
-- [x] Implementar filtros de período
-- [x] Implementar filtros de vendedor, produto, cliente
+- [x] Filtros de período (corrigido para incluir dia limite)
+- [x] Filtros de vendedor, produto, cliente
 - [x] Calcular métricas (total vendas, faturamento, ticket médio)
-- [x] Calcular impostos (IPI, ST)
+- [x] Calcular impostos (IPI, ST, ICMS)
 - [x] Calcular margem de lucro
-- [ ] **Aplicar migration das colunas faltantes** ⚠️ **PENDENTE**
+- [x] Migration das colunas `origem_venda` e `uf_destino` aplicada
 
-#### Frontend
+#### Frontend - Completo ✅
 - [x] `VendasReportConfig` component
 - [x] Wizard de configuração
 - [x] Filtros específicos de vendas
 - [x] `VendasReportViewer` component
-- [x] Gráficos (temporal, vendedor, produto)
-- [x] Implementar exportação
+- [x] Gráficos:
+  - [x] Vendas ao longo do tempo
+  - [x] Vendas por vendedor
+  - [x] Top produtos
+- [x] Exportação (PDF, Excel, CSV)
 
-### Fase 3: Relatório de Produtos ❓ (Status Desconhecido)
-- Status a verificar após resolver a Fase 2
+---
 
-### Fases 4-7: Não Iniciadas
-- Fase 4: Relatório de Clientes
-- Fase 5: Relatório Financeiro
-- Fase 6: Salvar e Templates
-- Fase 7: Polimento e Otimização
+## 🎯 Fase 3: Relatório de Produtos - EM ANDAMENTO 🚧
 
-## 🔍 Análise do Problema
+### Status Atual
+- **Backend**: Parcialmente implementado
+  - ✅ API `/api/relatorios/produtos/preview.ts` existe
+  - ✅ Busca produtos e vendas do período
+  - ⚠️ Precisa revisar e completar cálculos
+  - ❓ `/api/relatorios/produtos/generate.ts` - verificar
+  - ❓ `/api/relatorios/produtos/export.ts` - verificar
 
-### Por que aconteceu?
-1. O código TypeScript foi desenvolvido assumindo que as colunas existiriam
-2. Os tipos foram definidos corretamente em `types/index.ts`
-3. O código da API usa essas colunas para filtros e visualizações
-4. Mas a migration para criar as colunas nunca foi executada
+- **Frontend**: Status desconhecido
+  - ❓ `ProdutosReportConfig` component
+  - ❓ Filtros de categoria e estoque
+  - ❓ `ProdutosReportViewer` component
+  - ❓ Gráficos
 
-### Impacto
-- **Severidade**: Alta (API completamente quebrada)
-- **Alcance**: Apenas relatórios de vendas
-- **Outros relatórios**: Possivelmente não afetados
+### Próximos Passos (Fase 3)
 
-### Lições Aprendidas
-1. Validar que migrations foram aplicadas antes de considerar uma fase completa
-2. Incluir verificação de schema no processo de deploy
-3. Testar APIs em ambiente que reflita o banco de produção
+#### Backend
+1. [ ] Revisar `/api/relatorios/produtos/preview.ts`
+   - [ ] Corrigir filtro de data (aplicar mesma correção da venda)
+   - [ ] Calcular produtos mais vendidos
+   - [ ] Calcular produtos com baixo estoque
+   - [ ] Calcular rotatividade
+   - [ ] Calcular margem por produto
+2. [ ] Verificar/Criar `/api/relatorios/produtos/generate.ts`
+3. [ ] Verificar/Criar `/api/relatorios/produtos/export.ts`
+   - [ ] Export PDF
+   - [ ] Export Excel
+   - [ ] Export CSV
 
-## 📝 Checklist de Resolução
+#### Frontend
+1. [ ] Verificar se existe `ProdutosReportConfig`
+2. [ ] Criar/Completar filtros:
+   - [ ] Categoria
+   - [ ] Status do estoque (baixo, zerado)
+   - [ ] Status do produto (ativo, inativo)
+3. [ ] Criar/Completar `ProdutosReportViewer`
+4. [ ] Implementar gráficos:
+   - [ ] Top produtos vendidos
+   - [ ] Distribuição por categoria
+   - [ ] Análise ABC
 
-- [x] Identificar o problema
-- [x] Criar migration com as colunas faltantes
-- [x] Documentar a migration
-- [x] Validar sintaxe SQL
-- [x] Validar código TypeScript
-- [x] Commitar mudanças
-- [ ] **Aplicar migration no banco** ⚠️ **AÇÃO NECESSÁRIA**
-- [ ] Testar endpoint de preview
-- [ ] Testar geração de relatório completo
-- [ ] Marcar Fase 2 como completa
+---
 
-## 🔗 Arquivos Relevantes
+## 📋 Checklist Geral do Plano
 
-### Migrations
-- `database/migrations/009_add_vendas_origem_uf_columns.sql` - Migration principal
-- `database/migrations/009_APPLY_INSTRUCTIONS.md` - Instruções de aplicação
+### ✅ Fase 1: Estrutura Base (Completo)
+- [x] Types criados em `types/reports.ts`
+- [x] Schema de banco implementado
+- [x] Componentes base criados
+- [x] Serviço base criado
 
-### Código da API
-- `pages/api/relatorios/vendas/preview.ts` - Endpoint que estava falhando
-- `pages/api/relatorios/vendas/export.ts` - Exportação de relatórios
-- `pages/api/relatorios/vendas/generate.ts` - Geração de relatórios
+### ✅ Fase 2: Relatório de Vendas (Completo)
+- [x] API backend completa e testada
+- [x] Frontend completo e funcional
+- [x] Visualização funcional
+- [x] Exportação em todos os formatos
+- [x] Correções de bugs aplicadas
 
-### Types
-- `types/index.ts` - Interface `Venda` (linhas 102-134)
-- `types/reports.ts` - Tipos de relatórios
+### 🚧 Fase 3: Relatório de Produtos (Em Andamento)
+- [?] API backend completa
+- [ ] Frontend configuração completa
+- [ ] Visualização funcional
+- [ ] Exportação em todos os formatos
+- [ ] Testes realizados
 
-### Frontend
-- Componentes em `components/reports/` (vários)
-- Páginas em `pages/relatorios/` (a verificar)
+### ❓ Fase 4: Relatório de Clientes (Não Iniciado)
+- [ ] API backend completa
+- [ ] Frontend configuração completa
+- [ ] Visualização funcional
+- [ ] Exportação em todos os formatos
+- [ ] Testes realizados
 
-## 🎯 Resumo Executivo
+### ❓ Fase 5: Relatório Financeiro (Não Iniciado)
+- [ ] API backend completa
+- [ ] Frontend configuração completa
+- [ ] Visualização funcional com DRE
+- [ ] Exportação em todos os formatos
+- [ ] Testes realizados
 
-**O que foi feito**: Criada migration para adicionar colunas `origem_venda` e `uf_destino` à tabela `vendas`.
+### ❓ Fase 6: Salvar e Templates (Não Iniciado)
+- [ ] Salvamento de relatórios
+- [ ] Templates funcionando
+- [ ] Cache implementado
 
-**O que precisa ser feito**: Aplicar a migration no banco de dados usando `supabase db push` ou manualmente.
+### ❓ Fase 7: Polimento e Otimização (Não Iniciado)
+- [ ] Mobile otimizado
+- [ ] Performance otimizada
+- [ ] Documentação completa
 
-**Tempo estimado**: 5 minutos para aplicar + 10 minutos para testar = ~15 minutos
+---
 
-**Risco**: Baixo (migration apenas adiciona colunas, não remove ou modifica dados existentes)
+## 🔍 Problemas Conhecidos
 
-**Impacto**: Resolve completamente o erro 500 no endpoint de relatórios de vendas.
+### Resolvidos ✅
+1. ~~Coluna `origem_venda` não existe~~ - Migration aplicada
+2. ~~Coluna `uf_destino` não existe~~ - Migration aplicada
+3. ~~Vendas do dia limite não aparecem~~ - Filtro corrigido
+4. ~~Campos de impostos vazios em vendas antigas~~ - Fallback implementado
+
+### Pendentes ⚠️
+Nenhum problema conhecido no momento.
+
+---
+
+## 📝 Notas Técnicas
+
+### Correções Aplicadas
+
+**Filtro de Data (preview.ts)**
+```typescript
+// Adicionar 1 dia à data final para incluir todo o dia limite
+const endDatePlusOne = new Date(endDate)
+endDatePlusOne.setDate(endDatePlusOne.getDate() + 1)
+const endDateAdjusted = endDatePlusOne.toISOString().split('T')[0]
+
+.gte('data_venda', startDate)
+.lt('data_venda', endDateAdjusted)
+```
+
+**Fallback para Campos Vazios**
+```typescript
+// Usar novos campos se disponíveis, senão calcular dos itens
+let ipi = venda.total_ipi || 0
+if (!venda.total_ipi && venda.itens?.length) {
+  ipi = venda.itens.reduce((sum, item) => sum + (item.ipi_valor || 0), 0)
+}
+// ... mesmo padrão para st, icms, subtotal, valorLiquido
+```
+
+---
+
+## 🎯 Objetivo Imediato
+
+**Completar Fase 3: Relatório de Produtos**
+
+1. Revisar e corrigir API de preview
+2. Implementar/revisar APIs de generate e export
+3. Criar/completar componentes frontend
+4. Testar funcionalidade completa
+5. Documentar e marcar fase como completa
+
+**Tempo estimado**: 2-3 horas
+
+---
+
+**Última atualização**: 2025-01-14 - Correções no Relatório de Vendas aplicadas
+**Próxima ação**: Revisar e completar Relatório de Produtos (Fase 3)

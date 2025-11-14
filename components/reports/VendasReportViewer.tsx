@@ -38,6 +38,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
   className,
 }) => {
   const { resumo, vendasPorDia, vendasPorVendedor, vendasPorProduto, vendasDetalhadas } = data
+  const { metricas = {}, graficos = {} } = configuracao
 
   return (
     <div className={className}>
@@ -80,93 +81,105 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
 
       {/* Resumo Executivo */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total de Vendas</CardDescription>
-            <CardTitle className="text-3xl">{resumo.totalVendas}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Vendas realizadas no período
-            </p>
-          </CardContent>
-        </Card>
+        {(metricas.incluirTotalVendas !== false) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total de Vendas</CardDescription>
+              <CardTitle className="text-3xl">{resumo.totalVendas}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Vendas realizadas no período
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Faturamento Total</CardDescription>
-            <CardTitle className="text-3xl">
-              {formatCurrency(resumo.faturamentoTotal)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Valor total faturado
-            </p>
-          </CardContent>
-        </Card>
+        {(metricas.incluirFaturamento !== false) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Faturamento Total</CardDescription>
+              <CardTitle className="text-3xl">
+                {formatCurrency(resumo.faturamentoTotal)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Valor total faturado
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Ticket Médio</CardDescription>
-            <CardTitle className="text-3xl">
-              {formatCurrency(resumo.ticketMedio)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Valor médio por venda
-            </p>
-          </CardContent>
-        </Card>
+        {(metricas.incluirTicketMedio !== false) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Ticket Médio</CardDescription>
+              <CardTitle className="text-3xl">
+                {formatCurrency(resumo.ticketMedio)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Valor médio por venda
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Impostos</CardDescription>
-            <CardTitle className="text-3xl">
-              {formatCurrency(resumo.totalImpostos)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              IPI + ST
-            </p>
-          </CardContent>
-        </Card>
+        {(metricas.incluirImpostos !== false) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total Impostos</CardDescription>
+              <CardTitle className="text-3xl">
+                {formatCurrency(resumo.totalImpostos)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                IPI + ST
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Custo Total</CardDescription>
-            <CardTitle className="text-3xl">
-              {formatCurrency(resumo.custoTotal)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Custo dos produtos vendidos
-            </p>
-          </CardContent>
-        </Card>
+        {(metricas.incluirCustos !== false) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Custo Total</CardDescription>
+              <CardTitle className="text-3xl">
+                {formatCurrency(resumo.custoTotal)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Custo dos produtos vendidos
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Margem de Lucro</CardDescription>
-            <CardTitle className="text-3xl">
-              {resumo.margemLucro.toFixed(2)}%
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Percentual de lucratividade
-            </p>
-          </CardContent>
-        </Card>
+        {(metricas.incluirMargemLucro !== false) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Margem de Lucro</CardDescription>
+              <CardTitle className="text-3xl">
+                {resumo.margemLucro.toFixed(2)}%
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Percentual de lucratividade
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Gráficos */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Vendas ao longo do tempo */}
-        {vendasPorDia.length > 0 && (
+        {(graficos.incluirGraficoTemporal !== false) && vendasPorDia.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Vendas ao Longo do Tempo</CardTitle>
@@ -218,7 +231,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
         )}
 
         {/* Top Vendedores */}
-        {vendasPorVendedor.length > 0 && (
+        {(graficos.incluirGraficoVendedor !== false) && vendasPorVendedor.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Vendas por Vendedor</CardTitle>
@@ -262,7 +275,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
       </div>
 
       {/* Top 10 Produtos */}
-      {vendasPorProduto.length > 0 && (
+      {(graficos.incluirGraficoProduto !== false) && vendasPorProduto.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Top 10 Produtos Mais Vendidos</CardTitle>

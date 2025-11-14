@@ -25,6 +25,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     const { startDate, endDate } = config.filtros.periodo
 
+    // Adicionar 1 dia à data final para incluir todo o dia limite
+    const endDatePlusOne = new Date(endDate)
+    endDatePlusOne.setDate(endDatePlusOne.getDate() + 1)
+    const endDateAdjusted = endDatePlusOne.toISOString().split('T')[0]
+
     // Base query com todos os dados necessários
     let query = supabase
       .from('vendas')
@@ -51,6 +56,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           produto_id,
           quantidade,
           preco_unitario,
+          subtotal,
           subtotal_bruto,
           desconto_proporcional,
           subtotal_liquido,
@@ -62,7 +68,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         )
       `)
       .gte('data_venda', startDate)
-      .lte('data_venda', endDate)
+      .lt('data_venda', endDateAdjusted) // Incluir até o final do dia limite
 
     // Aplicar filtros adicionais
     if (config.filtros.status && config.filtros.status.length > 0) {
@@ -192,14 +198,29 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           if (item.produto) {
             const produto = Array.isArray(item.produto) ? item.produto[0] : item.produto
             if (!produto) return
-            
+
             const produtoId = produto.id
             const produtoNome = produto.nome
             const existing = vendasPorProdutoMap.get(produtoId) || { nome: produtoNome, quantidade: 0, faturamento: 0 }
+
+            // Calcular faturamento com fallbacks apropriados
+            let faturamentoItem = 0
+            if (item.total_item !== null && item.total_item !== undefined) {
+              faturamentoItem = item.total_item
+            } else if (item.subtotal_liquido !== null && item.subtotal_liquido !== undefined) {
+              faturamentoItem = item.subtotal_liquido
+            } else if (item.subtotal_bruto !== null && item.subtotal_bruto !== undefined) {
+              faturamentoItem = item.subtotal_bruto
+            } else if (item.subtotal !== null && item.subtotal !== undefined) {
+              faturamentoItem = item.subtotal
+            } else if (item.preco_unitario !== null && item.preco_unitario !== undefined) {
+              faturamentoItem = item.preco_unitario * item.quantidade
+            }
+
             vendasPorProdutoMap.set(produtoId, {
               nome: produtoNome,
               quantidade: existing.quantidade + item.quantidade,
-              faturamento: existing.faturamento + (item.total_item || 0),
+              faturamento: existing.faturamento + faturamentoItem,
             })
           }
         })
@@ -220,13 +241,31 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const vendasDetalhadas = vendas.slice(0, 100).map(venda => {
       const cliente = Array.isArray(venda.cliente) ? venda.cliente[0] : venda.cliente
       const vendedor = Array.isArray(venda.vendedor) ? venda.vendedor[0] : venda.vendedor
-      
-      const ipi = venda.total_ipi || 0
-      const st = venda.total_st || 0
-      const icms = venda.total_icms || 0
-      const subtotal = venda.total_produtos_bruto || 0
-      const valorLiquido = venda.total_produtos_liquido || 0
-      
+
+      // Usar novos campos se disponíveis, senão calcular dos itens ou usar campos antigos
+      let ipi = venda.total_ipi || 0
+      let st = venda.total_st || 0
+      let icms = venda.total_icms || 0
+      let subtotal = venda.total_produtos_bruto || venda.valor_total || 0
+      let valorLiquido = venda.total_produtos_liquido || 0
+
+      // Se campos novos estão vazios, calcular dos itens
+      if (!venda.total_ipi && venda.itens?.length) {
+        ipi = venda.itens.reduce((sum, item) => sum + (item.ipi_valor || 0), 0)
+      }
+      if (!venda.total_st && venda.itens?.length) {
+        st = venda.itens.reduce((sum, item) => sum + (item.st_valor || 0), 0)
+      }
+      if (!venda.total_icms && venda.itens?.length) {
+        icms = venda.itens.reduce((sum, item) => sum + (item.icms_valor || 0), 0)
+      }
+      if (!venda.total_produtos_bruto && venda.itens?.length) {
+        subtotal = venda.itens.reduce((sum, item) => sum + (item.subtotal_bruto || (item.preco_unitario * item.quantidade)), 0)
+      }
+      if (!venda.total_produtos_liquido && venda.itens?.length) {
+        valorLiquido = venda.itens.reduce((sum, item) => sum + (item.subtotal_liquido || (item.subtotal_bruto || (item.preco_unitario * item.quantidade))), 0)
+      }
+
       return {
         id: venda.id,
         data: venda.data_venda,
