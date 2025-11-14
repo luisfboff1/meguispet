@@ -35,7 +35,10 @@
       "Bash(pnpm build:*)",
       "Bash(npm install:*)",
       "Bash(pnpm run typecheck:*)",
-      "Bash(pnpm run build:local:*)"
+      "Bash(pnpm run build:local:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(tar:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

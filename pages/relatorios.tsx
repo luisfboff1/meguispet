@@ -1,19 +1,24 @@
 import React, { useState, useMemo } from 'react'
+import { useRouter } from 'next/router'
 import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { 
-  Download, 
-  Filter, 
+import {
+  Download,
   Calendar,
   BarChart3,
   PieChart,
   TrendingUp,
   FileText,
-  Eye
+  Eye,
+  ShoppingCart,
+  Package,
+  Users,
+  DollarSign,
 } from 'lucide-react'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+import { ReportCard } from '@/components/reports/ReportCard'
+import type { ReportType } from '@/types/reports'
 
 interface ReportData {
   id: string
@@ -25,46 +30,37 @@ interface ReportData {
 }
 
 export default function RelatoriosPage() {
-  const [dateRange, setDateRange] = useState({
-    start: '',
-    end: ''
-  })
+  const router = useRouter()
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
+  const handleReportConfig = (tipo: ReportType) => {
+    // Redirecionar para página específica do relatório
+    router.push(`/relatorios/${tipo}`)
   }
 
   const reportTypes = [
     {
-      id: 'vendas',
+      id: 'vendas' as ReportType,
       title: 'Relatório de Vendas',
-      description: 'Vendas por período, vendedor e produto',
-      icon: BarChart3,
-      color: 'text-blue-600'
+      description: 'Análise completa de vendas, faturamento, impostos e margem de lucro',
+      icon: <ShoppingCart className="h-6 w-6" />,
     },
     {
-      id: 'produtos',
+      id: 'produtos' as ReportType,
       title: 'Relatório de Produtos',
-      description: 'Produtos mais vendidos e estoque',
-      icon: PieChart,
-      color: 'text-green-600'
+      description: 'Produtos mais vendidos, rotatividade de estoque e análise ABC',
+      icon: <Package className="h-6 w-6" />,
     },
     {
-      id: 'clientes',
+      id: 'clientes' as ReportType,
       title: 'Relatório de Clientes',
-      description: 'Análise de clientes e compras',
-      icon: TrendingUp,
-      color: 'text-purple-600'
+      description: 'Análise de clientes, novos cadastros e análise RFM',
+      icon: <Users className="h-6 w-6" />,
     },
     {
-      id: 'financeiro',
+      id: 'financeiro' as ReportType,
       title: 'Relatório Financeiro',
-      description: 'Receitas, despesas e lucros',
-      icon: FileText,
-      color: 'text-orange-600'
+      description: 'DRE completo com receitas, despesas, lucros e margens',
+      icon: <DollarSign className="h-6 w-6" />,
     }
   ]
 
@@ -202,93 +198,22 @@ export default function RelatoriosPage() {
         </div>
       </div>
 
-      {/* Date Range Filter */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros de Período</CardTitle>
-          <CardDescription>Selecione o período para os relatórios</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Data Inicial
-              </label>
-              <Input
-                type="date"
-                value={dateRange.start}
-                onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Data Final
-              </label>
-              <Input
-                type="date"
-                value={dateRange.end}
-                onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                Aplicar Filtros
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Report Types */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {reportTypes.map((report) => {
-          const IconComponent = report.icon
-          return (
-            <Card key={report.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center`}>
-                      <IconComponent className={`h-5 w-5 ${report.color}`} />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{report.title}</CardTitle>
-                      <CardDescription>{report.description}</CardDescription>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Período:</span>
-                    <span className="font-medium">
-                      {dateRange.start && dateRange.end 
-                        ? `${dateRange.start} - ${dateRange.end}`
-                        : 'Últimos 30 dias'
-                      }
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Status:</span>
-                    <span className="text-green-600 font-medium">Disponível</span>
-                  </div>
-                  <div className="flex space-x-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Eye className="mr-2 h-4 w-4" />
-                      Visualizar
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Download className="mr-2 h-4 w-4" />
-                      PDF
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+      {/* Report Types - Cards de relatórios disponíveis */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Tipos de Relatórios</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+          {reportTypes.map((report, index) => (
+            <ReportCard
+              key={report.id}
+              tipo={report.id}
+              titulo={report.title}
+              descricao={report.description}
+              icon={report.icon}
+              onClick={() => handleReportConfig(report.id)}
+              animationDelay={index * 0.1}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Quick Stats */}
