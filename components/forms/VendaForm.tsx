@@ -53,7 +53,7 @@ interface VendaFormState {
   estoque_id: string
   observacoes: string
   desconto: number
-  prazo_pagamento?: string | number
+  data_pagamento?: string // Data de pagamento
 }
 
 const getFormaPagamentoIdFromVenda = (dados?: Venda): string => {
@@ -148,7 +148,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         estoque_id: '',
         observacoes: '',
         desconto: 0,
-        prazo_pagamento: ''
+        data_pagamento: ''
       })
       return
     }
@@ -163,7 +163,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0,
-      prazo_pagamento: venda.prazo_pagamento || ''
+      data_pagamento: venda.prazo_pagamento ? String(venda.prazo_pagamento) : ''
     })
 
     if (venda.itens?.length) {
@@ -407,6 +407,16 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       return
     }
 
+    // Validate payment date when not using installments
+    if (!usarParcelas && !formData.data_pagamento) {
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Selecione a data de pagamento ou ative o parcelamento.',
+        type: 'error',
+      })
+      return
+    }
+
     const itensValidos = itens.every(item => item.produto_id > 0 && item.quantidade > 0 && item.preco_unitario > 0)
     if (!itensValidos) {
       setAlert({
@@ -434,7 +444,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       forma_pagamento_id: Number(formData.forma_pagamento_id),
       estoque_id: Number(formData.estoque_id),
       forma_pagamento: formaSelecionada.nome,
-      prazo_pagamento: formData.prazo_pagamento,
+      data_pagamento: formData.data_pagamento,
       parcelas: usarParcelas ? parcelas : undefined,
       itens: itensCalculados.map(itemCalc => ({
         produto_id: itemCalc.produto_id,
@@ -855,16 +865,25 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                 </p>
               </div>
 
-              <div>
-                <Label htmlFor="prazo_pagamento">Prazo de Pagamento</Label>
-                <Input
-                  id="prazo_pagamento"
-                  type="text"
-                  value={String(formData.prazo_pagamento || '')}
-                  onChange={(e) => setFormData(prev => ({ ...prev, prazo_pagamento: e.target.value }))}
-                  placeholder="Ex: 30 dias ou À vista"
-                />
-              </div>
+              {/* Payment Date - Required when not using installments */}
+              {!usarParcelas && (
+                <div>
+                  <Label htmlFor="data_pagamento">
+                    Data de Pagamento <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="data_pagamento"
+                    type="date"
+                    value={formData.data_pagamento || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data_pagamento: e.target.value }))}
+                    className="w-full"
+                    required={!usarParcelas}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Data em que o pagamento será recebido
+                  </p>
+                </div>
+              )}
 
               {/* Installments Configuration */}
               <div className="pt-4 border-t">

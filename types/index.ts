@@ -390,7 +390,7 @@ export interface VendaForm {
   estoque_id: number
   itens: VendaItemInput[]
   desconto?: number
-  prazo_pagamento?: string | number
+  data_pagamento?: string // Data de pagamento (substitui prazo_pagamento)
   imposto_percentual?: number
   forma_pagamento: FormaPagamento
   origem_venda: OrigemVenda
