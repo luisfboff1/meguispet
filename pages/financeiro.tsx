@@ -483,6 +483,9 @@ export default function FinanceiroPage() {
           {row.original.venda_id && (
             <span className="text-xs text-blue-600 dark:text-blue-400 block mt-1">
               📦 Venda #{row.original.venda_id}
+              {row.original.venda_parcela_id && (
+                <span className="ml-1">• Parcela</span>
+              )}
             </span>
           )}
         </div>

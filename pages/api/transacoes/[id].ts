@@ -15,10 +15,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
   try {
     if (method === 'GET') {
-      // Buscar transação individual
+      // Buscar transação individual com dados relacionados
       const { data, error } = await supabase
         .from('transacoes')
-        .select('*')
+        .select(`
+          *,
+          categoria_detalhe:categorias_financeiras(id, nome, tipo, cor, icone),
+          venda:vendas(id, numero_venda, valor_final, data_venda)
+        `)
         .eq('id', transacaoId)
         .single();
 
