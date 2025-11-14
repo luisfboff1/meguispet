@@ -205,15 +205,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
             // Calcular faturamento com fallbacks apropriados
             let faturamentoItem = 0
-            if (item.total_item !== null && item.total_item !== undefined) {
+            // Prioridade: total_item > subtotal_liquido > subtotal_bruto > subtotal > preco_unitario
+            if (item.total_item !== null && item.total_item !== undefined && item.total_item !== 0) {
               faturamentoItem = item.total_item
-            } else if (item.subtotal_liquido !== null && item.subtotal_liquido !== undefined) {
+            } else if (item.subtotal_liquido !== null && item.subtotal_liquido !== undefined && item.subtotal_liquido !== 0) {
               faturamentoItem = item.subtotal_liquido
-            } else if (item.subtotal_bruto !== null && item.subtotal_bruto !== undefined) {
+            } else if (item.subtotal_bruto !== null && item.subtotal_bruto !== undefined && item.subtotal_bruto !== 0) {
               faturamentoItem = item.subtotal_bruto
-            } else if (item.subtotal !== null && item.subtotal !== undefined) {
+            } else if (item.subtotal !== null && item.subtotal !== undefined && item.subtotal !== 0) {
               faturamentoItem = item.subtotal
-            } else if (item.preco_unitario !== null && item.preco_unitario !== undefined) {
+            } else if (item.preco_unitario !== null && item.preco_unitario !== undefined && item.preco_unitario !== 0) {
               faturamentoItem = item.preco_unitario * item.quantidade
             }
 
