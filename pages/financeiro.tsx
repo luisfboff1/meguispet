@@ -25,7 +25,7 @@ import { transacoesService, categoriasFinanceirasService, transacoesRecorrentesS
 import { TransacaoForm } from '@/components/forms/TransacaoForm'
 import { CategoriaFinanceiraForm } from '@/components/forms/CategoriaFinanceiraForm'
 import { TransacaoRecorrenteForm } from '@/components/forms/TransacaoRecorrenteForm'
-import { FinanceiroChart, PizzaChart } from '@/components/charts/FinanceiroChart'
+import CustomizableFinanceiroChart from '@/components/charts/CustomizableFinanceiroChart'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { 
   TransacaoFinanceira, 
@@ -601,6 +601,14 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
+      {/* Customizable Financial Chart */}
+      {metrics?.grafico_mensal && (
+        <CustomizableFinanceiroChart
+          data={metrics.grafico_mensal}
+          loading={loading}
+        />
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
@@ -698,58 +706,6 @@ export default function FinanceiroPage() {
       {/* Transacoes Tab Content */}
       {activeTab === 'transacoes' && (
         <div className="space-y-6">
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {metrics?.grafico_mensal ? (
-          <FinanceiroChart
-            data={metrics.grafico_mensal}
-            title="Receitas vs Despesas"
-            description="Últimos 6 meses"
-          />
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Receitas vs Despesas</CardTitle>
-              <CardDescription>Últimos 6 meses</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center">
-                  <PieChart className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Carregando dados...</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {metrics ? (
-          <PizzaChart
-            data={{
-              receita: metrics.receita || 0,
-              despesas: metrics.despesas || 0
-            }}
-            title="Distribuição Financeira"
-            description="Receitas vs Despesas do mês"
-          />
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribuição Financeira</CardTitle>
-              <CardDescription>Receitas vs Despesas do mês</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center">
-                  <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Carregando dados...</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
 
       {/* Recent Transactions */}
       <Card>
