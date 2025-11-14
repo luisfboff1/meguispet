@@ -1,6 +1,8 @@
 # 📊 Sistema de Relatórios
 
-**Status:** 🟡 Em Progresso (Fase 3/7 concluída)
+**Status:** 🔴 Atenção Necessária - Migration Pendente
+
+⚠️ **AÇÃO REQUERIDA**: O relatório de vendas requer aplicação de migration no banco de dados. Ver [SITUACAO_ATUAL.md](./SITUACAO_ATUAL.md)
 
 Sistema completo de relatórios customizáveis para análise de vendas, produtos, clientes e finanças, com filtros avançados, visualizações interativas e exportação em múltiplos formatos.
 
@@ -27,9 +29,10 @@ O Sistema de Relatórios permite aos usuários gerar análises detalhadas do neg
 |-----------|-----------|--------|
 | [00-plano-geral.md](./00-plano-geral.md) | Plano completo com todas as 7 fases | ✅ |
 | [01-fase-estrutura.md](./01-fase-estrutura.md) | Fase 1: Estrutura base (types, componentes, banco) | ✅ |
-| [02-fase-vendas.md](./02-fase-vendas.md) | Fase 2: Relatório de Vendas completo | ✅ |
+| [02-fase-vendas.md](./02-fase-vendas.md) | Fase 2: Relatório de Vendas completo | 🔴 |
 | [03-fase-produtos.md](./03-fase-produtos.md) | Fase 3: Relatório de Produtos completo | ✅ |
 | [resumo-implementacao.md](./resumo-implementacao.md) | Resumo geral de implementação | ✅ |
+| [SITUACAO_ATUAL.md](./SITUACAO_ATUAL.md) | **Status atual e ações necessárias** | ⚠️ |
 
 ---
 
@@ -42,13 +45,14 @@ O Sistema de Relatórios permite aos usuários gerar análises detalhadas do neg
 - [x] Serviço API (`services/reportsService.ts`)
 - [x] Página principal (`/relatorios`)
 
-### ✅ Fase 2: Relatório de Vendas (Concluída)
+### 🔴 Fase 2: Relatório de Vendas (Migration Pendente)
 - [x] APIs: preview, generate, export
 - [x] Componente `VendasReportViewer`
 - [x] Página `/relatorios/vendas`
 - [x] Gráficos: vendas ao longo do tempo, vendas por vendedor
 - [x] Métricas: total vendas, faturamento, ticket médio, impostos, margem
 - [x] Exportação PDF/Excel/CSV
+- [ ] **⚠️ Aplicar migration 009 no banco de dados** (colunas origem_venda e uf_destino)
 
 ### ✅ Fase 3: Relatório de Produtos (Concluída)
 - [x] APIs: preview, generate, export
@@ -239,7 +243,8 @@ services/
 └── reportsService.ts                   # Serviço de integração
 
 database/migrations/
-└── 008_reports_system.sql              # Migration de relatórios
+├── 008_reports_system.sql              # Migration de relatórios
+└── 009_add_vendas_origem_uf_columns.sql # ⚠️ Migration pendente
 ```
 
 ---
