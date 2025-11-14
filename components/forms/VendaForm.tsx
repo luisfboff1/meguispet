@@ -122,7 +122,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     ipiValor: true,
     icmsAliquota: false,
     icmsValor: false,
-    stAliquota: false,
+    stAliquota: true, // Mostrar ST% por padrão para ver valores da tabela MVA
     stValor: true,
     totalItem: true,
     acoes: true
