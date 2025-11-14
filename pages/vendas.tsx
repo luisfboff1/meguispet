@@ -423,12 +423,42 @@ export default function VendasPage() {
     },
     {
       accessorKey: "valor_final",
-      header: ({ column }) => <SortableHeader column={column}>Total</SortableHeader>,
+      header: ({ column }) => <SortableHeader column={column}>Total com Imposto</SortableHeader>,
       cell: ({ row }) => (
         <div className="text-sm font-medium text-green-600">
           {formatCurrency(row.original.valor_final)}
         </div>
       ),
+    },
+    {
+      accessorKey: "total_ipi",
+      header: ({ column }) => <SortableHeader column={column}>IPI</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-700">
+          {row.original.total_ipi ? formatCurrency(row.original.total_ipi) : '-'}
+        </div>
+      ),
+      enableHiding: true,
+    },
+    {
+      accessorKey: "total_icms",
+      header: ({ column }) => <SortableHeader column={column}>ICMS</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-blue-600" title="Informativo - não incluído no total">
+          {row.original.total_icms ? formatCurrency(row.original.total_icms) : '-'}
+        </div>
+      ),
+      enableHiding: true,
+    },
+    {
+      accessorKey: "total_st",
+      header: ({ column }) => <SortableHeader column={column}>ST</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-700">
+          {row.original.total_st ? formatCurrency(row.original.total_st) : '-'}
+        </div>
+      ),
+      enableHiding: true,
     },
     {
       id: "forma_pagamento",
@@ -829,6 +859,11 @@ export default function VendasPage() {
           enableSorting={true}
           enableColumnVisibility={true}
           mobileVisibleColumns={['numero_venda', 'valor_final', 'status', 'acoes']}
+          initialColumnVisibility={{
+            total_ipi: false,
+            total_icms: false,
+            total_st: false,
+          }}
         />
       ) : (
         <Card>

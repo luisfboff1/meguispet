@@ -36,6 +36,7 @@ interface DataTableProps<TData, TValue> {
   enableSorting?: boolean
   enableColumnVisibility?: boolean
   mobileVisibleColumns?: string[] // IDs of columns to show on mobile by default
+  initialColumnVisibility?: VisibilityState // Initial visibility state for columns
 }
 
 export function DataTable<TData, TValue>({
@@ -45,10 +46,11 @@ export function DataTable<TData, TValue>({
   enableSorting = true,
   enableColumnVisibility = true,
   mobileVisibleColumns = [],
+  initialColumnVisibility = {},
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(initialColumnVisibility)
   const [columnResizeMode] = React.useState<ColumnResizeMode>("onChange")
   const [isMobile, setIsMobile] = React.useState(false)
 
@@ -66,21 +68,21 @@ export function DataTable<TData, TValue>({
   // Initialize column visibility based on screen size
   React.useEffect(() => {
     if (isMobile && mobileVisibleColumns.length > 0) {
-      const initialVisibility: VisibilityState = {}
+      const mobileVisibility: VisibilityState = { ...initialColumnVisibility }
       columns.forEach((column) => {
         const columnDef = column as { id?: string; accessorKey?: string | number | symbol }
         const columnId = typeof column.id === 'string' ? column.id : 
                         columnDef.accessorKey?.toString() || ''
         if (columnId && !mobileVisibleColumns.includes(columnId)) {
-          initialVisibility[columnId] = false
+          mobileVisibility[columnId] = false
         }
       })
-      setColumnVisibility(initialVisibility)
-    } else if (!isMobile) {
-      // Reset visibility on desktop
-      setColumnVisibility({})
+      setColumnVisibility(mobileVisibility)
+    } else if (!isMobile && Object.keys(columnVisibility).length === 0) {
+      // Set initial visibility on desktop if not already set
+      setColumnVisibility(initialColumnVisibility)
     }
-  }, [isMobile, mobileVisibleColumns, columns])
+  }, [isMobile, mobileVisibleColumns, columns, initialColumnVisibility])
 
   const table = useReactTable({
     data,
