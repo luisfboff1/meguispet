@@ -16,9 +16,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       let query = supabase.from('transacoes').select(`
         *,
         categoria_detalhe:categorias_financeiras(id, nome, tipo, cor, icone),
-        venda:vendas(id, numero_venda, valor_final, data_venda),
-        venda_parcela:venda_parcelas(id, numero_parcela, valor_parcela, data_vencimento),
-        transacao_recorrente:transacoes_recorrentes(id, descricao, frequencia)
+        venda:vendas(id, numero_venda, valor_final, data_venda)
       `, { count: 'exact' });
 
       if (tipo) query = query.eq('tipo', tipo);
