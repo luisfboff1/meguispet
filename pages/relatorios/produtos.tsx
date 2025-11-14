@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import { ReportConfigWizard } from '@/components/reports/ReportConfigWizard'
 import { ProdutosReportViewer } from '@/components/reports/ProdutosReportViewer'
-import { useToast } from '@/hooks/useToast'
-import { reportsService } from '@/services/reportsService'
+import { useToast } from '@/components/ui/use-toast'
+import { reportsService, downloadReport, getExportFilename } from '@/services/reportsService'
 import type { ReportConfiguration, ReportFormat, ProdutosReportData } from '@/types/reports'
 
 type Step = 'config' | 'viewing'
@@ -33,26 +33,26 @@ export default function ProdutosReportPage() {
         toast({
           title: 'Relatório gerado',
           description: 'Relatório de produtos gerado com sucesso',
-          variant: 'success'
+          variant: 'default'
         })
       } else {
         // Exportar diretamente (PDF, Excel, CSV)
         const blob = await reportsService.export('produtos', config, formato)
 
         // Download do arquivo
-        const filename = reportsService.getExportFilename(
+        const filename = getExportFilename(
           'produtos',
           formato,
           config.filtros.periodo.startDate,
           config.filtros.periodo.endDate
         )
 
-        reportsService.downloadReport(blob, filename)
+        downloadReport(blob, filename)
 
         toast({
           title: 'Relatório exportado',
           description: `Relatório exportado como ${formato.toUpperCase()}`,
-          variant: 'success'
+          variant: 'default'
         })
       }
     } catch (error) {
@@ -60,7 +60,7 @@ export default function ProdutosReportPage() {
       toast({
         title: 'Erro',
         description: error instanceof Error ? error.message : 'Erro ao gerar relatório',
-        variant: 'error'
+        variant: 'destructive'
       })
     } finally {
       setIsLoading(false)
@@ -69,6 +69,7 @@ export default function ProdutosReportPage() {
 
   const handleExport = async (formato: ReportFormat) => {
     if (!currentConfig) return
+    if (formato === 'web') return // Web format is handled by handleGenerate
 
     try {
       setIsLoading(true)
@@ -76,26 +77,26 @@ export default function ProdutosReportPage() {
       const blob = await reportsService.export('produtos', currentConfig, formato)
 
       // Download do arquivo
-      const filename = reportsService.getExportFilename(
+      const filename = getExportFilename(
         'produtos',
         formato,
         currentConfig.filtros.periodo.startDate,
         currentConfig.filtros.periodo.endDate
       )
 
-      reportsService.downloadReport(blob, filename)
+      downloadReport(blob, filename)
 
       toast({
         title: 'Relatório exportado',
         description: `Relatório exportado como ${formato.toUpperCase()}`,
-        variant: 'success'
+        variant: 'default'
       })
     } catch (error) {
       console.error('Erro ao exportar relatório:', error)
       toast({
         title: 'Erro',
         description: error instanceof Error ? error.message : 'Erro ao exportar relatório',
-        variant: 'error'
+        variant: 'destructive'
       })
     } finally {
       setIsLoading(false)

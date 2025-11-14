@@ -64,11 +64,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         })
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[export] Erro:', error)
     return res.status(500).json({
       success: false,
-      message: error.message || 'Erro ao exportar relatório',
+      message: error instanceof Error ? error.message : 'Erro ao exportar relatório',
     })
   }
 }
@@ -115,7 +115,7 @@ function exportPDF(data: VendasReportData, periodo: { startDate: string; endDate
 
   // Top 10 Produtos
   if (data.vendasPorProduto.length > 0) {
-    const finalY = (doc as any).lastAutoTable.finalY || resumoY + 45
+    const finalY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? resumoY + 45
 
     doc.setFontSize(14)
     doc.text('Top 10 Produtos', 14, finalY + 15)

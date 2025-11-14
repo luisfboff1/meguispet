@@ -302,7 +302,7 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
         <ChartTooltip
           content={
             <ChartTooltipContent
-              labelFormatter={(value) => {
+              labelFormatter={(value): React.ReactNode => {
                 const item = processedData.find((d) => d.formattedDate === value)
                 if (item) {
                   return new Date(item.data).toLocaleDateString('pt-BR', {
@@ -311,7 +311,7 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
                     month: 'long',
                   })
                 }
-                return value
+                return String(value ?? '')
               }}
               formatter={(value, name) => {
                 const numValue = typeof value === 'number' ? value : parseFloat(value as string)

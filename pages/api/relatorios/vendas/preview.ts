@@ -126,8 +126,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     let custoTotal = 0
     vendas.forEach(venda => {
       if (venda.itens) {
-        venda.itens.forEach((item: any) => {
-          const precoCusto = item.produto?.preco_custo || 0
+        venda.itens.forEach((item) => {
+          const produto = Array.isArray(item.produto) ? item.produto[0] : item.produto
+          const precoCusto = produto?.preco_custo || 0
           custoTotal += precoCusto * item.quantidade
         })
       }
@@ -160,8 +161,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const vendasPorVendedorMap = new Map<number, { nome: string; quantidade: number; faturamento: number }>()
     vendas.forEach(venda => {
       if (venda.vendedor) {
-        const vendedorId = venda.vendedor.id
-        const vendedorNome = venda.vendedor.nome
+        const vendedor = Array.isArray(venda.vendedor) ? venda.vendedor[0] : venda.vendedor
+        if (!vendedor) return
+        
+        const vendedorId = vendedor.id
+        const vendedorNome = vendedor.nome
         const existing = vendasPorVendedorMap.get(vendedorId) || { nome: vendedorNome, quantidade: 0, faturamento: 0 }
         vendasPorVendedorMap.set(vendedorId, {
           nome: vendedorNome,
@@ -184,10 +188,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const vendasPorProdutoMap = new Map<number, { nome: string; quantidade: number; faturamento: number }>()
     vendas.forEach(venda => {
       if (venda.itens) {
-        venda.itens.forEach((item: any) => {
+        venda.itens.forEach((item) => {
           if (item.produto) {
-            const produtoId = item.produto.id
-            const produtoNome = item.produto.nome
+            const produto = Array.isArray(item.produto) ? item.produto[0] : item.produto
+            if (!produto) return
+            
+            const produtoId = produto.id
+            const produtoNome = produto.nome
             const existing = vendasPorProdutoMap.get(produtoId) || { nome: produtoNome, quantidade: 0, faturamento: 0 }
             vendasPorProdutoMap.set(produtoId, {
               nome: produtoNome,
@@ -210,17 +217,22 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .slice(0, 10)
 
     // Vendas detalhadas (limitado a 100 para preview)
-    const vendasDetalhadas = vendas.slice(0, 100).map(venda => ({
-      id: venda.id,
-      data: venda.data_venda,
-      cliente: venda.cliente?.nome || 'Cliente não informado',
-      vendedor: venda.vendedor?.nome || 'Vendedor não informado',
-      produtos: venda.itens?.length || 0,
-      subtotal: venda.total_produtos_liquido || 0,
-      impostos: (venda.total_ipi || 0) + (venda.total_st || 0),
-      total: venda.valor_final || 0,
-      status: venda.status,
-    }))
+    const vendasDetalhadas = vendas.slice(0, 100).map(venda => {
+      const cliente = Array.isArray(venda.cliente) ? venda.cliente[0] : venda.cliente
+      const vendedor = Array.isArray(venda.vendedor) ? venda.vendedor[0] : venda.vendedor
+      
+      return {
+        id: venda.id,
+        data: venda.data_venda,
+        cliente: cliente?.nome || 'Cliente não informado',
+        vendedor: vendedor?.nome || 'Vendedor não informado',
+        produtos: venda.itens?.length || 0,
+        subtotal: venda.total_produtos_liquido || 0,
+        impostos: (venda.total_ipi || 0) + (venda.total_st || 0),
+        total: venda.valor_final || 0,
+        status: venda.status,
+      }
+    })
 
     const reportData: VendasReportData = {
       resumo: {
@@ -246,11 +258,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       },
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[preview] Erro:', error)
     return res.status(500).json({
       success: false,
-      message: error.message || 'Erro ao gerar preview do relatório',
+      message: error instanceof Error ? error.message : 'Erro ao gerar preview do relatório',
     })
   }
 }

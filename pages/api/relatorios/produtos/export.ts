@@ -96,9 +96,10 @@ function exportPDF(res: NextApiResponse, data: ProdutosReportData, periodo: stri
   })
 
   // Top 10 Produtos Mais Vendidos
-  const startYMaisVendidos = (doc as any).lastAutoTable.finalY + 10
+  const startYMaisVendidos = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 80
+  const startYPosition = startYMaisVendidos + 10
   doc.setFontSize(14)
-  doc.text('Top 10 Produtos Mais Vendidos', 14, startYMaisVendidos)
+  doc.text('Top 10 Produtos Mais Vendidos', 14, startYPosition)
 
   const maisVendidosData = data.produtosMaisVendidos.map(p => [
     p.produtoNome,
@@ -108,7 +109,7 @@ function exportPDF(res: NextApiResponse, data: ProdutosReportData, periodo: stri
   ])
 
   autoTable(doc, {
-    startY: startYMaisVendidos + 5,
+    startY: startYPosition + 5,
     head: [['Produto', 'Qtd Vendida', 'Faturamento', 'Margem']],
     body: maisVendidosData,
     theme: 'striped',
@@ -117,10 +118,11 @@ function exportPDF(res: NextApiResponse, data: ProdutosReportData, periodo: stri
 
   // Produtos com Baixo Estoque
   if (data.produtosBaixoEstoque.length > 0) {
-    const startYBaixoEstoque = (doc as any).lastAutoTable.finalY + 10
+    const startYBaixoEstoque = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 150
+    const startYBaixoEstoquePosition = startYBaixoEstoque + 10
 
     // Adicionar nova página se necessário
-    if (startYBaixoEstoque > 250) {
+    if (startYBaixoEstoquePosition > 250) {
       doc.addPage()
       doc.setFontSize(14)
       doc.text('Produtos com Baixo Estoque', 14, 20)
@@ -141,7 +143,7 @@ function exportPDF(res: NextApiResponse, data: ProdutosReportData, periodo: stri
       })
     } else {
       doc.setFontSize(14)
-      doc.text('Produtos com Baixo Estoque', 14, startYBaixoEstoque)
+      doc.text('Produtos com Baixo Estoque', 14, startYBaixoEstoquePosition)
 
       const baixoEstoqueData = data.produtosBaixoEstoque.slice(0, 15).map(p => [
         p.produtoNome,
@@ -151,7 +153,7 @@ function exportPDF(res: NextApiResponse, data: ProdutosReportData, periodo: stri
       ])
 
       autoTable(doc, {
-        startY: startYBaixoEstoque + 5,
+        startY: startYBaixoEstoquePosition + 5,
         head: [['Produto', 'Estoque Atual', 'Estoque Mínimo', 'Diferença']],
         body: baixoEstoqueData,
         theme: 'striped',

@@ -99,15 +99,19 @@ export default async function handler(
       categoria: string
     }>()
 
-    vendas?.forEach((venda: Venda) => {
-      venda.itens?.forEach((item: ItemVenda & { produto?: Produto }) => {
+    vendas?.forEach((venda) => {
+      venda.itens?.forEach((item) => {
         if (!item.produto) return
+        
+        // Handle produto being an array (Supabase quirk)
+        const produto = Array.isArray(item.produto) ? item.produto[0] : item.produto
+        if (!produto) return
 
         const produtoId = item.produto_id
         const existing = vendasPorProduto.get(produtoId)
 
         const faturamento = item.subtotal_liquido || item.preco_unitario * item.quantidade
-        const custo = (item.produto.preco_custo || 0) * item.quantidade
+        const custo = (produto.preco_custo || 0) * item.quantidade
         const lucro = faturamento - custo
         const margem = faturamento > 0 ? (lucro / faturamento) * 100 : 0
 
@@ -121,12 +125,12 @@ export default async function handler(
         } else {
           vendasPorProduto.set(produtoId, {
             produtoId,
-            produtoNome: item.produto.nome,
+            produtoNome: produto.nome,
             quantidadeVendida: item.quantidade,
             faturamento,
             custo,
             margem,
-            categoria: item.produto.categoria || 'Sem categoria'
+            categoria: produto.categoria || 'Sem categoria'
           })
         }
       })

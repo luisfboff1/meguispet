@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import { ReportConfigWizard, VendasReportViewer } from '@/components/reports'
 import type { ReportConfiguration, ReportFormat, VendasReportData } from '@/types/reports'
 import { reportsService, downloadReport, getExportFilename } from '@/services/reportsService'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function VendasReportPage() {
   const router = useRouter()
@@ -28,7 +28,7 @@ export default function VendasReportPage() {
         toast({
           title: 'Relatório gerado!',
           description: 'Relatório gerado com sucesso',
-          variant: 'success',
+          variant: 'default',
         })
       } else {
         // Exportar arquivo
@@ -44,14 +44,14 @@ export default function VendasReportPage() {
         toast({
           title: 'Relatório exportado!',
           description: `Arquivo ${filename} baixado com sucesso`,
-          variant: 'success',
+          variant: 'default',
         })
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erro ao gerar relatório:', error)
       toast({
         title: 'Erro ao gerar relatório',
-        description: error.message || 'Ocorreu um erro ao gerar o relatório',
+        description: error instanceof Error ? error.message : 'Ocorreu um erro ao gerar o relatório',
         variant: 'destructive',
       })
     }
@@ -73,13 +73,13 @@ export default function VendasReportPage() {
       toast({
         title: 'Relatório exportado!',
         description: `Arquivo ${filename} baixado com sucesso`,
-        variant: 'success',
+        variant: 'default',
       })
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erro ao exportar relatório:', error)
       toast({
         title: 'Erro ao exportar relatório',
-        description: error.message || 'Ocorreu um erro ao exportar o relatório',
+        description: error instanceof Error ? error.message : 'Ocorreu um erro ao exportar o relatório',
         variant: 'destructive',
       })
     }
