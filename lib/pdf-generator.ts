@@ -220,46 +220,174 @@ export const generateOrderPDF = async (
   // ==================== TABELA DE PRODUTOS ====================
   // Usar itensOrdenados se fornecido, caso contrário usar venda.itens
   const itensParaPDF = options?.itensOrdenados || venda.itens || []
-  const tableData = itensParaPDF.map((item) => [
-    item.produto?.id?.toString() || '',
-    item.produto?.nome || 'Produto sem nome',
-    item.quantidade.toString().replace('.', ','),
-    `R$ ${item.preco_unitario.toFixed(2).replace('.', ',')}`,
-    `R$ ${item.subtotal.toFixed(2).replace('.', ',')}`
-  ])
+  
+  // Verificar se tem os novos campos de impostos (IPI, ICMS, ST)
+  const hasNovosImpostos = venda.total_ipi != null || venda.total_icms != null || venda.total_st != null
+  
+  // Calcular totais dos campos novos
+  const totalProdutosBruto = hasNovosImpostos
+    ? (venda.total_produtos_bruto || 0)
+    : itensParaPDF.reduce((sum, item) => sum + (item.subtotal_bruto || item.subtotal || 0), 0)
+  
+  const valorDesconto = hasNovosImpostos
+    ? (venda.desconto_total || 0)
+    : (venda.desconto || 0)
+  
+  const totalProdutosLiquido = hasNovosImpostos
+    ? (venda.total_produtos_liquido || totalProdutosBruto - valorDesconto)
+    : (totalProdutosBruto - valorDesconto)
+  
+  const totalIPI = venda.total_ipi || 0
+  const totalICMS = venda.total_icms || 0
+  const totalST = venda.total_st || 0
+  
+  const hasImposto = venda.imposto_percentual && venda.imposto_percentual > 0
+  
+  // Calcular total final
+  const totalFinal = hasNovosImpostos
+    ? (venda.valor_final || totalProdutosLiquido + totalIPI + totalST)
+    : (opts.incluirImpostos && hasImposto
+        ? totalProdutosBruto - valorDesconto + ((totalProdutosBruto - valorDesconto) * venda.imposto_percentual!) / 100
+        : totalProdutosBruto - valorDesconto)
 
-  autoTable(doc, {
-    startY: yPos,
-    head: [['CÓD', 'DESCRIÇÃO', 'QTD', 'PREÇO UNIT.', 'TOTAL']],
-    body: tableData,
-    theme: 'plain',
-    styles: {
-      fontSize: 9,
-      cellPadding: 3,
-      lineColor: [0, 0, 0],
-      lineWidth: 0.1,
-    },
-    headStyles: {
-      fillColor: [255, 255, 255],
-      textColor: [0, 0, 0],
-      fontStyle: 'bold',
-      halign: 'left',
-      lineWidth: { bottom: 0.3, top: 0.3 },
-    },
-    bodyStyles: {
-      textColor: [0, 0, 0],
-    },
-    columnStyles: {
-      0: { cellWidth: 20, halign: 'center' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 20, halign: 'center' },
-      3: { cellWidth: 30, halign: 'right' },
-      4: { cellWidth: 30, halign: 'right' },
-    },
-    didDrawPage: (data) => {
-      yPos = data.cursor?.y || yPos
+  // Criar tabela com colunas detalhadas se houver impostos novos
+  if (hasNovosImpostos) {
+    // Cabeçalhos da tabela detalhada
+    const headers = [['PRODUTO', 'QTD', 'PREÇO', 'SUBTOTAL']]
+    if (valorDesconto > 0) headers[0].push('DESC.')
+    headers[0].push('LÍQUIDO')
+    if (totalIPI > 0) headers[0].push('IPI')
+    if (totalICMS > 0) headers[0].push('ICMS*')
+    if (totalST > 0) headers[0].push('ST')
+    headers[0].push('TOTAL')
+    
+    // Dados da tabela
+    const tableData = itensParaPDF.map((item) => {
+      const row = [
+        item.produto?.nome || 'Produto sem nome',
+        item.quantidade.toString().replace('.', ','),
+        `R$ ${item.preco_unitario.toFixed(2).replace('.', ',')}`,
+        `R$ ${(item.subtotal_bruto || item.subtotal || 0).toFixed(2).replace('.', ',')}`
+      ]
+      if (valorDesconto > 0) {
+        row.push(item.desconto_proporcional ? `-R$ ${item.desconto_proporcional.toFixed(2).replace('.', ',')}` : '-')
+      }
+      row.push(`R$ ${(item.subtotal_liquido || (item.subtotal - (item.desconto_proporcional || 0))).toFixed(2).replace('.', ',')}`)
+      if (totalIPI > 0) {
+        row.push(item.ipi_valor ? `R$ ${item.ipi_valor.toFixed(2).replace('.', ',')}` : '-')
+      }
+      if (totalICMS > 0) {
+        row.push(item.icms_valor ? `R$ ${item.icms_valor.toFixed(2).replace('.', ',')}` : '-')
+      }
+      if (totalST > 0) {
+        row.push(item.st_valor ? `R$ ${item.st_valor.toFixed(2).replace('.', ',')}` : '-')
+      }
+      row.push(`R$ ${(item.total_item || item.subtotal).toFixed(2).replace('.', ',')}`)
+      return row
+    })
+    
+    // Footer com totais por coluna
+    const footerRow = ['TOTAIS', '', '', `R$ ${totalProdutosBruto.toFixed(2).replace('.', ',')}`]
+    if (valorDesconto > 0) {
+      footerRow.push(`-R$ ${valorDesconto.toFixed(2).replace('.', ',')}`)
     }
-  })
+    footerRow.push(`R$ ${totalProdutosLiquido.toFixed(2).replace('.', ',')}`)
+    if (totalIPI > 0) {
+      footerRow.push(`R$ ${totalIPI.toFixed(2).replace('.', ',')}`)
+    }
+    if (totalICMS > 0) {
+      footerRow.push(`R$ ${totalICMS.toFixed(2).replace('.', ',')}`)
+    }
+    if (totalST > 0) {
+      footerRow.push(`R$ ${totalST.toFixed(2).replace('.', ',')}`)
+    }
+    footerRow.push(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`)
+    
+    tableData.push(footerRow)
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: headers,
+      body: tableData,
+      theme: 'plain',
+      styles: {
+        fontSize: 7,
+        cellPadding: 2,
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [255, 255, 255],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        halign: 'center',
+        lineWidth: { bottom: 0.3, top: 0.3 },
+        fontSize: 7,
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0],
+        fontSize: 7,
+      },
+      footStyles: {
+        fillColor: [240, 240, 240],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        fontSize: 7,
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' },
+        1: { cellWidth: 12, halign: 'center' },
+        2: { cellWidth: 18, halign: 'right' },
+        3: { cellWidth: 18, halign: 'right' },
+        ...(valorDesconto > 0 ? { 4: { cellWidth: 16, halign: 'right' } } : {}),
+      },
+      didDrawPage: (data) => {
+        yPos = data.cursor?.y || yPos
+      }
+    })
+  } else {
+    // Tabela simplificada original
+    const tableData = itensParaPDF.map((item) => [
+      item.produto?.id?.toString() || '',
+      item.produto?.nome || 'Produto sem nome',
+      item.quantidade.toString().replace('.', ','),
+      `R$ ${item.preco_unitario.toFixed(2).replace('.', ',')}`,
+      `R$ ${item.subtotal.toFixed(2).replace('.', ',')}`
+    ])
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['CÓD', 'DESCRIÇÃO', 'QTD', 'PREÇO UNIT.', 'TOTAL']],
+      body: tableData,
+      theme: 'plain',
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [255, 255, 255],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        halign: 'left',
+        lineWidth: { bottom: 0.3, top: 0.3 },
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0],
+      },
+      columnStyles: {
+        0: { cellWidth: 20, halign: 'center' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 20, halign: 'center' },
+        3: { cellWidth: 30, halign: 'right' },
+        4: { cellWidth: 30, halign: 'right' },
+      },
+      didDrawPage: (data) => {
+        yPos = data.cursor?.y || yPos
+      }
+    })
+  }
 
   yPos += 8
 
@@ -268,37 +396,38 @@ export const generateOrderPDF = async (
   const totalsX = pageWidth - margin - 70
   const valueX = pageWidth - margin - 5 // Valores sempre alinhados à direita com margem fixa
 
-  // Calcular total de produtos (soma dos subtotais dos itens ordenados)
-  const totalProdutos = itensParaPDF.reduce((sum, item) => sum + item.subtotal, 0)
-  const valorDesconto = venda.desconto || 0
-  const hasImposto = venda.imposto_percentual && venda.imposto_percentual > 0
-
-  // Calcular total final corretamente baseado nas opções
-  const incluirImpostosNoPDF = opts.incluirImpostos
-  const totalFinal = incluirImpostosNoPDF && hasImposto
-    ? totalProdutos - valorDesconto + ((totalProdutos - valorDesconto) * venda.imposto_percentual!) / 100
-    : totalProdutos - valorDesconto
-
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
 
-  // Total de Produtos
-  doc.text('Total de Produtos:', totalsX, yPos)
-  doc.text(`R$ ${totalProdutos.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
-  yPos += 5
-
-  // Desconto (se aplicável)
-  if (valorDesconto > 0) {
-    doc.text('Desconto:', totalsX, yPos)
-    doc.text(`R$ ${valorDesconto.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+  // Mostrar resumo de totais apenas se não tiver os novos impostos (já mostrados na tabela)
+  if (!hasNovosImpostos) {
+    // Total de Produtos
+    doc.text('Total de Produtos:', totalsX, yPos)
+    doc.text(`R$ ${totalProdutosBruto.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
     yPos += 5
-  }
 
-  // Total final - mostrar "TOTAL COM IMPOSTO" apenas se houver imposto e incluirImpostos estiver ativo
-  doc.setFont('helvetica', 'bold')
-  doc.text(hasImposto && incluirImpostosNoPDF ? 'TOTAL COM IMPOSTO:' : 'TOTAL:', totalsX, yPos)
-  doc.text(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
-  yPos += 8
+    // Desconto (se aplicável)
+    if (valorDesconto > 0) {
+      doc.text('Desconto:', totalsX, yPos)
+      doc.text(`R$ ${valorDesconto.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+      yPos += 5
+    }
+
+    // Total final - mostrar "TOTAL COM IMPOSTO" apenas se houver imposto e incluirImpostos estiver ativo
+    doc.setFont('helvetica', 'bold')
+    doc.text(hasImposto && opts.incluirImpostos ? 'TOTAL COM IMPOSTO:' : 'TOTAL:', totalsX, yPos)
+    doc.text(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+    yPos += 8
+  } else {
+    // Com novos impostos, adicionar nota sobre ICMS se aplicável
+    if (totalICMS > 0) {
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'italic')
+      const notaICMS = '* ICMS: Valor informativo, NÃO incluído no total da venda (pode ser creditado).'
+      doc.text(notaICMS, margin, yPos)
+      yPos += 5
+    }
+  }
 
   // ==================== OBSERVAÇÕES ====================
   if (opts.incluirObservacoes && (venda.observacoes || opts.observacoesAdicionais)) {
