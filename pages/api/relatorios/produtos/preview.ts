@@ -73,6 +73,7 @@ const handler = async (
           produto_id,
           quantidade,
           preco_unitario,
+          subtotal,
           subtotal_bruto,
           subtotal_liquido,
           produto:produtos(
@@ -104,6 +105,9 @@ const handler = async (
       p => p.estoque <= p.estoque_minimo && p.ativo
     ) || []
 
+    // Criar um Set de IDs de produtos válidos baseado nos filtros aplicados
+    const produtosValidosIds = new Set(produtos?.map(p => p.id) || [])
+
     // 4️⃣ Calcular vendas por produto
     const vendasPorProduto = new Map<number, {
       produtoId: number
@@ -126,22 +130,40 @@ const handler = async (
         if (!produto) return
 
         const produtoId = item.produto_id
+        
+        // ✅ FILTRO: Só processar produtos que passaram pelos filtros iniciais
+        if (!produtosValidosIds.has(produtoId)) {
+          return
+        }
+
         const existing = vendasPorProduto.get(produtoId)
 
         // Calcular faturamento com fallbacks apropriados
+        // Prioridade: subtotal_liquido > subtotal_bruto > preco_unitario * quantidade
         let faturamento = 0
         let caminho = ''
 
-        if (item.subtotal_liquido !== null && item.subtotal_liquido !== undefined) {
+        // Tentar subtotal_liquido primeiro (valor mais preciso)
+        if (item.subtotal_liquido !== null && item.subtotal_liquido !== undefined && item.subtotal_liquido !== 0) {
           faturamento = item.subtotal_liquido
           caminho = 'subtotal_liquido'
-        } else if (item.subtotal_bruto !== null && item.subtotal_bruto !== undefined) {
+        } 
+        // Se subtotal_liquido é 0 ou null, tentar subtotal_bruto
+        else if (item.subtotal_bruto !== null && item.subtotal_bruto !== undefined && item.subtotal_bruto !== 0) {
           faturamento = item.subtotal_bruto
           caminho = 'subtotal_bruto'
-        } else if (item.preco_unitario !== null && item.preco_unitario !== undefined) {
+        } 
+        // Se ambos são 0 ou null, usar preco_unitario * quantidade
+        else if (item.preco_unitario !== null && item.preco_unitario !== undefined && item.preco_unitario !== 0) {
           faturamento = item.preco_unitario * item.quantidade
           caminho = 'preco_unitario'
-        } else {
+        }
+        // Se todos são 0 ou null, tentar buscar do campo subtotal antigo
+        else if (item.subtotal !== null && item.subtotal !== undefined && item.subtotal !== 0) {
+          faturamento = item.subtotal
+          caminho = 'subtotal_legacy'
+        }
+        else {
           caminho = 'SEM_PRECO'
         }
 
@@ -155,6 +177,7 @@ const handler = async (
             quantidade: item.quantidade,
             caminho_usado: caminho,
             item_dados: {
+              subtotal: item.subtotal,
               subtotal_liquido: item.subtotal_liquido,
               subtotal_bruto: item.subtotal_bruto,
               preco_unitario: item.preco_unitario,

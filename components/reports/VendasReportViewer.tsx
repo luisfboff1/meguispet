@@ -81,7 +81,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
 
       {/* Resumo Executivo */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {(metricas.incluirTotalVendas !== false) && (
+        {(metricas.incluirTotalVendas === true) && (
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total de Vendas</CardDescription>
@@ -95,7 +95,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           </Card>
         )}
 
-        {(metricas.incluirFaturamento !== false) && (
+        {(metricas.incluirFaturamento === true) && (
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Faturamento Total</CardDescription>
@@ -111,7 +111,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           </Card>
         )}
 
-        {(metricas.incluirTicketMedio !== false) && (
+        {(metricas.incluirTicketMedio === true) && (
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Ticket Médio</CardDescription>
@@ -127,7 +127,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           </Card>
         )}
 
-        {(metricas.incluirImpostos !== false) && (
+        {(metricas.incluirImpostos === true) && (
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Impostos</CardDescription>
@@ -143,7 +143,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           </Card>
         )}
 
-        {(metricas.incluirCustos !== false) && (
+        {(metricas.incluirCustos === true) && (
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Custo Total</CardDescription>
@@ -159,7 +159,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           </Card>
         )}
 
-        {(metricas.incluirMargemLucro !== false) && (
+        {(metricas.incluirMargemLucro === true) && (
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Margem de Lucro</CardDescription>
@@ -179,7 +179,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
       {/* Gráficos */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Vendas ao longo do tempo */}
-        {(graficos.incluirGraficoTemporal !== false) && vendasPorDia.length > 0 && (
+        {(graficos.incluirGraficoTemporal === true) && vendasPorDia.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Vendas ao Longo do Tempo</CardTitle>
@@ -231,7 +231,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
         )}
 
         {/* Top Vendedores */}
-        {(graficos.incluirGraficoVendedor !== false) && vendasPorVendedor.length > 0 && (
+        {(graficos.incluirGraficoVendedor === true) && vendasPorVendedor.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Vendas por Vendedor</CardTitle>
@@ -275,7 +275,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
       </div>
 
       {/* Top 10 Produtos */}
-      {(graficos.incluirGraficoProduto !== false) && vendasPorProduto.length > 0 && (
+      {(graficos.incluirGraficoProduto === true) && vendasPorProduto.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Top 10 Produtos Mais Vendidos</CardTitle>
@@ -291,7 +291,10 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                     <th className="text-left p-2 text-sm font-medium">#</th>
                     <th className="text-left p-2 text-sm font-medium">Produto</th>
                     <th className="text-right p-2 text-sm font-medium">Quantidade</th>
+                    <th className="text-right p-2 text-sm font-medium">Preço Custo</th>
+                    <th className="text-right p-2 text-sm font-medium">Preço Venda</th>
                     <th className="text-right p-2 text-sm font-medium">Faturamento</th>
+                    <th className="text-right p-2 text-sm font-medium">Lucro %</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -300,7 +303,20 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                       <td className="p-2 text-sm">{index + 1}</td>
                       <td className="p-2 text-sm font-medium">{produto.produtoNome}</td>
                       <td className="p-2 text-sm text-right">{produto.quantidade}</td>
+                      <td className="p-2 text-sm text-right">{formatCurrency(produto.precoCusto || 0)}</td>
+                      <td className="p-2 text-sm text-right">{formatCurrency(produto.precoVenda || 0)}</td>
                       <td className="p-2 text-sm text-right">{formatCurrency(produto.faturamento)}</td>
+                      <td className="p-2 text-sm text-right">
+                        <span className={`font-medium ${
+                          (produto.margemLucro || 0) > 20 
+                            ? 'text-green-600' 
+                            : (produto.margemLucro || 0) > 10 
+                              ? 'text-yellow-600' 
+                              : 'text-red-600'
+                        }`}>
+                          {(produto.margemLucro || 0).toFixed(1)}%
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
