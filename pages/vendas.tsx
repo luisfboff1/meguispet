@@ -144,7 +144,7 @@ export default function VendasPage() {
         setEditingVenda(null)
 
         // Buscar venda completa para impressão
-        const vendaId = editingVenda?.id || (response.data as any)?.id
+        const vendaId = editingVenda?.id || (typeof response.data === 'object' && response.data && 'id' in response.data ? response.data.id : undefined)
         if (vendaId) {
           try {
             const vendaCompleta = await vendasService.getById(vendaId)

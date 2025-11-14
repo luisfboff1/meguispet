@@ -89,11 +89,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       message: 'Relatório gerado e salvo com sucesso',
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[generate] Erro:', error)
     return res.status(500).json({
       success: false,
-      message: error.message || 'Erro ao gerar relatório',
+      message: error instanceof Error ? error.message : 'Erro ao gerar relatório',
     })
   }
 }

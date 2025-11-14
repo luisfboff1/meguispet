@@ -47,11 +47,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       },
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[saved/index] Erro:', error)
     return res.status(500).json({
       success: false,
-      message: error.message || 'Erro ao listar relatórios',
+      message: error instanceof Error ? error.message : 'Erro ao listar relatórios',
     })
   }
 }
