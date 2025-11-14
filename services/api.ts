@@ -17,6 +17,8 @@ import type {
   CategoriaFinanceiraForm,
   TransacaoRecorrente,
   TransacaoRecorrenteForm,
+  VendaParcela,
+  VendaParcelaInput,
   ApiResponse,
   PaginatedResponse,
   DashboardMetric,
@@ -554,6 +556,44 @@ export const transacoesRecorrentesService = {
 
   async gerarTransacoes(): Promise<ApiResponse> {
     const response = await api.post('/transacoes-recorrentes/gerar')
+    return response.data
+  }
+}
+
+// 💰 PARCELAS DE VENDAS
+export const vendaParcelasService = {
+  async getByVendaId(vendaId: number): Promise<ApiResponse<VendaParcela[]>> {
+    const response = await api.get(`/venda-parcelas/${vendaId}`)
+    return response.data
+  },
+
+  async getById(id: number): Promise<ApiResponse<VendaParcela>> {
+    const response = await api.get(`/venda-parcelas/parcela/${id}`)
+    return response.data
+  },
+
+  async create(parcelas: VendaParcelaInput[], vendaId: number): Promise<ApiResponse<VendaParcela[]>> {
+    const response = await api.post('/venda-parcelas', { vendaId, parcelas })
+    return response.data
+  },
+
+  async update(id: number, parcela: Partial<VendaParcela>): Promise<ApiResponse<VendaParcela>> {
+    const response = await api.put(`/venda-parcelas/${id}`, { ...parcela, id })
+    return response.data
+  },
+
+  async updateDataVencimento(id: number, data_vencimento: string): Promise<ApiResponse<VendaParcela>> {
+    const response = await api.patch(`/venda-parcelas/${id}/data-vencimento`, { data_vencimento })
+    return response.data
+  },
+
+  async marcarComoPaga(id: number, data_pagamento: string): Promise<ApiResponse<VendaParcela>> {
+    const response = await api.patch(`/venda-parcelas/${id}/pagar`, { data_pagamento })
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/venda-parcelas/${id}`)
     return response.data
   }
 }

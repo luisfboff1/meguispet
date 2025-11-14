@@ -131,6 +131,7 @@ export interface Venda {
   cliente?: Cliente
   vendedor?: Vendedor
   itens?: ItemVenda[]
+  parcelas?: VendaParcela[] // Parcelas de pagamento da venda
 }
 
 export interface ItemVenda {
@@ -252,12 +253,30 @@ export interface TransacaoFinanceira {
   categoria_detalhe?: CategoriaFinanceira
   venda_id?: number
   venda?: Venda
+  venda_parcela_id?: number
+  venda_parcela?: VendaParcela
   transacao_recorrente_id?: number
   transacao_recorrente?: TransacaoRecorrente
   data_transacao: string
   observacoes?: string
   created_at: string
   updated_at: string
+}
+
+export interface VendaParcela {
+  id: number
+  venda_id: number
+  numero_parcela: number
+  valor_parcela: number
+  data_vencimento: string
+  data_pagamento?: string | null
+  status: 'pendente' | 'pago' | 'atrasado' | 'cancelado'
+  transacao_id?: number | null
+  transacao?: TransacaoFinanceira
+  observacoes?: string
+  created_at: string
+  updated_at: string
+  venda?: Venda
 }
 
 // Tipos para formulários
@@ -376,6 +395,14 @@ export interface VendaForm {
   forma_pagamento: FormaPagamento
   origem_venda: OrigemVenda
   uf_destino?: string // UF de destino da venda (para cálculo ICMS-ST)
+  observacoes?: string
+  parcelas?: VendaParcelaInput[] // Parcelas de pagamento
+}
+
+export interface VendaParcelaInput {
+  numero_parcela: number
+  valor_parcela: number
+  data_vencimento: string
   observacoes?: string
 }
 
