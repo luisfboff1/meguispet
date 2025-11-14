@@ -168,6 +168,13 @@ export default function CustomizableFinanceiroChart({ data, loading = false }: C
       filteredData = filteredData.filter(d => d.temMovimentacao)
     }
 
+    // Limitar dados para performance (máximo 365 dias no gráfico)
+    if (filteredData.length > 365) {
+      // Pegar amostra distribuída uniformemente
+      const step = Math.ceil(filteredData.length / 365)
+      filteredData = filteredData.filter((_, index) => index % step === 0)
+    }
+
     // Add formatted display date
     return filteredData.map(d => ({
       ...d,

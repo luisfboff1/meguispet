@@ -19,10 +19,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }
 
       const supabase = getSupabase();
-      // Buscar TODAS as transações (histórico completo para fluxo de caixa acumulativo)
+      // Buscar transações dos últimos 180 dias (6 meses de histórico)
+      // Para fluxo de caixa, limitamos para performance
+      const dataInicio = new Date();
+      dataInicio.setDate(dataInicio.getDate() - 180);
+
       const { data: transacoes, error } = await supabase
         .from('transacoes')
         .select('tipo, valor, data_transacao')
+        .gte('data_transacao', dataInicio.toISOString().split('T')[0])
         .order('data_transacao', { ascending: true });
 
       if (error) throw error;
@@ -81,9 +86,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
-        // Projetar 90 dias para o futuro
+        // Projetar 60 dias para o futuro (otimizado para performance)
         const dataFinal = new Date(hoje);
-        dataFinal.setDate(dataFinal.getDate() + 90);
+        dataFinal.setDate(dataFinal.getDate() + 60);
 
         // Gerar transações recorrentes futuras
         const transacoesProjetadas: Record<string, { receitas: number; despesas: number }> = {};
@@ -124,7 +129,21 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           }
         }
 
-        let saldoAcumulado = 0;
+        // Calcular saldo inicial (soma de todas as transações antes do período)
+        let saldoInicial = 0;
+        (transacoes || []).forEach(t => {
+          const dataTransacao = new Date(t.data_transacao);
+          if (dataTransacao < new Date(Object.keys(graficoDiario)[0])) {
+            const valor = parseFloat(t.valor.toString());
+            if (t.tipo === 'receita') {
+              saldoInicial += valor;
+            } else {
+              saldoInicial -= valor;
+            }
+          }
+        });
+
+        let saldoAcumulado = saldoInicial;
 
         for (let d = new Date(primeiraData); d <= dataFinal; d.setDate(d.getDate() + 1)) {
           const diaStr = d.toISOString().split('T')[0];
