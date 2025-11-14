@@ -13,6 +13,7 @@ Documentação detalhada de todas as funcionalidades implementadas no MeguisPet.
 | 🛒 Vendas | 🟢 100% | - | [Ver](./vendas/) |
 | 📦 Estoque | 🟢 100% | - | [Ver](./estoque/) |
 | 💬 Feedback | 🟢 100% | - | [Ver](./feedback/) |
+| 📄 PDF | 🟢 100% | - | [Ver](./pdf/) |
 
 **Legenda:**
 - 🟢 Completo
@@ -56,6 +57,8 @@ Cálculo automático de impostos (IPI, ICMS, ST) em vendas.
 
 **Documentação:**
 - [Plano IPI/ST](./impostos/plano-ipi-st.md)
+- [Plano ICMS-ST Completo](./impostos/plano_icms_st_completo.md)
+- [Progresso](./impostos/ICMS_ST_PROGRESSO.md)
 
 ---
 
@@ -72,6 +75,10 @@ Gestão completa de vendas e pedidos.
 - ✅ Cálculo de impostos
 - ✅ Vendas multi-marketplace
 
+**Documentação:**
+- [README](./vendas/README.md)
+- [Correções Implementadas](./vendas/)
+
 ---
 
 ### 📦 [Estoque](./estoque/)
@@ -85,6 +92,13 @@ Controle de estoque multi-loja.
 - ✅ Estoque mínimo
 - ✅ Alertas de baixo estoque
 - ✅ Transferências entre estoques
+- ✅ Preço médio ponderado
+- ✅ Movimentações de estoque
+
+**Documentação:**
+- [README](./estoque/README.md)
+- [Stock Management V2](./estoque/STOCK_V2_README.md)
+- [Plano Multi-Estoque](./estoque/PLANO_MULTI_ESTOQUE.md)
 
 ---
 
@@ -98,6 +112,32 @@ Sistema de feedback e suporte.
 - ✅ Categorização (bug/sugestão/dúvida)
 - ✅ Upload de screenshots
 - ✅ Histórico de feedbacks
+- ✅ Kanban board para gestão
+
+**Documentação:**
+- [README](./feedback/README.md)
+- [System Docs](./feedback/FEEDBACK_SYSTEM_DOCS.md)
+- [UI Guide](./feedback/FEEDBACK_SYSTEM_UI_GUIDE.md)
+
+---
+
+### 📄 [PDF](./pdf/)
+Sistema de geração de pedidos em PDF.
+
+**Status:** 🟢 Completo
+
+**Features:**
+- ✅ Geração de pedidos em PDF
+- ✅ Layout customizável
+- ✅ Dados completos do pedido
+- ✅ Tabela de produtos
+- ✅ Totalizadores e impostos
+- ✅ Download automático
+
+**Documentação:**
+- [README](./pdf/README.md)
+- [Implementação](./pdf/IMPLEMENTACAO_PDF.md)
+- [Atualização de Layout](./pdf/ATUALIZACAO_PDF.md)
 
 ---
 
