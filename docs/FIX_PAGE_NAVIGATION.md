@@ -25,7 +25,7 @@ The Vendas page worked because:
 
 ## Solution Implemented
 
-### Changes Made
+### Changes Made - UPDATED (v2)
 
 #### 1. pages/_app.tsx
 ```tsx
@@ -35,20 +35,30 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
   
   return (
-    <MainLayout>
-      <Component {...pageProps} key={router.asPath} />
+    <MainLayout key={router.pathname}>
+      <Component {...pageProps} key={router.pathname} />
     </MainLayout>
   )
 }
 ```
 
-**Key Addition**: `key={router.asPath}`
+**Key Changes**: 
+- Added `key={router.pathname}` to both MainLayout AND Component
+- Using `router.pathname` instead of `router.asPath`
 
-This forces React to:
-- Unmount the old page component completely when the route changes
-- Mount a fresh instance of the new page component
-- Reset all component state to initial values
-- Properly run useEffect cleanup functions
+**Why router.pathname instead of router.asPath?**
+- `pathname` = `/dashboard` (route path only)
+- `asPath` = `/dashboard?tab=overview#section` (includes query params and hash)
+- Using `pathname` avoids unnecessary remounts when only query params change
+
+**Why key on MainLayout too?**
+This forces React to remount the entire layout, including:
+- Sidebar state reset
+- Animation states reset
+- All memoized content refresh
+- Header state reset
+
+This more aggressive approach ensures both the layout wrapper AND the page content completely remount on every route change.
 
 #### 2. components/charts/CustomizableFinanceiroChart.tsx
 Removed debug console.log that was running on every render:

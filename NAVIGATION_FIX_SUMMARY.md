@@ -12,16 +12,23 @@ Fixed the issue where pages were not properly updating when navigating between r
 
 The fix was implemented by adding a `key` prop to force React to properly unmount and remount components on route changes.
 
-### What Changed
+### What Changed (Updated v2)
 
-1. **pages/_app.tsx** (Core Fix)
+1. **pages/_app.tsx** (Core Fix - Updated)
    ```tsx
    // Added useRouter hook
    const router = useRouter()
    
-   // Added key prop based on route
-   <Component {...pageProps} key={router.asPath} />
+   // Added key prop to BOTH MainLayout and Component
+   <MainLayout key={router.pathname}>
+     <Component {...pageProps} key={router.pathname} />
+   </MainLayout>
    ```
+
+   **Updates in v2:**
+   - Changed from `router.asPath` to `router.pathname` (avoids remounts on query param changes)
+   - Added key to MainLayout wrapper (forces complete layout remount)
+   - Kept key on Component (ensures page content remount)
 
 2. **components/charts/CustomizableFinanceiroChart.tsx**
    - Removed debug console.log that ran on every render
@@ -35,20 +42,31 @@ The fix was implemented by adding a `key` prop to force React to properly unmoun
    - `docs/FIX_PAGE_NAVIGATION.md` - Technical explanation
    - `docs/MANUAL_TESTING_NAVIGATION.md` - Testing guide
 
-## How It Works
+## How It Works (Updated v2)
 
-The `key={router.asPath}` prop tells React:
-- "This component is DIFFERENT when the route changes"
-- Forces complete unmount of old page
-- Forces fresh mount of new page
-- Resets all component state
+The `key={router.pathname}` prop on both MainLayout and Component tells React:
+- "These components are DIFFERENT when the route path changes"
+- Forces complete unmount of old layout AND page
+- Forces fresh mount of new layout AND page
+- Resets all component state in both
 - Runs all cleanup functions properly
+
+**Why router.pathname?**
+- Only changes when the actual route path changes (e.g., `/dashboard` → `/financeiro`)
+- Doesn't change for query params or hash changes (e.g., `?tab=1` or `#section`)
+- Prevents unnecessary remounts while maintaining proper navigation behavior
+
+**Why key on MainLayout too?**
+- Ensures sidebar, header, and all layout state is reset
+- Prevents memoized layout components from blocking remounts
+- Forces AnimatePresence animations to restart cleanly
 
 ### Why This Maintains Performance
 
 - ✅ React.memo still works for within-page updates
 - ✅ Lazy loading is unchanged
-- ✅ Only route changes trigger remounts (as they should)
+- ✅ Only route PATH changes trigger remounts (as they should)
+- ✅ Query param changes don't trigger unnecessary remounts
 - ✅ No impact on interaction speed
 - ✅ Same bundle size
 
