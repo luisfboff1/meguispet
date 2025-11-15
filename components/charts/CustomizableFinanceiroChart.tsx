@@ -67,11 +67,6 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
   const [customEndDate, setCustomEndDate] = useState('')
   const [showCustomDatePopover, setShowCustomDatePopover] = useState(false)
 
-  // Debug: detectar re-renders
-  React.useEffect(() => {
-    console.log('🔄 CustomizableFinanceiroChart renderizou')
-  })
-
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {}
     selectedMetrics.forEach((metric) => {
