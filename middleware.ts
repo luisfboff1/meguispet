@@ -48,14 +48,11 @@ export async function middleware(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
-  // Try to refresh the session - this will automatically refresh expired tokens
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  // Get the user (this will use the refreshed session if available)
+  // Get the user (getUser() already refreshes the session internally)
+  // No need to call getSession() separately - it's duplicated work
   const {
     data: { user },
+    error
   } = await supabase.auth.getUser()
 
   // If user is not signed in and the current path is not /login, redirect to /login

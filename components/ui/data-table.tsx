@@ -54,34 +54,40 @@ export const DataTable = React.memo(function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(initialColumnVisibility)
   const [columnResizeMode] = React.useState<ColumnResizeMode>("onChange")
   const [isMobile, setIsMobile] = React.useState(false)
+  const isInitializedRef = React.useRef(false)
 
   // Detect mobile screen size
   React.useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Initialize column visibility based on screen size
+  // Initialize column visibility based on screen size (ONCE on mount)
   React.useEffect(() => {
+    // Prevent infinite loop: only run once on mount
+    if (isInitializedRef.current) return
+
     if (isMobile && mobileVisibleColumns.length > 0) {
       const mobileVisibility: VisibilityState = { ...initialColumnVisibility }
       columns.forEach((column) => {
         const columnDef = column as { id?: string; accessorKey?: string | number | symbol }
-        const columnId = typeof column.id === 'string' ? column.id : 
+        const columnId = typeof column.id === 'string' ? column.id :
                         columnDef.accessorKey?.toString() || ''
         if (columnId && !mobileVisibleColumns.includes(columnId)) {
           mobileVisibility[columnId] = false
         }
       })
       setColumnVisibility(mobileVisibility)
-    } else if (!isMobile && Object.keys(columnVisibility).length === 0) {
-      // Set initial visibility on desktop if not already set
+      isInitializedRef.current = true
+    } else if (!isMobile) {
+      // Set initial visibility on desktop
       setColumnVisibility(initialColumnVisibility)
+      isInitializedRef.current = true
     }
   }, [isMobile, mobileVisibleColumns, columns, initialColumnVisibility])
 

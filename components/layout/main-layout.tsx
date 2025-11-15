@@ -52,11 +52,9 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     setHydrated(true)
   }, [])
 
-  useEffect(() => {
-    if (!isNoLayoutPage && hydrated && !loading && !isAuthenticated) {
-      router.replace('/login')
-    }
-  }, [hydrated, isAuthenticated, isNoLayoutPage, loading, router])
+  // Removed: Auth check is handled by middleware.ts
+  // No need to duplicate the check here - middleware already protects routes
+  // This improves navigation performance by removing blocking redirects
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -75,7 +73,9 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   }
 
   // Evitar hidratação mismatch - só renderizar após montar no cliente
-  if (!hydrated || loading) {
+  // Removed 'loading' check to prevent blocking page transitions
+  // Middleware handles auth, so we can render immediately after hydration
+  if (!hydrated) {
     return <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
       <div className="flex-1 flex items-center justify-center">
         <div className="text-gray-500">Carregando...</div>
@@ -83,9 +83,8 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     </div>
   }
 
-  if (!isAuthenticated) {
-    return null
-  }
+  // Allow rendering even if not authenticated - middleware will redirect if needed
+  // This prevents flash of loading screen during navigation
 
   return (
   <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900" suppressHydrationWarning>

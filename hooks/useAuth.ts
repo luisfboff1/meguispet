@@ -47,7 +47,7 @@ export function useAuth() {
 
   useEffect(() => {
     synchronizeLocalStorage()
-  }, [synchronizeLocalStorage])
+  }, [token, user]) // Only sync when token or user actually changes
 
   const handleLogout = useCallback(async () => {
     try {
@@ -135,10 +135,13 @@ export function useAuth() {
   }, [clear, handleLogout, setCredentials, setStatus])
 
   useEffect(() => {
+    // Only check auth on initial mount if status is idle
+    // Middleware already protects routes, so we don't need to check on every render
     if (status === 'idle') {
       checkAuth()
     }
-  }, [status, checkAuth])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]) // Remove checkAuth from dependencies to prevent unnecessary checks
 
   // Set up Supabase auth state listener for automatic token refresh
   useEffect(() => {

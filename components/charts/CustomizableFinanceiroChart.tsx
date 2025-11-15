@@ -67,10 +67,13 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
   const [customEndDate, setCustomEndDate] = useState('')
   const [showCustomDatePopover, setShowCustomDatePopover] = useState(false)
 
-  // Debug: detectar re-renders
+  // Debug: detectar re-renders - apenas no mount
   React.useEffect(() => {
-    console.log('🔄 CustomizableFinanceiroChart renderizou')
-  })
+    console.log('🔄 CustomizableFinanceiroChart montado')
+    return () => {
+      console.log('🚪 CustomizableFinanceiroChart desmontado')
+    }
+  }, []) // Array vazio = só roda no mount/unmount
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {}

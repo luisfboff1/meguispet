@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -54,6 +55,7 @@ interface MetricCard {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [metrics, setMetrics] = useState<MetricCard[]>([])
   const [topProducts, setTopProducts] = useState<DashboardTopProduct[]>([])
   const [vendas7Dias, setVendas7Dias] = useState<DashboardVendasDia[]>([])
@@ -255,8 +257,8 @@ export default function DashboardPage() {
   const handleNovaMovimentacao = showMovimentacaoModal
 
   const handleVerRelatorios = () => {
-    // Redirecionar para página de relatórios
-    window.location.href = '/relatorios'
+    // Redirecionar para página de relatórios usando Next.js routing
+    router.push('/relatorios')
   }
 
   const formatCurrency = (value: number) => {
