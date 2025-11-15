@@ -56,7 +56,7 @@ const metricConfig: Record<MetricKey, { label: string; color: string }> = {
   saldoAcumulado: { label: 'Saldo Acumulado', color: 'hsl(38, 92%, 50%)' },
 }
 
-export default function CustomizableFinanceiroChart({ data, loading = false }: CustomizableFinanceiroChartProps) {
+const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroChart({ data, loading = false }: CustomizableFinanceiroChartProps) {
   const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
     new Set<MetricKey>(['saldoAcumulado'])
   )
@@ -66,6 +66,11 @@ export default function CustomizableFinanceiroChart({ data, loading = false }: C
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
   const [showCustomDatePopover, setShowCustomDatePopover] = useState(false)
+
+  // Debug: detectar re-renders
+  React.useEffect(() => {
+    console.log('🔄 CustomizableFinanceiroChart renderizou')
+  })
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {}
@@ -654,4 +659,6 @@ export default function CustomizableFinanceiroChart({ data, loading = false }: C
       </CardContent>
     </Card>
   )
-}
+})
+
+export default CustomizableFinanceiroChart
