@@ -61,17 +61,13 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   useEffect(() => {
     const handleRouteChange = () => {
       closeOnNavigate()
-      // Trigger a custom event that pages can listen to for refreshing data
-      window.dispatchEvent(new CustomEvent('routechange', { 
-        detail: { path: router.asPath } 
-      }))
     }
 
     router.events.on('routeChangeComplete', handleRouteChange)
     return () => {
       router.events.off('routeChangeComplete', handleRouteChange)
     }
-  }, [closeOnNavigate, router.events, router.asPath])
+  }, [closeOnNavigate, router.events])
 
   // Se for página sem layout, renderizar só o conteúdo
   if (isNoLayoutPage) {
