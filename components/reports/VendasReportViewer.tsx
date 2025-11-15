@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Download, FileSpreadsheet, FileText, Share2 } from 'lucide-react'
@@ -6,11 +6,15 @@ import { Line, LineChart, Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, Cart
 import type { VendasReportData, ReportConfiguration, ReportFormat } from '@/types/reports'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import html2canvas from 'html2canvas'
 
 export interface VendasReportViewerProps {
   data: VendasReportData
   configuracao: ReportConfiguration
-  onExport: (formato: ReportFormat) => void
+  onExport: (formato: ReportFormat, chartImages?: {
+    temporal?: { image: string; width: number; height: number }
+    vendedor?: { image: string; width: number; height: number }
+  }) => void
   className?: string
 }
 
@@ -40,6 +44,71 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
   const { resumo, vendasPorDia, vendasPorVendedor, vendasPorProduto, vendasDetalhadas } = data
   const { metricas = {}, graficos = {} } = configuracao
 
+  // Refs para capturar gráficos
+  const graficoTemporalRef = useRef<HTMLDivElement>(null)
+  const graficoVendedorRef = useRef<HTMLDivElement>(null)
+
+  // Função para capturar gráficos como base64
+  const captureCharts = async (): Promise<{
+    temporal?: { image: string; width: number; height: number }
+    vendedor?: { image: string; width: number; height: number }
+  }> => {
+    const charts: {
+      temporal?: { image: string; width: number; height: number }
+      vendedor?: { image: string; width: number; height: number }
+    } = {}
+
+    try {
+      if (graficoTemporalRef.current && graficos.incluirGraficoTemporal) {
+        const canvas = await html2canvas(graficoTemporalRef.current, {
+          backgroundColor: '#ffffff',
+          scale: 3, // Qualidade muito alta
+          useCORS: true,
+          logging: false,
+          width: graficoTemporalRef.current.offsetWidth,
+          height: graficoTemporalRef.current.offsetHeight,
+        })
+        charts.temporal = {
+          image: canvas.toDataURL('image/png', 1.0),
+          width: canvas.width,
+          height: canvas.height,
+        }
+      }
+
+      if (graficoVendedorRef.current && graficos.incluirGraficoVendedor) {
+        const canvas = await html2canvas(graficoVendedorRef.current, {
+          backgroundColor: '#ffffff',
+          scale: 3, // Qualidade muito alta
+          useCORS: true,
+          logging: false,
+          width: graficoVendedorRef.current.offsetWidth,
+          height: graficoVendedorRef.current.offsetHeight,
+        })
+        charts.vendedor = {
+          image: canvas.toDataURL('image/png', 1.0),
+          width: canvas.width,
+          height: canvas.height,
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao capturar gráficos:', error)
+    }
+
+    return charts
+  }
+
+  // Handler de export modificado para capturar gráficos
+  const handleExportWithCharts = async (formato: ReportFormat) => {
+    if (formato === 'pdf') {
+      // Capturar gráficos antes de exportar
+      const chartImages = await captureCharts()
+      // Passar imagens para o handler original
+      onExport(formato, chartImages)
+    } else {
+      onExport(formato)
+    }
+  }
+
   return (
     <div className={className}>
       {/* Header com ações */}
@@ -55,7 +124,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onExport('pdf')}
+            onClick={() => handleExportWithCharts('pdf')}
           >
             <FileText className="mr-2 h-4 w-4" />
             PDF
@@ -63,7 +132,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onExport('excel')}
+            onClick={() => handleExportWithCharts('excel')}
           >
             <FileSpreadsheet className="mr-2 h-4 w-4" />
             Excel
@@ -71,7 +140,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onExport('csv')}
+            onClick={() => handleExportWithCharts('csv')}
           >
             <Download className="mr-2 h-4 w-4" />
             CSV
@@ -180,7 +249,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Vendas ao longo do tempo */}
         {(graficos.incluirGraficoTemporal === true) && vendasPorDia.length > 0 && (
-          <Card>
+          <Card ref={graficoTemporalRef}>
             <CardHeader>
               <CardTitle>Vendas ao Longo do Tempo</CardTitle>
               <CardDescription>
@@ -199,6 +268,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                   <YAxis yAxisId="left" style={{ fontSize: 12 }} />
                   <YAxis yAxisId="right" orientation="right" style={{ fontSize: 12 }} />
                   <Tooltip
+                    wrapperStyle={{ zIndex: 1000 }}
                     labelFormatter={formatDate}
                     formatter={(value: number, name: string) => {
                       if (name === 'Faturamento') {
@@ -232,7 +302,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
 
         {/* Top Vendedores */}
         {(graficos.incluirGraficoVendedor === true) && vendasPorVendedor.length > 0 && (
-          <Card>
+          <Card ref={graficoVendedorRef}>
             <CardHeader>
               <CardTitle>Vendas por Vendedor</CardTitle>
               <CardDescription>
@@ -257,6 +327,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                     label={{ value: 'Faturamento (R$)', angle: 90, position: 'insideRight' }}
                   />
                   <Tooltip
+                    wrapperStyle={{ zIndex: 1000 }}
                     formatter={(value: number, name: string) => {
                       if (name === 'Faturamento') {
                         return [formatCurrency(value), name]

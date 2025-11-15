@@ -57,11 +57,14 @@ export default function VendasReportPage() {
     }
   }
 
-  const handleExport = async (formato: ReportFormat) => {
+  const handleExport = async (formato: ReportFormat, chartImages?: {
+    temporal?: { image: string; width: number; height: number }
+    vendedor?: { image: string; width: number; height: number }
+  }) => {
     if (!reportConfig) return
 
     try {
-      const blob = await reportsService.export('vendas', reportConfig, formato as 'pdf' | 'excel' | 'csv')
+      const blob = await reportsService.export('vendas', reportConfig, formato as 'pdf' | 'excel' | 'csv', chartImages)
       const filename = getExportFilename(
         'vendas',
         formato,

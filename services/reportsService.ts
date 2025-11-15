@@ -90,13 +90,18 @@ export const reportsService = {
   export: async (
     tipo: ReportType,
     config: ReportConfiguration,
-    formato: 'pdf' | 'excel' | 'csv'
+    formato: 'pdf' | 'excel' | 'csv',
+    chartImages?: {
+      temporal?: { image: string; width: number; height: number }
+      vendedor?: { image: string; width: number; height: number }
+    }
   ): Promise<Blob> => {
     const response = await api.post(
       `/${tipo}/export`,
       {
         ...config,
         formato,
+        chartImages, // Incluir imagens dos gráficos
       },
       {
         responseType: 'blob',
