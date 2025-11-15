@@ -86,15 +86,8 @@ const nextConfig = (phase) => {
             },
           ],
         },
-        {
-          source: '/api/:path*',
-          headers: [
-            {
-              key: 'Cache-Control',
-              value: 'public, max-age=300, stale-while-revalidate=600',
-            },
-          ],
-        },
+        // ⚠️ REMOVED aggressive API caching - was causing stale data issues
+        // APIs now use in-memory cache with invalidation instead of HTTP cache
       ]
     },
   }

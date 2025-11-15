@@ -43,7 +43,8 @@
       "mcp__byterover-mcp__byterover-retrieve-knowledge",
       "mcp__ide__getDiagnostics",
       "Bash(npm run dev:local)",
-      "Bash(pnpm run dev)"
+      "Bash(pnpm run dev)",
+      "Bash(pnpm remove @next/swc-win32-x64-msvc)"
     ],
     "deny": [],
     "ask": []

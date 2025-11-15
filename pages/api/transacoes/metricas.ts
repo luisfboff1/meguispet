@@ -1,10 +1,7 @@
 import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
-
-// Simple in-memory cache (5 minutes TTL)
-let metricasCache: { data: unknown; timestamp: number } | null = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+import { cacheManager } from '@/lib/cache-manager';
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
@@ -12,22 +9,26 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   try {
     if (method === 'GET') {
       // Check cache first
-      const now = Date.now();
-      if (metricasCache && (now - metricasCache.timestamp) < CACHE_TTL) {
+      if (cacheManager.metricas.isValid()) {
         console.log('💰 Serving financial metrics from cache');
-        return res.status(200).json(metricasCache.data);
+        const cached = cacheManager.metricas.get();
+        return res.status(200).json(cached?.data);
       }
 
       const supabase = getSupabase();
-      // Buscar transações dos últimos 180 dias (6 meses de histórico)
+      // Buscar transações dos últimos 180 dias + próximos 60 dias (para incluir parcelas futuras)
       // Para fluxo de caixa, limitamos para performance
       const dataInicio = new Date();
       dataInicio.setDate(dataInicio.getDate() - 180);
+
+      const dataFim = new Date();
+      dataFim.setDate(dataFim.getDate() + 60);
 
       const { data: transacoes, error } = await supabase
         .from('transacoes')
         .select('tipo, valor, data_transacao')
         .gte('data_transacao', dataInicio.toISOString().split('T')[0])
+        .lte('data_transacao', dataFim.toISOString().split('T')[0])
         .order('data_transacao', { ascending: true });
 
       if (error) throw error;
@@ -150,11 +151,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           const ehFuturo = d > hoje;
 
           // Dados históricos ou projetados
+          // Para dias futuros: somar transações já cadastradas (parcelas) + recorrentes projetadas
           const receitas = ehFuturo
-            ? (transacoesProjetadas[diaStr]?.receitas || 0)
+            ? (graficoDiario[diaStr]?.receitas || 0) + (transacoesProjetadas[diaStr]?.receitas || 0)
             : (graficoDiario[diaStr]?.receitas || 0);
           const despesas = ehFuturo
-            ? (transacoesProjetadas[diaStr]?.despesas || 0)
+            ? (graficoDiario[diaStr]?.despesas || 0) + (transacoesProjetadas[diaStr]?.despesas || 0)
             : (graficoDiario[diaStr]?.despesas || 0);
 
           const fluxoDia = receitas - despesas;
@@ -211,9 +213,18 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       };
 
       // Cache the response
-      metricasCache = { data: response, timestamp: now };
+      cacheManager.metricas.set(response);
 
       return res.status(200).json(response);
+    }
+
+    if (method === 'DELETE') {
+      // Endpoint para forçar invalidação do cache
+      cacheManager.metricas.invalidate();
+      return res.status(200).json({
+        success: true,
+        message: 'Cache de métricas invalidado com sucesso'
+      });
     }
 
     return res.status(405).json({ success: false, message: 'Método não permitido' });

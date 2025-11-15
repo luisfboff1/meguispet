@@ -23,6 +23,8 @@ export type { VendasReportViewerProps } from './VendasReportViewer'
 export { ProdutosReportViewer } from './ProdutosReportViewer'
 export type { ProdutosReportViewerProps } from './ProdutosReportViewer'
 
-// Futuras exportações (Fase 4+):
+export { FinanceiroReportViewer } from './FinanceiroReportViewer'
+export type { FinanceiroReportViewerProps } from './FinanceiroReportViewer'
+
+// Futuras exportações:
 // export { ClientesReportViewer } from './ClientesReportViewer'
-// export { FinanceiroReportViewer } from './FinanceiroReportViewer'

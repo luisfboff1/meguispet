@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -6,9 +6,6 @@ import { Button } from '@/components/ui/button'
 import {
   Download,
   Calendar,
-  BarChart3,
-  PieChart,
-  TrendingUp,
   FileText,
   Eye,
   ShoppingCart,
@@ -64,41 +61,8 @@ export default function RelatoriosPage() {
     }
   ]
 
-  // Sample data for recent reports - in production this would come from an API
-  const recentReports: ReportData[] = [
-    {
-      id: '1',
-      tipo: 'vendas',
-      nome: 'Relatório de Vendas - Mensal',
-      periodo: 'Dezembro 2024',
-      dataGeracao: '2024-12-15',
-      status: 'disponivel'
-    },
-    {
-      id: '2',
-      tipo: 'produtos',
-      nome: 'Relatório de Produtos Mais Vendidos',
-      periodo: 'Novembro 2024',
-      dataGeracao: '2024-12-01',
-      status: 'disponivel'
-    },
-    {
-      id: '3',
-      tipo: 'clientes',
-      nome: 'Análise de Clientes',
-      periodo: 'Outubro-Dezembro 2024',
-      dataGeracao: '2024-12-10',
-      status: 'disponivel'
-    },
-    {
-      id: '4',
-      tipo: 'financeiro',
-      nome: 'Relatório Financeiro - Trimestral',
-      periodo: 'Q4 2024',
-      dataGeracao: '2024-12-20',
-      status: 'disponivel'
-    }
-  ]
+  // Relatórios recentes virão de uma API futuramente
+  const recentReports: ReportData[] = []
 
   const getStatusColor = (status: ReportData['status']) => {
     switch (status) {
@@ -190,12 +154,6 @@ export default function RelatoriosPage() {
           <p className="text-gray-600">Gere relatórios detalhados do seu negócio</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button className="bg-meguispet-primary hover:bg-meguispet-primary/90">
-            <Download className="mr-2 h-4 w-4" />
-            Exportar Todos
-          </Button>
-        </div>
       </div>
 
       {/* Report Types - Cards de relatórios disponíveis */}
@@ -214,53 +172,6 @@ export default function RelatoriosPage() {
             />
           ))}
         </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Vendas</CardTitle>
-            <BarChart3 className="h-4 w-4 text-meguispet-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">No período</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Faturamento</CardTitle>
-            <TrendingUp className="h-4 w-4 text-meguispet-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ 0,00</div>
-            <p className="text-xs text-muted-foreground">No período</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtos Vendidos</CardTitle>
-            <PieChart className="h-4 w-4 text-meguispet-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">Unidades</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Novos Clientes</CardTitle>
-            <Calendar className="h-4 w-4 text-meguispet-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">No período</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Recent Reports */}

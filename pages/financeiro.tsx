@@ -138,10 +138,11 @@ export default function FinanceiroPage() {
     try {
       setLoading(true)
       const response = await transacoesService.create(data)
-      
+
       if (response.success) {
         setShowTransacaoForm(false)
         setEditingTransacao(null)
+        // Recarregar dados financeiros (cache foi invalidado no backend)
         await loadFinancialData()
       } else {
         setError(response.message || 'Erro ao criar transação')
@@ -155,14 +156,15 @@ export default function FinanceiroPage() {
 
   const handleEditTransacao = async (data: TransacaoFormType) => {
     if (!editingTransacao) return
-    
+
     try {
       setLoading(true)
       const response = await transacoesService.update(editingTransacao.id, data)
-      
+
       if (response.success) {
         setShowTransacaoForm(false)
         setEditingTransacao(null)
+        // Recarregar dados financeiros (cache foi invalidado no backend)
         await loadFinancialData()
       } else {
         setError(response.message || 'Erro ao atualizar transação')
@@ -176,12 +178,13 @@ export default function FinanceiroPage() {
 
   const handleDeleteTransacao = async (id: number) => {
     if (!confirm('Tem certeza que deseja excluir esta transação?')) return
-    
+
     try {
       setLoading(true)
       const response = await transacoesService.delete(id)
-      
+
       if (response.success) {
+        // Recarregar dados financeiros (cache foi invalidado no backend)
         await loadFinancialData()
       } else {
         setError(response.message || 'Erro ao excluir transação')

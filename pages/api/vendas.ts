@@ -1,6 +1,7 @@
 import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import { invalidateCacheAfterMutation } from '@/lib/cache-manager';
 import {
   applySaleStock,
   revertSaleStock,
@@ -351,6 +352,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         }
       }
 
+      // Invalidar cache de métricas após criar venda
+      invalidateCacheAfterMutation();
+
       return res.status(201).json({
         success: true,
         message: algumErroEstoque
@@ -602,6 +606,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         }
       }
 
+      // Invalidar cache de métricas após atualizar venda
+      invalidateCacheAfterMutation();
+
       return res.status(200).json({
         success: true,
         message: 'Venda atualizada com sucesso',
@@ -704,6 +711,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           message: 'Erro ao deletar venda: ' + deleteVendaError.message 
         });
       }
+
+      // Invalidar cache de métricas após excluir venda
+      invalidateCacheAfterMutation();
 
       return res.status(200).json({
         success: true,

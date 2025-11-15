@@ -39,8 +39,9 @@ interface DataTableProps<TData, TValue> {
   initialColumnVisibility?: VisibilityState // Initial visibility state for columns
 }
 
-// Memoized for performance
-export const DataTable = React.memo(function DataTable<TData, TValue>({
+// ⚠️ REMOVED React.memo - was blocking data updates after mutations
+// React.memo caused stale data issue where F5 wouldn't refresh
+export function DataTable<TData, TValue>({
   columns,
   data,
   enableColumnResizing = true,
@@ -236,7 +237,7 @@ export const DataTable = React.memo(function DataTable<TData, TValue>({
       </div>
     </div>
   )
-}) as <TData, TValue>(props: DataTableProps<TData, TValue>) => React.ReactElement
+}
 
 // Helper component for sortable column headers
 export function SortableHeader<TData>({ 

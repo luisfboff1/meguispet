@@ -1,6 +1,7 @@
 import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import { invalidateCacheAfterMutation } from '@/lib/cache-manager';
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
@@ -57,6 +58,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .single();
 
       if (error) throw error;
+
+      // Invalidar cache de métricas após criar transação
+      invalidateCacheAfterMutation();
 
       return res.status(201).json({ success: true, message: 'Transação criada com sucesso', data });
     }

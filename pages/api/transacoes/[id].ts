@@ -1,6 +1,7 @@
 import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import { invalidateCacheAfterMutation } from '@/lib/cache-manager';
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method, query } = req;
@@ -75,10 +76,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       if (error) throw error;
 
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Transação atualizada com sucesso', 
-        data 
+      // Invalidar cache de métricas após atualizar transação
+      invalidateCacheAfterMutation();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Transação atualizada com sucesso',
+        data
       });
     }
 
@@ -102,9 +106,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       if (error) throw error;
 
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Transação excluída com sucesso' 
+      // Invalidar cache de métricas após excluir transação
+      invalidateCacheAfterMutation();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Transação excluída com sucesso'
       });
     }
 
