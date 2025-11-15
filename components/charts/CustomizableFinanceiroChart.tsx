@@ -26,6 +26,20 @@ import type { FinanceiroMetrics } from '@/types'
 // Lazy loading de Recharts para otimização
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 
+// Utility functions FORA do componente para evitar re-renders
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 0,
+  }).format(value)
+}
+
 interface CustomizableFinanceiroChartProps {
   data: FinanceiroMetrics['grafico_mensal'] | FinanceiroMetrics['grafico_diario']
   loading?: boolean
@@ -52,20 +66,6 @@ export default function CustomizableFinanceiroChart({ data, loading = false }: C
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
   const [showCustomDatePopover, setShowCustomDatePopover] = useState(false)
-
-  // Utility functions defined before use
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-  }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-    }).format(value)
-  }
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {}
