@@ -68,15 +68,9 @@ export default function FinanceiroPage() {
   const [filterTipo, setFilterTipo] = useState('')
 
   useEffect(() => {
-    console.log('📊 Página Financeiro montada')
     loadFinancialData()
     loadCategorias()
     loadTransacoesRecorrentes()
-
-    // Cleanup quando desmontar
-    return () => {
-      console.log('🚪 Página Financeiro desmontando...')
-    }
   }, [])
 
   const loadFinancialData = async () => {
