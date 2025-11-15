@@ -56,7 +56,7 @@ const metricConfig: Record<MetricKey, { label: string; color: string }> = {
   saldoAcumulado: { label: 'Saldo Acumulado', color: 'hsl(38, 92%, 50%)' },
 }
 
-const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroChart({ data, loading = false }: CustomizableFinanceiroChartProps) {
+function CustomizableFinanceiroChart({ data, loading = false }: CustomizableFinanceiroChartProps) {
   const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
     new Set<MetricKey>(['saldoAcumulado'])
   )
@@ -654,6 +654,6 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
       </CardContent>
     </Card>
   )
-})
+}
 
 export default CustomizableFinanceiroChart

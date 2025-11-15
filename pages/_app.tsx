@@ -1,7 +1,6 @@
 import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
-import { useRouter } from 'next/router'
 import { MainLayout } from '@/components/layout/main-layout'
 import { ToastProvider } from '@/components/ui/use-toast'
 import { Toaster } from '@/components/ui/toaster'
@@ -11,8 +10,6 @@ import { Toaster } from '@/components/ui/toaster'
 // Não precisa configurar layout página por página!
 
 export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter()
-  
   return (
     <>
       <Head>
@@ -21,7 +18,7 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
       <ToastProvider>
         <MainLayout>
-          <Component {...pageProps} key={router.asPath} />
+          <Component {...pageProps} />
         </MainLayout>
         <Toaster />
       </ToastProvider>

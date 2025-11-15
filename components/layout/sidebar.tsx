@@ -137,8 +137,6 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
                   key={item.href}
                   href={item.href}
                   onClick={handleItemSelect}
-                  prefetch={false}
-                  scroll={false}
                   className={cn(
                     'group relative flex items-center gap-3 overflow-hidden rounded-2xl px-3 py-2 text-sm transition-all duration-200',
                     active
