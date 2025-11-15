@@ -4,90 +4,170 @@
 Sometimes when navigating between pages in the application, the URL would change but the page content wouldn't update, requiring a hard refresh (F5) to see the new page.
 
 ## Root Cause
-In Next.js applications using the Pages Router, when navigating between pages using client-side navigation (`Link` component or `router.push`), Next.js optimizes performance by reusing React component instances when possible. This is generally good for performance, but can cause issues when:
-
-1. Pages don't properly reset their state on mount
-2. `useEffect` hooks have stale closures or missing dependencies
-3. Components cache data that should be refreshed on navigation
-4. State management stores don't properly sync with route changes
+In Next.js applications using the Pages Router, when navigating between pages using client-side navigation (`Link` component or `router.push`), React component instances can persist between navigations if they're not properly tracking route changes. This caused pages to not re-initialize their data fetching logic when users navigated away and back.
 
 ## Solution
-Added a `key` prop to the main `Component` element in `pages/_app.tsx` using `router.asPath`:
+Added `router.asPath` as a dependency to the `useEffect` hooks in all pages that load data. This ensures pages detect route changes and reload their data, while still respecting their own caching logic.
 
+### Implementation
+
+**Before:**
 ```tsx
-import { useRouter } from 'next/router'
-
-export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter()
-  
-  return (
-    <MainLayout>
-      <Component {...pageProps} key={router.asPath} />
-    </MainLayout>
-  )
+export default function DashboardPage() {
+  useEffect(() => {
+    loadDashboardData()
+  }, [loadDashboardData])  // Missing route tracking
 }
 ```
 
+**After:**
+```tsx
+import { useRouter } from 'next/router'
+
+export default function DashboardPage() {
+  const router = useRouter()
+  
+  // Load data on mount and when route changes
+  // Cache logic inside loadDashboardData prevents unnecessary API calls
+  useEffect(() => {
+    loadDashboardData()
+  }, [loadDashboardData, router.asPath])
+}
+```
+
+## Why This Approach?
+
+### Initial Approach (Rejected)
+The first solution used `key={router.asPath}` on the `<Component>` in `_app.tsx` to force complete remounting:
+
+```tsx
+// This was rejected
+<Component {...pageProps} key={router.asPath} />
+```
+
+**Problems:**
+- ❌ Forced complete component remount on every navigation
+- ❌ Lost all client-side cache (5-minute API cache)
+- ❌ Went against documented performance optimizations
+- ❌ Negated the "Navegação entre Páginas: Instantâneo" feature
+
+### Current Approach (Implemented)
+Track route changes at the page level using `router.asPath` dependency:
+
+**Advantages:**
+- ✅ Pages detect route changes and reload when necessary
+- ✅ Respects page-level caching (5-minute cache still works)
+- ✅ Maintains all performance optimizations
+- ✅ No scroll position loss
+- ✅ Aligns with documented architecture
+
 ## How It Works
-When React sees a different `key` value on a component:
-1. It completely unmounts the old component instance
-2. Cleans up all state, effects, event listeners, and cached data
-3. Mounts a fresh instance of the new component
-4. Runs all initialization logic from scratch
 
-By using `router.asPath` as the key:
-- Every route change gets a new key value
-- Query parameters are included (e.g., `/produtos?categoria=racao`)
-- This forces a complete remount on every navigation
+1. **Route Change Detection**: When user navigates to a page, `router.asPath` changes
+2. **useEffect Trigger**: The useEffect with `router.asPath` dependency runs
+3. **Cache Check**: Page's load function checks if data is still cached
+4. **Conditional Fetch**: Only fetches new data if cache expired (>5 minutes)
 
-## Why `router.asPath` Instead of `router.pathname`?
-- `router.pathname`: `/produtos` (path only)
-- `router.asPath`: `/produtos?categoria=racao` (includes query params)
+Example with caching:
 
-Using `router.asPath` ensures proper remounting even when:
-- Navigating to the same page with different query parameters
-- Using URL hash fragments
-- Any part of the URL changes
+```tsx
+const loadDashboardData = useCallback(async (force = false) => {
+  const now = Date.now()
+  
+  // If data was fetched recently and not forcing, skip
+  if (!force && now - lastFetchRef.current < CACHE_DURATION) {
+    console.log('Using cached dashboard data')
+    return  // ✅ Cache prevents unnecessary API call
+  }
+  
+  // ... fetch new data
+}, [])
 
-## Trade-offs
-### Pros ✅
-- Guarantees fresh state on every navigation
-- Prevents stale data issues
-- Simple, one-line fix
-- No changes needed to individual pages
-- Future-proof against similar issues
+useEffect(() => {
+  loadDashboardData()  // Respects cache on re-run
+}, [loadDashboardData, router.asPath])
+```
 
-### Cons ⚠️
-- Slightly more aggressive remounting than necessary
-- Pages lose scroll position between navigations
-- Any expensive initialization runs on every navigation
-- State that could be preserved is lost
+## Pages Updated
 
-## When This Might Not Be Ideal
-If your application needs to:
-- Preserve scroll position between navigations
-- Keep cached data between related pages
-- Maintain form state when navigating away and back
+All data-loading pages now properly track route changes:
 
-In those cases, consider:
-- Using `getStaticProps`/`getServerSideProps` for data fetching
-- Implementing proper cleanup in `useEffect` hooks
-- Using a global state manager (like Zustand) that syncs with router
-- Adding proper dependencies to `useEffect` hooks
+- ✅ dashboard.tsx
+- ✅ clientes.tsx
+- ✅ fornecedores.tsx
+- ✅ produtos-estoque.tsx
+- ✅ financeiro.tsx
+- ✅ produtos.tsx
+- ✅ vendas.tsx
+- ✅ vendedores.tsx
+- ✅ usuarios.tsx
+- ✅ estoque.tsx
+- ✅ feedback.tsx
+- ✅ configuracoes.tsx
+- ✅ notificacoes.tsx
+
+Pages that already used `router.query` as dependency (busca.tsx, produto-detalhes.tsx) were already handling this correctly.
 
 ## Testing
+
 To verify the fix works:
-1. Navigate between different pages (e.g., Dashboard → Vendas → Produtos)
-2. Use browser back/forward buttons
-3. Navigate to the same page with different query parameters
-4. Verify URL and content always stay in sync
+
+1. Navigate to Dashboard
+2. Navigate to another page (e.g., Vendas)
+3. Navigate back to Dashboard
+4. ✅ Dashboard should show immediately (from cache if <5 min)
+5. ✅ No F5 refresh needed
+6. Wait >5 minutes and repeat
+7. ✅ Dashboard should fetch fresh data automatically
+
+## Performance Impact
+
+**Before Fix:**
+- Navigation sometimes stuck (URL changes, content doesn't)
+- Requires F5 refresh
+
+**After Fix:**
+- ✅ Navigation always works
+- ✅ 5-minute API cache still active
+- ✅ No performance degradation
+- ✅ Maintains "Navegação Instantânea" feature
+
+## Trade-offs
+
+### Current Approach ✅
+**Pros:**
+- Fixes navigation issue
+- Maintains all performance optimizations
+- Respects API caching (5-minute TTL)
+- Minimal code changes per page
+- No scroll position loss
+- Aligns with architecture docs
+
+**Cons:**
+- Requires updating multiple pages (one-time change)
+- Each page needs proper cache logic (most already have it)
+
+### Rejected Approach ❌
+**Pros:**
+- Simple one-line change in _app.tsx
+- Guaranteed fresh state
+
+**Cons:**
+- Breaks all caching mechanisms
+- Degrades performance
+- Goes against documented optimizations
+- Loses scroll position
 
 ## Related Files
-- `pages/_app.tsx` - Main fix implementation
-- `components/layout/main-layout.tsx` - Layout component with router event handlers
+
+- `pages/_app.tsx` - Reverted to original (no key prop)
+- `pages/*` - Updated with router.asPath dependency
+- `components/layout/main-layout.tsx` - Router event handling
 - `middleware.ts` - Authentication middleware (not related to this issue)
+- `docs/performance/OTIMIZACOES.md` - Performance architecture that we preserve
 
 ## References
-- [Next.js Pages Router Documentation](https://nextjs.org/docs/pages/building-your-application/routing)
-- [React Keys Documentation](https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)
+
 - [Next.js Router Events](https://nextjs.org/docs/pages/api-reference/functions/use-router#routerevents)
+- [React useEffect Dependencies](https://react.dev/reference/react/useEffect#specifying-reactive-dependencies)
+- [Performance Optimizations Documentation](../performance/OTIMIZACOES.md)
