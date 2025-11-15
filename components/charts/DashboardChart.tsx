@@ -17,7 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Settings2, TrendingUp } from 'lucide-react'
+import { Settings2, TrendingUp, Menu } from 'lucide-react'
 import type { ChartConfig } from '@/components/ui/chart'
 
 // Recharts imports (lazy loaded na página)
@@ -54,6 +54,20 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
   )
   const [chartType, setChartType] = useState<ChartType>('area')
   const [displayMode, setDisplayMode] = useState<DisplayMode>('total')
+  const [showControls, setShowControls] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile screen size
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {}
@@ -102,6 +116,11 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
       }
     })
   }, [data, displayMode])
+
+  const closeControlsIfNeeded = () => {
+    // Fecha o menu após seleção
+    setShowControls(false)
+  }
 
   const toggleMetric = (metric: MetricKey) => {
     setSelectedMetrics((prev) => {
@@ -170,9 +189,9 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
     const chartProps = {
       data: processedData,
       margin: {
-        top: 10,
-        right: useDualAxis ? 50 : 10, // More space for right Y-axis
-        left: 10,
+        top: 5,
+        right: isMobile ? 5 : (useDualAxis ? 30 : 5),
+        left: isMobile ? 5 : 5,
         bottom: 0
       },
     }
@@ -236,7 +255,7 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
           tickMargin={8}
           className="text-xs"
         />
-        {useDualAxis ? (
+        {!isMobile && (useDualAxis ? (
           <>
             {/* Left Y-axis for monetary values */}
             <YAxis
@@ -301,8 +320,9 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
               }).format(value)
             }}
           />
-        )}
+        ))}
         <ChartTooltip
+          wrapperStyle={{ zIndex: 1000 }}
           content={
             <ChartTooltipContent
               labelFormatter={(value): React.ReactNode => {
@@ -358,20 +378,34 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <CardTitle>Análise de Desempenho</CardTitle>
-            <CardDescription>
-              Personalize a visualização das métricas do seu negócio
-            </CardDescription>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>Análise de Desempenho</CardTitle>
+              <CardDescription>
+                Personalize a visualização das métricas do seu negócio
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowControls(!showControls)}
+              className="w-fit"
+            >
+              <Menu className="h-4 w-4 mr-2" />
+              Personalizar
+            </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
+
+          {/* Controls Section - Collapsible */}
+          {showControls && (
+            <div className="flex flex-wrap gap-2 items-center border-t pt-4">
             {/* Display Mode Toggle */}
             <div className="flex rounded-md border">
               <Button
                 variant={displayMode === 'total' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setDisplayMode('total')}
+                onClick={() => { setDisplayMode('total'); closeControlsIfNeeded() }}
                 className="rounded-r-none"
               >
                 Total
@@ -379,7 +413,7 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
               <Button
                 variant={displayMode === 'percent' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setDisplayMode('percent')}
+                onClick={() => { setDisplayMode('percent'); closeControlsIfNeeded() }}
                 className="rounded-l-none"
               >
                 %
@@ -391,7 +425,7 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
               <Button
                 variant={chartType === 'area' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setChartType('area')}
+                onClick={() => { setChartType('area'); closeControlsIfNeeded() }}
                 className="rounded-r-none rounded-l-md px-3"
               >
                 Área
@@ -399,7 +433,7 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
               <Button
                 variant={chartType === 'line' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setChartType('line')}
+                onClick={() => { setChartType('line'); closeControlsIfNeeded() }}
                 className="rounded-none px-3"
               >
                 Linha
@@ -407,7 +441,7 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
               <Button
                 variant={chartType === 'bar' ? 'default' : 'ghost'}
                 size="sm"
-                onClick={() => setChartType('bar')}
+                onClick={() => { setChartType('bar'); closeControlsIfNeeded() }}
                 className="rounded-l-none rounded-r-md px-3"
               >
                 Barra
@@ -448,11 +482,12 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-80 w-full">
+        <ChartContainer config={chartConfig} className="h-96 w-full">
           {renderChart()}
         </ChartContainer>
       </CardContent>

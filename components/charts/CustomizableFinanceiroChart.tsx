@@ -19,7 +19,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Settings2, TrendingUp, Calendar, Eye, EyeOff, CalendarDays } from 'lucide-react'
+import { Settings2, TrendingUp, Calendar, Eye, EyeOff, CalendarDays, Menu } from 'lucide-react'
 import type { ChartConfig } from '@/components/ui/chart'
 import type { FinanceiroMetrics } from '@/types'
 
@@ -66,6 +66,8 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
   const [showCustomDatePopover, setShowCustomDatePopover] = useState(false)
+  const [showControls, setShowControls] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Debug: detectar re-renders - apenas no mount
   React.useEffect(() => {
@@ -74,6 +76,18 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
       console.log('🚪 CustomizableFinanceiroChart desmontado')
     }
   }, []) // Array vazio = só roda no mount/unmount
+
+  // Detect mobile screen size
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {}
@@ -205,6 +219,11 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
     return { receitas, despesas, fluxo }
   }, [processedData])
 
+  const closeControlsIfNeeded = () => {
+    // Fecha o menu após seleção
+    setShowControls(false)
+  }
+
   const toggleMetric = (metric: MetricKey) => {
     setSelectedMetrics((prev) => {
       const next = new Set(prev)
@@ -223,6 +242,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
     if (customStartDate && customEndDate) {
       setPeriodFilter('custom')
       setShowCustomDatePopover(false)
+      closeControlsIfNeeded()
     }
   }
 
@@ -268,9 +288,9 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
     const chartProps = {
       data: processedData,
       margin: {
-        top: 10,
-        right: 10,
-        left: 10,
+        top: 5,
+        right: isMobile ? 5 : 5,
+        left: isMobile ? 5 : 5,
         bottom: 0
       },
     }
@@ -340,22 +360,24 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
           height={processedData.length > 31 ? 60 : 30}
           interval={processedData.length > 60 ? Math.floor(processedData.length / 30) : 'preserveStartEnd'}
         />
-        <YAxis
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          className="text-xs"
-          tickFormatter={(value) => {
-            return new Intl.NumberFormat('pt-BR', {
-              notation: 'compact',
-              compactDisplay: 'short',
-              style: 'currency',
-              currency: 'BRL',
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
-            }).format(value)
-          }}
-        />
+        {!isMobile && (
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            className="text-xs"
+            tickFormatter={(value) => {
+              return new Intl.NumberFormat('pt-BR', {
+                notation: 'compact',
+                compactDisplay: 'short',
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              }).format(value)
+            }}
+          />
+        )}
         {/* Linha de referência para "Hoje" */}
         {hojeIndex >= 0 && (
           <ReferenceLine
@@ -366,6 +388,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
           />
         )}
         <ChartTooltip
+          wrapperStyle={{ zIndex: 1000 }}
           content={
             <ChartTooltipContent
               labelFormatter={(value): React.ReactNode => {
@@ -437,16 +460,26 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
                 Projeção do saldo futuro com base em receitas, despesas e transações recorrentes
               </CardDescription>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowControls(!showControls)}
+              className="w-fit"
+            >
+              <Menu className="h-4 w-4 mr-2" />
+              Personalizar
+            </Button>
           </div>
 
-          {/* Controls Row */}
-          <div className="flex flex-wrap gap-2 items-center">
+          {/* Controls Section - Collapsible */}
+          {showControls && (
+            <div className="flex flex-wrap gap-2 items-center border-t pt-4">
             {/* Period Filter */}
             <div className="flex flex-wrap gap-1">
               <Button
                 variant={periodFilter === 'next7' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setPeriodFilter('next7')}
+                onClick={() => { setPeriodFilter('next7'); closeControlsIfNeeded() }}
                 className="px-3"
               >
                 14 dias
@@ -454,7 +487,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <Button
                 variant={periodFilter === 'next30' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setPeriodFilter('next30')}
+                onClick={() => { setPeriodFilter('next30'); closeControlsIfNeeded() }}
                 className="px-3"
               >
                 60 dias
@@ -462,7 +495,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <Button
                 variant={periodFilter === 'next60' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setPeriodFilter('next60')}
+                onClick={() => { setPeriodFilter('next60'); closeControlsIfNeeded() }}
                 className="px-3"
               >
                 120 dias
@@ -470,7 +503,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <Button
                 variant={periodFilter === 'next90' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setPeriodFilter('next90')}
+                onClick={() => { setPeriodFilter('next90'); closeControlsIfNeeded() }}
                 className="px-3"
               >
                 180 dias
@@ -478,7 +511,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <Button
                 variant={periodFilter === 'month' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setPeriodFilter('month')}
+                onClick={() => { setPeriodFilter('month'); closeControlsIfNeeded() }}
                 className="px-3"
               >
                 Este Mês
@@ -503,7 +536,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <Button
                 variant={chartType === 'area' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setChartType('area')}
+                onClick={() => { setChartType('area'); closeControlsIfNeeded() }}
                 className="px-3"
               >
                 Área
@@ -511,7 +544,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <Button
                 variant={chartType === 'line' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setChartType('line')}
+                onClick={() => { setChartType('line'); closeControlsIfNeeded() }}
                 className="px-3"
               >
                 Linha
@@ -519,7 +552,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <Button
                 variant={chartType === 'bar' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setChartType('bar')}
+                onClick={() => { setChartType('bar'); closeControlsIfNeeded() }}
                 className="px-3"
               >
                 Barra
@@ -532,7 +565,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
             <Button
               variant={showEmptyDays ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setShowEmptyDays(!showEmptyDays)}
+              onClick={() => { setShowEmptyDays(!showEmptyDays); closeControlsIfNeeded() }}
               className="px-3"
             >
               {showEmptyDays ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
@@ -570,7 +603,8 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+            </div>
+          )}
 
           {/* Custom Date Range Inputs */}
           {showCustomDatePopover && (
@@ -615,12 +649,12 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
           )}
 
           {/* Period Summary */}
-          <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="text-center">
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                 Receitas do Período
               </div>
-              <div className="text-lg font-bold text-green-600">
+              <div className="text-sm sm:text-lg font-bold text-green-600 break-words">
                 {formatCurrency(periodTotals.receitas)}
               </div>
             </div>
@@ -628,7 +662,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                 Despesas do Período
               </div>
-              <div className="text-lg font-bold text-red-600">
+              <div className="text-sm sm:text-lg font-bold text-red-600 break-words">
                 {formatCurrency(periodTotals.despesas)}
               </div>
             </div>
@@ -636,7 +670,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                 Fluxo do Período
               </div>
-              <div className={`text-lg font-bold ${periodTotals.fluxo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <div className={`text-sm sm:text-lg font-bold break-words ${periodTotals.fluxo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                 {formatCurrency(periodTotals.fluxo)}
               </div>
             </div>
