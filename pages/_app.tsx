@@ -21,7 +21,7 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
       <ToastProvider>
         <MainLayout>
-          <Component {...pageProps} key={router.pathname} />
+          <Component {...pageProps} key={router.asPath} />
         </MainLayout>
         <Toaster />
       </ToastProvider>
