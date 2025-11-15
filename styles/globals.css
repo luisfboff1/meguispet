@@ -335,6 +335,20 @@
   will-change: opacity;
 }
 
+/* Optimize Recharts and animations to reduce forced reflow */
+.recharts-wrapper,
+.recharts-surface {
+  will-change: auto;
+  contain: layout style paint;
+}
+
+/* Optimize Framer Motion animations */
+[data-framer-component] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 /* Reduce motion para acessibilidade */
 @media (prefers-reduced-motion: reduce) {
   * {

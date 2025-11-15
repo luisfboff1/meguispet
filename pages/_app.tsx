@@ -45,8 +45,8 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="description" content="Sistema de gestão completo para pet shops" />
       </Head>
       <ToastProvider>
-        <MainLayout>
-          <Component {...pageProps} />
+        <MainLayout key={router.pathname}>
+          <Component {...pageProps} key={router.asPath} />
         </MainLayout>
         <Toaster />
       </ToastProvider>

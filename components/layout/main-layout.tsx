@@ -37,15 +37,14 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
 
   const sidebarWidth = useMemo(() => (isCollapsed && !isTemporary ? 88 : 268), [isCollapsed, isTemporary])
 
-  const sidebarContent = useMemo(
-    () => (
-      <Sidebar
-        isCollapsed={isTemporary ? false : isCollapsed}
-        onToggle={isTemporary ? toggle : toggleCollapsed}
-        hideToggle={isTemporary}
-      />
-    ),
-    [isCollapsed, isTemporary, toggle, toggleCollapsed]
+  // Sidebar content - removed useMemo to allow re-renders on route change
+  // This fixes mobile navigation issue where URL changes but content doesn't update
+  const sidebarContent = (
+    <Sidebar
+      isCollapsed={isTemporary ? false : isCollapsed}
+      onToggle={isTemporary ? toggle : toggleCollapsed}
+      hideToggle={isTemporary}
+    />
   )
 
   useEffect(() => {
