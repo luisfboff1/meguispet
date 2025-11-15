@@ -2,6 +2,7 @@ import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 import { MainLayout } from '@/components/layout/main-layout'
 import { ToastProvider } from '@/components/ui/use-toast'
 import { Toaster } from '@/components/ui/toaster'
@@ -12,6 +13,22 @@ import { Toaster } from '@/components/ui/toaster'
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
+  const [routeKey, setRouteKey] = useState(router.pathname)
+  
+  // Force update the key when route changes
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      // Extract pathname from full URL
+      const pathname = url.split('?')[0]
+      setRouteKey(pathname)
+    }
+    
+    router.events.on('routeChangeComplete', handleRouteChange)
+    
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange)
+    }
+  }, [router])
   
   return (
     <>
@@ -21,8 +38,8 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
       <ToastProvider>
         <MainLayout>
-          {/* Use router.pathname as key to force remount only when page changes, not query params */}
-          <Component {...pageProps} key={router.pathname} />
+          {/* Use routeKey to force remount when page changes */}
+          <Component {...pageProps} key={routeKey} />
         </MainLayout>
         <Toaster />
       </ToastProvider>
