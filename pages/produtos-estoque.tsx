@@ -476,7 +476,7 @@ export default function ProdutosEstoquePage() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [router.asPath])
 
   const loadData = async () => {
     try {

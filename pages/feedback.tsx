@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { Plus, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
@@ -9,6 +10,7 @@ import { feedbackService } from '@/services/feedbackService'
 import type { FeedbackTicket, FeedbackStatus, FeedbackTicketForm } from '@/types'
 
 export default function FeedbackPage() {
+  const router = useRouter()
   const { toast } = useToast()
   const { open: openModal } = useModal()
   const { user } = useAuth()
@@ -54,7 +56,7 @@ export default function FeedbackPage() {
 
   useEffect(() => {
     loadTickets()
-  }, [])
+  }, [router.asPath])
 
   const handleCreateFeedback = () => {
     openModal('feedback', {

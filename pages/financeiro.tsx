@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -44,6 +45,7 @@ import {
 } from '@/types'
 
 export default function FinanceiroPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [metrics, setMetrics] = useState<FinanceiroMetrics | null>(null)
   const [transacoes, setTransacoes] = useState<TransacaoFinanceira[]>([])
@@ -77,7 +79,7 @@ export default function FinanceiroPage() {
     return () => {
       console.log('🚪 Página Financeiro desmontando...')
     }
-  }, [])
+  }, [router.asPath])
 
   const loadFinancialData = async () => {
     try {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/router'
 import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import Toast from '@/components/ui/Toast'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 
 export default function ClientesPage() {
+  const router = useRouter()
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -35,7 +37,7 @@ export default function ClientesPage() {
 
   useEffect(() => {
     loadClientes()
-  }, [currentPage])
+  }, [currentPage, router.asPath])
 
   const loadClientes = async () => {
     try {

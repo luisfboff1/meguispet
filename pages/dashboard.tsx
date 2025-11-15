@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react'
+import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -54,6 +55,7 @@ interface MetricCard {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [metrics, setMetrics] = useState<MetricCard[]>([])
   const [topProducts, setTopProducts] = useState<DashboardTopProduct[]>([])
   const [vendas7Dias, setVendas7Dias] = useState<DashboardVendasDia[]>([])
@@ -122,9 +124,11 @@ export default function DashboardPage() {
     }
   }, [])
 
+  // Load data on mount and when route changes (e.g., navigating back to this page)
+  // Cache logic inside loadDashboardData prevents unnecessary API calls
   useEffect(() => {
     loadDashboardData()
-  }, [loadDashboardData])
+  }, [loadDashboardData, router.asPath])
 
   const updateModalLoading = useCallback(
     (value: boolean) => {

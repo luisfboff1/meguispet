@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/router'
 import axios from 'axios'
 import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +30,7 @@ import { downloadOrderPDF, PDFGeneratorOptions } from '@/lib/pdf-generator'
 import VendaPDFPreviewModal, { PDFPreviewOptions } from '@/components/modals/VendaPDFPreviewModal'
 
 export default function VendasPage() {
+  const router = useRouter()
   const [vendas, setVendas] = useState<Venda[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -46,6 +48,7 @@ export default function VendasPage() {
   const [vendaRecemSalva, setVendaRecemSalva] = useState<Venda | null>(null)
 
   useEffect(() => {
+    // Track route changes to reload data
     loadVendas()
   }, [currentPage])
 

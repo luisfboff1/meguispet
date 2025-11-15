@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +21,7 @@ import type { Produto, ProdutoForm as ProdutoFormValues } from '@/types'
 import { useModal } from '@/hooks/useModal'
 
 export default function ProdutosPage() {
+  const router = useRouter()
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,7 +45,7 @@ export default function ProdutosPage() {
 
   useEffect(() => {
     loadProdutos()
-  }, [loadProdutos])
+  }, [loadProdutos, router.asPath])
 
   const filteredProdutos = produtos.filter(produto =>
     produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||

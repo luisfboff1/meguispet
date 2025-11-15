@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/router'
 import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ interface PaginationState {
 }
 
 export default function FornecedoresPage() {
+  const router = useRouter()
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([])
   const [loading, setLoading] = useState(true)
   const [formLoading, setFormLoading] = useState(false)
@@ -41,7 +43,7 @@ export default function FornecedoresPage() {
 
   useEffect(() => {
     void loadFornecedores()
-  }, [currentPage])
+  }, [currentPage, router.asPath])
 
   const loadFornecedores = async () => {
     try {

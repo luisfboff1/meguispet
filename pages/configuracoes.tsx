@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,6 +53,7 @@ interface FormaPagamento {
 }
 
 export default function ConfiguracoesPage() {
+  const router = useRouter()
   const [configuracoes, setConfiguracoes] = useState<ConfiguracoesState>(DEFAULT_CONFIGURACOES)
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([])
   const [novaFormaPagamento, setNovaFormaPagamento] = useState('')
@@ -65,7 +67,7 @@ export default function ConfiguracoesPage() {
 
   useEffect(() => {
     loadFormasPagamento()
-  }, [])
+  }, [router.asPath])
 
   const loadFormasPagamento = async () => {
     try {

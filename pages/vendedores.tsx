@@ -37,7 +37,7 @@ export default function VendedoresPage() {
 
   useEffect(() => {
     loadVendedores()
-  }, [currentPage])
+  }, [currentPage, router.asPath])
 
   const loadVendedores = async () => {
     try {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +19,7 @@ import EstoqueOperacaoForm from '@/components/forms/EstoqueOperacaoForm'
 import Toast from '@/components/ui/Toast'
 
 export default function EstoquePage() {
+  const router = useRouter()
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -28,7 +30,7 @@ export default function EstoquePage() {
 
   useEffect(() => {
     loadProdutos()
-  }, [])
+  }, [router.asPath])
 
   const loadProdutos = async () => {
     try {
