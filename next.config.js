@@ -34,6 +34,69 @@ const nextConfig = (phase) => {
     env: {
       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
     },
+
+    // 🚀 Otimizações de Bundle Splitting
+    webpack: (config, { isServer }) => {
+      if (!isServer) {
+        // Split Recharts em chunk separado
+        config.optimization = {
+          ...config.optimization,
+          splitChunks: {
+            ...config.optimization.splitChunks,
+            cacheGroups: {
+              ...config.optimization.splitChunks?.cacheGroups,
+              recharts: {
+                test: /[\\/]node_modules[\\/]recharts/,
+                name: 'recharts',
+                chunks: 'async',
+                priority: 20,
+              },
+              tanstack: {
+                test: /[\\/]node_modules[\\/]@tanstack/,
+                name: 'tanstack',
+                chunks: 'async',
+                priority: 15,
+              },
+              supabase: {
+                test: /[\\/]node_modules[\\/]@supabase/,
+                name: 'supabase',
+                chunks: 'async',
+                priority: 10,
+              },
+            },
+          },
+        }
+      }
+      return config
+    },
+
+    // 🎯 Headers para performance
+    async headers() {
+      return [
+        {
+          source: '/:path*',
+          headers: [
+            {
+              key: 'X-DNS-Prefetch-Control',
+              value: 'on'
+            },
+            {
+              key: 'X-Frame-Options',
+              value: 'SAMEORIGIN'
+            },
+          ],
+        },
+        {
+          source: '/api/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=300, stale-while-revalidate=600',
+            },
+          ],
+        },
+      ]
+    },
   }
 
   return config
