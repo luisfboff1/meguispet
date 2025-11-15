@@ -144,6 +144,7 @@ export default function FeedbackDetailsModal({
               >
                 {anexo.conteudo_base64 && anexo.tipo_arquivo.startsWith('image/') ? (
                   <div className="space-y-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`data:${anexo.tipo_arquivo};base64,${anexo.conteudo_base64}`}
                       alt={anexo.nome_arquivo}

@@ -260,7 +260,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       // ✅ CRIAR PARCELAS E TRANSAÇÕES FINANCEIRAS (se parcelas forem especificadas)
       if (parcelas && Array.isArray(parcelas) && parcelas.length > 0) {
         // Validar que o total das parcelas corresponde ao valor final da venda
-        const totalParcelas = parcelas.reduce((sum: number, p: any) => sum + Number(p.valor_parcela), 0);
+        const totalParcelas = parcelas.reduce((sum: number, p: { valor_parcela: number }) => sum + Number(p.valor_parcela), 0);
         const valorFinalVenda = Number(venda.valor_final);
         
         if (Math.abs(totalParcelas - valorFinalVenda) > 0.10) {
@@ -279,7 +279,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         const categoria_id = categoriaVendas?.id || null;
 
         // Inserir parcelas
-        const parcelasToInsert = parcelas.map((p: any) => ({
+        const parcelasToInsert = parcelas.map((p: { numero_parcela: number; valor_parcela: number; data_vencimento: string; observacoes?: string }) => ({
           venda_id: venda.id,
           numero_parcela: p.numero_parcela,
           valor_parcela: p.valor_parcela,
@@ -298,7 +298,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           // Não faz rollback da venda, apenas loga o erro
         } else if (parcelasCreated) {
           // Criar transações financeiras para cada parcela
-          const transacoesToInsert = parcelasCreated.map((parcela: any) => ({
+          const transacoesToInsert = parcelasCreated.map((parcela: { id: number; numero_parcela: number; valor_parcela: number; data_vencimento: string; observacoes?: string | null }) => ({
             tipo: 'receita',
             valor: parcela.valor_parcela,
             descricao: `Receita Venda ${numero_venda} - Parcela ${parcela.numero_parcela}/${parcelas.length}`,

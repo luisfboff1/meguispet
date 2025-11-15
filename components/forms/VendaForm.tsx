@@ -362,7 +362,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   }
 
   // Update installment value
-  const atualizarParcela = (index: number, field: keyof VendaParcelaInput, value: any) => {
+  const atualizarParcela = (index: number, field: keyof VendaParcelaInput, value: string | number) => {
     const novasParcelas = [...parcelas]
     novasParcelas[index] = {
       ...novasParcelas[index],

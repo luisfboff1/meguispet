@@ -259,6 +259,7 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
                   key={index}
                   className="group relative overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`data:image/png;base64,${base64}`}
                     alt={`Imagem colada ${index + 1}`}

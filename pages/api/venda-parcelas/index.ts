@@ -86,11 +86,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       success: false,
       message: 'Método não permitido',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro no endpoint de parcelas:', error);
+    const message = error instanceof Error ? error.message : 'Erro interno do servidor';
     return res.status(500).json({
       success: false,
-      message: error.message || 'Erro interno do servidor',
+      message,
     });
   }
 };
