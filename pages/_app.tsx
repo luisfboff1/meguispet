@@ -20,7 +20,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="description" content="Sistema de gestão completo para pet shops" />
       </Head>
       <ToastProvider>
-        <MainLayout key={router.pathname}>
+        <MainLayout>
           <Component {...pageProps} key={router.pathname} />
         </MainLayout>
         <Toaster />

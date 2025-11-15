@@ -141,7 +141,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
           isMobile={isTemporary}
         />
 
-        <main className="relative flex-1 overflow-auto p-6">
+        <main className="relative flex-1 overflow-auto p-6" key={router.pathname}>
           <div
             className={cn(
               'mx-auto min-h-full w-full max-w-7xl space-y-6 transition-all duration-300',
