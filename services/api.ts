@@ -25,6 +25,8 @@ import type {
   DashboardTopProduct,
   DashboardVendasDia,
   FormaPagamentoRegistro,
+  CondicaoPagamento,
+  CondicaoPagamentoForm,
   Estoque
 } from '@/types'
 
@@ -282,6 +284,34 @@ export const formasPagamentoService = {
 
   async delete(id: number): Promise<ApiResponse> {
     const response = await api.delete(`/formas_pagamento?id=${id}`)
+    return response.data
+  }
+}
+
+// 💳 CONDIÇÕES DE PAGAMENTO
+export const condicoesPagamentoService = {
+  async getAll(activeOnly = false): Promise<ApiResponse<CondicaoPagamento[]>> {
+    const response = await api.get(`/condicoes_pagamento${activeOnly ? '?active=1' : ''}`)
+    return response.data
+  },
+
+  async getById(id: number): Promise<ApiResponse<CondicaoPagamento>> {
+    const response = await api.get(`/condicoes_pagamento?id=${id}`)
+    return response.data
+  },
+
+  async create(payload: CondicaoPagamentoForm): Promise<ApiResponse<CondicaoPagamento>> {
+    const response = await api.post('/condicoes_pagamento', payload)
+    return response.data
+  },
+
+  async update(id: number, payload: Partial<CondicaoPagamentoForm>): Promise<ApiResponse<CondicaoPagamento>> {
+    const response = await api.put('/condicoes_pagamento', { id, ...payload })
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/condicoes_pagamento?id=${id}`)
     return response.data
   }
 }

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Plus, Trash2, ShoppingCart, Settings, Calendar } from 'lucide-react'
-import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService } from '@/services/api'
+import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService, condicoesPagamentoService } from '@/services/api'
 import { impostosService } from '@/services/impostosService'
 import { calcularItensVenda, calcularTotaisVenda, formatCurrency } from '@/services/vendaCalculations'
 import AlertDialog from '@/components/ui/AlertDialog'
@@ -19,6 +19,7 @@ import type {
   VendaParcelaInput,
   OrigemVenda,
   FormaPagamentoRegistro,
+  CondicaoPagamento,
   Estoque,
   ItemCalculado,
   TotaisVenda,
@@ -48,12 +49,14 @@ interface VendaFormState {
   cliente_id: string
   vendedor_id: string
   forma_pagamento_id: string
+  condicao_pagamento_id: string
   origem_venda: OrigemVenda
   uf_destino: string
   estoque_id: string
   observacoes: string
   desconto: number
   data_pagamento?: string // Data de pagamento
+  data_base_calculo?: string // Data base para cálculo das parcelas
 }
 
 const getFormaPagamentoIdFromVenda = (dados?: Venda): string => {
@@ -94,11 +97,13 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     cliente_id: venda?.cliente_id ? String(venda.cliente_id) : '',
     vendedor_id: venda?.vendedor_id ? String(venda.vendedor_id) : '',
     forma_pagamento_id: getFormaPagamentoIdFromVenda(venda),
+    condicao_pagamento_id: venda?.condicao_pagamento_id ? String(venda.condicao_pagamento_id) : '',
     origem_venda: venda?.origem_venda || 'loja_fisica',
     uf_destino: venda?.uf_destino || 'SP',
     estoque_id: getEstoqueIdFromVenda(venda),
     observacoes: venda?.observacoes || '',
-    desconto: venda?.desconto || 0
+    desconto: venda?.desconto || 0,
+    data_base_calculo: new Date().toISOString().split('T')[0] // Default to today
   })
 
   const [itens, setItens] = useState<ItemVenda[]>([])
@@ -108,6 +113,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamentoRegistro[]>([])
+  const [condicoesPagamento, setCondicoesPagamento] = useState<CondicaoPagamento[]>([])
   const [estoques, setEstoques] = useState<Estoque[]>([])
   const [loadingData, setLoadingData] = useState(false)
   const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
@@ -143,12 +149,14 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         cliente_id: '',
         vendedor_id: '',
         forma_pagamento_id: '',
+        condicao_pagamento_id: '',
         origem_venda: 'loja_fisica',
         uf_destino: 'SP',
         estoque_id: '',
         observacoes: '',
         desconto: 0,
-        data_pagamento: ''
+        data_pagamento: '',
+        data_base_calculo: new Date().toISOString().split('T')[0]
       })
       return
     }
@@ -158,12 +166,14 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       cliente_id: venda.cliente_id ? String(venda.cliente_id) : '',
       vendedor_id: venda.vendedor_id ? String(venda.vendedor_id) : '',
       forma_pagamento_id: getFormaPagamentoIdFromVenda(venda),
+      condicao_pagamento_id: venda.condicao_pagamento_id ? String(venda.condicao_pagamento_id) : '',
       origem_venda: venda.origem_venda,
       uf_destino: venda.uf_destino || 'SP',
       estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0,
-      data_pagamento: venda.prazo_pagamento ? String(venda.prazo_pagamento) : ''
+      data_pagamento: venda.prazo_pagamento ? String(venda.prazo_pagamento) : '',
+      data_base_calculo: new Date().toISOString().split('T')[0]
     })
 
     if (venda.itens?.length) {
@@ -215,11 +225,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const loadData = async () => {
     try {
       setLoadingData(true)
-      const [clientesRes, vendedoresRes, produtosRes, formasPagamentoRes, estoquesRes] = await Promise.all([
+      const [clientesRes, vendedoresRes, produtosRes, formasPagamentoRes, condicoesPagamentoRes, estoquesRes] = await Promise.all([
         clientesService.getAll(1, 100),
         vendedoresService.getAll(1, 100),
         produtosService.getAll(1, 100),
         formasPagamentoService.getAll(true),
+        condicoesPagamentoService.getAll(true),
         estoquesService.getAll(true)
       ])
 
@@ -227,6 +238,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       if (vendedoresRes.success && vendedoresRes.data) setVendedores(vendedoresRes.data)
       if (produtosRes.success && produtosRes.data) setProdutos(produtosRes.data)
       if (formasPagamentoRes.success && formasPagamentoRes.data) setFormasPagamento(formasPagamentoRes.data)
+      if (condicoesPagamentoRes.success && condicoesPagamentoRes.data) setCondicoesPagamento(condicoesPagamentoRes.data)
       if (estoquesRes.success && estoquesRes.data) setEstoques(estoquesRes.data)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
@@ -361,6 +373,50 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     setParcelas(novasParcelas)
   }
 
+  // Generate installments based on payment terms
+  const gerarParcelasPorCondicao = () => {
+    if (!totais || !formData.condicao_pagamento_id) return
+    
+    const condicaoSelecionada = condicoesPagamento.find(
+      c => String(c.id) === formData.condicao_pagamento_id
+    )
+    
+    if (!condicaoSelecionada || !condicaoSelecionada.dias_parcelas.length) return
+
+    const diasParcelas = condicaoSelecionada.dias_parcelas
+    const valorPorParcela = totais.total_geral / diasParcelas.length
+    const novasParcelas: VendaParcelaInput[] = []
+    
+    // Get base date for calculation (default to today)
+    const dataBase = formData.data_base_calculo
+      ? new Date(formData.data_base_calculo + 'T00:00:00')
+      : new Date()
+
+    diasParcelas.forEach((dias, index) => {
+      const dataVencimento = new Date(dataBase)
+      dataVencimento.setDate(dataVencimento.getDate() + dias)
+      
+      novasParcelas.push({
+        numero_parcela: index + 1,
+        valor_parcela: Number(valorPorParcela.toFixed(2)),
+        data_vencimento: dataVencimento.toISOString().split('T')[0],
+        observacoes: `Parcela ${index + 1}/${diasParcelas.length} - ${dias} dias`
+      })
+    })
+
+    // Adjust last installment to account for rounding differences
+    const totalParcelas = novasParcelas.reduce((sum, p) => sum + p.valor_parcela, 0)
+    const diferenca = totais.total_geral - totalParcelas
+    if (Math.abs(diferenca) > 0.01) {
+      novasParcelas[novasParcelas.length - 1].valor_parcela += diferenca
+      novasParcelas[novasParcelas.length - 1].valor_parcela = Number(novasParcelas[novasParcelas.length - 1].valor_parcela.toFixed(2))
+    }
+
+    setParcelas(novasParcelas)
+    setUsarParcelas(true)
+    setNumeroParcelas(diasParcelas.length)
+  }
+
   // Update installment value
   const atualizarParcela = (index: number, field: keyof VendaParcelaInput, value: string | number) => {
     const novasParcelas = [...parcelas]
@@ -373,10 +429,17 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
 
   // Effect to regenerate installments when number changes or when usarParcelas is enabled
   useEffect(() => {
-    if (usarParcelas && numeroParcelas > 0 && totais) {
+    if (usarParcelas && numeroParcelas > 0 && totais && !formData.condicao_pagamento_id) {
       gerarParcelas()
     }
   }, [usarParcelas, numeroParcelas, primeiraParcela, totais?.total_geral])
+
+  // Effect to generate installments based on payment terms
+  useEffect(() => {
+    if (formData.condicao_pagamento_id && totais) {
+      gerarParcelasPorCondicao()
+    }
+  }, [formData.condicao_pagamento_id, formData.data_base_calculo, totais?.total_geral])
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -442,6 +505,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       cliente_id: formData.cliente_id ? Number(formData.cliente_id) : null,
       vendedor_id: formData.vendedor_id ? Number(formData.vendedor_id) : null,
       forma_pagamento_id: Number(formData.forma_pagamento_id),
+      condicao_pagamento_id: formData.condicao_pagamento_id ? Number(formData.condicao_pagamento_id) : null,
       estoque_id: Number(formData.estoque_id),
       forma_pagamento: formaSelecionada.nome,
       data_pagamento: formData.data_pagamento,
@@ -885,50 +949,101 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                 </div>
               )}
 
-              {/* Installments Configuration */}
+              {/* Payment Terms Selection */}
               <div className="pt-4 border-t">
-                <div className="flex items-center space-x-2 mb-3">
-                  <input
-                    type="checkbox"
-                    id="usar-parcelas"
-                    checked={usarParcelas}
-                    onChange={(e) => setUsarParcelas(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300"
-                  />
-                  <Label htmlFor="usar-parcelas" className="cursor-pointer">
-                    Parcelar pagamento
-                  </Label>
-                </div>
+                <Label htmlFor="condicao_pagamento_id">Condição de Pagamento</Label>
+                <select
+                  id="condicao_pagamento_id"
+                  value={formData.condicao_pagamento_id}
+                  onChange={(e) => {
+                    const condicaoId = e.target.value
+                    setFormData(prev => ({ ...prev, condicao_pagamento_id: condicaoId }))
+                    // Clear manual installments configuration when selecting a payment term
+                    if (condicaoId) {
+                      setUsarParcelas(false)
+                      setNumeroParcelas(1)
+                      setPrimeiraParcela('')
+                    }
+                  }}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Selecione uma condição (opcional)</option>
+                  {condicoesPagamento.map(condicao => (
+                    <option key={condicao.id} value={condicao.id}>
+                      {condicao.nome} - {condicao.dias_parcelas.length === 1 && condicao.dias_parcelas[0] === 0 
+                        ? 'À Vista'
+                        : `${condicao.dias_parcelas.length}x (${condicao.dias_parcelas.join(', ')} dias)`}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Selecione uma condição pré-definida ou configure manualmente abaixo
+                </p>
 
-                {usarParcelas && (
-                  <div className="space-y-3 pl-6">
-                    <div>
-                      <Label htmlFor="numero-parcelas">Número de Parcelas</Label>
-                      <Input
-                        id="numero-parcelas"
-                        type="number"
-                        min="1"
-                        max="60"
-                        value={numeroParcelas}
-                        onChange={(e) => setNumeroParcelas(Number(e.target.value))}
-                        placeholder="Ex: 3"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="primeira-parcela">Data da Primeira Parcela</Label>
-                      <Input
-                        id="primeira-parcela"
-                        type="date"
-                        value={primeiraParcela}
-                        onChange={(e) => setPrimeiraParcela(e.target.value)}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Demais parcelas serão mensais após esta data
-                      </p>
-                    </div>
+                {/* Base Date for Payment Terms Calculation */}
+                {formData.condicao_pagamento_id && (
+                  <div className="mt-3">
+                    <Label htmlFor="data_base_calculo">Data Base para Cálculo</Label>
+                    <Input
+                      id="data_base_calculo"
+                      type="date"
+                      value={formData.data_base_calculo || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, data_base_calculo: e.target.value }))}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Data de referência para calcular os vencimentos (padrão: hoje)
+                    </p>
                   </div>
                 )}
               </div>
+
+              {/* Installments Configuration */}
+              {!formData.condicao_pagamento_id && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="usar-parcelas"
+                      checked={usarParcelas}
+                      onChange={(e) => setUsarParcelas(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <Label htmlFor="usar-parcelas" className="cursor-pointer">
+                      Parcelar pagamento (manual)
+                    </Label>
+                  </div>
+
+                  {usarParcelas && (
+                    <div className="space-y-3 pl-6">
+                      <div>
+                        <Label htmlFor="numero-parcelas">Número de Parcelas</Label>
+                        <Input
+                          id="numero-parcelas"
+                          type="number"
+                          min="1"
+                          max="60"
+                          value={numeroParcelas}
+                          onChange={(e) => setNumeroParcelas(Number(e.target.value))}
+                          placeholder="Ex: 3"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="primeira-parcela">Data da Primeira Parcela</Label>
+                        <Input
+                          id="primeira-parcela"
+                          type="date"
+                          value={primeiraParcela}
+                          onChange={(e) => setPrimeiraParcela(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Demais parcelas serão mensais após esta data
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Resumo dos Totais */}

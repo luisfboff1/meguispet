@@ -112,6 +112,8 @@ export interface Venda {
   forma_pagamento: FormaPagamento
   forma_pagamento_id?: number | null
   forma_pagamento_detalhe?: FormaPagamentoRegistro | null
+  condicao_pagamento_id?: number | null
+  condicao_pagamento?: CondicaoPagamento | null
   estoque_id?: number | null
   estoque?: Estoque | null
   origem_venda: 'loja_fisica' | 'mercado_livre' | 'shopee' | 'magazine_luiza' | 'americanas' | 'outros'
@@ -359,6 +361,25 @@ export interface FormaPagamentoRegistro {
   updated_at?: string
 }
 
+export interface CondicaoPagamento {
+  id: number
+  nome: string
+  descricao?: string
+  dias_parcelas: number[] // Array de dias [15, 30, 45]
+  ativo: boolean
+  ordem: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CondicaoPagamentoForm {
+  nome: string
+  descricao?: string
+  dias_parcelas: number[]
+  ativo?: boolean
+  ordem?: number
+}
+
 export type OrigemVenda =
   | 'loja_fisica'
   | 'mercado_livre'
@@ -391,6 +412,7 @@ export interface VendaForm {
   itens: VendaItemInput[]
   desconto?: number
   data_pagamento?: string // Data de pagamento (substitui prazo_pagamento)
+  condicao_pagamento_id?: number | null // Condição de pagamento selecionada
   imposto_percentual?: number
   forma_pagamento: FormaPagamento
   origem_venda: OrigemVenda
