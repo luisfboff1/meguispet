@@ -16,8 +16,7 @@ import {
   Phone,
   Mail,
   TrendingUp,
-  DollarSign,
-  Loader2
+  DollarSign
 } from 'lucide-react'
 import { vendedoresService } from '@/services/api'
 import VendedorForm from '@/components/forms/VendedorForm'
@@ -271,15 +270,10 @@ export default function VendedoresPage() {
             variant="ghost" 
             size="sm"
             onClick={() => handleExcluirVendedor(row.original)}
-            disabled={deletingId === row.original.id}
             title="Excluir vendedor"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-red-600 hover:text-red-700"
           >
-            {deletingId === row.original.id ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       ),
@@ -363,7 +357,7 @@ export default function VendedoresPage() {
       ),
     },
   ]
-  }, [deletingId])
+  }, [])
 
   if (showForm) {
     return (
