@@ -16,7 +16,8 @@ import {
   Phone,
   Mail,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Loader2
 } from 'lucide-react'
 import { vendedoresService } from '@/services/api'
 import VendedorForm from '@/components/forms/VendedorForm'
