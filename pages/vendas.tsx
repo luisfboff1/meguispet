@@ -596,6 +596,7 @@ export default function VendasPage() {
     {
       id: "acoes",
       header: "Ações",
+      enableSorting: false,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Button 
@@ -773,6 +774,7 @@ export default function VendasPage() {
       {
         id: "acoes",
         header: "Ações",
+        enableSorting: false,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <Button 

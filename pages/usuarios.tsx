@@ -335,6 +335,7 @@ export default function UsuariosPage() {
     {
       id: "acoes",
       header: "Ações",
+      enableSorting: false,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Button 

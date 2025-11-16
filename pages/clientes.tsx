@@ -138,6 +138,7 @@ export default function ClientesPage() {
     {
       id: "acoes",
       header: "Ações",
+      enableSorting: false,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" title="Ver detalhes">
