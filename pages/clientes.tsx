@@ -136,6 +136,25 @@ export default function ClientesPage() {
   const clientesColumns = useMemo<ColumnDef<Cliente>[]>(() => {
     return [
     {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" title="Ver detalhes">
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleEditarCliente(row.original)}
+            title="Editar cliente"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+    {
       accessorKey: "nome",
       header: ({ column }) => <SortableHeader column={column}>Cliente</SortableHeader>,
       cell: ({ row }) => (
@@ -203,25 +222,6 @@ export default function ClientesPage() {
         ) : (
           <span className="text-sm text-gray-400">-</span>
         )
-      ),
-    },
-    {
-      id: "acoes",
-      header: "Ações",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" title="Ver detalhes">
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleEditarCliente(row.original)}
-            title="Editar cliente"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        </div>
       ),
     },
   ]
@@ -357,10 +357,12 @@ export default function ClientesPage() {
         <DataTable 
           columns={clientesColumns} 
           data={filteredClientes}
+          tableId="clientes"
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
-          mobileVisibleColumns={['nome', 'tipo', 'acoes']}
+          enableColumnReordering={true}
+          mobileVisibleColumns={['acoes', 'nome', 'tipo']}
         />
       ) : (
         <Card>

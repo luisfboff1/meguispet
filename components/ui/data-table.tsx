@@ -5,13 +5,14 @@ import {
   ColumnFiltersState,
   SortingState,
   VisibilityState,
+  ColumnOrderState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { MoreHorizontal, ArrowUpDown, ChevronDown, Columns } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, ChevronDown, Columns, GripVertical } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -36,6 +37,8 @@ interface DataTableProps<TData, TValue> {
   enableColumnResizing?: boolean
   enableSorting?: boolean
   enableColumnVisibility?: boolean
+  enableColumnReordering?: boolean
+  tableId?: string // Unique identifier for localStorage persistence
   mobileVisibleColumns?: string[] // IDs of columns to show on mobile by default
   initialColumnVisibility?: VisibilityState // Initial visibility state for columns
 }
@@ -48,16 +51,20 @@ export function DataTable<TData, TValue>({
   enableColumnResizing = true,
   enableSorting = true,
   enableColumnVisibility = true,
+  enableColumnReordering = true,
+  tableId = 'default-table',
   mobileVisibleColumns = [],
   initialColumnVisibility = {},
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(initialColumnVisibility)
+  const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
   const [columnResizeMode] = React.useState<ColumnResizeMode>("onChange")
   const [isMobile, setIsMobile] = React.useState(false)
   const isInitializedRef = React.useRef(false)
   const scrollContainerRef = useHorizontalScroll<HTMLDivElement>()
+  const [draggedColumn, setDraggedColumn] = React.useState<string | null>(null)
 
   // Detect mobile screen size
   React.useEffect(() => {
@@ -69,6 +76,32 @@ export function DataTable<TData, TValue>({
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Load persisted preferences from localStorage
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const savedColumnOrder = localStorage.getItem(`table-column-order-${tableId}`)
+    const savedColumnVisibility = localStorage.getItem(`table-column-visibility-${tableId}`)
+
+    if (savedColumnOrder) {
+      try {
+        const parsedOrder = JSON.parse(savedColumnOrder) as ColumnOrderState
+        setColumnOrder(parsedOrder)
+      } catch (e) {
+        console.warn('Failed to parse saved column order', e)
+      }
+    }
+
+    if (savedColumnVisibility) {
+      try {
+        const parsedVisibility = JSON.parse(savedColumnVisibility) as VisibilityState
+        setColumnVisibility(parsedVisibility)
+      } catch (e) {
+        console.warn('Failed to parse saved column visibility', e)
+      }
+    }
+  }, [tableId])
 
   // Initialize column visibility based on screen size (ONCE on mount)
   React.useEffect(() => {
@@ -94,6 +127,20 @@ export function DataTable<TData, TValue>({
     }
   }, [isMobile, mobileVisibleColumns, columns, initialColumnVisibility])
 
+  // Persist column order to localStorage
+  React.useEffect(() => {
+    if (columnOrder.length > 0) {
+      localStorage.setItem(`table-column-order-${tableId}`, JSON.stringify(columnOrder))
+    }
+  }, [columnOrder, tableId])
+
+  // Persist column visibility to localStorage
+  React.useEffect(() => {
+    if (Object.keys(columnVisibility).length > 0) {
+      localStorage.setItem(`table-column-visibility-${tableId}`, JSON.stringify(columnVisibility))
+    }
+  }, [columnVisibility, tableId])
+
   const table = useReactTable({
     data,
     columns,
@@ -105,12 +152,56 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnOrderChange: setColumnOrder,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      columnOrder,
     },
   })
+
+  // Drag and drop handlers for column reordering
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, columnId: string) => {
+    setDraggedColumn(columnId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
+    e.preventDefault()
+    if (!draggedColumn || draggedColumn === targetColumnId) {
+      setDraggedColumn(null)
+      return
+    }
+
+    const currentOrder = table.getState().columnOrder
+    const allColumns = table.getAllColumns().map(col => col.id)
+    const activeOrder = currentOrder.length > 0 ? currentOrder : allColumns
+
+    const oldIndex = activeOrder.indexOf(draggedColumn)
+    const newIndex = activeOrder.indexOf(targetColumnId)
+
+    if (oldIndex === -1 || newIndex === -1) {
+      setDraggedColumn(null)
+      return
+    }
+
+    const newOrder = [...activeOrder]
+    newOrder.splice(oldIndex, 1)
+    newOrder.splice(newIndex, 0, draggedColumn)
+
+    setColumnOrder(newOrder)
+    setDraggedColumn(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedColumn(null)
+  }
 
   return (
     <div className="w-full space-y-4">
@@ -169,15 +260,31 @@ export function DataTable<TData, TValue>({
                         minWidth: '100px',
                         maxWidth: isMobile ? '200px' : 'none',
                       }}
-                      className="whitespace-nowrap"
+                      className={`whitespace-nowrap ${draggedColumn === header.column.id ? 'opacity-50' : ''}`}
+                      draggable={enableColumnReordering && !isMobile}
+                      onDragStart={(e) => handleDragStart(e, header.column.id)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, header.column.id)}
+                      onDragEnd={handleDragEnd}
                     >
                       {header.isPlaceholder ? null : (
                         <>
-                          <div className="truncate">
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
+                          <div className="flex items-center gap-1 truncate">
+                            {/* Drag Handle */}
+                            {enableColumnReordering && !isMobile && (
+                              <div 
+                                className="cursor-grab active:cursor-grabbing flex-shrink-0"
+                                title="Arrastar para reordenar coluna"
+                              >
+                                <GripVertical className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                              </div>
                             )}
+                            <div className="flex-1 truncate">
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                            </div>
                           </div>
                           {/* Resize Handle */}
                           {enableColumnResizing && header.column.getCanResize() && !isMobile && (
