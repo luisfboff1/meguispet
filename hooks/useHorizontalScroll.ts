@@ -38,7 +38,7 @@ export function useHorizontalScroll<T extends HTMLElement>(): RefObject<T | null
       }
 
       isDraggingRef.current = true
-      startXRef.current = e.pageX - el.offsetLeft
+      startXRef.current = e.clientX
       scrollLeftRef.current = el.scrollLeft
       el.style.cursor = 'grabbing'
       el.style.userSelect = 'none'
@@ -51,7 +51,7 @@ export function useHorizontalScroll<T extends HTMLElement>(): RefObject<T | null
       if (!isDraggingRef.current || !el) return
       e.preventDefault()
       
-      const x = e.pageX - el.offsetLeft
+      const x = e.clientX
       const walk = (x - startXRef.current) * 1.5 // Multiply by 1.5 for faster scrolling
       el.scrollLeft = scrollLeftRef.current - walk
     }
