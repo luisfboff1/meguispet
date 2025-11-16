@@ -1,6 +1,7 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { ScrollableContainer } from '@/components/ui/scrollable-container'
 import { Download, FileText, FileSpreadsheet } from 'lucide-react'
 import {
   BarChart,
@@ -225,7 +226,7 @@ export function ProdutosReportViewer({
               <CardDescription>Produtos com maior saída no período</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <ScrollableContainer>
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
@@ -266,7 +267,7 @@ export function ProdutosReportViewer({
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollableContainer>
             </CardContent>
           </Card>
         )}
@@ -279,7 +280,7 @@ export function ProdutosReportViewer({
               <CardDescription>Produtos que precisam de reposição</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <ScrollableContainer>
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
@@ -316,7 +317,7 @@ export function ProdutosReportViewer({
                     })}
                   </tbody>
                 </table>
-              </div>
+              </ScrollableContainer>
             </CardContent>
           </Card>
         )}
@@ -330,7 +331,7 @@ export function ProdutosReportViewer({
             <CardDescription>Desempenho de cada categoria no período</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <ScrollableContainer>
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
@@ -354,7 +355,7 @@ export function ProdutosReportViewer({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableContainer>
           </CardContent>
         </Card>
       )}

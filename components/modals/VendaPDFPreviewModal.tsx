@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ScrollableContainer } from '@/components/ui/scrollable-container'
 import { FileText, Download, Eye, X, ArrowUpDown, GripVertical } from 'lucide-react'
 import type { Venda, ItemVenda } from '@/types'
 
@@ -280,7 +281,7 @@ export default function VendaPDFPreviewModal({
                     <div className="border rounded-lg overflow-hidden">
                       {hasNovosImpostos ? (
                         /* Tabela com novos campos de impostos */
-                        <div className="overflow-x-auto">
+                        <ScrollableContainer>
                           <table className="w-full text-xs">
                             <thead className="bg-gray-50">
                               <tr>
@@ -342,10 +343,11 @@ export default function VendaPDFPreviewModal({
                               ))}
                             </tbody>
                           </table>
-                        </div>
+                        </ScrollableContainer>
                       ) : (
                         /* Tabela original simplificada */
-                        <table className="w-full text-sm">
+                        <ScrollableContainer>
+                          <table className="w-full text-sm">
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="w-8 px-2 py-2"></th>
@@ -420,6 +422,7 @@ export default function VendaPDFPreviewModal({
                             ))}
                           </tbody>
                         </table>
+                        </ScrollableContainer>
                       )}
                     </div>
                   </div>
@@ -537,7 +540,7 @@ export default function VendaPDFPreviewModal({
                         </span>
                       </div>
 
-                      <div className="overflow-x-auto">
+                      <ScrollableContainer>
                         <table className="min-w-full divide-y divide-gray-200 border rounded-lg">
                           <thead className="bg-gray-50">
                             <tr>
@@ -580,7 +583,7 @@ export default function VendaPDFPreviewModal({
                             ))}
                           </tbody>
                         </table>
-                      </div>
+                      </ScrollableContainer>
 
                       <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-2">
                         <p className="text-xs text-blue-900">

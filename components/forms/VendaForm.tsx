@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ScrollableContainer } from '@/components/ui/scrollable-container'
 import { Loader2, Plus, Trash2, ShoppingCart, Settings, Calendar } from 'lucide-react'
 import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService, condicoesPagamentoService } from '@/services/api'
 import { impostosService } from '@/services/impostosService'
@@ -753,7 +754,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             )}
 
             <div className="border rounded-md overflow-hidden">
-              <div className="max-h-[400px] overflow-x-auto overflow-y-auto">
+              <ScrollableContainer className="max-h-[400px] overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b sticky top-0 z-10">
                     <tr>
@@ -902,7 +903,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                     Nenhum item adicionado. Clique em &quot;Adicionar Item&quot; para começar.
                   </div>
                 )}
-              </div>
+              </ScrollableContainer>
             </div>
           </div>
 
@@ -1095,7 +1096,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             <div className="space-y-2">
               <Label className="mb-2 block">Parcelas Geradas</Label>
               <div className="border rounded-md overflow-hidden">
-                <div className="max-h-[300px] overflow-y-auto">
+                <ScrollableContainer className="max-h-[300px] overflow-y-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 border-b sticky top-0">
                       <tr>
@@ -1157,7 +1158,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                       </tr>
                     </tfoot>
                   </table>
-                </div>
+                </ScrollableContainer>
               </div>
             </div>
           )}
