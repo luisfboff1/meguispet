@@ -594,6 +594,65 @@ export default function VendasPage() {
   const vendasColumns = useMemo<ColumnDef<Venda>[]>(() => {
     return [
     {
+      id: "acoes",
+      header: () => <div className="text-sm font-medium">Ações</div>,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleVisualizarVenda(row.original)}
+            title="Ver detalhes"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleExportarPDF(row.original)}
+            title="Exportar PDF"
+            className="text-blue-600 hover:text-blue-700"
+          >
+            <FileText className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleEditarVenda(row.original)}
+            title="Editar venda"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          {row.original.status === 'pendente' && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-green-600 hover:text-green-700"
+              onClick={() => handleConfirmarVenda(row.original)}
+              title="Confirmar pagamento"
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+          )}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="text-red-600 hover:text-red-700"
+            onClick={() => handleExcluirVenda(row.original)}
+            disabled={deletingId === row.original.id}
+            title="Excluir venda"
+          >
+            {deletingId === row.original.id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      ),
+    },
+    {
       accessorKey: "numero_venda",
       header: ({ column }) => <SortableHeader column={column}>Venda</SortableHeader>,
       cell: ({ row }) => (
@@ -706,70 +765,52 @@ export default function VendasPage() {
         </div>
       ),
     },
-    {
-      id: "acoes",
-      header: "Ações",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleVisualizarVenda(row.original)}
-            title="Ver detalhes"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleExportarPDF(row.original)}
-            title="Exportar PDF"
-            className="text-blue-600 hover:text-blue-700"
-          >
-            <FileText className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleEditarVenda(row.original)}
-            title="Editar venda"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          {row.original.status === 'pendente' && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="text-green-600 hover:text-green-700"
-              onClick={() => handleConfirmarVenda(row.original)}
-              title="Confirmar pagamento"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-          )}
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="text-red-600 hover:text-red-700"
-            onClick={() => handleExcluirVenda(row.original)}
-            disabled={deletingId === row.original.id}
-            title="Excluir venda"
-          >
-            {deletingId === row.original.id ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      ),
-    },
   ]
   }, [deletingId])
 
   // Column definitions for payment terms table
   const condicoesColumns = useMemo<ColumnDef<CondicaoPagamento>[]>(() => {
     return [
+      {
+        id: "acoes",
+        header: () => <div className="text-sm font-medium">Ações</div>,
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => handleEditarCondicao(row.original)}
+              title="Editar condição"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => handleToggleAtivo(row.original)}
+              title={row.original.ativo ? "Desativar" : "Ativar"}
+              className={row.original.ativo ? "text-gray-600" : "text-green-600"}
+            >
+              {row.original.ativo ? 'Desativar' : 'Ativar'}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={() => handleExcluirCondicao(row.original)}
+              disabled={deletingCondicaoId === row.original.id}
+              title="Excluir condição"
+            >
+              {deletingCondicaoId === row.original.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        ),
+      },
       {
         accessorKey: "nome",
         header: ({ column }) => <SortableHeader column={column}>Nome</SortableHeader>,
@@ -814,45 +855,6 @@ export default function VendasPage() {
           }`}>
             {row.original.ativo ? 'Ativo' : 'Inativo'}
           </span>
-        ),
-      },
-      {
-        id: "acoes",
-        header: "Ações",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => handleEditarCondicao(row.original)}
-              title="Editar condição"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => handleToggleAtivo(row.original)}
-              title={row.original.ativo ? "Desativar" : "Ativar"}
-              className={row.original.ativo ? "text-gray-600" : "text-green-600"}
-            >
-              {row.original.ativo ? 'Desativar' : 'Ativar'}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={() => handleExcluirCondicao(row.original)}
-              disabled={deletingCondicaoId === row.original.id}
-              title="Excluir condição"
-            >
-              {deletingCondicaoId === row.original.id ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
         ),
       },
     ]
@@ -1207,10 +1209,12 @@ export default function VendasPage() {
         <DataTable 
           columns={vendasColumns} 
           data={filteredVendas}
+          tableId="vendas"
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
-          mobileVisibleColumns={['numero_venda', 'valor_final', 'status', 'acoes']}
+          enableColumnReordering={true}
+          mobileVisibleColumns={['acoes', 'numero_venda', 'valor_final', 'status']}
           initialColumnVisibility={{
             total_produtos_liquido: false,
             total_ipi: false,
@@ -1259,10 +1263,12 @@ export default function VendasPage() {
             <DataTable 
               columns={condicoesColumns} 
               data={condicoes}
+              tableId="condicoes-pagamento"
               enableColumnResizing={true}
               enableSorting={true}
               enableColumnVisibility={true}
-              mobileVisibleColumns={['nome', 'dias_parcelas', 'acoes']}
+              enableColumnReordering={true}
+              mobileVisibleColumns={['acoes', 'nome', 'dias_parcelas']}
             />
           ) : (
             <Card>
