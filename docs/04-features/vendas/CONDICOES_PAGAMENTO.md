@@ -4,29 +4,42 @@
 
 O sistema de condições de pagamento permite que o cliente configure opções de parcelamento pré-definidas que podem ser selecionadas rapidamente durante o processo de venda. Por exemplo, você pode criar condições como "15/30/45 dias" ou "30/60/90 dias".
 
+## Acesso
+
+As condições de pagamento estão integradas na **página de Vendas** (`/vendas`) como uma aba. 
+
+Para acessar:
+1. Navegue para `/vendas`
+2. Clique na aba **"Condições de Pagamento"**
+
 ## Funcionalidades
 
 ### 1. Gerenciamento de Condições de Pagamento
 
-Acesse a página de **Condições de Pagamento** em `/condicoes-pagamento` para:
+Na aba **Condições de Pagamento** você pode:
 
+- ✅ Visualizar todas as condições em uma tabela customizável
 - ✅ Criar novas condições de pagamento
 - ✅ Editar condições existentes
 - ✅ Ativar/Desativar condições
 - ✅ Excluir condições (desde que não estejam em uso)
-- ✅ Visualizar todas as condições cadastradas
+- ✅ Ordenar por colunas
+- ✅ Visualização responsiva (mobile e desktop)
 
 ### 2. Criação de Condições
 
-Ao criar uma nova condição:
+Para criar uma nova condição:
 
-1. **Nome**: Nome descritivo (ex: "15/30/45 dias")
-2. **Descrição** (opcional): Descrição adicional (ex: "Parcelado em 3x sem juros")
-3. **Dias de Pagamento**: Informe os dias separados por vírgula (ex: `15, 30, 45`)
-   - Use `0` para pagamento à vista
-   - Os dias serão automaticamente ordenados
-4. **Ordem**: Define a ordem de exibição na lista
-5. **Ativo**: Marca se a condição está disponível para uso
+1. Na aba **Condições de Pagamento**, clique em **"Nova Condição"**
+2. Preencha o formulário:
+   - **Nome**: Nome descritivo (ex: "15/30/45 dias")
+   - **Descrição** (opcional): Descrição adicional (ex: "Parcelado em 3x sem juros")
+   - **Dias de Pagamento**: Informe os dias separados por vírgula (ex: `15, 30, 45`)
+     - Use `0` para pagamento à vista
+     - Os dias serão automaticamente ordenados
+   - **Ordem**: Define a ordem de exibição na lista
+   - **Ativo**: Marca se a condição está disponível para uso
+3. Clique em **"Salvar Condição"**
 
 **Exemplo de configurações:**
 - À Vista: `0`
@@ -37,12 +50,13 @@ Ao criar uma nova condição:
 
 ### 3. Uso nas Vendas
 
-No formulário de **Nova Venda**:
+No formulário de **Nova Venda** (aba "Vendas"):
 
-1. Localize o campo **"Condição de Pagamento"** (logo acima do parcelamento manual)
-2. Selecione uma condição da lista
-3. (Opcional) Ajuste a **Data Base para Cálculo** (padrão: hoje)
-4. As parcelas serão geradas automaticamente com base na condição selecionada
+1. Adicione produtos ao carrinho
+2. Localize o campo **"Condição de Pagamento"** (logo acima do parcelamento manual)
+3. Selecione uma condição da lista
+4. (Opcional) Ajuste a **Data Base para Cálculo** (padrão: hoje)
+5. As parcelas serão geradas automaticamente com base na condição selecionada
 
 **Comportamento:**
 - Quando uma condição é selecionada, o sistema automaticamente:

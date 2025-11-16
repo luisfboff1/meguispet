@@ -4,6 +4,14 @@
 
 This feature allows you to create **payment conditions templates** (like "15/30/45 days") that can be quickly selected when creating a sale, automatically generating the payment installments.
 
+## Location
+
+Payment terms are integrated into the **Sales page** (`/vendas`) as a tab.
+
+**To access:**
+1. Navigate to `/vendas`  
+2. Click on the **"Condições de Pagamento"** tab
+
 ## Example Use Case
 
 **Before this feature:**
@@ -22,30 +30,26 @@ This feature allows you to create **payment conditions templates** (like "15/30/
 
 ### 1️⃣ Create Payment Terms (Setup - Do Once)
 
-Navigate to: `http://your-domain.com/condicoes-pagamento`
+Navigate to: `http://your-domain.com/vendas` → Click on **"Condições de Pagamento"** tab
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Condições de Pagamento                              │
-│  Gerencie os prazos de pagamento disponíveis        │
+│  Vendas                                              │
+│  Gerencie suas vendas e condições de pagamento      │
 │                                          [+ Nova]    │
 ├─────────────────────────────────────────────────────┤
+│  [Vendas]  [Condições de Pagamento] ← Click Here   │
+├─────────────────────────────────────────────────────┤
 │                                                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────┐│
-│  │ 💳 À Vista   │  │ 💳 15 Dias   │  │ 💳 30 Dias ││
-│  │              │  │              │  │            ││
-│  │ 📅 À Vista   │  │ 📅 15 dias   │  │ 📅 30 dias ││
-│  │ 1 parcela    │  │ 1 parcela    │  │ 1 parcela  ││
-│  │ [Edit] [Tog] │  │ [Edit] [Tog] │  │ [Ed] [Tog] ││
-│  └──────────────┘  └──────────────┘  └────────────┘│
-│                                                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────┐│
-│  │ 💳 15/30 D.  │  │ 💳 30/60 D.  │  │ 💳 30/60/90││
-│  │              │  │              │  │            ││
-│  │ 📅 15/30 dias│  │ 📅 30/60 dias│  │ 📅 30/60/90││
-│  │ 2 parcelas   │  │ 2 parcelas   │  │ 3 parcelas ││
-│  │ [Edit] [Tog] │  │ [Edit] [Tog] │  │ [Ed] [Tog] ││
-│  └──────────────┘  └──────────────┘  └────────────┘│
+│  📊 Payment Terms Table (Customizable & Responsive) │
+│  ┌──────────────────────────────────────────────┐  │
+│  │ Nome        │ Prazos      │ Status  │ Ações  │  │
+│  ├──────────────────────────────────────────────┤  │
+│  │ À Vista     │ À Vista     │ ✓ Ativo │ [Edit] │  │
+│  │ 15 Dias     │ 15 dias     │ ✓ Ativo │ [Edit] │  │
+│  │ 30/60 Dias  │ 30/60 dias  │ ✓ Ativo │ [Edit] │  │
+│  │ 15/30/45 D. │ 15/30/45 d. │ ✓ Ativo │ [Edit] │  │
+│  └──────────────────────────────────────────────┘  │
 │                                                       │
 └─────────────────────────────────────────────────────┘
 ```
@@ -277,10 +281,11 @@ Result: Full payment due immediately (today)
 ## 🚀 Getting Started
 
 1. Run the database migration (see IMPLEMENTATION_SUMMARY.md)
-2. Access `/condicoes-pagamento`
-3. Review the 8 default payment terms
-4. (Optional) Create custom terms for your business
-5. Start using them in sales! 🎉
+2. Access `/vendas`
+3. Click on the **"Condições de Pagamento"** tab
+4. Review the 8 default payment terms in the table
+5. (Optional) Create custom terms for your business
+6. Switch to the **"Vendas"** tab and start using them in sales! 🎉
 
 ---
 

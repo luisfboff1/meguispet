@@ -79,19 +79,24 @@ Added `condicoesPagamentoService` with methods:
 - delete(id: number)
 ```
 
-### 5. Management Page ✅
-**File**: `pages/condicoes-pagamento.tsx`
+### 5. Management Interface ✅
+**Location**: `/pages/vendas.tsx` (as a tab)
 
 Features:
-- Modern card-based UI displaying all payment terms
+- Integrated as a tab within the sales page
+- Uses project's DataTable component (customizable, responsive)
+- Sortable columns with SortableHeader
 - Create/Edit modal with intuitive form
 - Dynamic days input with comma-separated values
 - Real-time preview of payment terms
 - Toggle active/inactive functionality
 - Delete with usage validation
-- Responsive design
+- Mobile responsive with configurable visible columns
+- Follows exact same pattern as vendas table
 
 UI Components used:
+- Tab system with button navigation
+- DataTable with column definitions
 - Card, CardHeader, CardTitle, CardDescription, CardContent
 - Button, Input, Label
 - Toast notifications
@@ -133,21 +138,24 @@ Comprehensive documentation including:
 ## User Flow
 
 ### Setup (One-time)
-1. Navigate to `/condicoes-pagamento`
-2. Click "Nova Condição"
-3. Fill in:
+1. Navigate to `/vendas`
+2. Click on "Condições de Pagamento" tab
+3. Click "Nova Condição"
+4. Fill in:
    - Name (e.g., "15/30/45 dias")
    - Description (optional)
    - Days (comma-separated: 15, 30, 45)
-4. Save
+5. Save
 
 ### Using in Sales
-1. Open new sale form (`/vendas`)
-2. Add products to cart
-3. Select payment term from dropdown
-4. (Optional) Adjust base calculation date
-5. Review auto-generated installments
-6. Complete and save sale
+1. Go to `/vendas`
+2. Ensure you're on the "Vendas" tab
+3. Click "Nova Venda"
+4. Add products to cart
+5. Select payment term from dropdown
+6. (Optional) Adjust base calculation date
+7. Review auto-generated installments
+8. Complete and save sale
 
 ## Technical Details
 
@@ -209,14 +217,12 @@ Result:
    ```
 
 2. **Test the Feature**
-   - Access `/condicoes-pagamento` page
+   - Access `/vendas` page
+   - Click on "Condições de Pagamento" tab
+   - Review existing payment terms in the table
    - Create a custom payment term
-   - Go to sales form and test with the new term
+   - Switch to "Vendas" tab and test with the new term
    - Verify installments are generated correctly
-
-3. **Optional: Add Navigation Link**
-   - If desired, add a link to `/condicoes-pagamento` in the sidebar or configurações page
-   - Currently accessible by direct URL navigation
 
 ## Deployment Notes
 
