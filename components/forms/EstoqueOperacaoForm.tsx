@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { ScrollableContainer } from '@/components/ui/scrollable-container'
 import {
   Loader2,
   TrendingUp,
@@ -574,7 +575,7 @@ export default function EstoqueOperacaoForm({
             </div>
 
             <div className="rounded-lg border border-gray-200">
-              <div className="overflow-x-auto">
+              <ScrollableContainer>
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-gray-50">
                     <tr>
@@ -636,7 +637,7 @@ export default function EstoqueOperacaoForm({
                     )}
                   </tbody>
                 </table>
-              </div>
+              </ScrollableContainer>
             </div>
           </section>
 

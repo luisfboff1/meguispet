@@ -1,6 +1,7 @@
 import React, { useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { ScrollableContainer } from '@/components/ui/scrollable-container'
 import { Download, FileSpreadsheet, FileText, Share2 } from 'lucide-react'
 import { Line, LineChart, Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import type { VendasReportData, ReportConfiguration, ReportFormat } from '@/types/reports'
@@ -355,7 +356,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <ScrollableContainer>
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
@@ -392,7 +393,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableContainer>
           </CardContent>
         </Card>
       )}
@@ -407,7 +408,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <ScrollableContainer>
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
@@ -468,7 +469,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableContainer>
           </CardContent>
         </Card>
       )}

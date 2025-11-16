@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useHorizontalScroll } from "@/hooks/useHorizontalScroll"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -56,6 +57,7 @@ export function DataTable<TData, TValue>({
   const [columnResizeMode] = React.useState<ColumnResizeMode>("onChange")
   const [isMobile, setIsMobile] = React.useState(false)
   const isInitializedRef = React.useRef(false)
+  const scrollContainerRef = useHorizontalScroll<HTMLDivElement>()
 
   // Detect mobile screen size
   React.useEffect(() => {
@@ -153,7 +155,7 @@ export function DataTable<TData, TValue>({
       )}
 
       {/* Table */}
-      <div className="rounded-md border overflow-x-auto">
+      <div ref={scrollContainerRef} className="rounded-md border overflow-x-auto">
         <Table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto' }}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
