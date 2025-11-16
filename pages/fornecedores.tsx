@@ -184,6 +184,32 @@ export default function FornecedoresPage() {
   const fornecedoresColumns = useMemo<ColumnDef<Fornecedor>[]>(() => {
     return [
     {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleEditarFornecedor(row.original)}
+            title="Editar fornecedor"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-600 hover:text-red-700"
+            onClick={() => handleRemoverFornecedor(row.original)}
+            disabled={formLoading}
+            title="Desativar fornecedor"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+    {
       accessorKey: "nome",
       header: ({ column }) => <SortableHeader column={column}>Fornecedor</SortableHeader>,
       cell: ({ row }) => (
@@ -264,32 +290,6 @@ export default function FornecedoresPage() {
           </div>
         )
       },
-    },
-    {
-      id: "acoes",
-      header: "Ações",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleEditarFornecedor(row.original)}
-            title="Editar fornecedor"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-600 hover:text-red-700"
-            onClick={() => handleRemoverFornecedor(row.original)}
-            disabled={formLoading}
-            title="Desativar fornecedor"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
     },
   ]
   }, [formLoading])
@@ -379,10 +379,12 @@ export default function FornecedoresPage() {
         <DataTable 
           columns={fornecedoresColumns} 
           data={filteredFornecedores}
+          tableId="fornecedores"
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
-          mobileVisibleColumns={['nome', 'telefone', 'acoes']}
+          enableColumnReordering={true}
+          mobileVisibleColumns={['acoes', 'nome', 'telefone']}
         />
       ) : (
         <Card>

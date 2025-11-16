@@ -243,6 +243,47 @@ export default function VendedoresPage() {
   const vendedoresColumns = useMemo<ColumnDef<Vendedor>[]>(() => {
     return [
     {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedVendedor(row.original)
+              setShowDetailsModal(true)
+            }}
+            title="Ver detalhes e vendas"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleEditarVendedor(row.original)}
+            title="Editar vendedor"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => handleExcluirVendedor(row.original)}
+            disabled={deletingId === row.original.id}
+            title="Excluir vendedor"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            {deletingId === row.original.id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      ),
+    },
+    {
       accessorKey: "nome",
       header: ({ column }) => <SortableHeader column={column}>Vendedor</SortableHeader>,
       cell: ({ row }) => (
@@ -320,44 +361,8 @@ export default function VendedoresPage() {
         </div>
       ),
     },
-    {
-      id: "acoes",
-      header: "Ações",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedVendedor(row.original)
-              setShowDetailsModal(true)
-            }}
-            title="Ver detalhes e vendas"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleEditarVendedor(row.original)}
-            title="Editar vendedor"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleExcluirVendedor(row.original)}
-            title="Excluir vendedor"
-            className="text-red-600 hover:text-red-700"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
   ]
-  }, [])
+  }, [deletingId])
 
   if (showForm) {
     return (
@@ -500,10 +505,12 @@ export default function VendedoresPage() {
         <DataTable 
           columns={vendedoresColumns} 
           data={filteredVendedores}
+          tableId="vendedores"
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
-          mobileVisibleColumns={['nome', 'telefone', 'comissao', 'acoes']}
+          enableColumnReordering={true}
+          mobileVisibleColumns={['acoes', 'nome', 'telefone', 'comissao']}
         />
       ) : (
         <Card>

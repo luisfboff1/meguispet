@@ -333,6 +333,41 @@ export default function UsuariosPage() {
   const usuariosColumns = useMemo<ColumnDef<Usuario>[]>(() => {
     return [
     {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            title="Ver detalhes"
+            onClick={() => handleViewUser(row.original)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            title="Editar usuário"
+            onClick={() => handleEditUser(row.original)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          {currentUser?.role === 'admin' && currentUser?.id !== row.original.id && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              title="Excluir usuário"
+              onClick={() => handleDeleteUser(row.original)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      ),
+    },
+    {
       accessorKey: "nome",
       header: ({ column }) => <SortableHeader column={column}>Usuário</SortableHeader>,
       cell: ({ row }) => (
@@ -377,41 +412,6 @@ export default function UsuariosPage() {
         <span className={`text-sm font-medium ${row.original.ativo ? 'text-green-600' : 'text-red-600'}`}>
           {row.original.ativo ? 'Ativo' : 'Inativo'}
         </span>
-      ),
-    },
-    {
-      id: "acoes",
-      header: "Ações",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            title="Ver detalhes"
-            onClick={() => handleViewUser(row.original)}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            title="Editar usuário"
-            onClick={() => handleEditUser(row.original)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          {currentUser?.role === 'admin' && currentUser?.id !== row.original.id && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              title="Excluir usuário"
-              onClick={() => handleDeleteUser(row.original)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
       ),
     },
   ]
@@ -529,10 +529,12 @@ export default function UsuariosPage() {
         <DataTable 
           columns={usuariosColumns} 
           data={filteredUsuarios}
+          tableId="usuarios"
           enableColumnResizing={true}
           enableSorting={true}
           enableColumnVisibility={true}
-          mobileVisibleColumns={['nome', 'email', 'role', 'acoes']}
+          enableColumnReordering={true}
+          mobileVisibleColumns={['acoes', 'nome', 'email', 'role']}
         />
       ) : (
         <Card>
