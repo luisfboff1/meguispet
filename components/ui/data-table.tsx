@@ -261,8 +261,11 @@ export function DataTable<TData, TValue>({
                         maxWidth: isMobile ? '200px' : 'none',
                       }}
                       className={`whitespace-nowrap ${draggedColumn === header.column.id ? 'opacity-50' : ''}`}
+                      draggable={enableColumnReordering && !isMobile}
+                      onDragStart={(e) => handleDragStart(e, header.column.id)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, header.column.id)}
+                      onDragEnd={handleDragEnd}
                     >
                       {header.isPlaceholder ? null : (
                         <>
@@ -270,15 +273,6 @@ export function DataTable<TData, TValue>({
                             {/* Drag Handle */}
                             {enableColumnReordering && !isMobile && (
                               <div 
-                                draggable
-                                onDragStart={(e) => {
-                                  e.stopPropagation()
-                                  handleDragStart(e, header.column.id)
-                                }}
-                                onDragEnd={(e) => {
-                                  e.stopPropagation()
-                                  handleDragEnd()
-                                }}
                                 className="cursor-grab active:cursor-grabbing flex-shrink-0"
                                 title="Arrastar para reordenar coluna"
                               >
