@@ -271,8 +271,14 @@ export function DataTable<TData, TValue>({
                             {enableColumnReordering && !isMobile && (
                               <div 
                                 draggable
-                                onDragStart={(e) => handleDragStart(e, header.column.id)}
-                                onDragEnd={handleDragEnd}
+                                onDragStart={(e) => {
+                                  e.stopPropagation()
+                                  handleDragStart(e, header.column.id)
+                                }}
+                                onDragEnd={(e) => {
+                                  e.stopPropagation()
+                                  handleDragEnd()
+                                }}
                                 className="cursor-grab active:cursor-grabbing flex-shrink-0"
                                 title="Arrastar para reordenar coluna"
                               >
