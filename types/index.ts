@@ -482,6 +482,52 @@ export interface VendedorForm {
   ativo?: boolean
 }
 
+// Tipos para detalhes do vendedor (modal)
+export interface VendedorMetricas {
+  faturamentoTotal: number
+  faturamentoPeriodoAnterior: number
+  variacaoFaturamento: number
+  quantidadeVendas: number
+  quantidadePeriodoAnterior: number
+  variacaoQuantidade: number
+  ticketMedio: number
+  ticketMedioPeriodoAnterior: number
+  variacaoTicketMedio: number
+  comissaoTotal: number
+  ultimaVenda: {
+    id: number
+    numero_venda: string
+    data_venda: string
+    valor_final: number
+  } | null
+  graficoVendas: Array<{
+    data: string // YYYY-MM-DD
+    faturamento: number
+    quantidade: number
+  }>
+}
+
+export interface VendedorVenda {
+  id: number
+  numero_venda: string
+  cliente: {
+    id: number
+    nome: string
+  } | null
+  data_venda: string
+  valor_final: number
+  status: string
+  forma_pagamento: string
+}
+
+export interface VendedorVendasResponse {
+  vendas: VendedorVenda[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 // Tipos para API
 export interface ApiResponse<T = unknown> {
   success: boolean

@@ -22,6 +22,7 @@ import { vendedoresService } from '@/services/api'
 import VendedorForm from '@/components/forms/VendedorForm'
 import AlertDialog from '@/components/ui/AlertDialog'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+import { VendedorDetailsModal } from '@/components/modals/VendedorDetailsModal'
 import type { Vendedor, VendedorForm as VendedorFormValues } from '@/types'
 
 export default function VendedoresPage() {
@@ -34,6 +35,10 @@ export default function VendedoresPage() {
   const [editingVendedor, setEditingVendedor] = useState<Vendedor | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [alertDialog, setAlertDialog] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
+
+  // Modal de detalhes do vendedor
+  const [selectedVendedor, setSelectedVendedor] = useState<Vendedor | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
 
   useEffect(() => {
     loadVendedores()
@@ -320,11 +325,14 @@ export default function VendedoresPage() {
       header: "Ações",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
-            onClick={() => handleVerVendas(row.original)}
-            title="Ver vendas"
+            onClick={() => {
+              setSelectedVendedor(row.original)
+              setShowDetailsModal(true)
+            }}
+            title="Ver detalhes e vendas"
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -507,6 +515,18 @@ export default function VendedoresPage() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Modal de Detalhes do Vendedor */}
+      {selectedVendedor && (
+        <VendedorDetailsModal
+          vendedor={selectedVendedor}
+          isOpen={showDetailsModal}
+          onClose={() => {
+            setShowDetailsModal(false)
+            setSelectedVendedor(null)
+          }}
+        />
       )}
     </div>
   )
