@@ -48,7 +48,7 @@ export function useHorizontalScroll<T extends HTMLElement>(): RefObject<T | null
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return
+      if (!isDraggingRef.current || !el) return
       e.preventDefault()
       
       const x = e.pageX - el.offsetLeft
@@ -57,14 +57,7 @@ export function useHorizontalScroll<T extends HTMLElement>(): RefObject<T | null
     }
 
     const handleMouseUp = () => {
-      if (!isDraggingRef.current) return
-      isDraggingRef.current = false
-      el.style.cursor = 'grab'
-      el.style.userSelect = ''
-    }
-
-    const handleMouseLeave = () => {
-      if (!isDraggingRef.current) return
+      if (!isDraggingRef.current || !el) return
       isDraggingRef.current = false
       el.style.cursor = 'grab'
       el.style.userSelect = ''
@@ -74,17 +67,17 @@ export function useHorizontalScroll<T extends HTMLElement>(): RefObject<T | null
     el.style.cursor = 'grab'
 
     // Add event listeners
+    // mousedown on the element
     el.addEventListener('mousedown', handleMouseDown)
-    el.addEventListener('mousemove', handleMouseMove)
-    el.addEventListener('mouseup', handleMouseUp)
-    el.addEventListener('mouseleave', handleMouseLeave)
+    // mousemove and mouseup on document to track mouse outside element
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
 
     // Cleanup
     return () => {
       el.removeEventListener('mousedown', handleMouseDown)
-      el.removeEventListener('mousemove', handleMouseMove)
-      el.removeEventListener('mouseup', handleMouseUp)
-      el.removeEventListener('mouseleave', handleMouseLeave)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
     }
   }, [])
 
