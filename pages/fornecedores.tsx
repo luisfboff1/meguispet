@@ -185,7 +185,7 @@ export default function FornecedoresPage() {
     return [
     {
       id: "acoes",
-      header: "Ações",
+      header: () => <div className="text-sm font-medium">Ações</div>,
       enableSorting: false,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">

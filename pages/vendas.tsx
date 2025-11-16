@@ -595,7 +595,7 @@ export default function VendasPage() {
     return [
     {
       id: "acoes",
-      header: "Ações",
+      header: () => <div className="text-sm font-medium">Ações</div>,
       enableSorting: false,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
@@ -773,7 +773,7 @@ export default function VendasPage() {
     return [
       {
         id: "acoes",
-        header: "Ações",
+        header: () => <div className="text-sm font-medium">Ações</div>,
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
