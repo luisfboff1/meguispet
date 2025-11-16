@@ -4,6 +4,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { 
   Plus, 
   Search, 
@@ -17,10 +18,12 @@ import {
   Calendar,
   Loader2,
   Check,
-  FileText
+  FileText,
+  CreditCard,
+  X
 } from 'lucide-react'
-import { vendasService, clientesService } from '@/services/api'
-import type { Venda, VendaForm as VendaFormValues } from '@/types'
+import { vendasService, clientesService, condicoesPagamentoService } from '@/services/api'
+import type { Venda, VendaForm as VendaFormValues, CondicaoPagamento, CondicaoPagamentoForm } from '@/types'
 import VendaForm from '@/components/forms/VendaForm'
 import Toast from '@/components/ui/Toast'
 import AlertDialog from '@/components/ui/AlertDialog'
@@ -29,6 +32,7 @@ import { downloadOrderPDF, PDFGeneratorOptions } from '@/lib/pdf-generator'
 import VendaPDFPreviewModal, { PDFPreviewOptions } from '@/components/modals/VendaPDFPreviewModal'
 
 export default function VendasPage() {
+  const [activeTab, setActiveTab] = useState<'vendas' | 'condicoes'>('vendas')
   const [vendas, setVendas] = useState<Venda[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -44,10 +48,31 @@ export default function VendasPage() {
   const [vendaParaPDF, setVendaParaPDF] = useState<Venda | null>(null)
   const [showPrintConfirmation, setShowPrintConfirmation] = useState(false)
   const [vendaRecemSalva, setVendaRecemSalva] = useState<Venda | null>(null)
+  
+  // Payment terms state
+  const [condicoes, setCondicoes] = useState<CondicaoPagamento[]>([])
+  const [condicoesLoading, setCondicoesLoading] = useState(false)
+  const [showCondicaoForm, setShowCondicaoForm] = useState(false)
+  const [editingCondicao, setEditingCondicao] = useState<CondicaoPagamento | null>(null)
+  const [condicaoFormData, setCondicaoFormData] = useState<CondicaoPagamentoForm & { dias_input: string }>({
+    nome: '',
+    descricao: '',
+    dias_parcelas: [],
+    dias_input: '',
+    ativo: true,
+    ordem: 0
+  })
+  const [deletingCondicaoId, setDeletingCondicaoId] = useState<number | null>(null)
 
   useEffect(() => {
     loadVendas()
   }, [currentPage])
+
+  useEffect(() => {
+    if (activeTab === 'condicoes') {
+      loadCondicoes()
+    }
+  }, [activeTab])
 
   const loadVendas = async () => {
     try {
@@ -65,6 +90,21 @@ export default function VendasPage() {
       console.error('Erro ao carregar vendas:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadCondicoes = async () => {
+    try {
+      setCondicoesLoading(true)
+      const response = await condicoesPagamentoService.getAll()
+      if (response.success && response.data) {
+        setCondicoes(response.data)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar condições de pagamento:', error)
+      setToast({ message: 'Erro ao carregar condições de pagamento', type: 'error' })
+    } finally {
+      setCondicoesLoading(false)
     }
   }
 
@@ -376,6 +416,173 @@ export default function VendasPage() {
     document.body.removeChild(link)
   }
 
+  // Payment terms handlers
+  const handleNovaCondicao = () => {
+    setEditingCondicao(null)
+    setCondicaoFormData({
+      nome: '',
+      descricao: '',
+      dias_parcelas: [],
+      dias_input: '',
+      ativo: true,
+      ordem: 0
+    })
+    setShowCondicaoForm(true)
+  }
+
+  const handleEditarCondicao = (condicao: CondicaoPagamento) => {
+    setEditingCondicao(condicao)
+    setCondicaoFormData({
+      nome: condicao.nome,
+      descricao: condicao.descricao || '',
+      dias_parcelas: condicao.dias_parcelas,
+      dias_input: condicao.dias_parcelas.join(', '),
+      ativo: condicao.ativo,
+      ordem: condicao.ordem
+    })
+    setShowCondicaoForm(true)
+  }
+
+  const parseDiasInput = (input: string): number[] => {
+    return input
+      .split(',')
+      .map(d => d.trim())
+      .filter(d => d !== '')
+      .map(d => parseInt(d))
+      .filter(d => !isNaN(d) && d >= 0)
+      .sort((a, b) => a - b)
+  }
+
+  const handleSalvarCondicao = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const dias_parcelas = parseDiasInput(condicaoFormData.dias_input)
+
+    if (!condicaoFormData.nome) {
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Nome da condição de pagamento é obrigatório',
+        type: 'error',
+      })
+      return
+    }
+
+    if (dias_parcelas.length === 0) {
+      setAlert({
+        title: '❌ Erro de Validação',
+        message: 'Informe ao menos um prazo de pagamento (em dias)',
+        type: 'error',
+      })
+      return
+    }
+
+    try {
+      setFormLoading(true)
+      const payload: CondicaoPagamentoForm = {
+        nome: condicaoFormData.nome,
+        descricao: condicaoFormData.descricao || undefined,
+        dias_parcelas,
+        ativo: condicaoFormData.ativo,
+        ordem: condicaoFormData.ordem || 0
+      }
+
+      let response
+      if (editingCondicao) {
+        response = await condicoesPagamentoService.update(editingCondicao.id, payload)
+      } else {
+        response = await condicoesPagamentoService.create(payload)
+      }
+
+      if (response && response.success) {
+        await loadCondicoes()
+        setShowCondicaoForm(false)
+        setEditingCondicao(null)
+        setToast({
+          message: editingCondicao ? 'Condição atualizada com sucesso!' : 'Condição criada com sucesso!',
+          type: 'success'
+        })
+      } else {
+        setAlert({
+          title: '❌ Erro ao Salvar',
+          message: response?.message || 'Não foi possível salvar a condição de pagamento.',
+          type: 'error',
+        })
+      }
+    } catch (error: unknown) {
+      let msg = 'Não foi possível salvar a condição de pagamento.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
+        }
+      }
+      setAlert({
+        title: '❌ Erro ao Salvar',
+        message: msg,
+        type: 'error',
+      })
+      console.error('Erro ao salvar condição:', error)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleExcluirCondicao = async (condicao: CondicaoPagamento) => {
+    const confirmar = window.confirm(`Deseja realmente excluir a condição "${condicao.nome}"?`)
+    if (!confirmar) return
+
+    try {
+      setDeletingCondicaoId(condicao.id)
+      const response = await condicoesPagamentoService.delete(condicao.id)
+      if (response.success) {
+        await loadCondicoes()
+        setToast({ message: 'Condição de pagamento excluída com sucesso.', type: 'success' })
+      } else {
+        setToast({ message: response.message || 'Erro ao excluir condição', type: 'error' })
+      }
+    } catch (error: unknown) {
+      let msg = 'Não foi possível excluir a condição de pagamento.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
+        }
+      }
+      setToast({ message: msg, type: 'error' })
+      console.error('Erro ao excluir condição:', error)
+    } finally {
+      setDeletingCondicaoId(null)
+    }
+  }
+
+  const handleToggleAtivo = async (condicao: CondicaoPagamento) => {
+    try {
+      const response = await condicoesPagamentoService.update(condicao.id, {
+        ativo: !condicao.ativo
+      })
+      if (response.success) {
+        await loadCondicoes()
+        setToast({ 
+          message: `Condição ${!condicao.ativo ? 'ativada' : 'desativada'} com sucesso.`, 
+          type: 'success' 
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao alterar status:', error)
+      setToast({ message: 'Erro ao alterar status da condição', type: 'error' })
+    }
+  }
+
+  const formatDiasParcelas = (dias: number[]): string => {
+    if (dias.length === 0) return '-'
+    if (dias.length === 1 && dias[0] === 0) return 'À Vista'
+    return dias.map(d => `${d} dias`).join(' / ')
+  }
+
   // Helper function to get payment method
   const getFormaPagamento = (venda: Venda): string => {
     return venda.forma_pagamento_detalhe?.nome || 
@@ -560,6 +767,97 @@ export default function VendasPage() {
   ]
   }, [deletingId])
 
+  // Column definitions for payment terms table
+  const condicoesColumns = useMemo<ColumnDef<CondicaoPagamento>[]>(() => {
+    return [
+      {
+        accessorKey: "nome",
+        header: ({ column }) => <SortableHeader column={column}>Nome</SortableHeader>,
+        cell: ({ row }) => (
+          <div className="flex items-center space-x-2">
+            <CreditCard className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
+            <span className="font-medium text-gray-900">{row.original.nome}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "descricao",
+        header: ({ column }) => <SortableHeader column={column}>Descrição</SortableHeader>,
+        cell: ({ row }) => (
+          <span className="text-sm text-gray-600">{row.original.descricao || '-'}</span>
+        ),
+      },
+      {
+        accessorKey: "dias_parcelas",
+        header: "Prazos",
+        cell: ({ row }) => (
+          <span className="text-sm text-gray-900">{formatDiasParcelas(row.original.dias_parcelas)}</span>
+        ),
+      },
+      {
+        id: "numero_parcelas",
+        header: "Parcelas",
+        cell: ({ row }) => (
+          <span className="text-sm text-gray-700">
+            {row.original.dias_parcelas.length === 1 ? '1 parcela' : `${row.original.dias_parcelas.length} parcelas`}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "ativo",
+        header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
+        cell: ({ row }) => (
+          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+            row.original.ativo 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-gray-100 text-gray-600'
+          }`}>
+            {row.original.ativo ? 'Ativo' : 'Inativo'}
+          </span>
+        ),
+      },
+      {
+        id: "acoes",
+        header: "Ações",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => handleEditarCondicao(row.original)}
+              title="Editar condição"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => handleToggleAtivo(row.original)}
+              title={row.original.ativo ? "Desativar" : "Ativar"}
+              className={row.original.ativo ? "text-gray-600" : "text-green-600"}
+            >
+              {row.original.ativo ? 'Desativar' : 'Ativar'}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={() => handleExcluirCondicao(row.original)}
+              disabled={deletingCondicaoId === row.original.id}
+              title="Excluir condição"
+            >
+              {deletingCondicaoId === row.original.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        ),
+      },
+    ]
+  }, [deletingCondicaoId])
+
   return (
     <div className="space-y-6">
       {alert && (
@@ -617,34 +915,78 @@ export default function VendasPage() {
         }}
         onConfirmDownload={handleConfirmPDFDownload}
       />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Vendas</h1>
-          <p className="text-gray-600">Gerencie suas vendas e pedidos</p>
+          <p className="text-gray-600">Gerencie suas vendas e condições de pagamento</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button 
-            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-            onClick={handleNovaVenda}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Venda
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={handleExportar}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Exportar
-          </Button>
+          {activeTab === 'vendas' ? (
+            <>
+              <Button 
+                className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+                onClick={handleNovaVenda}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Venda
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleExportar}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </Button>
+            </>
+          ) : (
+            <Button 
+              className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+              onClick={handleNovaCondicao}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Condição
+            </Button>
+          )}
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('vendas')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'vendas'
+                ? 'border-meguispet-primary text-meguispet-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <ShoppingCart className="inline mr-2 h-4 w-4" />
+            Vendas
+          </button>
+          <button
+            onClick={() => setActiveTab('condicoes')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'condicoes'
+                ? 'border-meguispet-primary text-meguispet-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <CreditCard className="inline mr-2 h-4 w-4" />
+            Condições de Pagamento
+          </button>
+        </nav>
       </div>
 
       {/* Toast cobre mensagens de sucesso/erro */}
 
-      {selectedVenda ? (
+      {/* Vendas Tab Content */}
+      {activeTab === 'vendas' && (
+        <>
+          {selectedVenda ? (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -899,6 +1241,185 @@ export default function VendasPage() {
             errorMessage={undefined}
           />
         </div>
+      )}
+        </>
+      )}
+
+      {/* Payment Terms Tab Content */}
+      {activeTab === 'condicoes' && (
+        <>
+          {/* Payment Terms Table */}
+          {condicoesLoading ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
+              </CardContent>
+            </Card>
+          ) : condicoes.length > 0 ? (
+            <DataTable 
+              columns={condicoesColumns} 
+              data={condicoes}
+              enableColumnResizing={true}
+              enableSorting={true}
+              enableColumnVisibility={true}
+              mobileVisibleColumns={['nome', 'dias_parcelas', 'acoes']}
+            />
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <CreditCard className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma condição cadastrada</h3>
+                <p className="text-gray-600 text-center mb-4">
+                  Comece adicionando sua primeira condição de pagamento
+                </p>
+                <Button onClick={handleNovaCondicao}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Condição
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Terms Form Modal */}
+          {showCondicaoForm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg bg-black/20">
+              <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center">
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      {editingCondicao ? 'Editar Condição de Pagamento' : 'Nova Condição de Pagamento'}
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCondicaoForm(false)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <CardDescription>
+                    Configure os prazos de pagamento que estarão disponíveis nas vendas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSalvarCondicao} className="space-y-4">
+                    <div>
+                      <Label htmlFor="nome">
+                        Nome da Condição <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="nome"
+                        type="text"
+                        value={condicaoFormData.nome}
+                        onChange={(e) => setCondicaoFormData(prev => ({ ...prev, nome: e.target.value }))}
+                        placeholder="Ex: 15/30/45 dias"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Nome descritivo para identificar a condição
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="descricao">Descrição (Opcional)</Label>
+                      <Input
+                        id="descricao"
+                        type="text"
+                        value={condicaoFormData.descricao}
+                        onChange={(e) => setCondicaoFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                        placeholder="Ex: Parcelado em 3x sem juros"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="dias_input">
+                        Dias de Pagamento <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="dias_input"
+                        type="text"
+                        value={condicaoFormData.dias_input}
+                        onChange={(e) => setCondicaoFormData(prev => ({ ...prev, dias_input: e.target.value }))}
+                        placeholder="Ex: 15, 30, 45 ou 30, 60, 90"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Informe os dias separados por vírgula. Use 0 (zero) para pagamento à vista.
+                      </p>
+                      {condicaoFormData.dias_input && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                          <p className="font-medium text-blue-900 mb-1">Pré-visualização:</p>
+                          <p className="text-blue-700">
+                            {formatDiasParcelas(parseDiasInput(condicaoFormData.dias_input))}
+                            {' '}
+                            ({parseDiasInput(condicaoFormData.dias_input).length} 
+                            {parseDiasInput(condicaoFormData.dias_input).length === 1 ? ' parcela' : ' parcelas'})
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="ordem">Ordem de Exibição</Label>
+                        <Input
+                          id="ordem"
+                          type="number"
+                          min="0"
+                          value={condicaoFormData.ordem}
+                          onChange={(e) => setCondicaoFormData(prev => ({ ...prev, ordem: Number(e.target.value) }))}
+                          placeholder="0"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Menor número aparece primeiro
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-2 pt-6">
+                        <input
+                          type="checkbox"
+                          id="ativo"
+                          checked={condicaoFormData.ativo}
+                          onChange={(e) => setCondicaoFormData(prev => ({ ...prev, ativo: e.target.checked }))}
+                          className="w-4 h-4 rounded border-gray-300"
+                        />
+                        <Label htmlFor="ativo" className="cursor-pointer">
+                          Condição ativa
+                        </Label>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-2 pt-4 border-t">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setShowCondicaoForm(false)}
+                        disabled={formLoading}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={formLoading}
+                      >
+                        {formLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : (
+                          'Salvar Condição'
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
