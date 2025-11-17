@@ -405,57 +405,57 @@ export default function VendedoresPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Vendedores</CardTitle>
-            <User className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Total Vendedores</CardTitle>
+            <User className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vendedores.length}</div>
-            <p className="text-xs text-muted-foreground">Ativos</p>
+            <div className="text-2xl font-bold whitespace-nowrap">{vendedores.length}</div>
+            <p className="text-xs text-muted-foreground truncate">Ativos</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
-            <TrendingUp className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Total de Vendas</CardTitle>
+            <TrendingUp className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold whitespace-nowrap">
               {vendedores.reduce((sum, v) => sum + (v.total_vendas || 0), 0)}
             </div>
-            <p className="text-xs text-muted-foreground">Todas as vendas</p>
+            <p className="text-xs text-muted-foreground truncate">Todas as vendas</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Faturamento Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Faturamento Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold whitespace-nowrap">
               {formatCurrency(vendedores.reduce((sum, v) => sum + (v.total_faturamento || 0), 0))}
             </div>
-            <p className="text-xs text-muted-foreground">Todos os vendedores</p>
+            <p className="text-xs text-muted-foreground truncate">Todos os vendedores</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-            <TrendingUp className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Ticket Médio</CardTitle>
+            <TrendingUp className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold whitespace-nowrap">
               {vendedores.length > 0 
                 ? formatCurrency(vendedores.reduce((sum, v) => sum + (v.total_faturamento || 0), 0) / vendedores.length)
                 : 'R$ 0,00'
               }
             </div>
-            <p className="text-xs text-muted-foreground">Por vendedor</p>
+            <p className="text-xs text-muted-foreground truncate">Por vendedor</p>
           </CardContent>
         </Card>
       </div>

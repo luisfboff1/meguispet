@@ -439,52 +439,52 @@ export default function UsuariosPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Usuários</CardTitle>
-            <User className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Total Usuários</CardTitle>
+            <User className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{usuarios.length}</div>
-            <p className="text-xs text-muted-foreground">Ativos</p>
+            <div className="text-2xl font-bold whitespace-nowrap">{usuarios.length}</div>
+            <p className="text-xs text-muted-foreground truncate">Ativos</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Administradores</CardTitle>
-            <Shield className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Administradores</CardTitle>
+            <Shield className="h-4 w-4 text-red-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
               {usuarios.filter(u => u.role === 'admin').length}
             </div>
-            <p className="text-xs text-muted-foreground">Usuários</p>
+            <p className="text-xs text-muted-foreground truncate">Usuários</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendedores</CardTitle>
-            <User className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Vendedores</CardTitle>
+            <User className="h-4 w-4 text-blue-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
               {usuarios.filter(u => u.ativo).length}
             </div>
-            <p className="text-xs text-muted-foreground">Usuários Ativos</p>
+            <p className="text-xs text-muted-foreground truncate">Usuários Ativos</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Último Acesso</CardTitle>
-            <Calendar className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Último Acesso</CardTitle>
+            <Calendar className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Hoje</div>
-            <p className="text-xs text-muted-foreground">Sistema</p>
+            <div className="text-2xl font-bold whitespace-nowrap">Hoje</div>
+            <p className="text-xs text-muted-foreground truncate">Sistema</p>
           </CardContent>
         </Card>
       </div>

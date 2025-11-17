@@ -254,58 +254,58 @@ export default function ClientesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
-            <Users className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Total Clientes</CardTitle>
+            <Users className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clientes.length}</div>
-            <p className="text-xs text-muted-foreground">Cadastrados</p>
+            <div className="text-2xl font-bold whitespace-nowrap">{clientes.length}</div>
+            <p className="text-xs text-muted-foreground truncate">Cadastrados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Novos Este Mês</CardTitle>
-            <Calendar className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Novos Este Mês</CardTitle>
+            <Calendar className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold whitespace-nowrap">
               {clientes.filter(cliente => {
                 const clientDate = new Date(cliente.created_at)
                 const now = new Date()
                 return clientDate.getMonth() === now.getMonth() && clientDate.getFullYear() === now.getFullYear()
               }).length}
             </div>
-            <p className="text-xs text-muted-foreground">Este mês</p>
+            <p className="text-xs text-muted-foreground truncate">Este mês</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Com Email</CardTitle>
-            <Mail className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Com Email</CardTitle>
+            <Mail className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold whitespace-nowrap">
               {clientes.filter(cliente => cliente.email).length}
             </div>
-            <p className="text-xs text-muted-foreground">Clientes</p>
+            <p className="text-xs text-muted-foreground truncate">Clientes</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Com Telefone</CardTitle>
-            <Phone className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Com Telefone</CardTitle>
+            <Phone className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold whitespace-nowrap">
               {clientes.filter(cliente => cliente.telefone).length}
             </div>
-            <p className="text-xs text-muted-foreground">Clientes</p>
+            <p className="text-xs text-muted-foreground truncate">Clientes</p>
           </CardContent>
         </Card>
       </div>
