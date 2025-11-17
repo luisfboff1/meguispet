@@ -584,7 +584,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="cliente_id">Cliente</Label>
               <select
@@ -647,7 +647,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="forma_pagamento">Forma de Pagamento</Label>
               <select

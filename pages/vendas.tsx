@@ -644,7 +644,7 @@ export default function VendasPage() {
       cell: ({ row }) => (
         <div className="flex items-center space-x-3 min-w-[140px]">
           <div className="w-8 h-8 bg-meguispet-primary/10 rounded flex items-center justify-center flex-shrink-0">
-            <ShoppingCart className="h-4 w-4 text-meguispet-primary" />
+            <ShoppingCart className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </div>
           <div>
             <div className="font-medium text-gray-900">{row.original.numero_venda || `#${row.original.id}`}</div>
@@ -1106,54 +1106,54 @@ export default function VendasPage() {
 
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Vendas</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Total Vendas</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vendas.length}</div>
-            <p className="text-xs text-muted-foreground">Este mês</p>
+            <div className="text-2xl font-bold whitespace-nowrap">{vendas.length}</div>
+            <p className="text-xs text-muted-foreground truncate">Este mês</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Faturamento</CardTitle>
-            <DollarSign className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Faturamento</CardTitle>
+            <DollarSign className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold whitespace-nowrap">
               {formatCurrency(vendas.reduce((sum, venda) => sum + Number(venda.valor_final || 0), 0))}
             </div>
-            <p className="text-xs text-muted-foreground">Este mês</p>
+            <p className="text-xs text-muted-foreground truncate">Este mês</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-            <DollarSign className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Ticket Médio</CardTitle>
+            <DollarSign className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold whitespace-nowrap">
               {vendas.length > 0 ? formatCurrency(vendas.reduce((sum, venda) => sum + Number(venda.valor_final || 0), 0) / vendas.length) : 'R$ 0,00'}
             </div>
-            <p className="text-xs text-muted-foreground">Por venda</p>
+            <p className="text-xs text-muted-foreground truncate">Por venda</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas Hoje</CardTitle>
-            <Calendar className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Vendas Hoje</CardTitle>
+            <Calendar className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold whitespace-nowrap">
               {vendas.filter(venda => new Date(venda.created_at).toDateString() === new Date().toDateString()).length}
             </div>
-            <p className="text-xs text-muted-foreground">Hoje</p>
+            <p className="text-xs text-muted-foreground truncate">Hoje</p>
           </CardContent>
         </Card>
       </div>
