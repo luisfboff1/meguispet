@@ -363,6 +363,14 @@ export const usuariosService = {
   async delete(id: number): Promise<ApiResponse> {
     const response = await api.delete(`/usuarios?id=${id}`)
     return response.data
+  },
+
+  async updatePassword(userId: number, newPassword: string): Promise<ApiResponse> {
+    const response = await api.put('/usuarios/update-password', {
+      user_id: userId,
+      new_password: newPassword,
+    })
+    return response.data
   }
 }
 

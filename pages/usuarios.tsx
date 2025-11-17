@@ -196,7 +196,7 @@ export default function UsuariosPage() {
         permissoes: Record<string, boolean>
       }) => {
         try {
-          // Prepare update data - only include password if it was changed
+          // Prepare update data (without password)
           const updateData: Partial<Usuario> = {
             nome: userData.nome,
             email: userData.email,
@@ -204,13 +204,25 @@ export default function UsuariosPage() {
             permissoes: userData.permissoes as Record<string, unknown>,
           }
 
-          // Only include password if it was provided
-          if (userData.password && userData.password.trim()) {
-            // Note: The API should hash the password on the backend
-            updateData.password_hash = userData.password
-          }
-
+          // Update user metadata
           const response = await usuariosService.update(usuario.id, updateData)
+
+          // If password was provided, update it separately
+          if (userData.password && userData.password.trim()) {
+            const passwordResponse = await usuariosService.updatePassword(
+              usuario.id,
+              userData.password
+            )
+
+            if (!passwordResponse.success) {
+              toast({
+                title: 'Aviso',
+                description: 'Usuário atualizado, mas houve erro ao atualizar a senha: ' + passwordResponse.message,
+                variant: 'destructive',
+              })
+              return
+            }
+          }
 
           if (response.success) {
             // Close modal first
