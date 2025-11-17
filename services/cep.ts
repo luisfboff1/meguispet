@@ -36,7 +36,6 @@ export const cepService = {
       
       return data
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error)
       return null
     }
   }

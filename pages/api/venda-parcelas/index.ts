@@ -68,7 +68,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .select();
 
       if (parcelasError) {
-        console.error('Erro ao criar parcelas:', parcelasError);
         return res.status(500).json({
           success: false,
           message: 'Erro ao criar parcelas: ' + parcelasError.message,
@@ -87,7 +86,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       message: 'Método não permitido',
     });
   } catch (error: unknown) {
-    console.error('Erro no endpoint de parcelas:', error);
     const message = error instanceof Error ? error.message : 'Erro interno do servidor';
     return res.status(500).json({
       success: false,

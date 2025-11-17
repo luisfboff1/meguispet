@@ -58,7 +58,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (authError || !authData.user) {
-      console.error('Supabase auth signup error:', authError);
       return res.status(400).json({
         success: false,
         message: authError?.message || 'Erro ao criar usuário no sistema de autenticação',
@@ -89,7 +88,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (usuarioError) {
       // Rollback: Delete the auth user if profile creation fails
-      console.error('Error creating user profile:', usuarioError);
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       
       return res.status(500).json({
@@ -108,7 +106,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
   } catch (error) {
-    console.error('Signup API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

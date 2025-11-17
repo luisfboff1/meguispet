@@ -45,7 +45,6 @@ export default function ClientesPage() {
         setClientes(response.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar clientes:', error)
     } finally {
       setLoading(false)
     }
@@ -117,7 +116,6 @@ export default function ClientesPage() {
         }
       }
       setToast({ message: msg, type: 'error' })
-      console.error('Erro ao salvar cliente:', error)
     } finally {
       setFormLoading(false)
     }

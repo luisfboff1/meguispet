@@ -143,9 +143,6 @@ export async function withRetry<T>(
       if (!shouldRetry) {
         // Non-retryable error or max attempts reached
         if (process.env.NODE_ENV === 'development') {
-          console.error(
-            `❌ Operation failed after ${attempt} attempt(s): ${lastError.message}`
-          );
         }
 
         return {
@@ -169,9 +166,6 @@ export async function withRetry<T>(
 
       // Log in development
       if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          `⚠️ Attempt ${attempt}/${opts.maxAttempts} failed: ${lastError.message}. Retrying in ${nextDelay}ms...`
-        );
       }
 
       // Wait before retrying
@@ -232,9 +226,6 @@ export async function withLockRetry<T>(
     ],
     onRetry: (error, attempt, delay) => {
       if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `🔒 Lock conflict detected (attempt ${attempt}). Retrying in ${delay}ms...`
-        );
       }
     },
   });
@@ -263,9 +254,6 @@ export async function withNetworkRetry<T>(
     ],
     onRetry: (error, attempt, delay) => {
       if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `🌐 Network error detected (attempt ${attempt}). Retrying in ${delay}ms...`
-        );
       }
     },
   });
@@ -289,7 +277,6 @@ const result = await withRetry(async () => {
 });
 
 if (!result.success) {
-  console.error('Failed after retries:', result.error);
   return;
 }
 

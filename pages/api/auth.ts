@@ -20,7 +20,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(405).json({ success: false, message: 'Método não permitido' });
     }
   } catch (error) {
-    console.error('Auth API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -84,7 +83,6 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
       message: 'Login realizado com sucesso',
     });
   } catch (error) {
-    console.error('Login error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro ao realizar login',
@@ -128,7 +126,6 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
       message: 'Perfil carregado com sucesso',
     });
   } catch (error) {
-    console.error('Get profile error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro ao carregar perfil',

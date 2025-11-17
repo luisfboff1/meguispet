@@ -55,7 +55,6 @@ export function TransacaoForm({
         setCategorias(response.data.filter(c => c.ativo))
       }
     } catch (error) {
-      console.error('Erro ao carregar categorias:', error)
     } finally {
       setLoadingCategorias(false)
     }
@@ -85,7 +84,6 @@ export function TransacaoForm({
                 recentSales.unshift(vendaResponse.data)
               }
             } catch (error) {
-              console.error('Erro ao carregar venda vinculada:', error)
             }
           }
         }
@@ -93,7 +91,6 @@ export function TransacaoForm({
         setVendas(recentSales)
       }
     } catch (error) {
-      console.error('Erro ao carregar vendas:', error)
     } finally {
       setLoadingVendas(false)
     }

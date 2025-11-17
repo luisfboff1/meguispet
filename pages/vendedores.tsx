@@ -49,11 +49,9 @@ export default function VendedoresPage() {
       setLoading(true)
       const response = await vendedoresService.getAll(currentPage, 10)
       if (response.success && response.data) {
-        console.log('Vendedores carregados:', response.data)
         setVendedores(response.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar vendedores:', error)
     } finally {
       setLoading(false)
     }
@@ -131,7 +129,6 @@ export default function VendedoresPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao salvar vendedor:', error)
       setAlertDialog({
         title: '❌ Erro Inesperado',
         message: 'Ocorreu um erro ao salvar o vendedor. Tente novamente mais tarde.',
@@ -168,7 +165,6 @@ export default function VendedoresPage() {
         })
       }
     } catch (error) {
-      console.error('Erro ao excluir vendedor:', error)
       setAlertDialog({
         title: '❌ Erro Inesperado',
         message: 'Ocorreu um erro ao excluir o vendedor. Tente novamente.',

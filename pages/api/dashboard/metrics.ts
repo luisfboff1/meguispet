@@ -10,7 +10,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   // Check cache first
   const now = Date.now();
   if (metricsCache && (now - metricsCache.timestamp) < CACHE_TTL) {
-    console.log('📊 Serving metrics from cache');
     return res.status(200).json(metricsCache.data);
   }
 
@@ -91,7 +90,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error('Dashboard Metrics API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

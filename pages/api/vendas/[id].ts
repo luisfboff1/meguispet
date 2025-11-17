@@ -56,7 +56,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .single();
 
       if (error) {
-        console.error('Erro ao buscar venda:', error);
         return res.status(404).json({ 
           success: false, 
           message: 'Venda não encontrada: ' + error.message 
@@ -92,7 +91,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .single();
 
       if (error) {
-        console.error('Erro ao atualizar status:', error);
         return res.status(500).json({ 
           success: false, 
           message: 'Erro ao atualizar status: ' + error.message 
@@ -108,7 +106,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     return res.status(405).json({ success: false, message: 'Método não permitido' });
   } catch (error) {
-    console.error('Venda API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

@@ -106,7 +106,6 @@ export async function adjustProductStock(
 
   // Handle retry result
   if (!result.success) {
-    console.error(`❌ Stock adjustment failed for product ${produto_id}:`, result.error?.message);
     return {
       success: false,
       error: result.error?.message || 'Stock adjustment failed after retries',
@@ -115,9 +114,6 @@ export async function adjustProductStock(
 
   if (process.env.NODE_ENV === 'development') {
     const change = quantityChange > 0 ? `+${quantityChange}` : `${quantityChange}`;
-    console.log(
-      `✅ Stock adjusted for product ${produto_id}: ${result.data.old_quantity} → ${result.data.new_quantity} (${change}) [${tipoOperacao}] [attempts: ${result.attempts}]`
-    );
   }
 
   return {
@@ -150,7 +146,6 @@ export async function validateStockAvailability(
     });
 
     if (error) {
-      console.error(`Error checking stock for product ${item.produto_id}:`, error);
       insufficientStock.push({
         produto_id: item.produto_id,
         produto_nome: `Product ${item.produto_id}`,
@@ -234,7 +229,6 @@ export async function applySaleStock(
   });
 
   if (!result.success) {
-    console.error('❌ Bulk stock adjustment failed:', result.error?.message);
     return {
       success: false,
       errors: [result.error?.message || 'Bulk stock adjustment failed'],
@@ -321,7 +315,6 @@ export async function revertSaleStock(
   });
 
   if (!result.success) {
-    console.error('❌ Bulk stock revert failed:', result.error?.message);
     return {
       success: false,
       errors: [result.error?.message || 'Bulk stock revert failed'],
@@ -434,7 +427,6 @@ export async function applyStockDeltas(
   });
 
   if (!result.success) {
-    console.error('❌ Delta stock adjustment failed:', result.error?.message);
     return {
       success: false,
       errors: [result.error?.message || 'Delta stock adjustment failed'],
@@ -504,7 +496,6 @@ export async function getStockHistory(
   });
 
   if (error) {
-    console.error('Error fetching stock history:', error);
     return [];
   }
 
@@ -541,7 +532,6 @@ export async function getRecentStockMovements(limit: number = 100): Promise<Stoc
     .limit(limit);
 
   if (error) {
-    console.error('Error fetching recent stock movements:', error);
     return [];
   }
 

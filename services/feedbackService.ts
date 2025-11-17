@@ -95,7 +95,6 @@ export const feedbackService = {
       const { data, error } = await query
 
       if (error) {
-        console.error('Error fetching feedback tickets:', error)
         return {
           success: false,
           error: error.message
@@ -107,7 +106,6 @@ export const feedbackService = {
         data: data as FeedbackTicket[]
       }
     } catch (error) {
-      console.error('Error in getAll:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -143,7 +141,6 @@ export const feedbackService = {
         .single()
 
       if (error) {
-        console.error('Error fetching feedback ticket:', error)
         return {
           success: false,
           error: error.message
@@ -155,7 +152,6 @@ export const feedbackService = {
         data: data as FeedbackTicket
       }
     } catch (error) {
-      console.error('Error in getById:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -194,7 +190,6 @@ export const feedbackService = {
         .single()
 
       if (ticketError) {
-        console.error('Error creating ticket:', ticketError)
         return {
           success: false,
           error: ticketError.message
@@ -223,7 +218,6 @@ export const feedbackService = {
           .insert(anexosData)
 
         if (anexosError) {
-          console.error('Error creating attachments:', anexosError)
           // Don't fail the whole operation, just log the error
         }
       }
@@ -243,7 +237,6 @@ export const feedbackService = {
           .insert(imagensData)
 
         if (imagensError) {
-          console.error('Error creating pasted images:', imagensError)
           // Don't fail the whole operation, just log the error
         }
       }
@@ -251,7 +244,6 @@ export const feedbackService = {
       // Fetch the complete ticket with relations
       return await this.getById(ticketId)
     } catch (error) {
-      console.error('Error in create:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -270,21 +262,17 @@ export const feedbackService = {
     try {
       const supabase = getSupabaseClient()
       if (!supabase) {
-        console.error('[feedbackService.update] Supabase client not initialized')
         return {
           success: false,
           error: 'Supabase client not initialized'
         }
       }
 
-      console.log('[feedbackService.update] Updating ticket:', { id, updates, usuarioId })
 
       // Check current auth session
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (authError) {
-        console.error('[feedbackService.update] Auth error:', authError)
       }
-      console.log('[feedbackService.update] Current authenticated user (supabase UUID):', user?.id)
 
       // Check if the usuario has the supabase_user_id set
       const { data: usuario, error: usuarioError } = await supabase
@@ -294,12 +282,7 @@ export const feedbackService = {
         .single()
 
       if (usuarioError) {
-        console.error('[feedbackService.update] Error fetching usuario:', usuarioError)
       } else {
-        console.log('[feedbackService.update] Usuario info:', usuario)
-        console.log('[feedbackService.update] Usuario role:', usuario?.role)
-        console.log('[feedbackService.update] Usuario supabase_user_id:', usuario?.supabase_user_id)
-        console.log('[feedbackService.update] MATCH?', usuario?.supabase_user_id === user?.id)
       }
 
       // First, verify the ticket exists
@@ -310,7 +293,6 @@ export const feedbackService = {
         .single()
 
       if (fetchError) {
-        console.error('[feedbackService.update] Error fetching existing ticket:', fetchError)
         return {
           success: false,
           error: `Erro ao buscar ticket: ${fetchError.message}`
@@ -318,15 +300,12 @@ export const feedbackService = {
       }
 
       if (!existingTicket) {
-        console.error('[feedbackService.update] Ticket not found:', id)
         return {
           success: false,
           error: 'Ticket não encontrado'
         }
       }
 
-      console.log('[feedbackService.update] Existing ticket found:', existingTicket)
-      console.log('[feedbackService.update] BEFORE UPDATE - Status:', existingTicket.status)
 
       const updateData = {
         ...updates,
@@ -334,7 +313,6 @@ export const feedbackService = {
         updated_at: new Date().toISOString()
       }
 
-      console.log('[feedbackService.update] Update data:', updateData)
 
       // Try update without .select() first (RLS might block select on update)
       const { error: updateError, count } = await supabase
@@ -343,29 +321,22 @@ export const feedbackService = {
         .eq('id', id)
 
       if (updateError) {
-        console.error('[feedbackService.update] Supabase update error:', updateError)
         return {
           success: false,
           error: updateError.message
         }
       }
 
-      console.log('[feedbackService.update] Update completed, count:', count)
 
       // Now fetch the updated ticket with all relations
       const result = await this.getById(id)
 
       if (result.success && result.data) {
-        console.log('[feedbackService.update] Successfully fetched updated ticket:', result.data)
-        console.log('[feedbackService.update] AFTER UPDATE - Status:', result.data.status)
-        console.log('[feedbackService.update] STATUS CHANGED?', existingTicket.status, '→', result.data.status)
       } else {
-        console.error('[feedbackService.update] Failed to fetch updated ticket:', result.error)
       }
 
       return result
     } catch (error) {
-      console.error('[feedbackService.update] Exception:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -392,7 +363,6 @@ export const feedbackService = {
         .eq('id', id)
 
       if (error) {
-        console.error('Error deleting ticket:', error)
         return {
           success: false,
           error: error.message
@@ -403,7 +373,6 @@ export const feedbackService = {
         success: true
       }
     } catch (error) {
-      console.error('Error in delete:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -441,7 +410,6 @@ export const feedbackService = {
         .single()
 
       if (error) {
-        console.error('Error adding comment:', error)
         return {
           success: false,
           error: error.message
@@ -453,7 +421,6 @@ export const feedbackService = {
         data: data as FeedbackComentario
       }
     } catch (error) {
-      console.error('Error in addComment:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -495,7 +462,6 @@ export const feedbackService = {
         data: grouped
       }
     } catch (error) {
-      console.error('Error in getByStatus:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'

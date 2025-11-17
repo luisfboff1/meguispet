@@ -11,7 +11,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   // Check cache first
   const now = Date.now();
   if (vendas7DiasCache && (now - vendas7DiasCache.timestamp) < CACHE_TTL) {
-    console.log('📈 Serving vendas 7 dias from cache');
     return res.status(200).json(vendas7DiasCache.data);
   }
 
@@ -97,7 +96,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error('Dashboard Vendas 7 Dias API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

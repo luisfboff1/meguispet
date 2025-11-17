@@ -63,7 +63,6 @@ export default async function handler(
     }
 
   } catch (error) {
-    console.error('Erro ao exportar relatório de produtos:', error)
     return res.status(500).json({
       error: 'Erro ao exportar relatório',
       message: error instanceof Error ? error.message : 'Erro desconhecido'

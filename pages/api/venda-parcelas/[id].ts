@@ -30,7 +30,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .order('numero_parcela', { ascending: true });
 
       if (error) {
-        console.error('Erro ao buscar parcelas:', error);
         return res.status(500).json({
           success: false,
           message: 'Erro ao buscar parcelas: ' + error.message,
@@ -60,7 +59,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .single();
 
       if (error) {
-        console.error('Erro ao atualizar parcela:', error);
         return res.status(500).json({
           success: false,
           message: 'Erro ao atualizar parcela: ' + error.message,
@@ -82,7 +80,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .eq('id', parcelaId);
 
       if (error) {
-        console.error('Erro ao deletar parcela:', error);
         return res.status(500).json({
           success: false,
           message: 'Erro ao deletar parcela: ' + error.message,
@@ -157,7 +154,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       message: 'Método não permitido',
     });
   } catch (error: unknown) {
-    console.error('Erro no endpoint de parcelas:', error);
     const message = error instanceof Error ? error.message : 'Erro interno do servidor';
     return res.status(500).json({
       success: false,

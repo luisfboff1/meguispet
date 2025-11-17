@@ -72,7 +72,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     return res.status(405).json({ success: false, message: 'Método não permitido' });
   } catch (error) {
-    console.error('Transações Recorrentes API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

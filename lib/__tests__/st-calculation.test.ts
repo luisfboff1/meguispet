@@ -63,8 +63,6 @@ function calcularSTCorreto(
 // TESTE COM EXEMPLO FORNECIDO
 // ============================================================================
 
-console.log('\n🧪 TESTE DE CÁLCULO DE ST\n')
-console.log('=' .repeat(80))
 
 const exemplo = calcularSTCorreto(
   2500,    // Valor Líquido
@@ -74,42 +72,20 @@ const exemplo = calcularSTCorreto(
   10       // IPI
 )
 
-console.log('\n📊 Exemplo Fornecido pelo Usuário:')
-console.log('   Valor Líquido: R$ 2.500,00')
-console.log('   MVA: 83,63%')
-console.log('   IPI: 10%')
-console.log('   ICMS Próprio: 4%')
-console.log('   Alíquota ST (interna): 18%')
 
-console.log('\n📐 Cálculo:')
-console.log(`   1. Base ST = 2.500 × (1 + 0,8363) = 2.500 × 1,8363 = R$ ${exemplo.baseST}`)
-console.log(`   2. ICMS ST = ${exemplo.baseST} × 18% = R$ ${exemplo.icmsST}`)
-console.log(`   3. ICMS Próprio = 2.500 × 4% = R$ ${exemplo.icmsProprio}`)
-console.log(`   4. ST Final = ${exemplo.icmsST} - ${exemplo.icmsProprio} = R$ ${exemplo.stFinal}`)
-console.log(`   5. IPI = 2.500 × 10% = R$ ${exemplo.ipi}`)
-console.log(`   6. Valor Final = 2.500 + ${exemplo.stFinal} + ${exemplo.ipi} = R$ ${exemplo.valorFinal}`)
 
-console.log('\n✅ Resultado Esperado: R$ 3.476,33')
-console.log(`✅ Resultado Calculado: R$ ${exemplo.valorFinal}`)
 
 const diferenca = Math.abs(3476.33 - exemplo.valorFinal)
 const passou = diferenca <= 0.02 // Margem de erro de arredondamento
-console.log(`\n${passou ? '✅ TESTE PASSOU!' : '❌ TESTE FALHOU!'}`)
 
 if (!passou) {
-  console.log(`   Esperado: R$ 3.476,33`)
-  console.log(`   Obtido: R$ ${exemplo.valorFinal}`)
-  console.log(`   Diferença: R$ ${diferenca.toFixed(2)}`)
 } else if (diferenca > 0) {
-  console.log(`   ℹ️  Diferença de arredondamento: R$ ${diferenca.toFixed(2)} (dentro da margem aceitável)`)
 }
 
 // ============================================================================
 // TESTE COM PRODUTO SEM ST (MVA = 0)
 // ============================================================================
 
-console.log('\n' + '='.repeat(80))
-console.log('\n📊 Teste: Produto SEM ST (MVA = 0)')
 
 const semST = calcularSTCorreto(
   1000,    // Valor Líquido
@@ -119,29 +95,19 @@ const semST = calcularSTCorreto(
   10       // IPI
 )
 
-console.log(`   Base ST: R$ ${semST.baseST} (deve ser igual ao valor líquido)`)
-console.log(`   ST Final: R$ ${semST.stFinal} (deve ser 0)`)
-console.log(`   IPI: R$ ${semST.ipi}`)
-console.log(`   Valor Final: R$ ${semST.valorFinal} (deve ser valor líquido + IPI apenas)`)
 
 const passoSemST = semST.stFinal === 0 && semST.valorFinal === 1100
-console.log(`\n${passoSemST ? '✅ TESTE PASSOU!' : '❌ TESTE FALHOU!'}`)
 
 // ============================================================================
 // TESTE COM DIFERENTES MVAs
 // ============================================================================
 
-console.log('\n' + '='.repeat(80))
-console.log('\n📊 Teste: Diferentes MVAs\n')
 
 const mvas = [30, 50, 70, 100]
 mvas.forEach(mva => {
   const resultado = calcularSTCorreto(1000, mva, 4, 18, 0)
-  console.log(`   MVA ${mva}%: Base ST = R$ ${resultado.baseST}, ST Final = R$ ${resultado.stFinal}`)
 })
 
-console.log('\n' + '='.repeat(80))
-console.log('\n✅ Todos os testes de validação do cálculo foram executados!\n')
 
 // Para executar este teste:
 // npx ts-node lib/__tests__/st-calculation.test.ts

@@ -81,7 +81,6 @@ export const ReportConfigWizard: React.FC<ReportConfigWizardProps> = ({
 
       await onGenerate(config, formato)
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error)
     } finally {
       setIsGenerating(false)
     }

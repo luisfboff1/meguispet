@@ -33,7 +33,6 @@ class ApiCache {
       return null;
     }
 
-    console.log(`✅ Cache HIT for key: ${key}`);
     return entry.data;
   }
 
@@ -47,7 +46,6 @@ class ApiCache {
       data,
       timestamp: Date.now(),
     });
-    console.log(`💾 Cache SET for key: ${key}`);
   }
 
   /**
@@ -56,7 +54,6 @@ class ApiCache {
    */
   invalidate(key: string): void {
     this.cache.delete(key);
-    console.log(`🗑️  Cache INVALIDATE for key: ${key}`);
   }
 
   /**
@@ -71,7 +68,6 @@ class ApiCache {
       }
     });
     keysToDelete.forEach(key => this.cache.delete(key));
-    console.log(`🗑️  Cache INVALIDATE pattern ${pattern}: ${keysToDelete.length} entries`);
   }
 
   /**
@@ -80,7 +76,6 @@ class ApiCache {
   clear(): void {
     const count = this.cache.size;
     this.cache.clear();
-    console.log(`🗑️  Cache CLEAR: ${count} entries removed`);
   }
 
   /**

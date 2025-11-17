@@ -23,12 +23,10 @@ export default function PerfilPage() {
     try {
       setLoading(true)
       // Aqui você implementaria a lógica de atualização do perfil
-      console.log('Atualizando perfil:', formData)
       // Simular delay
       await new Promise(resolve => setTimeout(resolve, 1000))
       alert('Perfil atualizado com sucesso!')
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error)
       alert('Erro ao atualizar perfil')
     } finally {
       setLoading(false)

@@ -53,7 +53,6 @@ export default function TabelaMvaList({
       setTotal(response.total)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar tabelas MVA')
-      console.error('Error loading tabelas MVA:', err)
     } finally {
       setLoading(false)
     }

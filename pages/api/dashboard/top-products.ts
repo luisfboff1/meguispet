@@ -26,7 +26,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const now = Date.now();
   const cacheKey = `top-products-${limitNum}`;
   if (topProductsCache && (now - topProductsCache.timestamp) < CACHE_TTL) {
-    console.log('📦 Serving top products from cache');
     return res.status(200).json(topProductsCache.data);
   }
 
@@ -103,7 +102,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .sort((a, b) => b.vendas - a.vendas)
       .slice(0, limitNum);
 
-    console.log('📊 Top products calculados:', topProducts);
 
     const response = {
       success: true,
@@ -115,7 +113,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error('Dashboard Top Products API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

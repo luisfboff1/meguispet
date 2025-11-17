@@ -35,7 +35,6 @@ export default function ProdutosPage() {
         setProdutos(response.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error)
     } finally {
       setLoading(false)
     }
@@ -95,7 +94,6 @@ export default function ProdutosPage() {
           updateProdutoModalLoading(true)
           try {
             // Debug: log payload before sending to API
-            console.log('[produtos] payload', formValues)
             if (produto) {
               const response = await produtosService.update(produto.id, formValues)
               if (response.success) {
@@ -104,18 +102,15 @@ export default function ProdutosPage() {
               }
             } else {
               const response = await produtosService.create(formValues)
-              console.log('[produtos] create response', response)
               if (response.success) {
                 await loadProdutos()
                 closeModal()
               } else {
                 // show backend message for debugging
                 window.alert('Erro ao criar produto: ' + (response.message || response.error || 'não especificado'))
-                console.error('produtos.create error response', response)
               }
             }
           } catch (error) {
-            console.error('Erro ao salvar produto:', error)
           } finally {
             updateProdutoModalLoading(false)
           }

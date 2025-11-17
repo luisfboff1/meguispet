@@ -27,17 +27,14 @@ const api = axios.create({
 // Interceptors para logging em desenvolvimento
 if (process.env.NODE_ENV === 'development') {
   api.interceptors.request.use(config => {
-    console.log('[reportsService] request', config.method?.toUpperCase(), config.url)
     return config
   })
 
   api.interceptors.response.use(
     response => {
-      console.log('[reportsService] response', response.status, response.config.url)
       return response
     },
     error => {
-      console.error('[reportsService] error', error.response?.status, error.config?.url, error.message)
       return Promise.reject(error)
     }
   )

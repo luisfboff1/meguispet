@@ -60,7 +60,6 @@ async function buscarImpostosProdutos(produtoIds: number[]): Promise<Map<number,
     .in('id', produtoIds)
 
   if (error) {
-    console.error('Erro ao buscar impostos dos produtos:', error)
     throw new Error('Erro ao buscar impostos dos produtos')
   }
 
@@ -175,16 +174,6 @@ function calcularItemComImpostos(
     stValor = icmsSTValor - icmsProprioValor
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`📊 Cálculo ST do Produto ${produtoId}:`, {
-        valorLiquido: subtotalLiquido.toFixed(2),
-        mva: `${mva}%`,
-        baseST: baseCalculoST.toFixed(2),
-        aliquotaSTInterna: `${ALIQUOTA_ST_INTERNA}%`,
-        icmsST: icmsSTValor.toFixed(2),
-        icmsProprioAliquota: `${icmsProprioAliquota}%`,
-        icmsProprio: icmsProprioValor.toFixed(2),
-        stFinal: stValor.toFixed(2)
-      })
     }
   }
 
@@ -248,14 +237,6 @@ export async function processarVendaComImpostos(
     const stAliquota = item.st_aliquota !== undefined ? item.st_aliquota : impostosDb.st
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`📊 Produto ${item.produto_id}: IPI=${ipiAliquota}%, ICMS=${icmsAliquota}%, ICMS Próprio=${icmsProprioAliquota}%, MVA=${stAliquota}%`, {
-        item_ipi: item.ipi_aliquota,
-        db_ipi: impostosDb.ipi,
-        item_icms_proprio: item.icms_proprio_aliquota,
-        db_icms_proprio: impostosDb.icms_proprio,
-        item_st: item.st_aliquota,
-        db_st: impostosDb.st
-      })
     }
 
     return calcularItemComImpostos(
@@ -289,11 +270,6 @@ export async function processarVendaComImpostos(
     total_st: Number(totalSt.toFixed(2)),
     total_geral: Number(totalGeral.toFixed(2))
   }
-
-  console.log('📊 Venda processada com impostos:', {
-    itens: itensCalculados.length,
-    totais
-  })
 
   return {
     itens: itensCalculados,

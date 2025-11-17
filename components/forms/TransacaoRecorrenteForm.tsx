@@ -63,7 +63,6 @@ export function TransacaoRecorrenteForm({
         setCategorias(response.data.filter(c => c.ativo))
       }
     } catch (error) {
-      console.error('Erro ao carregar categorias:', error)
     } finally {
       setLoadingCategorias(false)
     }

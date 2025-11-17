@@ -59,7 +59,6 @@ export default function FornecedoresPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar fornecedores:', error)
     } finally {
       setLoading(false)
     }
@@ -143,7 +142,6 @@ export default function FornecedoresPage() {
         }
       }
       setToast({ message: msg, type: 'error' })
-      console.error('Erro ao salvar fornecedor:', error)
     } finally {
       setFormLoading(false)
     }
@@ -158,7 +156,6 @@ export default function FornecedoresPage() {
         await loadFornecedores()
       }
     } catch (error) {
-      console.error('Erro ao desativar fornecedor:', error)
     } finally {
       setFormLoading(false)
     }

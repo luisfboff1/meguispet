@@ -92,7 +92,6 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
         }
       }
     } catch (error) {
-      console.error('Erro ao capturar gráficos:', error)
     }
 
     return charts

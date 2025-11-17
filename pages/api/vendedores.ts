@@ -40,18 +40,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             .neq('status', 'cancelado');
 
           if (vendasError) {
-            console.error('Erro ao buscar vendas do vendedor', vendedor.id, vendasError);
           }
 
-          console.log(`\n=== Vendedor: ${vendedor.nome} (ID: ${vendedor.id}) ===`);
-          console.log(`Total de vendas encontradas: ${vendas?.length || 0}`);
           
           if (vendas && vendas.length > 0) {
             vendas.forEach(v => {
-              console.log(`  Venda #${v.numero_venda} (ID: ${v.id}):`);
-              console.log(`    valor_total: ${v.valor_total}`);
-              console.log(`    valor_final: ${v.valor_final}`);
-              console.log(`    status: ${v.status}`);
             });
           }
 
@@ -61,7 +54,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             return sum + valor;
           }, 0) || 0;
 
-          console.log(`RESULTADO: ${totalVendas} vendas, Faturamento Total: R$ ${totalFaturamento.toFixed(2)}\n`);
 
           return {
             ...vendedor,
@@ -169,7 +161,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     return res.status(405).json({ success: false, message: 'Método não permitido' });
   } catch (error) {
-    console.error('Vendedores API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

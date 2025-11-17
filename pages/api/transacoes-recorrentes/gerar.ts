@@ -103,7 +103,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .eq('id', atualizacao.id);
 
       if (updateError) {
-        console.error(`Erro ao atualizar recorrente ${atualizacao.id}:`, updateError);
       }
     }
 
@@ -114,7 +113,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     });
 
   } catch (error) {
-    console.error('Gerar Transações Recorrentes API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro ao gerar transações recorrentes',
