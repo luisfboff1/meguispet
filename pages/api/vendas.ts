@@ -62,12 +62,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             st_aliquota,
             st_valor,
             total_item,
+            icms_proprio_aliquota,
+            icms_proprio_valor,
             base_calculo_st,
+            icms_st_aliquota,
+            icms_st_valor,
+            mva_aplicado,
             icms_proprio,
             icms_st_total,
             icms_st_recolher,
-            mva_aplicado,
-            produto:produtos(id, nome, preco_venda, ipi, icms, st)
+            produto:produtos(id, nome, preco_venda, ipi, icms, icms_proprio, st)
           )
         `, { count: 'exact' });
 
@@ -209,18 +213,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         ipi_valor: item.ipi_valor,
         icms_aliquota: item.icms_aliquota,
         icms_valor: item.icms_valor, // Informativo
-        st_aliquota: item.st_aliquota,
-        st_valor: item.st_valor,
+        st_aliquota: item.st_aliquota, // MVA
+        st_valor: item.st_valor, // ST Final
         total_item: item.total_item, // Total com IPI e ST (sem ICMS)
         // Campo antigo (manter compatibilidade)
         subtotal: item.total_item, // Usar total_item para compatibilidade
-        // Campos de impostos ICMS-ST (deprecados, manter para compatibilidade)
-        base_calculo_st: null,
-        icms_proprio: null,
-        icms_st_total: null,
-        icms_st_recolher: null,
-        mva_aplicado: null,
-        aliquota_icms: item.icms_aliquota,
+        // Campos detalhados de ST (novos)
+        icms_proprio_aliquota: item.icms_proprio_aliquota,
+        icms_proprio_valor: item.icms_proprio_valor,
+        base_calculo_st: item.base_calculo_st,
+        icms_st_aliquota: item.icms_st_aliquota,
+        icms_st_valor: item.icms_st_valor,
+        mva_aplicado: item.mva_aplicado,
+        // Campos antigos (manter compatibilidade) - CONVERTER PARA DECIMAL
+        icms_proprio: item.icms_proprio_valor,
+        icms_st_total: item.icms_st_valor,
+        icms_st_recolher: item.st_valor,
+        aliquota_icms: (item.icms_st_aliquota || item.icms_aliquota) / 100 // Converter % para decimal
       }));
 
       const { error: itensError } = await supabase.from('vendas_itens').insert(itensInsert);
@@ -567,18 +576,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           ipi_valor: item.ipi_valor,
           icms_aliquota: item.icms_aliquota,
           icms_valor: item.icms_valor,
-          st_aliquota: item.st_aliquota,
-          st_valor: item.st_valor,
+          st_aliquota: item.st_aliquota, // MVA
+          st_valor: item.st_valor, // ST Final
           total_item: item.total_item,
           // Campo antigo (manter compatibilidade)
           subtotal: item.total_item,
-          // Campos de impostos ICMS-ST (deprecados, manter para compatibilidade)
-          base_calculo_st: null,
-          icms_proprio: null,
-          icms_st_total: null,
-          icms_st_recolher: null,
-          mva_aplicado: null,
-          aliquota_icms: item.icms_aliquota,
+          // Campos detalhados de ST (novos)
+          icms_proprio_aliquota: item.icms_proprio_aliquota,
+          icms_proprio_valor: item.icms_proprio_valor,
+          base_calculo_st: item.base_calculo_st,
+          icms_st_aliquota: item.icms_st_aliquota,
+          icms_st_valor: item.icms_st_valor,
+          mva_aplicado: item.mva_aplicado,
+          // Campos antigos (manter compatibilidade) - CONVERTER PARA DECIMAL
+          icms_proprio: item.icms_proprio_valor,
+          icms_st_total: item.icms_st_valor,
+          icms_st_recolher: item.st_valor,
+          aliquota_icms: (item.icms_st_aliquota || item.icms_aliquota) / 100, // Converter % para decimal
         })) : (itens as VendaItemInput[]).map((item) => ({
           venda_id: parseInt(id as string, 10),
           produto_id: item.produto_id,

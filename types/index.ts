@@ -50,7 +50,8 @@ export interface Produto {
   // Impostos - NOVO
   ipi: number // Alíquota de IPI (0-100)
   icms: number // Alíquota de ICMS (0-100) - Informativo apenas
-  st: number // Alíquota de ST (0-100)
+  icms_proprio: number // Alíquota de ICMS Próprio (0-100) - Usado no cálculo de ST
+  st: number // MVA - Margem de Valor Agregado (0-100) - Base para cálculo de ST
   created_at: string
   updated_at: string
   estoques?: ProdutoEstoqueDetalhe[]
@@ -153,17 +154,23 @@ export interface ItemVenda {
   ipi_valor: number // Valor do IPI calculado
   icms_aliquota: number // Alíquota ICMS no momento da venda
   icms_valor: number // Valor do ICMS (informativo, NÃO no total)
-  st_aliquota: number // Alíquota ST no momento da venda
-  st_valor: number // Valor do ST calculado
+  st_aliquota: number // MVA (Margem de Valor Agregado) no momento da venda
+  st_valor: number // Valor do ST calculado (ICMS ST - ICMS Próprio)
   total_item: number // Total do item (subtotal_liquido + IPI + ST, sem ICMS)
 
-  // Campos de impostos ICMS-ST - Deprecados (manter por compatibilidade)
-  base_calculo_st?: number
-  icms_proprio?: number
-  icms_st_total?: number
-  icms_st_recolher?: number
-  mva_aplicado?: number
-  aliquota_icms?: number
+  // Campos detalhados de ICMS-ST (para transparência fiscal)
+  icms_proprio_aliquota?: number // Alíquota de ICMS Próprio (ex: 4%)
+  icms_proprio_valor?: number // Valor do ICMS Próprio calculado
+  base_calculo_st?: number // Base de cálculo ST = Valor Líquido × (1 + MVA)
+  icms_st_aliquota?: number // Alíquota de ICMS-ST (ex: 18%)
+  icms_st_valor?: number // Valor total do ICMS-ST (Base ST × Alíquota ST)
+  mva_aplicado?: number // MVA aplicado no cálculo
+
+  // Campos antigos (manter por compatibilidade)
+  icms_proprio?: number // Deprecado - usar icms_proprio_valor
+  icms_st_total?: number // Deprecado - usar icms_st_valor
+  icms_st_recolher?: number // Deprecado - usar st_valor
+  aliquota_icms?: number // Deprecado - usar icms_st_aliquota
 }
 
 export interface Fornecedor {

@@ -12,14 +12,24 @@ import { ItemCalculado, TotaisVenda } from '@/types'
 
 /**
  * Calcula um item da venda com todos os impostos e desconto proporcional
+ *
+ * FÓRMULA CORRETA DO ST:
+ * 1. Base ST = Valor Líquido × (1 + MVA/100)
+ * 2. ICMS ST = Base ST × Alíquota Interna (18%)
+ * 3. ICMS Próprio = Valor Líquido × ICMS Próprio %
+ * 4. ST Final = ICMS ST - ICMS Próprio
+ *
+ * @param stAliquota Na verdade é o MVA (Margem de Valor Agregado)
+ * @param icmsProprioAliquota Alíquota de ICMS Próprio (padrão 4%)
  */
 export function calcularItemVenda(
   precoUnitario: number,
   quantidade: number,
   ipiAliquota: number,
   icmsAliquota: number,
-  stAliquota: number,
-  descontoProporcional: number
+  stAliquota: number, // MVA
+  descontoProporcional: number,
+  icmsProprioAliquota: number = 4 // Padrão 4%
 ): Omit<ItemCalculado, 'produto_id' | 'produto_nome' | 'quantidade' | 'preco_unitario' | 'ipi_aliquota' | 'icms_aliquota' | 'st_aliquota'> {
   // 1. Subtotal bruto (preço × quantidade)
   const subtotalBruto = precoUnitario * quantidade
@@ -27,12 +37,44 @@ export function calcularItemVenda(
   // 2. Subtotal líquido (após desconto proporcional)
   const subtotalLiquido = subtotalBruto - descontoProporcional
 
-  // 3. Calcular impostos sobre o subtotal líquido
+  // 3. Calcular IPI sobre o subtotal líquido
   const ipiValor = subtotalLiquido * (ipiAliquota / 100)
-  const icmsValor = subtotalLiquido * (icmsAliquota / 100) // ICMS é informativo, não entra no total
-  const stValor = subtotalLiquido * (stAliquota / 100)
 
-  // 4. Total do item (subtotal líquido + IPI + ST) - ICMS NÃO ENTRA
+  // 4. Calcular ICMS (informativo, não entra no total)
+  const icmsValor = subtotalLiquido * (icmsAliquota / 100)
+
+  // 5. Calcular ST CORRETAMENTE usando MVA
+  const mva = stAliquota // stAliquota na verdade é o MVA
+  let stValor = 0
+
+  if (mva > 0) {
+    const ALIQUOTA_ST_INTERNA = 18 // Alíquota interna de ICMS-ST (18%)
+
+    // Base de cálculo do ST = Valor Líquido × (1 + MVA/100)
+    const baseST = subtotalLiquido * (1 + mva / 100)
+
+    // ICMS ST = Base ST × Alíquota Interna
+    const icmsST = baseST * (ALIQUOTA_ST_INTERNA / 100)
+
+    // ICMS Próprio = Valor Líquido × ICMS Próprio %
+    const icmsProprio = subtotalLiquido * (icmsProprioAliquota / 100)
+
+    // ST Final = ICMS ST - ICMS Próprio
+    stValor = icmsST - icmsProprio
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[vendaCalculations] ST calculado:`, {
+        valorLiquido: subtotalLiquido.toFixed(2),
+        mva: `${mva}%`,
+        baseST: baseST.toFixed(2),
+        icmsST: icmsST.toFixed(2),
+        icmsProprio: icmsProprio.toFixed(2),
+        stFinal: stValor.toFixed(2)
+      })
+    }
+  }
+
+  // 6. Total do item (subtotal líquido + IPI + ST) - ICMS NÃO ENTRA
   const totalItem = subtotalLiquido + ipiValor + stValor
 
   return {
@@ -97,7 +139,8 @@ export function calcularItensVenda(
     preco_unitario: number
     ipi_aliquota: number
     icms_aliquota: number
-    st_aliquota: number
+    st_aliquota: number // MVA
+    icms_proprio_aliquota?: number // ICMS Próprio (padrão 4%)
   }>,
   descontoTotal: number
 ): ItemCalculado[] {
@@ -111,8 +154,9 @@ export function calcularItensVenda(
       item.quantidade,
       item.ipi_aliquota,
       item.icms_aliquota,
-      item.st_aliquota,
-      descontosProporcionais[index]
+      item.st_aliquota, // MVA
+      descontosProporcionais[index],
+      item.icms_proprio_aliquota || 4 // Padrão 4%
     )
 
     return {
@@ -122,7 +166,7 @@ export function calcularItensVenda(
       preco_unitario: item.preco_unitario,
       ipi_aliquota: item.ipi_aliquota,
       icms_aliquota: item.icms_aliquota,
-      st_aliquota: item.st_aliquota,
+      st_aliquota: item.st_aliquota, // MVA
       ...calculado
     }
   })

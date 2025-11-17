@@ -35,6 +35,7 @@ interface ItemVenda {
   ipi_aliquota: number
   icms_aliquota: number
   st_aliquota: number
+  icms_proprio_aliquota?: number
 }
 
 interface VendaFormProps {
@@ -275,11 +276,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         newItens[index].produto_nome = produto.nome
         newItens[index].preco_unitario = precoVenda
 
-        // IPI vem do produto
+        // Impostos vêm do produto
         newItens[index].ipi_aliquota = produto.ipi || 0
         newItens[index].icms_aliquota = produto.icms || 0
+        newItens[index].icms_proprio_aliquota = produto.icms_proprio || 4 // Padrão 4%
 
-        // ST deve ser buscado da tabela MVA baseado no NCM do produto e UF de destino
+        // ST (MVA) deve ser buscado da tabela MVA baseado no NCM do produto e UF de destino
         try {
           const fiscalConfig = await impostosService.getByProdutoId(produto.id)
           if (fiscalConfig && fiscalConfig.ncm && formData.uf_destino) {

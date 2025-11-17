@@ -39,13 +39,17 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             st_aliquota,
             st_valor,
             total_item,
+            icms_proprio_aliquota,
+            icms_proprio_valor,
             base_calculo_st,
+            icms_st_aliquota,
+            icms_st_valor,
+            mva_aplicado,
             icms_proprio,
             icms_st_total,
             icms_st_recolher,
-            mva_aplicado,
             aliquota_icms,
-            produto:produtos(id, nome, preco_venda)
+            produto:produtos(id, nome, preco_venda, ipi, icms, icms_proprio, st)
           )
         `)
         .eq('id', id)
