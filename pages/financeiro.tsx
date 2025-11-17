@@ -627,7 +627,7 @@ export default function FinanceiroPage() {
             <TrendingUp className="h-4 w-4 text-green-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-600 whitespace-nowrap">
               {loading ? 'Carregando...' : metrics ? formatCurrency(metrics.receita) : 'R$ 0,00'}
             </div>
             <p className="text-xs text-muted-foreground truncate">Este mês</p>
@@ -640,7 +640,7 @@ export default function FinanceiroPage() {
             <TrendingDown className="h-4 w-4 text-red-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-red-600 whitespace-nowrap">
               {loading ? 'Carregando...' : metrics ? formatCurrency(metrics.despesas) : 'R$ 0,00'}
             </div>
             <p className="text-xs text-muted-foreground truncate">Este mês</p>
