@@ -252,17 +252,17 @@ export function VendedorDetailsModal({
                 {/* Faturamento Total */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Faturamento Total</CardTitle>
-                    <DollarSign className="h-4 w-4 text-meguispet-primary" />
+                    <CardTitle className="text-sm font-medium truncate pr-2">Faturamento Total</CardTitle>
+                    <DollarSign className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold whitespace-nowrap">
                       {formatCurrency(metricas.faturamentoTotal)}
                     </div>
                     {metricas.variacaoFaturamento !== 0 && (
                       <div className={`flex items-center gap-1 text-xs mt-1 ${getVariationColor(metricas.variacaoFaturamento)}`}>
                         {getVariationIcon(metricas.variacaoFaturamento)}
-                        <span>{Math.abs(metricas.variacaoFaturamento).toFixed(1)}%</span>
+                        <span className="whitespace-nowrap">{Math.abs(metricas.variacaoFaturamento).toFixed(1)}%</span>
                       </div>
                     )}
                   </CardContent>
@@ -271,15 +271,15 @@ export function VendedorDetailsModal({
                 {/* Quantidade de Vendas */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Vendas Realizadas</CardTitle>
-                    <ShoppingCart className="h-4 w-4 text-meguispet-primary" />
+                    <CardTitle className="text-sm font-medium truncate pr-2">Vendas Realizadas</CardTitle>
+                    <ShoppingCart className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{metricas.quantidadeVendas}</div>
+                    <div className="text-2xl font-bold whitespace-nowrap">{metricas.quantidadeVendas}</div>
                     {metricas.variacaoQuantidade !== 0 && (
                       <div className={`flex items-center gap-1 text-xs mt-1 ${getVariationColor(metricas.variacaoQuantidade)}`}>
                         {getVariationIcon(metricas.variacaoQuantidade)}
-                        <span>{Math.abs(metricas.variacaoQuantidade).toFixed(1)}%</span>
+                        <span className="whitespace-nowrap">{Math.abs(metricas.variacaoQuantidade).toFixed(1)}%</span>
                       </div>
                     )}
                   </CardContent>
@@ -288,17 +288,17 @@ export function VendedorDetailsModal({
                 {/* Ticket Médio */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-meguispet-primary" />
+                    <CardTitle className="text-sm font-medium truncate pr-2">Ticket Médio</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold whitespace-nowrap">
                       {formatCurrency(metricas.ticketMedio)}
                     </div>
                     {metricas.variacaoTicketMedio !== 0 && (
                       <div className={`flex items-center gap-1 text-xs mt-1 ${getVariationColor(metricas.variacaoTicketMedio)}`}>
                         {getVariationIcon(metricas.variacaoTicketMedio)}
-                        <span>{Math.abs(metricas.variacaoTicketMedio).toFixed(1)}%</span>
+                        <span className="whitespace-nowrap">{Math.abs(metricas.variacaoTicketMedio).toFixed(1)}%</span>
                       </div>
                     )}
                   </CardContent>
@@ -310,14 +310,14 @@ export function VendedorDetailsModal({
                 {/* Comissão Total */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Comissão Total</CardTitle>
-                    <Percent className="h-4 w-4 text-green-600" />
+                    <CardTitle className="text-sm font-medium truncate pr-2">Comissão Total</CardTitle>
+                    <Percent className="h-4 w-4 text-green-600 flex-shrink-0" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-2xl font-bold text-green-600 whitespace-nowrap">
                       {formatCurrency(metricas.comissaoTotal)}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
                       {vendedor.comissao}% sobre o faturamento
                     </p>
                   </CardContent>
@@ -326,8 +326,8 @@ export function VendedorDetailsModal({
                 {/* Última Venda */}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Última Venda</CardTitle>
-                    <Clock className="h-4 w-4 text-blue-600" />
+                    <CardTitle className="text-sm font-medium truncate pr-2">Última Venda</CardTitle>
+                    <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
                   </CardHeader>
                   <CardContent>
                     {metricas.ultimaVenda ? (

@@ -148,50 +148,50 @@ export default function ProdutosPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Produtos</CardTitle>
-            <Package className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Total Produtos</CardTitle>
+            <Package className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{produtos.length}</div>
-            <p className="text-xs text-muted-foreground">Cadastrados</p>
+            <div className="text-2xl font-bold whitespace-nowrap">{produtos.length}</div>
+            <p className="text-xs text-muted-foreground truncate">Cadastrados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Valor Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
-            <p className="text-xs text-muted-foreground">Em estoque</p>
+            <div className="text-2xl font-bold whitespace-nowrap">{formatCurrency(totalValue)}</div>
+            <p className="text-xs text-muted-foreground truncate">Em estoque</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Estoque Baixo</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Estoque Baixo</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{lowStockProducts}</div>
-            <p className="text-xs text-muted-foreground">Produtos</p>
+            <div className="text-2xl font-bold text-yellow-600 whitespace-nowrap">{lowStockProducts}</div>
+            <p className="text-xs text-muted-foreground truncate">Produtos</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categorias</CardTitle>
-            <TrendingUp className="h-4 w-4 text-meguispet-primary" />
+            <CardTitle className="text-sm font-medium truncate pr-2">Categorias</CardTitle>
+            <TrendingUp className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold whitespace-nowrap">
               {new Set(produtos.map(p => p.categoria)).size}
             </div>
-            <p className="text-xs text-muted-foreground">Diferentes</p>
+            <p className="text-xs text-muted-foreground truncate">Diferentes</p>
           </CardContent>
         </Card>
       </div>

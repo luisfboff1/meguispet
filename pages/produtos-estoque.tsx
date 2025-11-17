@@ -852,7 +852,7 @@ export default function ProdutosEstoquePage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium truncate pr-2">Total Produtos</CardTitle>
@@ -860,7 +860,7 @@ export default function ProdutosEstoquePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold whitespace-nowrap">{produtos.length}</div>
-            <p className="text-xs text-muted-foreground">Cadastrados</p>
+            <p className="text-xs text-muted-foreground truncate">Cadastrados</p>
           </CardContent>
         </Card>
 
@@ -871,7 +871,7 @@ export default function ProdutosEstoquePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600 whitespace-nowrap">{formatCurrency(totalValue)}</div>
-            <p className="text-xs text-muted-foreground">Preço de venda</p>
+            <p className="text-xs text-muted-foreground truncate">Preço de venda</p>
           </CardContent>
         </Card>
 
@@ -882,7 +882,7 @@ export default function ProdutosEstoquePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600 whitespace-nowrap">{formatCurrency(totalCusto)}</div>
-            <p className="text-xs text-muted-foreground">Preço de custo</p>
+            <p className="text-xs text-muted-foreground truncate">Preço de custo</p>
           </CardContent>
         </Card>
 
@@ -893,7 +893,7 @@ export default function ProdutosEstoquePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600 whitespace-nowrap">{formatCurrency(totalMargem)}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground truncate">
               {totalCusto > 0 ? `${((totalMargem / totalCusto) * 100).toFixed(1)}%` : '0%'}
             </p>
           </CardContent>
@@ -906,7 +906,7 @@ export default function ProdutosEstoquePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600 whitespace-nowrap">{lowStockCount}</div>
-            <p className="text-xs text-muted-foreground">Produtos</p>
+            <p className="text-xs text-muted-foreground truncate">Produtos</p>
           </CardContent>
         </Card>
       </div>
@@ -1162,7 +1162,7 @@ export default function ProdutosEstoquePage() {
               </div>
 
               {/* Informações Gerais */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-gray-700 mb-2">Tipo</h3>
                   <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${

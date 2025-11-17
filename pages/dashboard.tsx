@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { dashboardService, produtosService, clientesService, movimentacoesService, vendasService } from '@/services/api'
 import TopProductsTable from '@/components/tables/TopProductsTable'
+import { cn } from '@/lib/utils'
 
 // Lazy load do gráfico para otimização (economiza ~100KB)
 const DashboardChart = dynamic(() => import('@/components/charts/DashboardChart'), {
@@ -316,7 +317,7 @@ export default function DashboardPage() {
       <TopProductsTable data={topProducts} loading={loading} />
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {loading ? (
           // Loading skeleton
           Array.from({ length: 4 }).map((_, index) => (
@@ -336,29 +337,30 @@ export default function DashboardPage() {
             return (
               <AnimatedCard key={index}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
+                  <CardTitle className="text-sm font-medium text-gray-600 truncate pr-2">
                     {metric.title}
                   </CardTitle>
-                  <Icon className="h-4 w-4 text-meguispet-primary" />
+                  <Icon className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900 break-words">
                     {metric.value}
                   </div>
                   <div className="flex items-center text-xs">
                     {metric.changeType === 'positive' ? (
-                      <TrendingUp className="mr-1 h-3 w-3 text-green-600" />
+                      <TrendingUp className="mr-1 h-3 w-3 text-green-600 flex-shrink-0" />
                     ) : (
-                      <TrendingDown className="mr-1 h-3 w-3 text-red-600" />
+                      <TrendingDown className="mr-1 h-3 w-3 text-red-600 flex-shrink-0" />
                     )}
-                    <span className={
+                    <span className={cn(
+                      'whitespace-nowrap',
                       metric.changeType === 'positive'
                         ? 'text-green-600'
                         : 'text-red-600'
-                    }>
+                    )}>
                       {metric.change}
                     </span>
-                    <span className="text-gray-500 ml-1">vs. ontem</span>
+                    <span className="text-gray-500 ml-1 truncate">vs. ontem</span>
                   </div>
                 </CardContent>
               </AnimatedCard>
