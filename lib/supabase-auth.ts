@@ -88,7 +88,6 @@ export const verifySupabaseUser = async (
 
     return data.user;
   } catch (error) {
-    console.error('Error verifying Supabase user:', error);
     return null;
   }
 };
@@ -127,7 +126,6 @@ export const getUserProfile = async (
 
     return data as AppUserProfile;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
     return null;
   }
 };

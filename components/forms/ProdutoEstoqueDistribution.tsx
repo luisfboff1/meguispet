@@ -17,7 +17,6 @@ export default function ProdutoEstoqueDistribution({ initialValue, onChange }: P
   if (process.env.NODE_ENV === 'development') {
     // print lightweight identity info to help debug re-render loops
     // eslint-disable-next-line no-console
-    console.log('[ProdutoEstoqueDistribution] render', renderCounter.current, { initialValueLength: initialValue?.length ?? 0 })
   }
   const [estoquesDisponiveis, setEstoquesDisponiveis] = useState<Estoque[]>([])
   const [quantidades, setQuantidades] = useState<Record<number, number>>({})
@@ -34,7 +33,6 @@ export default function ProdutoEstoqueDistribution({ initialValue, onChange }: P
     })
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('[ProdutoEstoqueDistribution] syncWithInitial computed mapa', mapa, 'currentRef', quantidadesRef.current)
     }
 
     // Only update state if values actually changed to avoid loops
@@ -55,7 +53,6 @@ export default function ProdutoEstoqueDistribution({ initialValue, onChange }: P
     if (different) {
       quantidadesRef.current = mapa
       if (process.env.NODE_ENV === 'development') {
-        console.log('[ProdutoEstoqueDistribution] syncWithInitial updating quantidades', mapa)
       }
       setQuantidades(mapa)
     }
@@ -63,7 +60,6 @@ export default function ProdutoEstoqueDistribution({ initialValue, onChange }: P
 
   useEffect(() => {
     const carregarEstoques = async () => {
-      if (process.env.NODE_ENV === 'development') console.log('[ProdutoEstoqueDistribution] carregarEstoques start')
       try {
         setLoading(true)
         setErro(null)
@@ -76,11 +72,9 @@ export default function ProdutoEstoqueDistribution({ initialValue, onChange }: P
           setErro(response.message || 'Não foi possível carregar os estoques')
         }
       } catch (error) {
-        console.error('Erro ao carregar estoques:', error)
         setErro('Erro ao carregar estoques')
       } finally {
         setLoading(false)
-        if (process.env.NODE_ENV === 'development') console.log('[ProdutoEstoqueDistribution] carregarEstoques end')
       }
     }
 
@@ -104,7 +98,6 @@ export default function ProdutoEstoqueDistribution({ initialValue, onChange }: P
       const json = JSON.stringify(payload)
       if (json !== lastEmittedRef.current) {
         lastEmittedRef.current = json
-        if (process.env.NODE_ENV === 'development') console.log('[ProdutoEstoqueDistribution] emitting payload', payload)
         onChange(payload)
       }
     } catch (e) {

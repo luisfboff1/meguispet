@@ -74,7 +74,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
   } catch (error) {
-    console.error('[export] Erro:', error)
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erro ao exportar relatório',
@@ -210,7 +209,6 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
         doc.addImage(image, 'PNG', 14, currentY + 15, width, height)
         currentY += height + 20
       } catch (error) {
-        console.error('Erro ao adicionar imagem do gráfico temporal:', error)
         // Fallback para tabela se a imagem falhar
         addTemporalDataTable(doc, data, currentY)
         currentY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? currentY + 15
@@ -247,7 +245,6 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
         doc.addImage(image, 'PNG', 14, currentY + 15, width, height)
         currentY += height + 20
       } catch (error) {
-        console.error('Erro ao adicionar imagem do gráfico de vendedor:', error)
         // Fallback para tabela se a imagem falhar
         addVendedorDataTable(doc, data, currentY)
         currentY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? currentY + 15

@@ -68,14 +68,12 @@ export default function FinanceiroPage() {
   const [filterTipo, setFilterTipo] = useState('')
 
   useEffect(() => {
-    console.log('📊 Página Financeiro montada')
     loadFinancialData()
     loadCategorias()
     loadTransacoesRecorrentes()
 
     // Cleanup quando desmontar
     return () => {
-      console.log('🚪 Página Financeiro desmontando...')
     }
   }, [])
 
@@ -98,7 +96,6 @@ export default function FinanceiroPage() {
         setTransacoes(transacoesResponse.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar dados financeiros:', error)
       setError('Erro ao carregar dados financeiros')
     } finally {
       setLoading(false)
@@ -112,7 +109,6 @@ export default function FinanceiroPage() {
         setCategorias(response.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar categorias:', error)
     }
   }
 
@@ -123,7 +119,6 @@ export default function FinanceiroPage() {
         setTransacoesRecorrentes(response.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar transações recorrentes:', error)
     }
   }
 

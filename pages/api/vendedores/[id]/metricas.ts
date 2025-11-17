@@ -61,16 +61,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     dataInicioAnterior.setDate(dataInicioAnterior.getDate() - diasPeriodo);
     const dataFimAnterior = new Date(dataInicio);
 
-    console.log('📊 Calculando métricas do vendedor', {
-      vendedorId,
-      periodo,
-      diasPeriodo,
-      dataInicio: dataInicio.toISOString().split('T')[0],
-      dataFim: dataFim.toISOString().split('T')[0],
-      dataInicioAnterior: dataInicioAnterior.toISOString().split('T')[0],
-      dataFimAnterior: dataFimAnterior.toISOString().split('T')[0],
-    });
-
     // 1. Buscar vendas do período atual
     const { data: vendasPeriodoAtual, error: erroVendasAtual } = await supabase
       .from('vendas')
@@ -188,19 +178,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       graficoVendas,
     };
 
-    console.log('✅ Métricas calculadas:', {
-      vendedorId,
-      faturamentoTotal: metricas.faturamentoTotal,
-      quantidadeVendas: metricas.quantidadeVendas,
-      variacaoFaturamento: `${metricas.variacaoFaturamento}%`,
-    });
-
     return res.status(200).json({
       success: true,
       data: metricas,
     });
   } catch (error) {
-    console.error('Erro ao buscar métricas do vendedor:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro ao buscar métricas do vendedor',

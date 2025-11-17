@@ -43,7 +43,6 @@ const mapEditingItemsToEstoque = (editingData?: MovimentacaoEdicao) => {
         produto_nome: item.produto_nome
       }))
     } catch (error) {
-      console.warn('Não foi possível interpretar itens da movimentação para edição:', error)
     }
   }
 

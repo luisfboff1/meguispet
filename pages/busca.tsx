@@ -81,7 +81,6 @@ export default function BuscaPage() {
           })
         }
       } catch (error) {
-        console.error('Erro ao buscar vendas:', error)
       }
 
       // Buscar clientes
@@ -106,7 +105,6 @@ export default function BuscaPage() {
           })
         }
       } catch (error) {
-        console.error('Erro ao buscar clientes:', error)
       }
 
       // Buscar produtos
@@ -130,12 +128,10 @@ export default function BuscaPage() {
           })
         }
       } catch (error) {
-        console.error('Erro ao buscar produtos:', error)
       }
 
   setResults(accumulatedResults)
     } catch (error) {
-      console.error('Erro na busca:', error)
     } finally {
       setLoading(false)
     }

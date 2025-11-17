@@ -240,7 +240,6 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       if (condicoesPagamentoRes.success && condicoesPagamentoRes.data) setCondicoesPagamento(condicoesPagamentoRes.data)
       if (estoquesRes.success && estoquesRes.data) setEstoques(estoquesRes.data)
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
     } finally {
       setLoadingData(false)
     }
@@ -290,19 +289,15 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               // Calcular ST baseado no MVA
               // ST% = MVA% (já vem da tabela em decimal, ex: 0.8363 = 83.63%)
               newItens[index].st_aliquota = (mvaData.mva * 100) || 0
-              console.log(`[VendaForm] ST calculado automaticamente: ${newItens[index].st_aliquota}% (MVA: ${mvaData.mva})`)
             } else {
               newItens[index].st_aliquota = 0
               if (mvaData && !mvaData.sujeito_st) {
-                console.log('[VendaForm] Produto não sujeito a ST neste UF')
               }
             }
           } else {
             newItens[index].st_aliquota = 0
-            console.warn('[VendaForm] Configuração fiscal não encontrada para o produto')
           }
         } catch (error) {
-          console.error('[VendaForm] Erro ao buscar MVA:', error)
           newItens[index].st_aliquota = 0
         }
 
@@ -529,10 +524,6 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('[VendaForm] submit payload', vendaData)
-      console.log('[VendaForm] totais', totais)
-      console.log('[VendaForm] itensCalculados', itensCalculados)
-      console.log('[VendaForm] itens originais', itens)
     }
 
     onSubmit(vendaData)

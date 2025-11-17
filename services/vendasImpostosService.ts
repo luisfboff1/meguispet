@@ -25,7 +25,6 @@ export const vendasImpostosService = {
       if (error.code === 'PGRST116') {
         return null // Not found
       }
-      console.error('Error fetching vendas_impostos:', error)
       throw new Error(`Erro ao buscar impostos da venda: ${error.message}`)
     }
 
@@ -48,7 +47,6 @@ export const vendasImpostosService = {
       if (error.code === 'PGRST116') {
         return null // Not found
       }
-      console.error('Error fetching vendas_impostos by id:', error)
       throw new Error(`Erro ao buscar impostos: ${error.message}`)
     }
 
@@ -74,7 +72,6 @@ export const vendasImpostosService = {
       .range(offset, offset + limit - 1)
 
     if (error) {
-      console.error('Error fetching vendas_impostos:', error)
       throw new Error(`Erro ao buscar impostos: ${error.message}`)
     }
 
@@ -99,7 +96,6 @@ export const vendasImpostosService = {
       .single()
 
     if (error) {
-      console.error('Error creating vendas_impostos:', error)
       throw new Error(`Erro ao criar impostos da venda: ${error.message}`)
     }
 
@@ -120,7 +116,6 @@ export const vendasImpostosService = {
       .single()
 
     if (error) {
-      console.error('Error updating vendas_impostos:', error)
       throw new Error(`Erro ao atualizar impostos: ${error.message}`)
     }
 
@@ -141,7 +136,6 @@ export const vendasImpostosService = {
       .single()
 
     if (error) {
-      console.error('Error updating vendas_impostos by venda_id:', error)
       throw new Error(`Erro ao atualizar impostos da venda: ${error.message}`)
     }
 
@@ -160,7 +154,6 @@ export const vendasImpostosService = {
       .eq('id', id)
 
     if (error) {
-      console.error('Error deleting vendas_impostos:', error)
       throw new Error(`Erro ao deletar impostos: ${error.message}`)
     }
   },
@@ -177,7 +170,6 @@ export const vendasImpostosService = {
       .eq('venda_id', vendaId)
 
     if (error) {
-      console.error('Error deleting vendas_impostos by venda_id:', error)
       throw new Error(`Erro ao deletar impostos da venda: ${error.message}`)
     }
   },
@@ -216,7 +208,6 @@ export const vendasImpostosService = {
       .single()
 
     if (error) {
-      console.error('Error toggling exibir_no_pdf:', error)
       throw new Error(`Erro ao atualizar exibição no PDF: ${error.message}`)
     }
 
@@ -243,7 +234,6 @@ export const vendasImpostosService = {
       .single()
 
     if (error) {
-      console.error('Error toggling exibir_detalhamento:', error)
       throw new Error(`Erro ao atualizar detalhamento: ${error.message}`)
     }
 
@@ -276,7 +266,6 @@ export const vendasImpostosService = {
       .range(offset, offset + limit - 1)
 
     if (error) {
-      console.error('Error fetching vendas_impostos by date range:', error)
       throw new Error(`Erro ao buscar impostos por período: ${error.message}`)
     }
 
@@ -309,7 +298,6 @@ export const vendasImpostosService = {
       .lte('created_at', endDate)
 
     if (error) {
-      console.error('Error calculating total ICMS-ST:', error)
       throw new Error(`Erro ao calcular total de ICMS-ST: ${error.message}`)
     }
 

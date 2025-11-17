@@ -20,7 +20,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      console.error('Logout error:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro ao realizar logout',
@@ -33,7 +32,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Logout realizado com sucesso',
     });
   } catch (error) {
-    console.error('Logout API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

@@ -32,7 +32,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .range(offset, offset + limitNum - 1)
 
     if (error) {
-      console.error('[saved/index] Erro ao buscar relatórios:', error)
       throw error
     }
 
@@ -48,7 +47,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     })
 
   } catch (error) {
-    console.error('[saved/index] Erro:', error)
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erro ao listar relatórios',

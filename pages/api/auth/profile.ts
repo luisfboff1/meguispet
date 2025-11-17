@@ -46,7 +46,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Perfil carregado com sucesso',
     });
   } catch (error) {
-    console.error('Get profile error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro ao carregar perfil',

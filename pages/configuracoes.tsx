@@ -77,7 +77,6 @@ export default function ConfiguracoesPage() {
         setFormasPagamento(response.data.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar formas de pagamento:', error)
     }
   }
 
@@ -103,7 +102,6 @@ export default function ConfiguracoesPage() {
         alert('Forma de pagamento adicionada com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao adicionar forma de pagamento:', error)
       alert('Erro ao adicionar forma de pagamento')
     }
   }
@@ -124,7 +122,6 @@ export default function ConfiguracoesPage() {
         alert('Forma de pagamento atualizada com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao editar forma de pagamento:', error)
       alert('Erro ao editar forma de pagamento')
     }
   }
@@ -143,7 +140,6 @@ export default function ConfiguracoesPage() {
         alert('Forma de pagamento removida com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao remover forma de pagamento:', error)
       alert('Erro ao remover forma de pagamento')
     }
   }
@@ -155,12 +151,10 @@ export default function ConfiguracoesPage() {
   const handleSalvarConfiguracoes = async () => {
     try {
       setLoading(true)
-      console.log('Salvando configurações:', configuracoes)
       // Simular delay
       await new Promise(resolve => setTimeout(resolve, 1000))
       alert('Configurações salvas com sucesso!')
     } catch (error) {
-      console.error('Erro ao salvar configurações:', error)
       alert('Erro ao salvar configurações')
     } finally {
       setLoading(false)
@@ -180,7 +174,6 @@ export default function ConfiguracoesPage() {
     
     try {
       setLoading(true)
-      console.log('Alterando senha...')
       // Simular delay
       await new Promise(resolve => setTimeout(resolve, 1000))
       alert('Senha alterada com sucesso!')
@@ -188,7 +181,6 @@ export default function ConfiguracoesPage() {
       setNovaSenha('')
       setConfirmarSenha('')
     } catch (error) {
-      console.error('Erro ao alterar senha:', error)
       alert('Erro ao alterar senha')
     } finally {
       setLoading(false)

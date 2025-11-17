@@ -109,7 +109,6 @@ export default function ProdutoDetalhes() {
       }
     } catch (err) {
       setError('Erro ao carregar produto')
-      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -119,7 +118,6 @@ export default function ProdutoDetalhes() {
     try {
       if (!id) return
       const resposta = await historicoPrecosService.getByProdutoId(Number(id), 20)
-      console.log('📦 Dados do histórico (service):', resposta)
       if (resposta.success && Array.isArray(resposta.data)) {
         const historicoMapeado = resposta.data
           .filter(isHistoricoPrecoApiItem)
@@ -142,7 +140,6 @@ export default function ProdutoDetalhes() {
         setHistoricoPrecos([])
       }
     } catch (err) {
-      console.error('Erro ao carregar histórico de preços (service):', err)
       setHistoricoPrecos([])
     }
   }
@@ -160,7 +157,6 @@ export default function ProdutoDetalhes() {
       }
     } catch (err) {
       setError('Erro ao atualizar produto')
-      console.error(err)
     } finally {
       setLoading(false)
     }

@@ -60,15 +60,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const dataInicio = new Date();
     dataInicio.setDate(dataInicio.getDate() - diasPeriodo);
 
-    console.log('🔍 Buscando vendas do vendedor', {
-      vendedorId,
-      page,
-      limit,
-      periodo,
-      status: statusFilter || 'todos',
-      search: searchTerm || 'nenhuma',
-    });
-
     // Montar query base
     let queryBuilder = supabase
       .from('vendas')
@@ -163,20 +154,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       totalPages,
     };
 
-    console.log('✅ Vendas encontradas:', {
-      vendedorId,
-      total,
-      paginaAtual: page,
-      totalPaginas: totalPages,
-      vendasNestaPagina: vendasFormatadas.length,
-    });
-
     return res.status(200).json({
       success: true,
       data: response,
     });
   } catch (error) {
-    console.error('Erro ao buscar vendas do vendedor:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro ao buscar vendas do vendedor',

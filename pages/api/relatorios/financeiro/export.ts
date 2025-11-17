@@ -74,7 +74,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
   } catch (error) {
-    console.error('[export] Erro:', error)
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erro ao exportar relatório',
@@ -151,7 +150,6 @@ function exportPDF(data: FinanceiroReportData, config: ExportRequestBody, res: N
       doc.addImage(image, 'PNG', 14, currentY + 15, width, height)
       currentY += height + 20
     } catch (error) {
-      console.error('Erro ao adicionar gráfico de receitas:', error)
     }
   }
 
@@ -174,7 +172,6 @@ function exportPDF(data: FinanceiroReportData, config: ExportRequestBody, res: N
       doc.addImage(image, 'PNG', 14, currentY + 15, width, height)
       currentY += height + 20
     } catch (error) {
-      console.error('Erro ao adicionar gráfico de receitas por categoria:', error)
     }
   }
 
@@ -197,7 +194,6 @@ function exportPDF(data: FinanceiroReportData, config: ExportRequestBody, res: N
       doc.addImage(image, 'PNG', 14, currentY + 15, width, height)
       currentY += height + 20
     } catch (error) {
-      console.error('Erro ao adicionar gráfico de despesas por categoria:', error)
     }
   }
 

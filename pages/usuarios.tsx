@@ -45,7 +45,6 @@ export default function UsuariosPage() {
         setUsuarios(response.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error)
       toast({
         title: 'Erro',
         description: 'Não foi possível carregar a lista de usuários',
@@ -99,7 +98,6 @@ export default function UsuariosPage() {
         })
       }
     } catch (error) {
-      console.error('Erro ao criar usuário:', error)
       
       // Extract error message safely
       let errorMessage = 'Erro ao criar usuário'
@@ -235,7 +233,6 @@ export default function UsuariosPage() {
             })
           }
         } catch (error) {
-          console.error('Erro ao atualizar usuário:', error)
 
           let errorMessage = 'Erro ao atualizar usuário'
           if (error instanceof Error) {
@@ -298,7 +295,6 @@ export default function UsuariosPage() {
         })
       }
     } catch (error) {
-      console.error('Erro ao excluir usuário:', error)
       toast({
         title: 'Erro',
         description: 'Erro ao excluir usuário',

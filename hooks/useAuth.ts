@@ -60,7 +60,6 @@ export function useAuth() {
       // Then call the API logout endpoint (for any server-side cleanup)
       await authService.logout()
     } catch (error) {
-      console.error('Erro no logout:', error)
     } finally {
       clear()
       if (typeof window !== 'undefined') {
@@ -115,11 +114,9 @@ export function useAuth() {
         } catch (error: any) {
           // Handle 401 errors (expired/invalid token)
           if (error?.response?.status === 401) {
-            console.log('Token expirado, fazendo logout...')
             await handleLogout()
           } else {
             // Other errors - still logout for safety
-            console.error('Erro ao verificar autenticação:', error)
             await handleLogout()
           }
         }
@@ -129,7 +126,6 @@ export function useAuth() {
         setStatus('unauthenticated')
       }
     } catch (error) {
-      console.error('Erro crítico ao verificar autenticação:', error)
       await handleLogout()
     }
   }, [clear, handleLogout, setCredentials, setStatus])
@@ -151,11 +147,9 @@ export function useAuth() {
     
     // Listen for auth state changes (including token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event)
       
       if (event === 'TOKEN_REFRESHED' && session) {
         // Update token in state when it's refreshed
-        console.log('Token refreshed automatically')
         if (user) {
           setCredentials(user, session.access_token)
           setTokenCookie(session.access_token)
@@ -175,7 +169,6 @@ export function useAuth() {
             setStatus('authenticated')
           }
         } catch (error) {
-          console.error('Error fetching profile after sign in:', error)
         }
       }
     })
@@ -226,7 +219,6 @@ export function useAuth() {
         clearTokenCookie()
         return false
       } catch (error) {
-        console.error('Erro no login:', error)
         setStatus('unauthenticated')
         clearTokenCookie()
         return false

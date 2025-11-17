@@ -110,7 +110,6 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
         }
       }
     } catch (error) {
-      console.error('Erro ao capturar gráficos:', error)
     }
 
     return charts

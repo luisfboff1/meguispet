@@ -71,13 +71,11 @@ export default function DashboardPage() {
     
     // If data was fetched recently and not forcing, skip
     if (!force && now - lastFetchRef.current < CACHE_DURATION) {
-      console.log('Using cached dashboard data')
       return
     }
     
     // Prevent multiple simultaneous fetches
     if (isFetchingRef.current) {
-      console.log('Dashboard data fetch already in progress')
       return
     }
 
@@ -114,7 +112,6 @@ export default function DashboardPage() {
       // Update cache timestamp
       lastFetchRef.current = now
     } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error)
       // Fallback para dados vazios se API falhar
       setMetrics([])
       setTopProducts([])
@@ -146,10 +143,8 @@ export default function DashboardPage() {
       onSubmit: async (values: VendaFormValues) => {
         try {
           updateModalLoading(true)
-          console.log('Salvando venda:', values)
           // Salvar venda via API
           const response = await vendasService.create(values)
-          console.log('[dashboard] vendas.create response', response)
           if (response.success) {
             await loadDashboardData(true) // Force refresh after successful operation
             close()
@@ -157,10 +152,8 @@ export default function DashboardPage() {
             window.alert(response.message || '✅ Venda realizada com sucesso! Estoque atualizado.')
           } else {
             window.alert('❌ Erro ao criar venda: ' + (response.message || response.error || 'não especificado'))
-            console.error('dashboard vendas.create error', response)
           }
         } catch (error) {
-          console.error('Erro ao salvar venda:', error)
           window.alert('❌ Erro ao salvar venda. Tente novamente.')
         } finally {
           updateModalLoading(false)
@@ -174,19 +167,15 @@ export default function DashboardPage() {
       onSubmit: async (values: ProdutoFormValues) => {
         try {
           updateModalLoading(true)
-          console.log('Salvando produto:', values)
           // Persist the product via API and reload dashboard if successful
           const response = await produtosService.create(values)
-          console.log('[dashboard] produtos.create response', response)
           if (response.success) {
             await loadDashboardData(true) // Force refresh after successful operation
             close()
           } else {
             window.alert('Erro ao criar produto: ' + (response.message || response.error || 'não especificado'))
-            console.error('dashboard produtos.create error', response)
           }
         } catch (error) {
-          console.error('Erro ao salvar produto:', error)
         } finally {
           updateModalLoading(false)
         }
@@ -199,10 +188,8 @@ export default function DashboardPage() {
       onSubmit: async (values: ClienteFormValues) => {
         try {
           updateModalLoading(true)
-          console.log('Salvando cliente:', values)
           // Salvar cliente via API
           const response = await clientesService.create(values)
-          console.log('[dashboard] clientes.create response', response)
           if (response.success) {
             await loadDashboardData(true) // Force refresh after successful operation
             close()
@@ -210,10 +197,8 @@ export default function DashboardPage() {
             window.alert('✅ Cliente cadastrado com sucesso!')
           } else {
             window.alert('❌ Erro ao criar cliente: ' + (response.message || response.error || 'não especificado'))
-            console.error('dashboard clientes.create error', response)
           }
         } catch (error) {
-          console.error('Erro ao salvar cliente:', error)
           window.alert('❌ Erro ao salvar cliente. Tente novamente.')
         } finally {
           updateModalLoading(false)
@@ -227,10 +212,8 @@ export default function DashboardPage() {
       onSubmit: async (values: MovimentacaoFormValues) => {
         try {
           updateModalLoading(true)
-          console.log('Salvando movimentação:', values)
           // Salvar movimentação via API
           const response = await movimentacoesService.create(values)
-          console.log('[dashboard] movimentacoes.create response', response)
           if (response.success) {
             await loadDashboardData(true) // Force refresh after successful operation
             close()
@@ -238,10 +221,8 @@ export default function DashboardPage() {
             window.alert('✅ Movimentação cadastrada com sucesso!')
           } else {
             window.alert('❌ Erro ao criar movimentação: ' + (response.message || response.error || 'não especificado'))
-            console.error('dashboard movimentacoes.create error', response)
           }
         } catch (error) {
-          console.error('Erro ao salvar movimentação:', error)
           window.alert('❌ Erro ao salvar movimentação. Tente novamente.')
         } finally {
           updateModalLoading(false)

@@ -151,16 +151,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       },
     }
 
-    console.log('📊 Relatório Financeiro gerado:', {
-      periodo: `${startDate} a ${endDate}`,
-      transacoes: transacoes?.length || 0,
-      receitas: receitas.length,
-      despesas: despesas.length,
-      receitaTotal,
-      despesaTotal,
-      lucroLiquido
-    })
-
     return res.status(200).json({
       success: true,
       data: {
@@ -168,7 +158,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       },
     })
   } catch (error) {
-    console.error('[preview] Erro:', error)
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erro ao gerar preview do relatório',

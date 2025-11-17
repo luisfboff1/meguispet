@@ -49,7 +49,6 @@ export default function VendedorForm({ vendedor, onSubmit, onCancel, loading }: 
       setSubmitting(true)
       await onSubmit(formData)
     } catch (error) {
-      console.error('Erro ao salvar vendedor:', error)
     } finally {
       setSubmitting(false)
     }

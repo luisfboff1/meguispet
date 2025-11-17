@@ -87,13 +87,11 @@ export const generateOrderPDF = async (
           resolve(true)
         }
         img.onerror = () => {
-          console.warn('Logo não carregado, continuando sem logo')
           resolve(false)
         }
       })
     }
   } catch (error) {
-    console.warn('Erro ao carregar logo:', error)
   }
 
   // Nome da empresa ao lado do logo

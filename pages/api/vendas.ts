@@ -143,23 +143,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       const descontoValor = desconto || 0;
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('📦 POST /vendas - Itens recebidos:', JSON.stringify(itens, null, 2));
       }
 
       const vendaProcessada = await processarVendaComImpostos(
         itens as VendaItemInput[],
         descontoValor
       );
-
-      console.log('📊 Venda processada com impostos:', {
-        total_produtos_bruto: vendaProcessada.totais.total_produtos_bruto,
-        desconto_total: vendaProcessada.totais.desconto_total,
-        total_produtos_liquido: vendaProcessada.totais.total_produtos_liquido,
-        total_ipi: vendaProcessada.totais.total_ipi,
-        total_icms: vendaProcessada.totais.total_icms, // Informativo
-        total_st: vendaProcessada.totais.total_st,
-        total_geral: vendaProcessada.totais.total_geral // Total a pagar (sem ICMS)
-      });
 
       // ✅ CRIAR A VENDA
       const { data: venda, error } = await supabase
@@ -192,7 +181,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .single();
 
       if (error) {
-        console.error('Erro ao criar venda:', error);
         return res.status(500).json({
           success: false,
           message: '❌ Erro ao criar venda: ' + error.message,
@@ -237,7 +225,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       if (itensError) {
         // Reverter venda se falhar ao inserir itens
         await supabase.from('vendas').delete().eq('id', venda.id);
-        console.error('Erro ao inserir itens da venda:', itensError);
         return res.status(500).json({
           success: false,
           message: '❌ Erro ao inserir itens da venda: ' + itensError.message,
@@ -257,7 +244,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         await supabase.from('vendas_itens').delete().eq('venda_id', venda.id);
         await supabase.from('vendas').delete().eq('id', venda.id);
 
-        console.error('❌ Erro ao dar baixa no estoque (após retry automático):', stockResult.errors);
         return res.status(500).json({
           success: false,
           message: '❌ Erro ao dar baixa no estoque após múltiplas tentativas:\n' + stockResult.errors.join('\n'),
@@ -274,7 +260,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         const valorFinalVenda = Number(venda.valor_final);
         
         if (Math.abs(totalParcelas - valorFinalVenda) > 0.10) {
-          console.warn(`⚠️ Total das parcelas (${totalParcelas}) difere do valor final da venda (${valorFinalVenda})`);
         }
 
         // Buscar categoria "Vendas" para vincular transações
@@ -304,7 +289,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           .select();
 
         if (parcelasError) {
-          console.error('⚠️ Erro ao criar parcelas:', parcelasError);
           // Não faz rollback da venda, apenas loga o erro
         } else if (parcelasCreated) {
           // Criar transações financeiras para cada parcela
@@ -325,9 +309,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             .insert(transacoesToInsert);
 
           if (transacoesError) {
-            console.error('⚠️ Erro ao criar transações financeiras:', transacoesError);
           } else {
-            console.log(`✅ ${parcelas.length} transações financeiras criadas para a venda ${numero_venda}`);
           }
         }
       } else {
@@ -357,7 +339,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           });
 
         if (transacaoError) {
-          console.error('⚠️ Erro ao criar transação financeira:', transacaoError);
         }
       }
 
@@ -393,7 +374,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           .single();
 
         if (vendaError) {
-          console.error('Erro ao buscar venda atual:', vendaError);
           return res.status(404).json({ success: false, message: 'Venda não encontrada' });
         }
 
@@ -402,21 +382,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           oldItems = vendaAtual.itens || [];
 
           if (process.env.NODE_ENV === 'development') {
-            console.log('📊 [DEBUG PUT] Venda atual encontrada:', {
-              venda_id: id,
-              oldEstoqueId,
-              oldItems,
-              newItems: itens.map((i: VendaItemInput) => ({ produto_id: i.produto_id, quantidade: i.quantidade }))
-            });
           }
         } else {
-          console.warn('⚠️ [DEBUG PUT] vendaAtual está vazio/null para id:', id);
         }
       } else {
-        console.warn('⚠️ [DEBUG PUT] Não buscou oldItems. Condições:', {
-          temItens: itens && Array.isArray(itens) && itens.length > 0,
-          temEstoqueId: !!estoque_id
-        });
       }
 
       // 💰 PROCESSAR VENDA COM IMPOSTOS (IPI, ICMS, ST)
@@ -428,7 +397,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         const descontoValor = desconto || 0;
 
         if (process.env.NODE_ENV === 'development') {
-          console.log('📦 PUT /vendas - Itens recebidos:', JSON.stringify(itens, null, 2));
         }
 
         vendaProcessada = await processarVendaComImpostos(
@@ -438,16 +406,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
         valor_total_calculado = vendaProcessada.totais.total_produtos_bruto;
         valor_final_calculado = vendaProcessada.totais.total_geral;
-
-        console.log('📊 Recálculo da venda (PUT):', {
-          total_produtos_bruto: vendaProcessada.totais.total_produtos_bruto,
-          desconto_total: vendaProcessada.totais.desconto_total,
-          total_produtos_liquido: vendaProcessada.totais.total_produtos_liquido,
-          total_ipi: vendaProcessada.totais.total_ipi,
-          total_icms: vendaProcessada.totais.total_icms,
-          total_st: vendaProcessada.totais.total_st,
-          total_geral: vendaProcessada.totais.total_geral
-        });
       }
 
       const { data, error } = await supabase
@@ -488,11 +446,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       // 🔄 AJUSTAR ESTOQUE se os itens foram atualizados
       if (itens && Array.isArray(itens) && itens.length > 0 && estoque_id && oldEstoqueId) {
-        console.log('✅ [DEBUG PUT] Entrando no bloco de ajuste de estoque');
         // Se o estoque mudou, reverter do antigo e aplicar no novo
         if (oldEstoqueId !== estoque_id) {
           if (process.env.NODE_ENV === 'development') {
-            console.log(`📦 Mudança de estoque detectada: ${oldEstoqueId} → ${estoque_id}`);
           }
           
           // Reverter do estoque antigo
@@ -503,7 +459,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             req.user?.id
           );
           if (!revertResult.success) {
-            console.error('⚠️ Erro ao reverter estoque antigo (após retry):', revertResult.errors);
             return res.status(500).json({
               success: false,
               message: '❌ Erro ao reverter estoque do local antigo:\n' + revertResult.errors.join('\n'),
@@ -520,7 +475,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             req.user?.id
           );
           if (!applyResult.success) {
-            console.error('⚠️ Erro ao aplicar no novo estoque (após retry):', applyResult.errors);
 
             // Tentar desfazer o revert no estoque antigo para manter consistência
             const compensateResult = await applySaleStock(
@@ -530,9 +484,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
               req.user?.id
             );
             if (!compensateResult.success) {
-              console.error('⚠️ Falha crítica ao desfazer o revert no estoque antigo:', compensateResult.errors);
             } else {
-              console.log('✅ Revertido o revert no estoque antigo com sucesso.');
             }
 
             return res.status(500).json({
@@ -548,18 +500,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           }
         } else {
           // Mesmo estoque, calcular delta
-          console.log('📊 [DEBUG PUT] Calculando delta de estoque:', {
-            oldItems: oldItems.map(i => ({ produto_id: i.produto_id, qtd: i.quantidade })),
-            newItems: (itens as VendaItemInput[]).map(i => ({ produto_id: i.produto_id, qtd: i.quantidade }))
-          });
 
           const deltas = calculateStockDelta(oldItems, itens as VendaItemInput[]);
 
-          console.log('📊 [DEBUG PUT] Delta calculado:', deltas);
 
           if (deltas.length > 0) {
             if (process.env.NODE_ENV === 'development') {
-              console.log('📊 Ajustes de estoque necessários:', deltas);
             }
             const deltaResult = await applyStockDeltas(
               deltas,
@@ -569,7 +515,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             );
 
             if (!deltaResult.success) {
-              console.error('⚠️ Erro ao ajustar estoque (após retry):', deltaResult.errors);
               return res.status(500).json({
                 success: false,
                 message: '❌ Venda atualizada, mas erro ao ajustar estoque:\n' + deltaResult.errors.join('\n'),
@@ -578,19 +523,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
               });
             }
 
-            console.log('✅ Estoque ajustado com sucesso:', deltaResult.adjustments);
           } else {
-            console.log('ℹ️ [DEBUG PUT] Nenhum ajuste de estoque necessário (delta vazio)');
           }
         }
       } else {
-        console.warn('⚠️ [DEBUG PUT] NÃO AJUSTOU ESTOQUE! Condições:', {
-          temItens: itens && Array.isArray(itens) && itens.length > 0,
-          temEstoqueId: !!estoque_id,
-          temOldEstoqueId: !!oldEstoqueId,
-          oldEstoqueId,
-          oldItemsLength: oldItems.length
-        });
       }
 
       // 🗑️ Atualizar itens da venda no banco (se itens foram enviados)
@@ -647,7 +583,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         const { error: itensError } = await supabase.from('vendas_itens').insert(itensInsert);
         
         if (itensError) {
-          console.error('Erro ao atualizar itens da venda:', itensError);
           return res.status(500).json({
             success: false,
             message: '❌ Venda atualizada, mas erro ao atualizar itens: ' + itensError.message,
@@ -681,7 +616,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .single();
 
       if (vendaError) {
-        console.error('Erro ao buscar venda:', vendaError);
         return res.status(404).json({ success: false, message: 'Venda não encontrada' });
       }
 
@@ -699,7 +633,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         );
 
         if (!stockResult.success) {
-          console.error('❌ Erro ao reverter estoque (após retry):', stockResult.errors);
           return res.status(500).json({
             success: false,
             message: '❌ Erro ao reverter estoque após múltiplas tentativas:\n' + stockResult.errors.join('\n'),
@@ -707,7 +640,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           });
         }
 
-        console.log('✅ Estoque revertido com sucesso:', stockResult.adjustments);
       }
 
       // 3️⃣ Deletar transações financeiras relacionadas à venda
@@ -717,10 +649,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .eq('venda_id', id);
 
       if (deleteTransacoesError) {
-        console.error('⚠️ Erro ao deletar transações financeiras:', deleteTransacoesError);
         // Não impede a exclusão da venda, apenas loga o erro
       } else {
-        console.log('✅ Transações financeiras da venda deletadas com sucesso');
       }
 
       // 4️⃣ Deletar parcelas da venda (se existirem)
@@ -730,7 +660,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .eq('venda_id', id);
 
       if (deleteParcelasError) {
-        console.error('⚠️ Erro ao deletar parcelas:', deleteParcelasError);
         // Não impede a exclusão da venda, apenas loga o erro
       }
 
@@ -741,7 +670,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .eq('venda_id', id);
 
       if (deleteItensError) {
-        console.error('Erro ao deletar itens da venda:', deleteItensError);
         return res.status(500).json({ 
           success: false, 
           message: 'Erro ao deletar itens da venda: ' + deleteItensError.message 
@@ -755,7 +683,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .eq('id', id);
 
       if (deleteVendaError) {
-        console.error('Erro ao deletar venda:', deleteVendaError);
         return res.status(500).json({ 
           success: false, 
           message: 'Erro ao deletar venda: ' + deleteVendaError.message 
@@ -773,7 +700,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     return res.status(405).json({ success: false, message: 'Método não permitido' });
   } catch (error) {
-    console.error('Vendas API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

@@ -26,7 +26,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .single()
 
       if (error) {
-        console.error('[saved/[id]] Erro ao buscar relatório:', error)
         throw error
       }
 
@@ -50,7 +49,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .eq('usuario_id', req.user?.id || 1)
 
       if (error) {
-        console.error('[saved/[id]] Erro ao deletar relatório:', error)
         throw error
       }
 
@@ -67,7 +65,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
   } catch (error) {
-    console.error('[saved/[id]] Erro:', error)
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erro ao processar requisição',

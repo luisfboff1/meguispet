@@ -37,7 +37,6 @@ export default function FeedbackDetailsModal({
       await onDelete(ticket.id)
       onClose()
     } catch (error) {
-      console.error('Error deleting ticket:', error)
     } finally {
       setIsDeleting(false)
     }
@@ -51,7 +50,6 @@ export default function FeedbackDetailsModal({
       await onAddComment(ticket.id, newComment)
       setNewComment('')
     } catch (error) {
-      console.error('Error adding comment:', error)
     } finally {
       setIsAddingComment(false)
     }

@@ -56,7 +56,6 @@ export default function ProdutosReportPage() {
         })
       }
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error)
       toast({
         title: 'Erro',
         description: error instanceof Error ? error.message : 'Erro ao gerar relatório',
@@ -92,7 +91,6 @@ export default function ProdutosReportPage() {
         variant: 'default'
       })
     } catch (error) {
-      console.error('Erro ao exportar relatório:', error)
       toast({
         title: 'Erro',
         description: error instanceof Error ? error.message : 'Erro ao exportar relatório',

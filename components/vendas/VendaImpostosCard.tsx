@@ -146,7 +146,6 @@ export default function VendaImpostosCard({
                 }
               }
             } catch (error) {
-              console.error(`[VendaImpostosCard] Erro ao buscar MVA para NCM ${config.ncm}:`, error)
             }
           }
 
@@ -184,7 +183,6 @@ export default function VendaImpostosCard({
         setResult(impostoResult)
         onChangeRef.current(impostoResult)
       } catch (error) {
-        console.error('[VendaImpostosCard] Error calculating impostos:', error)
         setResult(null)
         onChangeRef.current(null)
       } finally {

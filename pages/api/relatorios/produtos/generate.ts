@@ -76,7 +76,6 @@ export default async function handler(
         .single()
 
       if (saveError) {
-        console.error('Erro ao salvar relatório:', saveError)
         // Não falhar a requisição, apenas avisar
       } else {
         reportId = savedReport?.id
@@ -94,7 +93,6 @@ export default async function handler(
     })
 
   } catch (error) {
-    console.error('Erro ao gerar relatório de produtos:', error)
     return res.status(500).json({
       error: 'Erro ao gerar relatório de produtos',
       message: error instanceof Error ? error.message : 'Erro desconhecido'

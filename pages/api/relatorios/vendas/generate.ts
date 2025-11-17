@@ -82,7 +82,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .single()
 
     if (saveError) {
-      console.error('[generate] Erro ao salvar relatório:', saveError)
       throw saveError
     }
 
@@ -94,7 +93,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     })
 
   } catch (error) {
-    console.error('[generate] Erro:', error)
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erro ao gerar relatório',

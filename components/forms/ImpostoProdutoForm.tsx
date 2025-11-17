@@ -54,7 +54,6 @@ export default function ImpostoProdutoForm({
 
     try {
       await impostosService.upsert(formData)
-      console.log('[ImpostoProdutoForm] Configuração fiscal salva com sucesso')
       setSaveSuccess(true)
 
       // Show success message briefly
@@ -65,7 +64,6 @@ export default function ImpostoProdutoForm({
       // Notify parent component
       await onSubmit(formData)
     } catch (error) {
-      console.error('[ImpostoProdutoForm] Erro ao salvar configuração fiscal:', error)
       alert('Erro ao salvar configuração fiscal. Por favor, tente novamente.')
     } finally {
       setSaving(false)

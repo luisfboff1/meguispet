@@ -488,7 +488,6 @@ export default function ProdutosEstoquePage() {
         setProdutos(produtosResponse.data)
         // Debug: inspect the first product's estoques shape
         if (process.env.NODE_ENV === 'development' && produtosResponse.data.length) {
-          console.log('[produtos-estoque] exemplo produto.estoques:', produtosResponse.data[0].estoques)
         }
       }
 
@@ -499,7 +498,6 @@ export default function ProdutosEstoquePage() {
           setEstoques(estoquesResponse.data)
         }
       } catch (error) {
-        console.error('Erro ao carregar estoques:', error)
       }
       
       // Carregar movimentações
@@ -509,11 +507,9 @@ export default function ProdutosEstoquePage() {
           setMovimentacoes(movimentacoesResponse.data)
         }
       } catch (error) {
-        console.error('Erro ao carregar movimentações:', error)
       }
       
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
     } finally {
       setLoading(false)
     }
@@ -607,7 +603,6 @@ export default function ProdutosEstoquePage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao salvar produto:', error)
       setAlertDialog({
         title: '❌ Erro Inesperado',
         message: 'Ocorreu um erro ao salvar o produto. Tente novamente mais tarde.',
@@ -632,7 +627,6 @@ export default function ProdutosEstoquePage() {
         setShowMovimentacaoForm(false)
       }
     } catch (error) {
-      console.error('Erro ao salvar movimentação:', error)
     } finally {
       setFormLoading(false)
     }
@@ -640,43 +634,32 @@ export default function ProdutosEstoquePage() {
 
   const handleEditarMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
     try {
-      console.log('✏️ Editando movimentação:', movimentacao.id)
       // Buscar detalhes completos da movimentação
       const response = await movimentacoesService.getById(movimentacao.id)
-      console.log('📦 Dados para edição:', response)
       
       if (response.success && response.data) {
-        console.log('✅ Carregando dados para edição:', response.data)
         setEditingMovimentacao(response.data)
         setShowMovimentacaoForm(true)
       } else {
-        console.error('❌ Erro ao carregar dados:', response)
         alert('Erro ao carregar dados para edição')
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar dados para edição:', error)
       alert('Erro ao carregar dados para edição')
     }
   }
 
   const handleVerDetalhesMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
     try {
-      console.log('🔍 Buscando detalhes da movimentação:', movimentacao.id)
       // Buscar detalhes completos da movimentação
       const response = await movimentacoesService.getById(movimentacao.id)
-      console.log('📦 Resposta da API:', response)
       
       if (response.success && response.data) {
-        console.log('✅ Dados carregados:', response.data)
-        console.log('📋 Itens encontrados:', response.data.itens?.length || 0)
         setSelectedMovimentacao(response.data)
         setShowMovimentacaoDetails(true)
       } else {
-        console.error('❌ Erro na resposta:', response)
         alert('Erro ao carregar detalhes da movimentação')
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar detalhes:', error)
       alert('Erro ao carregar detalhes da movimentação')
     }
   }
@@ -688,7 +671,6 @@ export default function ProdutosEstoquePage() {
         // TODO: Implementar exclusão quando a API estiver pronta
         alert('Funcionalidade de exclusão será implementada em breve')
       } catch (error) {
-        console.error('❌ Erro ao excluir movimentação:', error)
         alert('Erro ao excluir movimentação')
       } finally {
         setFormLoading(false)
@@ -703,14 +685,11 @@ export default function ProdutosEstoquePage() {
         const response = await movimentacoesService.updateStatus(movimentacao.id, 'confirmado')
         if (response.success) {
           await loadData() // Recarregar dados para atualizar estoque
-          console.log('✅ Movimentação confirmada e estoque atualizado')
           alert('Movimentação confirmada! Estoque atualizado com sucesso.')
         } else {
-          console.error('❌ Erro ao confirmar movimentação:', response.message)
           alert('Erro ao confirmar movimentação: ' + response.message)
         }
       } catch (error) {
-        console.error('❌ Erro ao confirmar movimentação:', error)
         alert('Erro ao confirmar movimentação')
       } finally {
         setFormLoading(false)

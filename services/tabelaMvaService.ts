@@ -60,7 +60,6 @@ export const tabelaMvaService = {
     const { data, error, count } = await query.range(offset, offset + limit - 1)
 
     if (error) {
-      console.error('Error fetching tabela_mva:', error)
       throw new Error(`Erro ao buscar tabela MVA: ${error.message}`)
     }
 
@@ -88,7 +87,6 @@ export const tabelaMvaService = {
       if (error.code === 'PGRST116') {
         return null // Not found
       }
-      console.error('Error fetching tabela_mva by id:', error)
       throw new Error(`Erro ao buscar MVA: ${error.message}`)
     }
 
@@ -113,7 +111,6 @@ export const tabelaMvaService = {
       if (error.code === 'PGRST116') {
         return null // Not found
       }
-      console.error('Error fetching tabela_mva by UF/NCM:', error)
       throw new Error(`Erro ao buscar MVA: ${error.message}`)
     }
 
@@ -133,7 +130,6 @@ export const tabelaMvaService = {
       .order('uf', { ascending: true })
 
     if (error) {
-      console.error('Error fetching UFs:', error)
       throw new Error(`Erro ao buscar UFs: ${error.message}`)
     }
 
@@ -155,7 +151,6 @@ export const tabelaMvaService = {
       .order('ncm', { ascending: true })
 
     if (error) {
-      console.error('Error fetching NCMs:', error)
       throw new Error(`Erro ao buscar NCMs: ${error.message}`)
     }
 
@@ -180,7 +175,6 @@ export const tabelaMvaService = {
       .single()
 
     if (error) {
-      console.error('Error creating tabela_mva:', error)
       throw new Error(`Erro ao criar MVA: ${error.message}`)
     }
 
@@ -206,7 +200,6 @@ export const tabelaMvaService = {
       .single()
 
     if (error) {
-      console.error('Error updating tabela_mva:', error)
       throw new Error(`Erro ao atualizar MVA: ${error.message}`)
     }
 
@@ -225,7 +218,6 @@ export const tabelaMvaService = {
       .eq('id', id)
 
     if (error) {
-      console.error('Error deleting tabela_mva:', error)
       throw new Error(`Erro ao deletar MVA: ${error.message}`)
     }
   },
@@ -242,7 +234,6 @@ export const tabelaMvaService = {
       .eq('id', id)
 
     if (error) {
-      console.error('Error hard deleting tabela_mva:', error)
       throw new Error(`Erro ao deletar permanentemente MVA: ${error.message}`)
     }
   },
@@ -262,7 +253,6 @@ export const tabelaMvaService = {
       .limit(limit)
 
     if (error) {
-      console.error('Error searching tabela_mva:', error)
       throw new Error(`Erro ao buscar MVA: ${error.message}`)
     }
 

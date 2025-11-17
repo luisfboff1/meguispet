@@ -75,7 +75,6 @@ const loadStoredNotifications = (): NotificationItem[] => {
       }
     }
   } catch (error) {
-    console.warn('Erro ao carregar notificações salvas:', error)
   }
 
   return defaultNotifications

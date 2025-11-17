@@ -79,7 +79,6 @@ export default function VendasPage() {
       setLoading(true)
       const response = await vendasService.getAll(currentPage, 10)
       if (response.success && response.data) {
-        console.log('Vendas carregadas:', response.data)
         setVendas(response.data)
         if (selectedVenda) {
           const vendaAtualizada = response.data.find(v => v.id === selectedVenda.id) || null
@@ -87,7 +86,6 @@ export default function VendasPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar vendas:', error)
     } finally {
       setLoading(false)
     }
@@ -101,7 +99,6 @@ export default function VendasPage() {
         setCondicoes(response.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar condições de pagamento:', error)
       setToast({ message: 'Erro ao carregar condições de pagamento', type: 'error' })
     } finally {
       setCondicoesLoading(false)
@@ -162,7 +159,6 @@ export default function VendasPage() {
         setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
       }
     } catch (error) {
-      console.error('Erro ao carregar venda:', error)
       setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
     } finally {
       setLoading(false)
@@ -192,7 +188,6 @@ export default function VendasPage() {
               setVendaRecemSalva(vendaCompleta.data)
             }
           } catch (error) {
-            console.error('Erro ao buscar venda completa:', error)
           }
         }
 
@@ -229,7 +224,6 @@ export default function VendasPage() {
         message: msg,
         type: 'error',
       })
-      console.error('Erro ao salvar venda:', error)
     } finally {
       setFormLoading(false)
     }
@@ -287,7 +281,6 @@ export default function VendasPage() {
         }
       }
       setToast({ message: msg, type: 'error' })
-      console.error('Erro ao excluir venda:', error)
     } finally {
       setDeletingId(null)
     }
@@ -316,7 +309,6 @@ export default function VendasPage() {
         }
       }
       setToast({ message: msg, type: 'error' })
-      console.error('Erro ao confirmar venda:', error)
     }
   }
 
@@ -351,7 +343,6 @@ export default function VendasPage() {
             }
           }
         } catch (error) {
-          console.error('Erro ao buscar dados do cliente:', error)
           // Continua mesmo se falhar ao buscar cliente
         }
       }
@@ -360,7 +351,6 @@ export default function VendasPage() {
       setVendaParaPDF(vendaCompleta)
       setShowPDFPreview(true)
     } catch (error) {
-      console.error('Erro ao preparar PDF:', error)
       setToast({ message: 'Erro ao preparar visualização do PDF', type: 'error' })
     }
   }
@@ -382,7 +372,6 @@ export default function VendasPage() {
       await downloadOrderPDF(vendaParaPDF, 'MEGUISPET', pdfOptions)
       setToast({ message: 'PDF gerado com sucesso!', type: 'success' })
     } catch (error) {
-      console.error('Erro ao gerar PDF:', error)
       setToast({ message: 'Erro ao gerar PDF do pedido', type: 'error' })
     }
   }
@@ -523,7 +512,6 @@ export default function VendasPage() {
         message: msg,
         type: 'error',
       })
-      console.error('Erro ao salvar condição:', error)
     } finally {
       setFormLoading(false)
     }
@@ -553,7 +541,6 @@ export default function VendasPage() {
         }
       }
       setToast({ message: msg, type: 'error' })
-      console.error('Erro ao excluir condição:', error)
     } finally {
       setDeletingCondicaoId(null)
     }
@@ -572,7 +559,6 @@ export default function VendasPage() {
         })
       }
     } catch (error) {
-      console.error('Erro ao alterar status:', error)
       setToast({ message: 'Erro ao alterar status da condição', type: 'error' })
     }
   }

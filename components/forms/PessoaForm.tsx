@@ -107,7 +107,6 @@ export default function PessoaForm({
         }))
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error)
     } finally {
       setCepLoading(false)
     }
@@ -137,7 +136,6 @@ export default function PessoaForm({
         }))
       }
     } catch (error) {
-      console.error('Erro ao buscar CNPJ:', error)
     } finally {
       setDocLookupLoading(false)
     }

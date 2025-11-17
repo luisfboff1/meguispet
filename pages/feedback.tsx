@@ -40,7 +40,6 @@ export default function FeedbackPage() {
         })
       }
     } catch (error) {
-      console.error('Error loading tickets:', error)
       toast({
         title: 'Erro ao carregar feedbacks',
         description: error instanceof Error ? error.message : 'Erro desconhecido',

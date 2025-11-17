@@ -41,7 +41,6 @@ export const cnpjService = {
       
       return data
     } catch (error) {
-      console.error('Erro ao buscar CNPJ:', error)
       return null
     }
   }

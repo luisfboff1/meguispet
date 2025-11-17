@@ -36,20 +36,16 @@ const api = axios.create({
 if (process.env.NODE_ENV === 'development') {
   api.interceptors.request.use(config => {
     const payloadPreview = typeof config.data === 'string' ? config.data : JSON.stringify(config.data)
-    console.log('[api] request', config.method?.toUpperCase(), config.url, payloadPreview)
     return config
   })
 
   api.interceptors.response.use(
     response => {
-      console.log('[api] response', response.status, response.config.url, response.data)
       return response
     },
     error => {
       if (error.response) {
-        console.error('[api] error', error.response.status, error.response.config?.url, error.response.data)
       } else {
-        console.error('[api] network error', error.message)
       }
       return Promise.reject(error)
     }
@@ -70,7 +66,6 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
             config.headers.Authorization = `Bearer ${session.access_token}`
           }
         } catch (parseError) {
-          console.warn('Erro ao parsear sessão Supabase:', parseError)
         }
       }
       
@@ -82,7 +77,6 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     }
   } catch (error) {
     // Ignorar erros de localStorage em SSR
-    console.warn('Erro ao acessar localStorage:', error)
   }
   return config
 })
@@ -369,7 +363,6 @@ export const authService = {
         document.cookie = `token=; Max-Age=0; Path=/; SameSite=Lax${secure}`
       }
     } catch (error) {
-      console.warn('Erro ao fazer logout no servidor:', error)
       // Continue with local cleanup even if server logout fails
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token')

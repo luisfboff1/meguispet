@@ -22,7 +22,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       data: vendas || [],
     });
   } catch (error) {
-    console.error('Dashboard Recent Sales API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

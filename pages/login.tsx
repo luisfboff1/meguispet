@@ -47,7 +47,6 @@ export default function LoginPage() {
         alert('Credenciais inválidas!')
       }
     } catch (error) {
-      console.error('Erro no login:', error)
       alert('Erro ao fazer login. Tente novamente.')
     } finally {
       setLoading(false)

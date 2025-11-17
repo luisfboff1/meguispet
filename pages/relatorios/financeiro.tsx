@@ -48,7 +48,6 @@ export default function FinanceiroReportPage() {
         })
       }
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error)
       toast({
         title: 'Erro ao gerar relatório',
         description: error instanceof Error ? error.message : 'Ocorreu um erro ao gerar o relatório',
@@ -80,7 +79,6 @@ export default function FinanceiroReportPage() {
         variant: 'default',
       })
     } catch (error) {
-      console.error('Erro ao exportar relatório:', error)
       toast({
         title: 'Erro ao exportar relatório',
         description: error instanceof Error ? error.message : 'Ocorreu um erro ao exportar o relatório',

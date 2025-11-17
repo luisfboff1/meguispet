@@ -61,7 +61,6 @@ export const withSupabaseAuth = (
       // Call the actual handler
       return handler(authenticatedReq, res);
     } catch (error) {
-      console.error('Authentication middleware error:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro ao validar autenticação',

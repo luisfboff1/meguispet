@@ -87,7 +87,6 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
         })
       }
     } catch (error) {
-      console.error('[ProdutoForm] Error loading fiscal config:', error)
     } finally {
       setLoadingFiscal(false)
     }
@@ -117,7 +116,6 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
       estoques: estoquesDistribuidos
     }
     // Debug: print payload before sending
-    console.log('[produto-form] submit payload', payload)
 
     try {
       await onSubmit(payload)
@@ -131,16 +129,13 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
             produto_id: produto.id
           }
           await impostosService.upsert(fiscalPayload)
-          console.log('[produto-form] Fiscal config saved successfully')
         } catch (error) {
-          console.error('[produto-form] Error saving fiscal config:', error)
           window.alert('Produto salvo, mas houve erro ao salvar configuração fiscal.')
         } finally {
           setSavingImposto(false)
         }
       }
     } catch (error) {
-      console.error('[produto-form] Error saving product:', error)
     }
   }
 

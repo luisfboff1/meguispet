@@ -94,7 +94,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const { data: vendas, error } = await query.order('data_venda', { ascending: false })
 
     if (error) {
-      console.error('[preview] Erro ao buscar vendas:', error)
       throw error
     }
 
@@ -340,7 +339,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     })
 
   } catch (error) {
-    console.error('[preview] Erro:', error)
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erro ao gerar preview do relatório',

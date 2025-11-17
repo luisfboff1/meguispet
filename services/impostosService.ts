@@ -34,7 +34,6 @@ export const impostosService = {
       .range(offset, offset + limit - 1)
 
     if (error) {
-      console.error('Error fetching impostos_produto:', error)
       throw new Error(`Erro ao buscar impostos: ${error.message}`)
     }
 
@@ -65,7 +64,6 @@ export const impostosService = {
       if (error.code === 'PGRST116') {
         return null // Not found
       }
-      console.error('Error fetching impostos_produto by id:', error)
       throw new Error(`Erro ao buscar imposto: ${error.message}`)
     }
 
@@ -92,7 +90,6 @@ export const impostosService = {
       if (error.code === 'PGRST116') {
         return null // Not found
       }
-      console.error('Error fetching impostos_produto by produto_id:', error)
       throw new Error(`Erro ao buscar imposto do produto: ${error.message}`)
     }
 
@@ -116,7 +113,6 @@ export const impostosService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching impostos_produto by NCM:', error)
       throw new Error(`Erro ao buscar impostos por NCM: ${error.message}`)
     }
 
@@ -129,7 +125,6 @@ export const impostosService = {
   async create(formData: ImpostoProdutoForm): Promise<ImpostoProduto> {
     const supabase = getSupabaseBrowser()
 
-    console.log('[impostosService.create] Creating with data:', formData)
 
     const { data, error } = await supabase
       .from('impostos_produto')
@@ -141,7 +136,6 @@ export const impostosService = {
       .single()
 
     if (error) {
-      console.error('[impostosService.create] Error:', error)
       if (error.code === 'PGRST116') {
         throw new Error('Erro: A configuração não foi criada. Verifique as permissões.')
       }
@@ -149,11 +143,9 @@ export const impostosService = {
     }
 
     if (!data) {
-      console.error('[impostosService.create] No data returned')
       throw new Error('Erro: Nenhum dado retornado após criar configuração')
     }
 
-    console.log('[impostosService.create] Success:', data)
     return data
   },
 
@@ -163,7 +155,6 @@ export const impostosService = {
   async update(id: string, formData: Partial<ImpostoProdutoForm>): Promise<ImpostoProduto> {
     const supabase = getSupabaseBrowser()
 
-    console.log('[impostosService.update] Updating id:', id, 'with data:', formData)
 
     const { data, error} = await supabase
       .from('impostos_produto')
@@ -176,7 +167,6 @@ export const impostosService = {
       .single()
 
     if (error) {
-      console.error('[impostosService.update] Error:', error)
       if (error.code === 'PGRST116') {
         throw new Error('Erro: Registro não encontrado ou sem permissão para atualizar.')
       }
@@ -184,11 +174,9 @@ export const impostosService = {
     }
 
     if (!data) {
-      console.error('[impostosService.update] No data returned')
       throw new Error('Erro: Nenhum dado retornado após atualizar configuração')
     }
 
-    console.log('[impostosService.update] Success:', data)
     return data
   },
 
@@ -209,7 +197,6 @@ export const impostosService = {
       .single()
 
     if (error) {
-      console.error('Error updating impostos_produto by produto_id:', error)
       throw new Error(`Erro ao atualizar imposto do produto: ${error.message}`)
     }
 
@@ -228,7 +215,6 @@ export const impostosService = {
       .eq('id', id)
 
     if (error) {
-      console.error('Error deleting impostos_produto:', error)
       throw new Error(`Erro ao deletar imposto: ${error.message}`)
     }
   },
@@ -245,7 +231,6 @@ export const impostosService = {
       .eq('id', id)
 
     if (error) {
-      console.error('Error hard deleting impostos_produto:', error)
       throw new Error(`Erro ao deletar permanentemente imposto: ${error.message}`)
     }
   },
@@ -255,15 +240,12 @@ export const impostosService = {
    * If product already has tax config, update it; otherwise, create new
    */
   async upsert(formData: ImpostoProdutoForm): Promise<ImpostoProduto> {
-    console.log('[impostosService.upsert] Called with produto_id:', formData.produto_id)
 
     const existing = await this.getByProdutoId(formData.produto_id)
 
     if (existing) {
-      console.log('[impostosService.upsert] Found existing config, updating...')
       return this.update(existing.id, formData)
     } else {
-      console.log('[impostosService.upsert] No existing config, creating new...')
       return this.create(formData)
     }
   },
@@ -281,7 +263,6 @@ export const impostosService = {
       .eq('ativo', true)
 
     if (errorImposto) {
-      console.error('Error fetching produtos with imposto:', errorImposto)
       throw new Error(`Erro ao buscar produtos com imposto: ${errorImposto.message}`)
     }
 
@@ -297,7 +278,6 @@ export const impostosService = {
       .limit(limit)
 
     if (errorProdutos) {
-      console.error('Error fetching produtos sem imposto:', errorProdutos)
       throw new Error(`Erro ao buscar produtos sem imposto: ${errorProdutos.message}`)
     }
 
@@ -319,7 +299,6 @@ export const impostosService = {
       `)
 
     if (error) {
-      console.error('Error bulk creating impostos_produto:', error)
       throw new Error(`Erro ao criar configurações em lote: ${error.message}`)
     }
 
@@ -348,10 +327,8 @@ export const impostosService = {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        console.warn(`[impostosService.getMVA] No MVA found for UF=${uf}, NCM=${ncm}`)
         return null // Not found
       }
-      console.error('[impostosService.getMVA] Error:', error)
       throw new Error(`Erro ao buscar MVA: ${error.message}`)
     }
 

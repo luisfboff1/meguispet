@@ -38,7 +38,6 @@ export default function EstoquePage() {
         setProdutos(response.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar produtos:', error)
     } finally {
       setLoading(false)
     }
@@ -57,7 +56,6 @@ export default function EstoquePage() {
 
   const convertToMovimentacaoPayload = (input: EstoqueOperacaoInput): MovimentacaoForm | null => {
     if (input.tipo === 'transferencia') {
-      console.warn('Transferência entre estoques ainda não implementada no backend atual.')
       return null
     }
 
@@ -109,7 +107,6 @@ export default function EstoquePage() {
         }
       }
       setToast({ message: msg, type: 'error' })
-      console.error('Erro ao ajustar estoque:', error)
     } finally {
       setFormLoading(false)
     }

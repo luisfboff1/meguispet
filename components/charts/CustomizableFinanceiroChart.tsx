@@ -71,9 +71,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
 
   // Debug: detectar re-renders - apenas no mount
   React.useEffect(() => {
-    console.log('🔄 CustomizableFinanceiroChart montado')
     return () => {
-      console.log('🚪 CustomizableFinanceiroChart desmontado')
     }
   }, []) // Array vazio = só roda no mount/unmount
 

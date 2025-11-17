@@ -10,7 +10,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     if (method === 'GET') {
       // Check cache first
       if (cacheManager.metricas.isValid()) {
-        console.log('💰 Serving financial metrics from cache');
         const cached = cacheManager.metricas.get();
         return res.status(200).json(cached?.data);
       }
@@ -191,15 +190,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         despesas: valores.despesas
       }));
 
-      console.log('📊 Métricas calculadas:', {
-        receita,
-        despesas,
-        lucro,
-        margem: margem.toFixed(2),
-        meses: grafico_mensal.length,
-        dias: grafico_diario.length
-      });
-
       const response = {
         success: true,
         data: {
@@ -229,7 +219,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     return res.status(405).json({ success: false, message: 'Método não permitido' });
   } catch (error) {
-    console.error('Transacoes Metricas API error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

@@ -89,7 +89,6 @@ export function DataTable<TData, TValue>({
         const parsedOrder = JSON.parse(savedColumnOrder) as ColumnOrderState
         setColumnOrder(parsedOrder)
       } catch (e) {
-        console.warn('Failed to parse saved column order', e)
       }
     }
 
@@ -98,7 +97,6 @@ export function DataTable<TData, TValue>({
         const parsedVisibility = JSON.parse(savedColumnVisibility) as VisibilityState
         setColumnVisibility(parsedVisibility)
       } catch (e) {
-        console.warn('Failed to parse saved column visibility', e)
       }
     }
   }, [tableId])

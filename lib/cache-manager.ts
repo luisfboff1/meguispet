@@ -16,12 +16,10 @@ export const cacheManager = {
 
     set: (data: unknown): void => {
       metricasCache = { data, timestamp: Date.now() };
-      console.log('💾 Cache de métricas financeiras atualizado');
     },
 
     invalidate: (): void => {
       metricasCache = null;
-      console.log('🗑️ Cache de métricas financeiras invalidado');
     },
 
     isValid: (): boolean => {
@@ -34,7 +32,6 @@ export const cacheManager = {
   // Invalidar TODOS os caches (útil para operações que afetam múltiplos dados)
   invalidateAll: (): void => {
     metricasCache = null;
-    console.log('🗑️ TODOS os caches invalidados');
   }
 };
 

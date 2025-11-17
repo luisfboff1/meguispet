@@ -63,14 +63,6 @@ export function calcularItemVenda(
     stValor = icmsST - icmsProprio
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[vendaCalculations] ST calculado:`, {
-        valorLiquido: subtotalLiquido.toFixed(2),
-        mva: `${mva}%`,
-        baseST: baseST.toFixed(2),
-        icmsST: icmsST.toFixed(2),
-        icmsProprio: icmsProprio.toFixed(2),
-        stFinal: stValor.toFixed(2)
-      })
     }
   }
 

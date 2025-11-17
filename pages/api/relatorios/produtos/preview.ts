@@ -53,7 +53,6 @@ const handler = async (
     const { data: produtos, error: produtosError } = await produtosQuery
 
     if (produtosError) {
-      console.error('[produtos-preview] Erro ao buscar produtos:', produtosError)
       return res.status(500).json({
         success: false,
         message: 'Erro ao buscar produtos: ' + produtosError.message
@@ -89,7 +88,6 @@ const handler = async (
       .neq('status', 'cancelado') // Não contar vendas canceladas
 
     if (vendasError) {
-      console.error('[produtos-preview] Erro ao buscar vendas:', vendasError)
       return res.status(500).json({
         success: false,
         message: 'Erro ao buscar vendas: ' + vendasError.message
@@ -170,20 +168,6 @@ const handler = async (
         // LOG DETALHADO para produtos com problema
         if (faturamento === 0 && item.quantidade > 0) {
           itemsComProblema++
-          console.log('🔍 [produtos-preview] Item com faturamento ZERO:', {
-            venda_id: venda.id,
-            produto_id: produtoId,
-            produto_nome: produto.nome,
-            quantidade: item.quantidade,
-            caminho_usado: caminho,
-            item_dados: {
-              subtotal: item.subtotal,
-              subtotal_liquido: item.subtotal_liquido,
-              subtotal_bruto: item.subtotal_bruto,
-              preco_unitario: item.preco_unitario,
-            },
-            faturamento_calculado: faturamento
-          })
         }
 
         const custo = (produto.preco_custo || 0) * item.quantidade
@@ -210,10 +194,6 @@ const handler = async (
         }
       })
     })
-
-    if (itemsComProblema > 0) {
-      console.warn(`⚠️ [produtos-preview] Total de itens com faturamento zero: ${itemsComProblema}`)
-    }
 
     // 5️⃣ Ordenar produtos
     const produtosVendidosArray = Array.from(vendasPorProduto.values())
@@ -307,7 +287,6 @@ const handler = async (
     })
 
   } catch (error) {
-    console.error('[produtos-preview] Erro:', error)
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erro ao gerar preview de produtos'
