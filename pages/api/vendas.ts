@@ -400,7 +400,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         if (vendaAtual) {
           oldEstoqueId = vendaAtual.estoque_id;
           oldItems = vendaAtual.itens || [];
+
+          if (process.env.NODE_ENV === 'development') {
+            console.log('📊 [DEBUG PUT] Venda atual encontrada:', {
+              venda_id: id,
+              oldEstoqueId,
+              oldItems,
+              newItems: itens.map((i: VendaItemInput) => ({ produto_id: i.produto_id, quantidade: i.quantidade }))
+            });
+          }
+        } else {
+          console.warn('⚠️ [DEBUG PUT] vendaAtual está vazio/null para id:', id);
         }
+      } else {
+        console.warn('⚠️ [DEBUG PUT] Não buscou oldItems. Condições:', {
+          temItens: itens && Array.isArray(itens) && itens.length > 0,
+          temEstoqueId: !!estoque_id
+        });
       }
 
       // 💰 PROCESSAR VENDA COM IMPOSTOS (IPI, ICMS, ST)
@@ -472,6 +488,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       // 🔄 AJUSTAR ESTOQUE se os itens foram atualizados
       if (itens && Array.isArray(itens) && itens.length > 0 && estoque_id && oldEstoqueId) {
+        console.log('✅ [DEBUG PUT] Entrando no bloco de ajuste de estoque');
         // Se o estoque mudou, reverter do antigo e aplicar no novo
         if (oldEstoqueId !== estoque_id) {
           if (process.env.NODE_ENV === 'development') {
@@ -531,7 +548,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           }
         } else {
           // Mesmo estoque, calcular delta
+          console.log('📊 [DEBUG PUT] Calculando delta de estoque:', {
+            oldItems: oldItems.map(i => ({ produto_id: i.produto_id, qtd: i.quantidade })),
+            newItems: (itens as VendaItemInput[]).map(i => ({ produto_id: i.produto_id, qtd: i.quantidade }))
+          });
+
           const deltas = calculateStockDelta(oldItems, itens as VendaItemInput[]);
+
+          console.log('📊 [DEBUG PUT] Delta calculado:', deltas);
 
           if (deltas.length > 0) {
             if (process.env.NODE_ENV === 'development') {
@@ -555,10 +579,22 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             }
 
             console.log('✅ Estoque ajustado com sucesso:', deltaResult.adjustments);
+          } else {
+            console.log('ℹ️ [DEBUG PUT] Nenhum ajuste de estoque necessário (delta vazio)');
           }
         }
+      } else {
+        console.warn('⚠️ [DEBUG PUT] NÃO AJUSTOU ESTOQUE! Condições:', {
+          temItens: itens && Array.isArray(itens) && itens.length > 0,
+          temEstoqueId: !!estoque_id,
+          temOldEstoqueId: !!oldEstoqueId,
+          oldEstoqueId,
+          oldItemsLength: oldItems.length
+        });
+      }
 
-        // 🗑️ Atualizar itens da venda no banco
+      // 🗑️ Atualizar itens da venda no banco (se itens foram enviados)
+      if (itens && Array.isArray(itens) && itens.length > 0) {
         // Deletar itens antigos
         await supabase.from('vendas_itens').delete().eq('venda_id', id);
 
