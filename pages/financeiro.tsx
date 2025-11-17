@@ -788,7 +788,7 @@ export default function FinanceiroPage() {
           <CardDescription>Operações financeiras comuns</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <Button 
               variant="outline" 
               className="h-20 flex flex-col"
@@ -944,7 +944,7 @@ export default function FinanceiroPage() {
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(recorrente.valor)}
                             </span>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-600 dark:text-gray-400">
                             <div>
                               <span className="font-medium">Frequência:</span> {recorrente.frequencia}
                             </div>

@@ -1162,7 +1162,7 @@ export default function ProdutosEstoquePage() {
               </div>
 
               {/* Informações Gerais */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-gray-700 mb-2">Tipo</h3>
                   <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${
