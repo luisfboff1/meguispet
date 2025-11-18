@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { verifySupabaseUser, getUserProfile, AppUserProfile } from './supabase-auth';
-import type { User } from '@supabase/supabase-js';
+import { verifySupabaseUser, getUserProfile, AppUserProfile, getSupabaseServerAuth } from './supabase-auth';
+import type { User, SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Extended request with authenticated user information
@@ -14,6 +14,11 @@ export interface AuthenticatedRequest extends NextApiRequest {
     permissoes: string | null;
     supabaseUser: User; // Full Supabase auth user object
   };
+  /**
+   * Supabase client with user context for RLS
+   * Use this instead of getSupabase() to respect Row Level Security policies
+   */
+  supabaseClient: SupabaseClient;
 }
 
 /**
@@ -48,7 +53,10 @@ export const withSupabaseAuth = (
         });
       }
 
-      // Attach user info to request
+      // Create Supabase client with user context for RLS
+      const supabaseClient = getSupabaseServerAuth(req, res);
+
+      // Attach user info and supabase client to request
       const authenticatedReq = req as AuthenticatedRequest;
       authenticatedReq.user = {
         id: userProfile.id,
@@ -57,6 +65,7 @@ export const withSupabaseAuth = (
         permissoes: userProfile.permissoes,
         supabaseUser,
       };
+      authenticatedReq.supabaseClient = supabaseClient;
 
       // Call the actual handler
       return handler(authenticatedReq, res);

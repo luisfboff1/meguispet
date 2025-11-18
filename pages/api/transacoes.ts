@@ -5,7 +5,8 @@ import { invalidateCacheAfterMutation } from '@/lib/cache-manager';
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
-  const supabase = getSupabase();
+  // Use authenticated Supabase client for RLS
+    const supabase = req.supabaseClient;
 
   try {
     if (method === 'GET') {

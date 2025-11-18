@@ -70,20 +70,62 @@ const nextConfig = (phase) => {
       return config
     },
 
-    // 🎯 Headers para performance
+    // 🎯 Headers de segurança (VULN-006)
     async headers() {
       return [
         {
           source: '/:path*',
           headers: [
+            // DNS Prefetch Control
             {
               key: 'X-DNS-Prefetch-Control',
               value: 'on'
             },
+            // Clickjacking Protection
             {
               key: 'X-Frame-Options',
-              value: 'SAMEORIGIN'
+              value: 'DENY' // Mais seguro que SAMEORIGIN
             },
+            // MIME Type Sniffing Protection
+            {
+              key: 'X-Content-Type-Options',
+              value: 'nosniff'
+            },
+            // XSS Protection (legacy, mas ainda útil)
+            {
+              key: 'X-XSS-Protection',
+              value: '1; mode=block'
+            },
+            // Referrer Policy
+            {
+              key: 'Referrer-Policy',
+              value: 'strict-origin-when-cross-origin'
+            },
+            // Permissions Policy (desabilita features desnecessárias)
+            {
+              key: 'Permissions-Policy',
+              value: 'geolocation=(), microphone=(), camera=(), payment=()'
+            },
+            // HSTS (Strict Transport Security)
+            {
+              key: 'Strict-Transport-Security',
+              value: 'max-age=31536000; includeSubDomains'
+            },
+            // Content Security Policy
+            {
+              key: 'Content-Security-Policy',
+              value: [
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval necessário para Next.js
+                "style-src 'self' 'unsafe-inline'",
+                "img-src 'self' data: https: blob:",
+                "font-src 'self' data:",
+                "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+                "frame-ancestors 'none'",
+                "base-uri 'self'",
+                "form-action 'self'"
+              ].join('; ')
+            }
           ],
         },
         // ⚠️ REMOVED aggressive API caching - was causing stale data issues

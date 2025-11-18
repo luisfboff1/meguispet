@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse} from 'next';
-import { getSupabase } from '@/lib/supabase';
+import { getSupabaseServiceRole } from '@/lib/supabase-auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -7,7 +7,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const supabase = getSupabase();
+    // Health check uses Service Role to bypass RLS (legitimate admin operation)
+    const supabase = getSupabaseServiceRole();
     const { data, error } = await supabase.from('usuarios').select('id').limit(1);
 
     if (error) throw error;

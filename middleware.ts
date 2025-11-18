@@ -11,10 +11,20 @@ import { NextResponse, type NextRequest } from 'next/server'
  * Features:
  * - Runs 100% on Edge runtime
  * - Uses official Supabase helpers (@supabase/ssr)
- * - Automatic session refresh
- * - Secure cookie management
+ * - Automatic session refresh (every 6 hours)
+ * - Secure cookie management with 6-hour expiration
  * - Redirects unauthenticated users to /login
+ * - Session timeout enforcement
+ * 
+ * Security Enhancements (Nov 2025):
+ * - Session expires every 6 hours
+ * - Cookie max-age set to 21600 seconds (6 hours)
+ * - SameSite=Strict for CSRF protection
+ * - Secure flag enforced
  */
+
+// Session configuration
+const SESSION_MAX_AGE = 6 * 60 * 60 // 6 hours in seconds
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -37,7 +47,16 @@ export async function middleware(request: NextRequest) {
             request,
           })
           cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options)
+            // Override cookie options for enhanced security
+            const secureOptions = {
+              ...options,
+              maxAge: SESSION_MAX_AGE, // 6 hours
+              httpOnly: true,
+              secure: true,
+              sameSite: 'strict' as const,
+              path: '/',
+            }
+            supabaseResponse.cookies.set(name, value, secureOptions)
           })
         },
       },
@@ -54,6 +73,40 @@ export async function middleware(request: NextRequest) {
     data: { user },
     error
   } = await supabase.auth.getUser()
+
+  // Check for session expiration based on last activity
+  if (user) {
+    const lastActivity = request.cookies.get('last_activity')?.value
+    if (lastActivity) {
+      const lastActivityTime = parseInt(lastActivity, 10)
+      const now = Date.now()
+      const timeSinceLastActivity = now - lastActivityTime
+      
+      // If session is older than 6 hours, force re-authentication
+      if (timeSinceLastActivity > SESSION_MAX_AGE * 1000) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        url.searchParams.set('reason', 'session_expired')
+        const response = NextResponse.redirect(url)
+        
+        // Clear all auth cookies
+        response.cookies.delete('sb-access-token')
+        response.cookies.delete('sb-refresh-token')
+        response.cookies.delete('last_activity')
+        
+        return response
+      }
+    }
+    
+    // Update last activity timestamp
+    supabaseResponse.cookies.set('last_activity', Date.now().toString(), {
+      maxAge: SESSION_MAX_AGE,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      path: '/',
+    })
+  }
 
   // If user is not signed in and the current path is not /login, redirect to /login
   if (!user && request.nextUrl.pathname !== '/login') {

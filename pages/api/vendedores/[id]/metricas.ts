@@ -41,7 +41,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   }
 
   try {
-    const supabase = getSupabase();
+    // Use authenticated Supabase client for RLS
+    const supabase = req.supabaseClient;
 
     // Obter parâmetro de período (padrão: 30 dias)
     const periodo = (query.periodo as string) || '30d';

@@ -5,7 +5,8 @@ import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middlewar
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method, query } = req;
   const { id } = query;
-  const supabase = getSupabase();
+  // Use authenticated Supabase client for RLS
+    const supabase = req.supabaseClient;
 
   if (!id || Array.isArray(id)) {
     return res.status(400).json({

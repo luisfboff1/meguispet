@@ -3,7 +3,8 @@ import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
-  const supabase = getSupabase();
+  // Use authenticated Supabase client for RLS
+    const supabase = req.supabaseClient;
 
   try {
     const { limit = '5' } = req.query;

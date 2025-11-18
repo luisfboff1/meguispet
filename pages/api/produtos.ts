@@ -20,7 +20,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
 
   try {
-    const supabase = getSupabase();
+    // Use authenticated Supabase client for RLS
+    const supabase = req.supabaseClient;
 
     if (method === 'GET') {
       const { id, page = '1', limit = '10', search = '', categoria = '' } = req.query;
