@@ -34,11 +34,13 @@ ALTER TABLE movimentacoes_estoque ENABLE ROW LEVEL SECURITY;
 -- Enable RLS on vendedores
 ALTER TABLE vendedores ENABLE ROW LEVEL SECURITY;
 
--- Enable RLS on categorias
-ALTER TABLE categorias ENABLE ROW LEVEL SECURITY;
-
--- Enable RLS on condicoes_pagamento
-ALTER TABLE condicoes_pagamento ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on condicoes_pagamento (if exists)
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'condicoes_pagamento') THEN
+    ALTER TABLE condicoes_pagamento ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
 -- =====================================================
 -- 2. CREATE RLS POLICIES FOR CLIENTES_FORNECEDORES
@@ -274,41 +276,31 @@ CREATE POLICY "Admins manage sellers" ON vendedores
   );
 
 -- =====================================================
--- 9. CREATE RLS POLICIES FOR CATEGORIAS
+-- 9. CREATE RLS POLICIES FOR CONDICOES_PAGAMENTO
 -- =====================================================
 
-CREATE POLICY "Authenticated users view categories" ON categorias
-  FOR SELECT
-  USING (
-    auth.uid() IS NOT NULL
-  );
-
-CREATE POLICY "Authenticated users manage categories" ON categorias
-  FOR ALL
-  USING (
-    auth.uid() IS NOT NULL
-  );
-
--- =====================================================
--- 10. CREATE RLS POLICIES FOR CONDICOES_PAGAMENTO
--- =====================================================
-
-CREATE POLICY "Authenticated users view payment conditions" ON condicoes_pagamento
-  FOR SELECT
-  USING (
-    auth.uid() IS NOT NULL
-  );
-
-CREATE POLICY "Admins manage payment conditions" ON condicoes_pagamento
-  FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM usuarios
-      WHERE supabase_user_id::text = auth.uid()::text
-      AND role IN ('admin', 'manager')
-      AND ativo = true
-    )
-  );
+-- Only create policies if the table exists
+DO $$ 
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'condicoes_pagamento') THEN
+    EXECUTE 'CREATE POLICY "Authenticated users view payment conditions" ON condicoes_pagamento
+      FOR SELECT
+      USING (
+        auth.uid() IS NOT NULL
+      )';
+    
+    EXECUTE 'CREATE POLICY "Admins manage payment conditions" ON condicoes_pagamento
+      FOR ALL
+      USING (
+        EXISTS (
+          SELECT 1 FROM usuarios
+          WHERE supabase_user_id::text = auth.uid()::text
+          AND role IN (''admin'', ''manager'')
+          AND ativo = true
+        )
+      )';
+  END IF;
+END $$;
 
 -- =====================================================
 -- VERIFICATION QUERIES
@@ -332,6 +324,8 @@ CREATE POLICY "Admins manage payment conditions" ON condicoes_pagamento
 -- 3. Test thoroughly in staging before applying to production
 -- 4. Monitor query performance after enabling RLS
 -- 5. Ensure Service Role Key is only used for admin operations
+-- 6. Tables covered: clientes_fornecedores, produtos, vendas, vendas_itens,
+--    transacoes, movimentacoes_estoque, vendedores, condicoes_pagamento (if exists)
 
 -- Migration complete
 COMMENT ON TABLE clientes_fornecedores IS 'RLS enabled - Migration 014';
