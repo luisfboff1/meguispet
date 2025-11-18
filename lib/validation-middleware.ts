@@ -36,7 +36,8 @@ export function validateRequestBody<T>(
     };
   } catch (error) {
     if (error instanceof ZodError) {
-      const errors: ValidationError[] = error.errors.map((err) => ({
+      const zodError = error as ZodError;
+      const errors: ValidationError[] = zodError.issues.map((err) => ({
         field: err.path.join('.'),
         message: err.message,
       }));

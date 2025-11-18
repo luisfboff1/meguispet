@@ -72,11 +72,11 @@ export const vendaSchema = z.object({
     'cheque',
     'crediario'
   ], {
-    errorMap: () => ({ message: 'Forma de pagamento inválida' })
+    message: 'Forma de pagamento inválida'
   }),
 
   status: z.enum(['pendente', 'concluida', 'cancelada'], {
-    errorMap: () => ({ message: 'Status inválido' })
+    message: 'Status inválido'
   }).optional().default('pendente'),
 
   observacoes: z.string()

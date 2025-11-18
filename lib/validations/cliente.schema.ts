@@ -32,7 +32,7 @@ export const clienteSchema = z.object({
     .trim(),
 
   tipo: z.enum(['cliente', 'fornecedor', 'ambos'], {
-    errorMap: () => ({ message: 'Tipo inválido. Deve ser: cliente, fornecedor ou ambos' })
+    message: 'Tipo inválido. Deve ser: cliente, fornecedor ou ambos'
   }),
 
   email: emailSchema,
