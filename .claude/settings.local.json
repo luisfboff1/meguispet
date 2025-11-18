@@ -44,7 +44,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(npm run dev:local)",
       "Bash(pnpm run dev)",
-      "Bash(pnpm remove @next/swc-win32-x64-msvc)"
+      "Bash(pnpm remove @next/swc-win32-x64-msvc)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
