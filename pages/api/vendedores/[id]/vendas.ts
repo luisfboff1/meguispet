@@ -38,7 +38,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   }
 
   try {
-    const supabase = getSupabase();
+    // Use authenticated Supabase client for RLS
+    const supabase = req.supabaseClient;
 
     // Parâmetros de paginação
     const page = parseInt((query.page as string) || '1', 10);

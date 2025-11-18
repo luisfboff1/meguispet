@@ -11,7 +11,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   }
 
   try {
-    const supabase = getSupabase();
+    // Use authenticated Supabase client for RLS
+    const supabase = req.supabaseClient;
 
     if (method === 'GET') {
       // Buscar venda com todos os relacionamentos e itens

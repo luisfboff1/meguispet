@@ -29,7 +29,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     return res.status(200).json(topProductsCache.data);
   }
 
-  const supabase = getSupabase();
+  // Use authenticated Supabase client for RLS
+    const supabase = req.supabaseClient;
 
   try {
     // 🚀 OPTIMIZED QUERY - Fetch only recent data and use parallel queries
