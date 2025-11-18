@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { verifySupabaseUser, getUserProfile } from '@/lib/supabase-auth';
+import { verifySupabaseUser, getUserProfile, getSupabaseServerAuth } from '@/lib/supabase-auth';
 
 /**
  * Get current user profile
@@ -23,8 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Get user profile from custom usuarios table
-    const userProfile = await getUserProfile(supabaseUser.email);
+    // Get authenticated supabase client
+    const supabase = getSupabaseServerAuth(req, res);
+
+    // Get user profile from custom usuarios table (with RLS context)
+    const userProfile = await getUserProfile(supabaseUser.email, supabase);
 
     if (!userProfile) {
       return res.status(404).json({

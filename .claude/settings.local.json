@@ -45,7 +45,9 @@
       "Bash(npm run dev:local)",
       "Bash(pnpm run dev)",
       "Bash(pnpm remove @next/swc-win32-x64-msvc)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm run build:local:*)",
+      "Bash(pnpm install:*)"
     ],
     "deny": [],
     "ask": []

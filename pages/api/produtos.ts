@@ -1,14 +1,10 @@
 import type { NextApiResponse } from 'next';
-import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import { withValidation } from '@/lib/validation-middleware';
+import { produtoCreateSchema, produtoUpdateSchema, ProdutoInput, ProdutoUpdateInput } from '@/lib/validations/produto.schema';
 
 interface EstoqueItem {
   quantidade: number;
-}
-
-interface EstoqueInput {
-  estoque_id: number;
-  quantidade?: number;
 }
 
 interface ProdutoComEstoques {
@@ -16,245 +12,264 @@ interface ProdutoComEstoques {
   [key: string]: unknown;
 }
 
-const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
-  const { method } = req;
+/**
+ * GET handler - List or get single produto
+ */
+const handleGet = async (req: AuthenticatedRequest, res: NextApiResponse) => {
+  const supabase = req.supabaseClient;
+  const { id, page = '1', limit = '10', search = '', categoria = '' } = req.query;
 
-  try {
-    // Use authenticated Supabase client for RLS
-    const supabase = req.supabaseClient;
+  if (id) {
+    const { data: produto, error } = await supabase
+      .from('produtos')
+      .select('*, estoques:produtos_estoques(estoque_id, estoque:estoques(nome), quantidade)')
+      .eq('id', id)
+      .single();
 
-    if (method === 'GET') {
-      const { id, page = '1', limit = '10', search = '', categoria = '' } = req.query;
-
-      if (id) {
-        const { data: produto, error } = await supabase
-          .from('produtos')
-          .select('*, estoques:produtos_estoques(estoque_id, estoque:estoques(nome), quantidade)')
-          .eq('id', id)
-          .single();
-
-        if (error || !produto) {
-          return res.status(404).json({ success: false, message: 'Produto não encontrado' });
-        }
-
-        const estoqueTotal = produto.estoques?.reduce((sum: number, e: EstoqueItem) => sum + (e.quantidade || 0), 0) || 0;
-
-        return res.status(200).json({
-          success: true,
-          data: { ...produto, estoque: estoqueTotal, estoque_total: estoqueTotal },
-        });
-      }
-
-      const pageNum = parseInt(page as string, 10);
-      const limitNum = parseInt(limit as string, 10);
-      const offset = (pageNum - 1) * limitNum;
-
-      let query = supabase
-        .from('produtos')
-        .select('*, estoques:produtos_estoques(estoque_id, quantidade, estoque:estoques(id, nome))', { count: 'exact' });
-
-      if (search) {
-        const searchStr = `%${search}%`;
-        query = query.or(`nome.ilike.${searchStr},descricao.ilike.${searchStr},codigo_barras.ilike.${searchStr}`);
-      }
-
-      if (categoria) {
-        query = query.eq('categoria', categoria);
-      }
-
-      const { data: produtos, count, error } = await query
-        .eq('ativo', true)
-        .order('nome', { ascending: true })
-        .range(offset, offset + limitNum - 1);
-
-      if (error) throw error;
-
-      const produtosComEstoque = produtos?.map((p: ProdutoComEstoques) => {
-        const estoqueTotal = p.estoques?.reduce((sum: number, e: EstoqueItem) => sum + (e.quantidade || 0), 0) || 0;
-        return { ...p, estoque: estoqueTotal, estoque_total: estoqueTotal };
-      });
-
-      return res.status(200).json({
-        success: true,
-        data: produtosComEstoque || [],
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total: count || 0,
-          pages: Math.ceil((count || 0) / limitNum),
-        },
-      });
+    if (error || !produto) {
+      return res.status(404).json({ success: false, message: 'Produto não encontrado' });
     }
 
-    if (method === 'POST') {
-      const { nome, descricao, preco_venda, preco_custo, estoque_minimo, categoria, codigo_barras, estoques, ipi, icms, st } = req.body;
+    const estoqueTotal = produto.estoques?.reduce((sum: number, e: EstoqueItem) => sum + (e.quantidade || 0), 0) || 0;
 
-      if (!nome) {
-        return res.status(400).json({ success: false, message: 'Nome do produto é obrigatório' });
-      }
+    return res.status(200).json({
+      success: true,
+      data: { ...produto, estoque: estoqueTotal, estoque_total: estoqueTotal },
+    });
+  }
 
-      // Validar alíquotas de impostos (devem estar entre 0 e 100)
-      if (ipi !== undefined && (ipi < 0 || ipi > 100)) {
-        return res.status(400).json({ success: false, message: 'IPI deve estar entre 0 e 100' });
-      }
-      if (icms !== undefined && (icms < 0 || icms > 100)) {
-        return res.status(400).json({ success: false, message: 'ICMS deve estar entre 0 e 100' });
-      }
-      if (st !== undefined && (st < 0 || st > 100)) {
-        return res.status(400).json({ success: false, message: 'ST deve estar entre 0 e 100' });
-      }
+  const pageNum = parseInt(page as string, 10);
+  const limitNum = parseInt(limit as string, 10);
+  const offset = (pageNum - 1) * limitNum;
 
-      if (codigo_barras) {
-        const { data: existing } = await supabase
-          .from('produtos')
-          .select('id')
-          .eq('codigo_barras', codigo_barras)
-          .single();
+  let query = supabase
+    .from('produtos')
+    .select('*, estoques:produtos_estoques(estoque_id, quantidade, estoque:estoques(id, nome))', { count: 'exact' });
 
-        if (existing) {
-          return res.status(400).json({ success: false, message: 'Código de barras já existe' });
-        }
-      }
+  if (search) {
+    const searchStr = `%${search}%`;
+    query = query.or(`nome.ilike.${searchStr},descricao.ilike.${searchStr},codigo_barras.ilike.${searchStr}`);
+  }
 
-      const { data: produto, error } = await supabase
+  if (categoria) {
+    query = query.eq('categoria', categoria);
+  }
+
+  const { data: produtos, count, error } = await query
+    .eq('ativo', true)
+    .order('nome', { ascending: true })
+    .range(offset, offset + limitNum - 1);
+
+  if (error) throw error;
+
+  const produtosComEstoque = produtos?.map((p: ProdutoComEstoques) => {
+    const estoqueTotal = p.estoques?.reduce((sum: number, e: EstoqueItem) => sum + (e.quantidade || 0), 0) || 0;
+    return { ...p, estoque: estoqueTotal, estoque_total: estoqueTotal };
+  });
+
+  return res.status(200).json({
+    success: true,
+    data: produtosComEstoque || [],
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total: count || 0,
+      pages: Math.ceil((count || 0) / limitNum),
+    },
+  });
+};
+
+/**
+ * POST handler - Create new produto (with validation)
+ */
+const handlePost = withValidation(
+  produtoCreateSchema,
+  async (req: AuthenticatedRequest, res: NextApiResponse, validatedData: ProdutoInput) => {
+    const supabase = req.supabaseClient;
+
+    // Check if codigo_barras already exists
+    if (validatedData.codigo_barras) {
+      const { data: existing } = await supabase
         .from('produtos')
-        .insert({
-          nome,
-          descricao: descricao || null,
-          preco_venda: preco_venda || 0,
-          preco_custo: preco_custo || 0,
-          estoque_minimo: estoque_minimo || 0,
-          categoria: categoria || null,
-          codigo_barras: codigo_barras || null,
-          ipi: ipi || 0, // Alíquota de IPI
-          icms: icms || 0, // Alíquota de ICMS (informativo)
-          st: st || 0, // Alíquota de ST
-        })
-        .select()
+        .select('id')
+        .eq('codigo_barras', validatedData.codigo_barras)
         .single();
 
-      if (error) throw error;
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Código de barras já existe' });
+      }
+    }
 
-      if (estoques && Array.isArray(estoques) && estoques.length > 0) {
-        const estoquesInsert = estoques.map((e: EstoqueInput) => ({
-          produto_id: produto.id,
+    // Prepare product data
+    const produtoData = {
+      nome: validatedData.nome,
+      descricao: validatedData.descricao || null,
+      preco_venda: validatedData.preco_venda,
+      preco_custo: validatedData.preco_custo,
+      estoque_minimo: validatedData.estoque_minimo,
+      categoria: validatedData.categoria || null,
+      codigo_barras: validatedData.codigo_barras || null,
+      ipi: validatedData.ipi,
+      icms: validatedData.icms,
+      st: validatedData.st,
+    };
+
+    const { data: produto, error } = await supabase
+      .from('produtos')
+      .insert(produtoData)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Insert stock entries if provided
+    if (validatedData.estoques && validatedData.estoques.length > 0) {
+      const estoquesInsert = validatedData.estoques.map((e) => ({
+        produto_id: produto.id,
+        estoque_id: e.estoque_id,
+        quantidade: e.quantidade || 0,
+      }));
+
+      await supabase.from('produtos_estoques').insert(estoquesInsert);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Produto criado com sucesso',
+      data: produto,
+    });
+  }
+);
+
+/**
+ * PUT handler - Update existing produto (with validation)
+ */
+const handlePut = withValidation(
+  produtoUpdateSchema,
+  async (req: AuthenticatedRequest, res: NextApiResponse, validatedData: ProdutoUpdateInput) => {
+    const supabase = req.supabaseClient;
+
+    if (!validatedData.id) {
+      return res.status(400).json({ success: false, message: 'ID do produto é obrigatório' });
+    }
+
+    // Check if codigo_barras already exists for another product
+    if (validatedData.codigo_barras) {
+      const { data: existing } = await supabase
+        .from('produtos')
+        .select('id')
+        .eq('codigo_barras', validatedData.codigo_barras)
+        .neq('id', validatedData.id)
+        .single();
+
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Código de barras já existe' });
+      }
+    }
+
+    // Prepare update data (exclude id)
+    const { id, estoques, ...updateFields } = validatedData;
+
+    const updateData = {
+      ...updateFields,
+      descricao: updateFields.descricao || null,
+      categoria: updateFields.categoria || null,
+      codigo_barras: updateFields.codigo_barras || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: produto, error } = await supabase
+      .from('produtos')
+      .update(updateData)
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+
+    if (!produto || produto.length === 0) {
+      return res.status(404).json({ success: false, message: 'Produto não encontrado' });
+    }
+
+    // Update stock entries if provided
+    if (estoques) {
+      // Delete existing stock entries
+      await supabase.from('produtos_estoques').delete().eq('produto_id', id);
+
+      // Insert new stock entries
+      if (estoques.length > 0) {
+        const estoquesInsert = estoques.map((e) => ({
+          produto_id: id,
           estoque_id: e.estoque_id,
           quantidade: e.quantidade || 0,
         }));
 
         await supabase.from('produtos_estoques').insert(estoquesInsert);
       }
+    }
 
-      return res.status(201).json({
-        success: true,
-        message: 'Produto criado com sucesso',
-        data: produto,
-      });
+    return res.status(200).json({
+      success: true,
+      message: 'Produto atualizado com sucesso',
+      data: produto[0],
+    });
+  }
+);
+
+/**
+ * DELETE handler - Soft delete produto
+ */
+const handleDelete = async (req: AuthenticatedRequest, res: NextApiResponse) => {
+  const supabase = req.supabaseClient;
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ success: false, message: 'ID do produto é obrigatório' });
+  }
+
+  const { data, error } = await supabase
+    .from('produtos')
+    .update({ ativo: false, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select();
+
+  if (error) throw error;
+
+  if (!data || data.length === 0) {
+    return res.status(404).json({ success: false, message: 'Produto não encontrado' });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: 'Produto removido com sucesso',
+  });
+};
+
+/**
+ * Main handler - Routes to appropriate method handler
+ */
+const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
+  const { method } = req;
+
+  try {
+    if (method === 'GET') {
+      return await handleGet(req, res);
+    }
+
+    if (method === 'POST') {
+      return await handlePost(req, res);
     }
 
     if (method === 'PUT') {
-      const { id, nome, descricao, preco_venda, preco_custo, estoque_minimo, categoria, codigo_barras, estoques, ipi, icms, st } = req.body;
-
-      if (!id) {
-        return res.status(400).json({ success: false, message: 'ID do produto é obrigatório' });
-      }
-
-      // Validar alíquotas de impostos (devem estar entre 0 e 100)
-      if (ipi !== undefined && (ipi < 0 || ipi > 100)) {
-        return res.status(400).json({ success: false, message: 'IPI deve estar entre 0 e 100' });
-      }
-      if (icms !== undefined && (icms < 0 || icms > 100)) {
-        return res.status(400).json({ success: false, message: 'ICMS deve estar entre 0 e 100' });
-      }
-      if (st !== undefined && (st < 0 || st > 100)) {
-        return res.status(400).json({ success: false, message: 'ST deve estar entre 0 e 100' });
-      }
-
-      if (codigo_barras) {
-        const { data: existing } = await supabase
-          .from('produtos')
-          .select('id')
-          .eq('codigo_barras', codigo_barras)
-          .neq('id', id)
-          .single();
-
-        if (existing) {
-          return res.status(400).json({ success: false, message: 'Código de barras já existe' });
-        }
-      }
-
-      const { data: produto, error } = await supabase
-        .from('produtos')
-        .update({
-          nome,
-          descricao: descricao || null,
-          preco_venda: preco_venda || 0,
-          preco_custo: preco_custo || 0,
-          estoque_minimo: estoque_minimo || 0,
-          categoria: categoria || null,
-          codigo_barras: codigo_barras || null,
-          ipi: ipi !== undefined ? ipi : 0, // Alíquota de IPI
-          icms: icms !== undefined ? icms : 0, // Alíquota de ICMS (informativo)
-          st: st !== undefined ? st : 0, // Alíquota de ST
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select();
-
-      if (error) throw error;
-
-      if (!produto || produto.length === 0) {
-        return res.status(404).json({ success: false, message: 'Produto não encontrado' });
-      }
-
-      if (estoques && Array.isArray(estoques)) {
-        await supabase.from('produtos_estoques').delete().eq('produto_id', id);
-
-        if (estoques.length > 0) {
-          const estoquesInsert = estoques.map((e: EstoqueInput) => ({
-            produto_id: id,
-            estoque_id: e.estoque_id,
-            quantidade: e.quantidade || 0,
-          }));
-
-          await supabase.from('produtos_estoques').insert(estoquesInsert);
-        }
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Produto atualizado com sucesso',
-        data: produto[0],
-      });
+      return await handlePut(req, res);
     }
 
     if (method === 'DELETE') {
-      const { id } = req.query;
-
-      if (!id) {
-        return res.status(400).json({ success: false, message: 'ID do produto é obrigatório' });
-      }
-
-      const { data, error } = await supabase
-        .from('produtos')
-        .update({ ativo: false, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select();
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        return res.status(404).json({ success: false, message: 'Produto não encontrado' });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Produto removido com sucesso',
-      });
+      return await handleDelete(req, res);
     }
 
     return res.status(405).json({ success: false, message: 'Método não permitido' });
   } catch (error) {
+    console.error('[API /produtos] Error:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

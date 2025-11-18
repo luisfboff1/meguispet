@@ -1,17 +1,15 @@
 /**
  * Input Sanitization Utilities
- * 
+ *
  * Security Enhancement: VULN-003 Fix
  * Provides functions to sanitize user inputs and prevent XSS attacks
- * Uses DOMPurify to strip potentially harmful HTML/scripts
+ * Uses simple regex-based sanitization (lightweight alternative to DOMPurify)
  */
-
-import DOMPurify from 'isomorphic-dompurify';
 
 /**
  * Sanitizes HTML content by stripping all tags and dangerous content
  * Use this for user inputs that should not contain any HTML
- * 
+ *
  * @param dirty - Potentially unsafe HTML string
  * @returns Sanitized plain text string
  */
@@ -20,11 +18,29 @@ export function sanitizeHTML(dirty: string): string {
     return '';
   }
 
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS: [], // Strip all HTML tags
-    ALLOWED_ATTR: [], // Strip all attributes
-    KEEP_CONTENT: true, // Keep text content
-  });
+  // Strip HTML tags
+  let cleaned = dirty.replace(/<[^>]*>/g, '');
+
+  // Remove script tags and content
+  cleaned = cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Remove event handlers (onclick, onerror, etc.)
+  cleaned = cleaned.replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
+  cleaned = cleaned.replace(/on\w+\s*=\s*[^\s>]*/gi, '');
+
+  // Remove javascript: protocol
+  cleaned = cleaned.replace(/javascript:/gi, '');
+
+  // Decode HTML entities and re-encode
+  cleaned = cleaned
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .replace(/&amp;/g, '&');
+
+  return cleaned.trim();
 }
 
 /**
@@ -81,7 +97,7 @@ export function sanitizeInput(input: any): any {
 /**
  * Sanitizes HTML but allows safe tags for rich text content
  * Use this only when you need to preserve some HTML formatting
- * 
+ *
  * @param dirty - HTML string with potential unsafe content
  * @returns Sanitized HTML with only safe tags
  */
@@ -90,11 +106,29 @@ export function sanitizeRichHTML(dirty: string): string {
     return '';
   }
 
-  return DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
-    ALLOWED_ATTR: [], // No attributes allowed
-    KEEP_CONTENT: true,
-  });
+  // Strip all tags except safe ones
+  const allowedTags = ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'];
+  const allowedTagsRegex = allowedTags.join('|');
+
+  // Remove all tags except allowed ones
+  let cleaned = dirty.replace(
+    new RegExp(`<(?!\\/?(${allowedTagsRegex})\\b)[^>]*>`, 'gi'),
+    ''
+  );
+
+  // Remove all attributes from tags
+  cleaned = cleaned.replace(/<(\w+)\s+[^>]*>/g, '<$1>');
+
+  // Remove script tags and content
+  cleaned = cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Remove event handlers
+  cleaned = cleaned.replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
+
+  // Remove javascript: protocol
+  cleaned = cleaned.replace(/javascript:/gi, '');
+
+  return cleaned.trim();
 }
 
 /**

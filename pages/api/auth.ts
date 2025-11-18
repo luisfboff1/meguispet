@@ -1,14 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServerAuth, verifySupabaseUser, getUserProfile } from '@/lib/supabase-auth';
+import { withRateLimit, withAuthRateLimit, RateLimitPresets } from '@/lib/rate-limit';
 
 /**
  * Authentication endpoint using Supabase Auth
  * Replaces custom JWT implementation
- * 
- * POST /api/auth - Login with email/password
+ *
+ * POST /api/auth - Login with email/password (rate-limited: 5 attempts/15min)
  * GET /api/auth/profile - Get current user profile
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
 
   try {
@@ -25,6 +26,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: 'Erro interno do servidor',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
+  }
+}
+
+// Apply rate limiting only to POST (login) endpoint
+// POST uses email-based rate limiting, GET uses IP-based
+export default function (req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'POST') {
+    // Login: 5 attempts per 15 minutes per email
+    return withAuthRateLimit(RateLimitPresets.LOGIN, handler)(req, res);
+  } else if (req.method === 'GET') {
+    // Profile: 100 requests per minute per IP
+    return withRateLimit(RateLimitPresets.GENERAL, handler)(req, res);
+  } else {
+    return handler(req, res);
   }
 }
 
@@ -55,7 +70,7 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     // Get user profile from custom usuarios table
-    const userProfile = await getUserProfile(email);
+    const userProfile = await getUserProfile(email, supabase);
 
     if (!userProfile) {
       return res.status(401).json({
@@ -103,8 +118,11 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
       });
     }
 
+    // Get authenticated supabase client
+    const supabase = getSupabaseServerAuth(req, res);
+
     // Get user profile from custom usuarios table
-    const userProfile = await getUserProfile(supabaseUser.email);
+    const userProfile = await getUserProfile(supabaseUser.email, supabase);
 
     if (!userProfile) {
       return res.status(404).json({

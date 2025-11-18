@@ -1,14 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServiceRole, getSupabaseServerAuth } from '@/lib/supabase-auth';
 import { hashPassword } from '@/lib/password';
+import { withAuthRateLimit, RateLimitPresets } from '@/lib/rate-limit';
 
 /**
  * User Signup endpoint using Supabase Auth
  * Creates a user in both Supabase auth.users and custom usuarios table
- * 
- * POST /api/auth/signup - Create new user account
+ *
+ * POST /api/auth/signup - Create new user account (rate-limited: 3 attempts/hour)
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
 
   if (method !== 'POST') {
@@ -113,3 +114,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 }
+
+// Apply rate limiting: 3 signup attempts per hour per email
+export default withAuthRateLimit(RateLimitPresets.SIGNUP, handler);

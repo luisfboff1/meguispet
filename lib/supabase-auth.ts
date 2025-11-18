@@ -8,8 +8,23 @@ import { NextApiRequest, NextApiResponse } from 'next';
  */
 
 /**
- * Get Supabase client with service role for server-side operations
- * WARNING: Only use this for admin operations, not for user-scoped queries
+ * ⚠️ CRITICAL WARNING: This function bypasses ALL RLS policies!
+ *
+ * getSupabaseServiceRole() provides unrestricted database access.
+ * Only use for legitimate admin operations where you MUST bypass RLS.
+ *
+ * ✅ VALID use cases:
+ * - Creating users (auth.admin.createUser)
+ * - Health checks (testing DB connectivity)
+ * - System migrations
+ * - Admin-only operations with explicit permission checks
+ *
+ * ❌ INVALID use cases:
+ * - User-scoped queries (use getSupabaseServerAuth instead)
+ * - Any operation that should respect RLS
+ * - Reading/writing user data without permission checks
+ *
+ * All usage is logged for security auditing.
  */
 export const getSupabaseServiceRole = (): SupabaseClient => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -18,6 +33,17 @@ export const getSupabaseServiceRole = (): SupabaseClient => {
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error('Missing Supabase service role credentials');
   }
+
+  // Log usage for security audit
+  const stack = new Error().stack;
+  const callerLine = stack?.split('\n')[2]?.trim() || 'unknown';
+
+  console.warn('[SECURITY] Service Role Key accessed (bypasses RLS):', {
+    timestamp: new Date().toISOString(),
+    caller: callerLine,
+    // Only log in development to avoid performance impact
+    ...(process.env.NODE_ENV === 'development' && { stack }),
+  });
 
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
@@ -106,14 +132,22 @@ export interface AppUserProfile {
   supabase_user_id?: string;
 }
 
+/**
+ * Get user profile from custom usuarios table
+ *
+ * @param email - User email to lookup
+ * @param supabase - Authenticated Supabase client (required for RLS)
+ * @returns User profile or null if not found
+ *
+ * ⚠️ IMPORTANT: Always pass an authenticated supabase client.
+ * This ensures RLS policies are respected and the query runs with user context.
+ */
 export const getUserProfile = async (
   email: string,
-  supabase?: SupabaseClient
+  supabase: SupabaseClient  // ✅ Now required - no more dangerous fallback
 ): Promise<AppUserProfile | null> => {
   try {
-    const client = supabase || getSupabaseServiceRole();
-    
-    const { data, error } = await client
+    const { data, error } = await supabase
       .from('usuarios')
       .select('id, nome, email, role, permissoes, ativo')
       .eq('email', email)

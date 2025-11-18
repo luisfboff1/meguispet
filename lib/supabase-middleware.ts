@@ -43,8 +43,11 @@ export const withSupabaseAuth = (
         });
       }
 
-      // Get user profile from custom usuarios table
-      const userProfile = await getUserProfile(supabaseUser.email);
+      // Create Supabase client with user context for RLS
+      const supabaseClient = getSupabaseServerAuth(req, res);
+
+      // Get user profile from custom usuarios table (with RLS context)
+      const userProfile = await getUserProfile(supabaseUser.email, supabaseClient);
 
       if (!userProfile) {
         return res.status(401).json({
@@ -52,9 +55,6 @@ export const withSupabaseAuth = (
           message: 'Usuário não encontrado ou inativo',
         });
       }
-
-      // Create Supabase client with user context for RLS
-      const supabaseClient = getSupabaseServerAuth(req, res);
 
       // Attach user info and supabase client to request
       const authenticatedReq = req as AuthenticatedRequest;

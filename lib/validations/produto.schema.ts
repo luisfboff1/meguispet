@@ -20,25 +20,19 @@ export const produtoSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  preco: z.number()
-    .nonnegative('Preço deve ser maior ou igual a zero')
-    .max(999999.99, 'Preço máximo excedido')
-    .finite('Preço deve ser um número válido'),
-
   preco_venda: z.number()
     .nonnegative('Preço de venda deve ser maior ou igual a zero')
     .max(999999.99, 'Preço de venda máximo excedido')
-    .finite('Preço de venda deve ser um número válido'),
+    .finite('Preço de venda deve ser um número válido')
+    .optional()
+    .default(0),
 
   preco_custo: z.number()
     .nonnegative('Preço de custo deve ser maior ou igual a zero')
     .max(999999.99, 'Preço de custo máximo excedido')
-    .finite('Preço de custo deve ser um número válido'),
-
-  estoque: z.number()
-    .int('Estoque deve ser um número inteiro')
-    .nonnegative('Estoque não pode ser negativo')
-    .max(999999, 'Estoque máximo excedido'),
+    .finite('Preço de custo deve ser um número válido')
+    .optional()
+    .default(0),
 
   estoque_minimo: z.number()
     .int('Estoque mínimo deve ser um número inteiro')
@@ -69,21 +63,36 @@ export const produtoSchema = z.object({
     .optional()
     .or(z.literal('UN')),
 
+  ipi: z.number()
+    .min(0, 'IPI deve ser maior ou igual a zero')
+    .max(100, 'IPI deve estar entre 0 e 100')
+    .optional()
+    .default(0),
+
+  icms: z.number()
+    .min(0, 'ICMS deve ser maior ou igual a zero')
+    .max(100, 'ICMS deve estar entre 0 e 100')
+    .optional()
+    .default(0),
+
+  st: z.number()
+    .min(0, 'ST deve ser maior ou igual a zero')
+    .max(100, 'ST deve estar entre 0 e 100')
+    .optional()
+    .default(0),
+
+  estoques: z.array(z.object({
+    estoque_id: z.number().int().positive(),
+    quantidade: z.number().int().nonnegative().optional().default(0),
+  }))
+    .optional(),
+
 }).refine((data) => {
   // Business rule: preço de venda deve ser >= preço de custo
   return data.preco_venda >= data.preco_custo;
 }, {
   message: 'Preço de venda deve ser maior ou igual ao preço de custo',
   path: ['preco_venda']
-}).refine((data) => {
-  // Business rule: estoque mínimo deve ser <= estoque atual
-  if (data.estoque_minimo && data.estoque) {
-    return data.estoque_minimo <= data.estoque;
-  }
-  return true;
-}, {
-  message: 'Estoque mínimo não pode ser maior que o estoque atual',
-  path: ['estoque_minimo']
 });
 
 // Schema for creating a new product
