@@ -327,10 +327,11 @@ export const generateOrderPDF = async (
         fontSize: 7,
       },
       footStyles: {
-        fillColor: [240, 240, 240],
+        fillColor: [220, 220, 220],
         textColor: [0, 0, 0],
         fontStyle: 'bold',
-        fontSize: 7,
+        fontSize: 9,
+        lineWidth: { top: 0.5, bottom: 0.5 },
       },
       columnStyles: {
         0: { cellWidth: 'auto', halign: 'left' },
@@ -417,7 +418,36 @@ export const generateOrderPDF = async (
     doc.text(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
     yPos += 8
   } else {
-    // Com novos impostos, adicionar nota sobre ICMS se aplicável
+    // Com novos impostos, adicionar resumo de impostos (IPI + ST, SEM ICMS próprio)
+    const totalImpostos = totalIPI + totalST
+    
+    if (totalImpostos > 0) {
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      
+      // Mostrar IPI se houver
+      if (totalIPI > 0) {
+        doc.text('IPI:', totalsX, yPos)
+        doc.text(`R$ ${totalIPI.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+        yPos += 5
+      }
+      
+      // Mostrar ST se houver
+      if (totalST > 0) {
+        doc.text('ST:', totalsX, yPos)
+        doc.text(`R$ ${totalST.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+        yPos += 5
+      }
+      
+      // Total de Impostos (IPI + ST, sem ICMS próprio)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(11)
+      doc.text('TOTAL DE IMPOSTOS:', totalsX, yPos)
+      doc.text(`R$ ${totalImpostos.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+      yPos += 8
+    }
+    
+    // Adicionar nota sobre ICMS se aplicável
     if (totalICMS > 0) {
       doc.setFontSize(8)
       doc.setFont('helvetica', 'italic')

@@ -341,6 +341,28 @@ export default function VendaPDFPreviewModal({
                                   </td>
                                 </tr>
                               ))}
+                              {/* Linha de Totais */}
+                              <tr className="bg-gray-200 font-bold text-sm border-t-2 border-gray-400">
+                                <td className="px-2 py-3"></td>
+                                <td className="px-2 py-3">TOTAIS</td>
+                                <td className="text-right px-2 py-3"></td>
+                                <td className="text-right px-2 py-3"></td>
+                                <td className="text-right px-2 py-3">{formatCurrency(totalProdutos)}</td>
+                                {valorDesconto > 0 && (
+                                  <td className="text-right px-2 py-3 text-red-700">-{formatCurrency(valorDesconto)}</td>
+                                )}
+                                <td className="text-right px-2 py-3">{formatCurrency(totalProdutosLiquido)}</td>
+                                {totalIPI > 0 && (
+                                  <td className="text-right px-2 py-3">{formatCurrency(totalIPI)}</td>
+                                )}
+                                {totalICMS > 0 && (
+                                  <td className="text-right px-2 py-3 text-blue-700">{formatCurrency(totalICMS)}</td>
+                                )}
+                                {totalST > 0 && (
+                                  <td className="text-right px-2 py-3">{formatCurrency(totalST)}</td>
+                                )}
+                                <td className="text-right px-2 py-3 text-green-700">{formatCurrency(totalFinal)}</td>
+                              </tr>
                             </tbody>
                           </table>
                         </ScrollableContainer>
@@ -448,23 +470,32 @@ export default function VendaPDFPreviewModal({
                               <span>Subtotal Líquido:</span>
                               <span className="font-medium">{formatCurrency(totalProdutosLiquido)}</span>
                             </div>
-                            <div className="border-t pt-2 space-y-1">
-                              {totalIPI > 0 && (
-                                <div className="flex justify-between">
-                                  <span>IPI:</span>
-                                  <span className="font-medium">{formatCurrency(totalIPI)}</span>
+                            
+                            {/* Seção de Impostos (IPI + ST, sem ICMS próprio) */}
+                            {(totalIPI > 0 || totalST > 0) && (
+                              <div className="border-t pt-2 space-y-1">
+                                {totalIPI > 0 && (
+                                  <div className="flex justify-between">
+                                    <span>IPI:</span>
+                                    <span className="font-medium">{formatCurrency(totalIPI)}</span>
+                                  </div>
+                                )}
+                                {totalST > 0 && (
+                                  <div className="flex justify-between">
+                                    <span>ST:</span>
+                                    <span className="font-medium">{formatCurrency(totalST)}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between font-bold text-base border-t pt-1">
+                                  <span>TOTAL DE IMPOSTOS:</span>
+                                  <span className="text-orange-600">{formatCurrency(totalIPI + totalST)}</span>
                                 </div>
-                              )}
-                              {totalST > 0 && (
-                                <div className="flex justify-between">
-                                  <span>ST:</span>
-                                  <span className="font-medium">{formatCurrency(totalST)}</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex justify-between text-base font-bold border-t pt-2">
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-between text-lg font-bold border-t pt-2 bg-green-50 px-2 py-1 rounded">
                               <span>TOTAL GERAL:</span>
-                              <span className="text-green-600">{formatCurrency(totalFinal)}</span>
+                              <span className="text-green-700">{formatCurrency(totalFinal)}</span>
                             </div>
                             {totalICMS > 0 && (
                               <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
