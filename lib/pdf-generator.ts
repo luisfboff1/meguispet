@@ -417,44 +417,6 @@ export const generateOrderPDF = async (
     doc.text(hasImposto && opts.incluirImpostos ? 'TOTAL COM IMPOSTO:' : 'TOTAL:', totalsX, yPos)
     doc.text(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
     yPos += 8
-  } else {
-    // Com novos impostos, adicionar resumo de impostos (IPI + ST, SEM ICMS próprio)
-    const totalImpostos = totalIPI + totalST
-    
-    if (totalImpostos > 0) {
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'normal')
-      
-      // Mostrar IPI se houver
-      if (totalIPI > 0) {
-        doc.text('IPI:', totalsX, yPos)
-        doc.text(`R$ ${totalIPI.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
-        yPos += 5
-      }
-      
-      // Mostrar ST se houver
-      if (totalST > 0) {
-        doc.text('ST:', totalsX, yPos)
-        doc.text(`R$ ${totalST.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
-        yPos += 5
-      }
-      
-      // Total de Impostos (IPI + ST, sem ICMS próprio)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.text('TOTAL DE IMPOSTOS:', totalsX, yPos)
-      doc.text(`R$ ${totalImpostos.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
-      yPos += 8
-    }
-    
-    // Adicionar nota sobre ICMS se aplicável
-    if (totalICMS > 0) {
-      doc.setFontSize(8)
-      doc.setFont('helvetica', 'italic')
-      const notaICMS = '* ICMS: Valor informativo, NÃO incluído no total da venda (pode ser creditado).'
-      doc.text(notaICMS, margin, yPos)
-      yPos += 5
-    }
   }
 
   // ==================== OBSERVAÇÕES ====================
@@ -485,12 +447,94 @@ export const generateOrderPDF = async (
     }
   }
 
-  // ==================== ICMS-ST ====================
+  // ==================== INFORMAÇÕES FISCAIS ====================
+  // Mostrar informações fiscais detalhadas (IPI, ICMS-ST, MVA, Total de Impostos)
+  if (hasNovosImpostos && (totalIPI > 0 || totalST > 0 || hasICMSST)) {
+    // Adicionar espaçamento
+    yPos += 3
+
+    // Linha separadora
+    doc.setLineWidth(0.3)
+    doc.line(margin, yPos, pageWidth - margin, yPos)
+    yPos += 6
+
+    // Título da seção
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.text('INFORMAÇÕES FISCAIS', margin, yPos)
+    yPos += 5
+
+    // Preparar dados da tabela
+    const fiscalTableData: string[][] = []
+    
+    // IPI (se houver)
+    if (totalIPI > 0) {
+      fiscalTableData.push(['IPI', `R$ ${totalIPI.toFixed(2).replace('.', ',')}`])
+    }
+    
+    // ICMS-ST a Recolher (se houver)
+    if (hasICMSST) {
+      const totaisICMSST = {
+        total_base_calculo_st: itensParaPDF.reduce((sum, item) => sum + (item.base_calculo_st || 0), 0),
+        total_icms_st_recolher: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0),
+        total_mva: itensParaPDF.reduce((sum, item) => sum + ((item.mva_aplicado || item.st_aliquota || 0) * (item.subtotal_liquido || 0)), 0)
+      }
+      
+      fiscalTableData.push(['ICMS-ST a Recolher', `R$ ${totaisICMSST.total_icms_st_recolher.toFixed(2).replace('.', ',')}`])
+      
+      // MVA (se disponível)
+      if (totaisICMSST.total_mva > 0) {
+        fiscalTableData.push(['MVA Total', `R$ ${totaisICMSST.total_mva.toFixed(2).replace('.', ',')}`])
+      }
+    }
+    
+    // Total de Impostos (IPI + ST, sem ICMS próprio)
+    const totalImpostos = totalIPI + totalST
+    if (totalImpostos > 0) {
+      fiscalTableData.push(['TOTAL DE IMPOSTOS', `R$ ${totalImpostos.toFixed(2).replace('.', ',')}`])
+    }
+
+    // Criar tabela com os totalizadores
+    autoTable(doc, {
+      startY: yPos,
+      body: fiscalTableData,
+      theme: 'plain',
+      styles: {
+        fontSize: 9,
+        cellPadding: 2,
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0],
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto', fontStyle: 'bold' },
+        1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+      },
+      didDrawPage: (data) => {
+        yPos = data.cursor?.y || yPos
+      }
+    })
+
+    yPos += 3
+
+    // Nota explicativa sobre ICMS
+    if (totalICMS > 0) {
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'italic')
+      const notaText = 'Nota: ICMS próprio é apenas informativo e não está incluído no total da venda (pode ser creditado).'
+      const notaLines = doc.splitTextToSize(notaText, pageWidth - 2 * margin)
+      doc.text(notaLines, margin, yPos)
+      yPos += (notaLines.length * 3) + 5
+    }
+  }
+
+  // ==================== ICMS-ST DETALHADO (OPCIONAL) ====================
   if (opts.incluirImpostosICMSST && hasICMSST) {
     // Calcular totais de ICMS-ST
     const totaisICMSST = {
       total_base_calculo_st: itensParaPDF.reduce((sum, item) => sum + (item.base_calculo_st || 0), 0),
-      total_icms_proprio: itensParaPDF.reduce((sum, item) => sum + (item.icms_proprio || 0), 0),
       total_icms_st_total: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_total || 0), 0),
       total_icms_st_recolher: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0)
     }
@@ -506,13 +550,12 @@ export const generateOrderPDF = async (
     // Título da seção
     doc.setFontSize(9)
     doc.setFont('helvetica', 'bold')
-    doc.text('INFORMAÇÕES FISCAIS - ICMS-ST', margin, yPos)
+    doc.text('DETALHAMENTO ICMS-ST', margin, yPos)
     yPos += 5
 
-    // Criar tabela com os totalizadores
+    // Criar tabela com os totalizadores (SEM ICMS Próprio)
     const icmsTableData = [
       ['Base de Cálculo ST', `R$ ${totaisICMSST.total_base_calculo_st.toFixed(2).replace('.', ',')}`],
-      ['ICMS Próprio', `R$ ${totaisICMSST.total_icms_proprio.toFixed(2).replace('.', ',')}`],
       ['ICMS-ST Total', `R$ ${totaisICMSST.total_icms_st_total.toFixed(2).replace('.', ',')}`],
       ['ICMS-ST a Recolher', `R$ ${totaisICMSST.total_icms_st_recolher.toFixed(2).replace('.', ',')}`]
     ]
