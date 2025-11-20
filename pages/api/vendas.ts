@@ -112,7 +112,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'POST') {
-      const { numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, valor_total, valor_final, desconto, data_pagamento, imposto_percentual, status, observacoes, uf_destino, itens, parcelas } = req.body;
+      const { numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, valor_total, valor_final, desconto, data_pagamento, imposto_percentual, status, observacoes, uf_destino, itens, parcelas, sem_impostos } = req.body;
 
       if (!numero_venda) {
         return res.status(400).json({ success: false, message: '❌ Número da venda é obrigatório' });
@@ -148,7 +148,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       const vendaProcessada = await processarVendaComImpostos(
         itens as VendaItemInput[],
-        descontoValor
+        descontoValor,
+        sem_impostos || false // Passar a flag sem_impostos
       );
 
       // ✅ CRIAR A VENDA
@@ -168,6 +169,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           prazo_pagamento: data_pagamento || null, // Mantém o campo no banco por compatibilidade
           imposto_percentual: imposto_percentual || 0,
           uf_destino: uf_destino || null,
+          sem_impostos: sem_impostos || false, // Campo novo: indica se a venda é sem impostos
           // Novos campos de impostos
           total_produtos_bruto: vendaProcessada.totais.total_produtos_bruto,
           desconto_total: vendaProcessada.totais.desconto_total,
@@ -357,7 +359,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'PUT') {
-      const { id, numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, desconto, data_pagamento, imposto_percentual, uf_destino, status, observacoes, itens } = req.body;
+      const { id, numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, desconto, data_pagamento, imposto_percentual, uf_destino, status, observacoes, itens, sem_impostos } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'ID da venda é obrigatório' });
@@ -402,7 +404,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
         vendaProcessada = await processarVendaComImpostos(
           itens as VendaItemInput[],
-          descontoValor
+          descontoValor,
+          sem_impostos || false // Passar a flag sem_impostos
         );
 
         valor_total_calculado = vendaProcessada.totais.total_produtos_bruto;
@@ -425,6 +428,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           prazo_pagamento: data_pagamento || null, // Mantém o campo no banco por compatibilidade
           imposto_percentual: imposto_percentual || 0,
           uf_destino: uf_destino || null,
+          sem_impostos: sem_impostos || false, // Campo novo: indica se a venda é sem impostos
           // Novos campos de impostos (se vendaProcessada existir)
           total_produtos_bruto: vendaProcessada?.totais.total_produtos_bruto || valor_total_calculado,
           desconto_total: vendaProcessada?.totais.desconto_total || (desconto || 0),
