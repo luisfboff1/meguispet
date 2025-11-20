@@ -24,7 +24,9 @@ const mapClienteToPessoa = (cliente?: Cliente): Partial<PessoaFormInput> => {
     estado: cliente.estado || '',
     cep: cliente.cep || '',
     bairro: cliente.bairro || '',
+    inscricao_estadual: cliente.inscricao_estadual || '',
     observacoes: cliente.observacoes || '',
+    vendedor_id: cliente.vendedor_id || null,
     tipo: cliente.tipo,
     ativo: cliente.ativo
   }

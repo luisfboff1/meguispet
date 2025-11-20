@@ -80,6 +80,7 @@ const handlePost = withValidation(
       estado: validatedData.estado || null,
       cep: validatedData.cep || null,
       documento: validatedData.documento || null,
+      inscricao_estadual: validatedData.inscricao_estadual || null,
       observacoes: validatedData.observacoes || null,
       vendedor_id: validatedData.vendedor_id || null,
     };
@@ -128,6 +129,7 @@ const handlePut = withValidation(
       estado: updateFields.estado || null,
       cep: updateFields.cep || null,
       documento: updateFields.documento || null,
+      inscricao_estadual: updateFields.inscricao_estadual || null,
       observacoes: updateFields.observacoes || null,
       vendedor_id: updateFields.vendedor_id || null,
       updated_at: new Date().toISOString(),
