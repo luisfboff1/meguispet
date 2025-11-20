@@ -330,7 +330,7 @@ export const generateOrderPDF = async (
         fillColor: [220, 220, 220],
         textColor: [0, 0, 0],
         fontStyle: 'bold',
-        fontSize: 9,
+        fontSize: 10,
         lineWidth: { top: 0.5, bottom: 0.5 },
       },
       columnStyles: {
@@ -475,17 +475,10 @@ export const generateOrderPDF = async (
     // ICMS-ST a Recolher (se houver)
     if (hasICMSST) {
       const totaisICMSST = {
-        total_base_calculo_st: itensParaPDF.reduce((sum, item) => sum + (item.base_calculo_st || 0), 0),
-        total_icms_st_recolher: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0),
-        total_mva: itensParaPDF.reduce((sum, item) => sum + ((item.mva_aplicado || item.st_aliquota || 0) * (item.subtotal_liquido || 0)), 0)
+        total_icms_st_recolher: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0)
       }
       
       fiscalTableData.push(['ICMS-ST a Recolher', `R$ ${totaisICMSST.total_icms_st_recolher.toFixed(2).replace('.', ',')}`])
-      
-      // MVA (se disponível)
-      if (totaisICMSST.total_mva > 0) {
-        fiscalTableData.push(['MVA Total', `R$ ${totaisICMSST.total_mva.toFixed(2).replace('.', ',')}`])
-      }
     }
     
     // Total de Impostos (IPI + ST, sem ICMS próprio)
@@ -528,69 +521,6 @@ export const generateOrderPDF = async (
       doc.text(notaLines, margin, yPos)
       yPos += (notaLines.length * 3) + 5
     }
-  }
-
-  // ==================== ICMS-ST DETALHADO (OPCIONAL) ====================
-  if (opts.incluirImpostosICMSST && hasICMSST) {
-    // Calcular totais de ICMS-ST
-    const totaisICMSST = {
-      total_base_calculo_st: itensParaPDF.reduce((sum, item) => sum + (item.base_calculo_st || 0), 0),
-      total_icms_st_total: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_total || 0), 0),
-      total_icms_st_recolher: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0)
-    }
-
-    // Adicionar espaçamento
-    yPos += 3
-
-    // Linha separadora
-    doc.setLineWidth(0.3)
-    doc.line(margin, yPos, pageWidth - margin, yPos)
-    yPos += 6
-
-    // Título da seção
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-    doc.text('DETALHAMENTO ICMS-ST', margin, yPos)
-    yPos += 5
-
-    // Criar tabela com os totalizadores (SEM ICMS Próprio)
-    const icmsTableData = [
-      ['Base de Cálculo ST', `R$ ${totaisICMSST.total_base_calculo_st.toFixed(2).replace('.', ',')}`],
-      ['ICMS-ST Total', `R$ ${totaisICMSST.total_icms_st_total.toFixed(2).replace('.', ',')}`],
-      ['ICMS-ST a Recolher', `R$ ${totaisICMSST.total_icms_st_recolher.toFixed(2).replace('.', ',')}`]
-    ]
-
-    autoTable(doc, {
-      startY: yPos,
-      body: icmsTableData,
-      theme: 'plain',
-      styles: {
-        fontSize: 9,
-        cellPadding: 2,
-        lineColor: [0, 0, 0],
-        lineWidth: 0.1,
-      },
-      bodyStyles: {
-        textColor: [0, 0, 0],
-      },
-      columnStyles: {
-        0: { cellWidth: 'auto', fontStyle: 'bold' },
-        1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
-      },
-      didDrawPage: (data) => {
-        yPos = data.cursor?.y || yPos
-      }
-    })
-
-    yPos += 3
-
-    // Nota explicativa
-    doc.setFontSize(8)
-    doc.setFont('helvetica', 'italic')
-    const notaText = 'Nota: Os valores de ICMS-ST são para controle fiscal e não estão incluídos no total da venda.'
-    const notaLines = doc.splitTextToSize(notaText, pageWidth - 2 * margin)
-    doc.text(notaLines, margin, yPos)
-    yPos += (notaLines.length * 3) + 5
   }
 
   // ==================== RODAPÉ ====================
