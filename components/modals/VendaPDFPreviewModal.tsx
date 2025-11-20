@@ -342,7 +342,7 @@ export default function VendaPDFPreviewModal({
                                 </tr>
                               ))}
                               {/* Linha de Totais */}
-                              <tr className="bg-gray-200 font-bold text-base border-t-2 border-gray-400">
+                              <tr className="bg-gray-200 font-bold text-lg border-t-2 border-gray-400">
                                 <td className="px-2 py-3"></td>
                                 <td className="px-2 py-3">TOTAIS</td>
                                 <td className="text-right px-2 py-3"></td>

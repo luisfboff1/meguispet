@@ -259,7 +259,7 @@ export const generateOrderPDF = async (
     if (totalST > 0) headers[0].push('ST')
     headers[0].push('TOTAL')
     
-    // Dados da tabela
+    // Dados da tabela (sem a linha de totais no body)
     const tableData = itensParaPDF.map((item) => {
       const row = [
         item.produto?.nome || 'Produto sem nome',
@@ -301,12 +301,11 @@ export const generateOrderPDF = async (
     }
     footerRow.push(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`)
     
-    tableData.push(footerRow)
-    
     autoTable(doc, {
       startY: yPos,
       head: headers,
       body: tableData,
+      foot: [footerRow],
       theme: 'plain',
       styles: {
         fontSize: 7,
@@ -330,7 +329,7 @@ export const generateOrderPDF = async (
         fillColor: [220, 220, 220],
         textColor: [0, 0, 0],
         fontStyle: 'bold',
-        fontSize: 10,
+        fontSize: 11,
         lineWidth: { top: 0.5, bottom: 0.5 },
       },
       columnStyles: {
