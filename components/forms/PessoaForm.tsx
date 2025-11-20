@@ -90,7 +90,7 @@ export default function PessoaForm({
       
       setVendedoresLoading(true)
       try {
-        const response = await vendedoresService.list(1, 1000)
+        const response = await vendedoresService.getAll(1, 1000)
         if (response.success && response.data) {
           setVendedores(response.data.filter((v: Vendedor) => v.ativo))
         }
