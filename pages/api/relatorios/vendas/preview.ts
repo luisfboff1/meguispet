@@ -13,7 +13,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   }
 
   try {
-    const supabase = getSupabase()
+    // Use authenticated supabase client from middleware to respect RLS policies
+    const supabase = req.supabaseClient
     const config: ReportConfiguration = req.body
 
     if (!config.filtros?.periodo) {

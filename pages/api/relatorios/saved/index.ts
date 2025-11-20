@@ -11,7 +11,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   }
 
   try {
-    const supabase = getSupabase()
+    // Use authenticated supabase client from middleware to respect RLS policies
+    const supabase = req.supabaseClient
     const { page = '1', limit = '10', tipo } = req.query
 
     const pageNum = parseInt(page as string, 10)
