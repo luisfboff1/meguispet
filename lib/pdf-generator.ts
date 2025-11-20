@@ -131,6 +131,15 @@ export const generateOrderPDF = async (
     doc.text(clienteDocumento, margin + 20, yPos)
     yPos += 6
 
+    // Inscrição Estadual - exibir se disponível
+    if (venda.cliente?.inscricao_estadual) {
+      doc.setFont('helvetica', 'bold')
+      doc.text('INSCRIÇÃO ESTADUAL:', margin, yPos)
+      doc.setFont('helvetica', 'normal')
+      doc.text(venda.cliente.inscricao_estadual, margin + 45, yPos)
+      yPos += 6
+    }
+
     // Endereço do cliente (somente se incluirEnderecoCompleto)
     if (opts.incluirEnderecoCompleto) {
       if (venda.cliente?.endereco) {
