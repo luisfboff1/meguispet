@@ -341,6 +341,28 @@ export default function VendaPDFPreviewModal({
                                   </td>
                                 </tr>
                               ))}
+                              {/* Linha de Totais */}
+                              <tr className="bg-gray-200 font-bold text-lg border-t-2 border-gray-400">
+                                <td className="px-2 py-3"></td>
+                                <td className="px-2 py-3">TOTAIS</td>
+                                <td className="text-right px-2 py-3"></td>
+                                <td className="text-right px-2 py-3"></td>
+                                <td className="text-right px-2 py-3">{formatCurrency(totalProdutos)}</td>
+                                {valorDesconto > 0 && (
+                                  <td className="text-right px-2 py-3 text-red-700">-{formatCurrency(valorDesconto)}</td>
+                                )}
+                                <td className="text-right px-2 py-3">{formatCurrency(totalProdutosLiquido)}</td>
+                                {totalIPI > 0 && (
+                                  <td className="text-right px-2 py-3">{formatCurrency(totalIPI)}</td>
+                                )}
+                                {totalICMS > 0 && (
+                                  <td className="text-right px-2 py-3 text-blue-700">{formatCurrency(totalICMS)}</td>
+                                )}
+                                {totalST > 0 && (
+                                  <td className="text-right px-2 py-3">{formatCurrency(totalST)}</td>
+                                )}
+                                <td className="text-right px-2 py-3 text-green-700">{formatCurrency(totalFinal)}</td>
+                              </tr>
                             </tbody>
                           </table>
                         </ScrollableContainer>
@@ -448,35 +470,11 @@ export default function VendaPDFPreviewModal({
                               <span>Subtotal Líquido:</span>
                               <span className="font-medium">{formatCurrency(totalProdutosLiquido)}</span>
                             </div>
-                            <div className="border-t pt-2 space-y-1">
-                              {totalIPI > 0 && (
-                                <div className="flex justify-between">
-                                  <span>IPI:</span>
-                                  <span className="font-medium">{formatCurrency(totalIPI)}</span>
-                                </div>
-                              )}
-                              {totalST > 0 && (
-                                <div className="flex justify-between">
-                                  <span>ST:</span>
-                                  <span className="font-medium">{formatCurrency(totalST)}</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex justify-between text-base font-bold border-t pt-2">
+                            
+                            <div className="flex justify-between text-lg font-bold border-t pt-2 bg-green-50 px-2 py-1 rounded">
                               <span>TOTAL GERAL:</span>
-                              <span className="text-green-600">{formatCurrency(totalFinal)}</span>
+                              <span className="text-green-700">{formatCurrency(totalFinal)}</span>
                             </div>
-                            {totalICMS > 0 && (
-                              <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-                                <div className="flex justify-between text-blue-700 font-medium mb-1">
-                                  <span>ICMS (Informativo):</span>
-                                  <span>{formatCurrency(totalICMS)}</span>
-                                </div>
-                                <p className="text-blue-600">
-                                  * Este valor NÃO está incluído no total. É apenas informativo (pode ser creditado).
-                                </p>
-                              </div>
-                            )}
                           </>
                         ) : (
                           /* Resumo original */
@@ -522,74 +520,42 @@ export default function VendaPDFPreviewModal({
                     </div>
                   )}
 
-                  {/* ICMS-ST */}
-                  {options.incluirImpostosICMSST && hasICMSST && totaisICMSST && (
+                  {/* Informações Fiscais (IPI, ICMS-ST a Recolher, Total de Impostos) */}
+                  {hasNovosImpostos && (totalIPI > 0 || totalST > 0 || hasICMSST) && (
                     <div className="border-t pt-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          Impostos ICMS-ST
-                          {venda.uf_destino && (
-                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-mono ml-2">
-                              UF: {venda.uf_destino}
-                            </span>
-                          )}
-                        </h4>
-                        <span className="text-sm font-bold text-green-700">
-                          Total a Recolher: {formatCurrency(totaisICMSST.total_icms_st_recolher)}
-                        </span>
+                      <h4 className="text-sm font-semibold mb-3">INFORMAÇÕES FISCAIS</h4>
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                        {/* IPI */}
+                        {totalIPI > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium">IPI:</span>
+                            <span className="font-bold">{formatCurrency(totalIPI)}</span>
+                          </div>
+                        )}
+                        
+                        {/* ICMS-ST a Recolher */}
+                        {hasICMSST && totaisICMSST && (
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium">ICMS-ST a Recolher:</span>
+                            <span className="font-bold">{formatCurrency(totaisICMSST.total_icms_st_recolher)}</span>
+                          </div>
+                        )}
+                        
+                        {/* Total de Impostos */}
+                        <div className="flex justify-between text-base font-bold border-t pt-2 mt-2">
+                          <span className="text-orange-700">TOTAL DE IMPOSTOS:</span>
+                          <span className="text-orange-700">{formatCurrency(totalIPI + totalST)}</span>
+                        </div>
                       </div>
-
-                      <ScrollableContainer>
-                        <table className="min-w-full divide-y divide-gray-200 border rounded-lg">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produto</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Qtd</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">MVA</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Alíq.</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Base ST</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">ICMS Próprio</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">ICMS-ST Total</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase bg-green-50">A Recolher</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {itensOrdenados.filter(item => item.icms_st_recolher && item.icms_st_recolher > 0).map((item, idx) => (
-                              <tr key={idx} className="hover:bg-gray-50">
-                                <td className="px-3 py-2 text-sm text-gray-900">
-                                  {item.produto?.nome || `Produto #${item.produto_id}`}
-                                </td>
-                                <td className="px-3 py-2 text-sm text-gray-600 text-right">{item.quantidade}</td>
-                                <td className="px-3 py-2 text-sm text-gray-600 text-right">
-                                  {item.mva_aplicado ? `${(item.mva_aplicado * 100).toFixed(2)}%` : '-'}
-                                </td>
-                                <td className="px-3 py-2 text-sm text-gray-600 text-right">
-                                  {item.aliquota_icms ? `${(item.aliquota_icms * 100).toFixed(2)}%` : '-'}
-                                </td>
-                                <td className="px-3 py-2 text-sm text-gray-600 text-right">
-                                  {formatCurrency(item.base_calculo_st || 0)}
-                                </td>
-                                <td className="px-3 py-2 text-sm text-gray-600 text-right">
-                                  {formatCurrency(item.icms_proprio || 0)}
-                                </td>
-                                <td className="px-3 py-2 text-sm text-gray-600 text-right">
-                                  {formatCurrency(item.icms_st_total || 0)}
-                                </td>
-                                <td className="px-3 py-2 text-sm font-semibold text-green-700 text-right bg-green-50">
-                                  {formatCurrency(item.icms_st_recolher || 0)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </ScrollableContainer>
-
-                      <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-2">
-                        <p className="text-xs text-blue-900">
-                          <strong>Nota:</strong> Os valores de ICMS-ST são para controle fiscal e não estão incluídos no total da venda.
-                        </p>
-                      </div>
+                      
+                      {/* Nota sobre ICMS próprio */}
+                      {totalICMS > 0 && (
+                        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                          <p className="text-blue-900">
+                            <strong>Nota:</strong> ICMS próprio é apenas informativo e não está incluído no total da venda (pode ser creditado).
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
