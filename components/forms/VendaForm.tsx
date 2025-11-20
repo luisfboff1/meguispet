@@ -1188,7 +1188,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               </Label>
             </div>
             <p className="text-xs text-gray-500 mt-1 ml-6">
-              Quando marcado, os impostos (IPI, ICMS, ST) não serão calculados e a mensagem "PEDIDO SEM IMPOSTOS" será adicionada automaticamente nas observações
+              Quando marcado, os impostos (IPI, ICMS, ST) não serão calculados e a mensagem &quot;PEDIDO SEM IMPOSTOS&quot; será adicionada automaticamente nas observações
             </p>
           </div>
 
