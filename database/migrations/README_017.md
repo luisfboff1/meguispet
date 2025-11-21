@@ -1,4 +1,4 @@
-# Migration 016: Add sem_impostos Field
+# Migration 017: Add sem_impostos Field
 
 ## Description
 Adds the `sem_impostos` boolean field to the `vendas` table to support sales without tax calculations.
@@ -14,7 +14,7 @@ When a sale is marked as "sem impostos" (without taxes), the system will:
 ### Via Supabase Dashboard
 1. Go to your Supabase project dashboard
 2. Navigate to SQL Editor
-3. Copy and paste the contents of `016_add_sem_impostos_field.sql`
+3. Copy and paste the contents of `017_add_sem_impostos_field.sql`
 4. Execute the SQL script
 
 ### Via Supabase CLI

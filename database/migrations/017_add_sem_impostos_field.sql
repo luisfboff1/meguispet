@@ -1,6 +1,6 @@
 -- =====================================================
 -- ADICIONAR CAMPO SEM_IMPOSTOS
--- Migration 016
+-- Migration 017
 -- Adiciona campo para indicar vendas sem impostos
 -- =====================================================
 

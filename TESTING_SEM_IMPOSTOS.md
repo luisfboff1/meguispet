@@ -4,7 +4,7 @@
 This document provides step-by-step instructions to manually test the "Sem Impostos" (No Taxes) feature for sales/orders.
 
 ## Prerequisites
-1. Database migration `016_add_sem_impostos_field.sql` must be applied
+1. Database migration `017_add_sem_impostos_field.sql` must be applied
 2. Application must be running (`npm run dev` or `pnpm dev`)
 3. User must be logged in with permission to create/edit sales
 

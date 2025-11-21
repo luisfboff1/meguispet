@@ -24,8 +24,8 @@ This implementation adds the ability to create sales/orders without tax calculat
 ## 📁 Files Modified
 
 ### Database
-- `database/migrations/016_add_sem_impostos_field.sql` - Migration to add boolean field
-- `database/migrations/README_016.md` - Migration documentation
+- `database/migrations/017_add_sem_impostos_field.sql` - Migration to add boolean field
+- `database/migrations/README_017.md` - Migration documentation
 
 ### Types
 - `types/index.ts` - Added `sem_impostos?: boolean` to Venda and VendaForm interfaces
@@ -130,7 +130,7 @@ See `TESTING_SEM_IMPOSTOS.md` for comprehensive test cases:
 
 1. **Via Supabase Dashboard:**
    - Navigate to SQL Editor
-   - Execute `016_add_sem_impostos_field.sql`
+   - Execute `017_add_sem_impostos_field.sql`
 
 2. **Verification Query:**
 ```sql
