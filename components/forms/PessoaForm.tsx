@@ -7,7 +7,8 @@ import { Switch } from '@/components/ui/switch'
 import { Loader2, Building2, MapPin } from 'lucide-react'
 import { cepService } from '@/services/cep'
 import { cnpjService } from '@/services/cnpj'
-import type { PessoaFormInput, PessoaTipo } from '@/types'
+import { vendedoresService } from '@/services/api'
+import type { PessoaFormInput, PessoaTipo, Vendedor } from '@/types'
 
 interface PessoaFormProps {
   initialData?: Partial<PessoaFormInput>
@@ -39,6 +40,7 @@ const defaultPessoa: PessoaFormInput = {
   observacoes: '',
   nome_fantasia: '',
   inscricao_estadual: '',
+  vendedor_id: null,
   ativo: true
 }
 
@@ -75,8 +77,32 @@ export default function PessoaForm({
   const [formData, setFormData] = useState<PessoaFormInput>(resolvedDefaults)
   const [cepLoading, setCepLoading] = useState(false)
   const [docLookupLoading, setDocLookupLoading] = useState(false)
+  const [vendedores, setVendedores] = useState<Vendedor[]>([])
+  const [vendedoresLoading, setVendedoresLoading] = useState(false)
 
   const currentTipo = allowTipoSwitch ? formData.tipo : tiposDisponiveis[0]
+  const showVendedorField = currentTipo === 'cliente' || currentTipo === 'ambos'
+
+  // Fetch vendedores list for the selector
+  useEffect(() => {
+    const fetchVendedores = async () => {
+      if (!showVendedorField) return
+      
+      setVendedoresLoading(true)
+      try {
+        const response = await vendedoresService.getAll(1, 1000)
+        if (response.success && response.data) {
+          setVendedores(response.data.filter((v: Vendedor) => v.ativo))
+        }
+      } catch (error) {
+        console.error('Error loading vendedores:', error)
+      } finally {
+        setVendedoresLoading(false)
+      }
+    }
+
+    fetchVendedores()
+  }, [showVendedorField])
 
   useEffect(() => {
     setFormData(prev => ({
@@ -240,16 +266,42 @@ export default function PessoaForm({
             )}
           </div>
 
-          {showFornecedorFields && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
               <Input
                 id="inscricao_estadual"
                 value={formData.inscricao_estadual ?? ''}
                 onChange={(event) => setFormData(prev => ({ ...prev, inscricao_estadual: event.target.value }))}
+                placeholder="Inscrição Estadual"
               />
             </div>
-          )}
+            {showVendedorField && (
+              <div className="space-y-2">
+                <Label htmlFor="vendedor_id">Vendedor</Label>
+                <select
+                  id="vendedor_id"
+                  value={formData.vendedor_id?.toString() ?? ''}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      vendedor_id: value ? parseInt(value, 10) : null 
+                    }))
+                  }}
+                  className="w-full p-2 border rounded-md"
+                  disabled={vendedoresLoading}
+                >
+                  <option value="">Selecione um vendedor</option>
+                  {vendedores.map((vendedor) => (
+                    <option key={vendedor.id} value={vendedor.id}>
+                      {vendedor.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

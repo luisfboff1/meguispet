@@ -76,6 +76,11 @@ export const clienteSchema = z.object({
     .positive('ID do vendedor deve ser positivo')
     .optional(),
 
+  inscricao_estadual: z.string()
+    .max(50, 'Inscrição Estadual deve ter no máximo 50 caracteres')
+    .optional()
+    .or(z.literal('')),
+
   observacoes: z.string()
     .max(1000, 'Observações devem ter no máximo 1000 caracteres')
     .optional()

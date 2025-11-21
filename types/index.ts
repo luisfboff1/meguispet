@@ -25,6 +25,7 @@ export interface Cliente {
   cep?: string
   bairro?: string
   documento?: string // CPF/CNPJ
+  inscricao_estadual?: string // State Registration
   observacoes?: string
   vendedor_id?: number | null
   vendedor?: Vendedor | null
@@ -310,6 +311,7 @@ export interface PessoaFormInput {
   tipo: PessoaTipo
   nome_fantasia?: string
   inscricao_estadual?: string
+  vendedor_id?: number | null
   ativo?: boolean
 }
 
