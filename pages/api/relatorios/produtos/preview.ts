@@ -32,7 +32,8 @@ const handler = async (
     endDatePlusOne.setDate(endDatePlusOne.getDate() + 1)
     const endDateAdjusted = endDatePlusOne.toISOString().split('T')[0]
 
-    const supabase = getSupabase()
+    // Use authenticated supabase client from middleware to respect RLS policies
+    const supabase = req.supabaseClient
 
     // 1️⃣ Buscar todos os produtos
     let produtosQuery = supabase

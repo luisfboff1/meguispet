@@ -1,14 +1,11 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { createClient } from '@supabase/supabase-js'
+import type { NextApiResponse } from 'next'
+import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware'
 import type { ReportConfiguration, ReportFormat, ProdutosReportData } from '@/types/reports'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-export default async function handler(
-  req: NextApiRequest,
+const handler = async (
+  req: AuthenticatedRequest,
   res: NextApiResponse
-) {
+) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -25,12 +22,11 @@ export default async function handler(
       return res.status(400).json({ error: 'Período é obrigatório' })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    // Use authenticated supabase client from middleware to respect RLS policies
+    const supabase = req.supabaseClient
+    const userId = req.user.id
 
-    // 1️⃣ Obter userId do token (simplificado - você pode melhorar isso)
-    const userId = 1 // TODO: Extrair do token JWT real
-
-    // 2️⃣ Chamar a API de preview para obter os dados
+    // Chamar a API de preview para obter os dados
     // Em produção, você pode fazer a lógica diretamente aqui ou reutilizar
     const protocol = req.headers['x-forwarded-proto'] || 'http'
     const host = req.headers.host || 'localhost:3000'
@@ -99,3 +95,5 @@ export default async function handler(
     })
   }
 }
+
+export default withSupabaseAuth(handler)

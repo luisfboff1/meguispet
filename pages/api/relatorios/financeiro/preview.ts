@@ -22,7 +22,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     const { startDate, endDate } = config.filtros.periodo
-    const supabase = getSupabase()
+    // Use authenticated supabase client from middleware to respect RLS policies
+    const supabase = req.supabaseClient
 
     // 1. Buscar todas as transações do período
     const { data: transacoes, error: transacoesError } = await supabase
