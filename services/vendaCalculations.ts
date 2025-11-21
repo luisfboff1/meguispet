@@ -21,6 +21,7 @@ import { ItemCalculado, TotaisVenda } from '@/types'
  *
  * @param stAliquota Na verdade é o MVA (Margem de Valor Agregado)
  * @param icmsProprioAliquota Alíquota de ICMS Próprio (padrão 4%)
+ * @param semImpostos Se true, não calcula impostos
  */
 export function calcularItemVenda(
   precoUnitario: number,
@@ -29,13 +30,27 @@ export function calcularItemVenda(
   icmsAliquota: number,
   stAliquota: number, // MVA
   descontoProporcional: number,
-  icmsProprioAliquota: number = 4 // Padrão 4%
+  icmsProprioAliquota: number = 4, // Padrão 4%
+  semImpostos: boolean = false // Nova opção para vendas sem impostos
 ): Omit<ItemCalculado, 'produto_id' | 'produto_nome' | 'quantidade' | 'preco_unitario' | 'ipi_aliquota' | 'icms_aliquota' | 'st_aliquota'> {
   // 1. Subtotal bruto (preço × quantidade)
   const subtotalBruto = precoUnitario * quantidade
 
   // 2. Subtotal líquido (após desconto proporcional)
   const subtotalLiquido = subtotalBruto - descontoProporcional
+
+  // Se a venda é sem impostos, zerar todos os valores de impostos
+  if (semImpostos) {
+    return {
+      subtotal_bruto: Number(subtotalBruto.toFixed(2)),
+      desconto_proporcional: Number(descontoProporcional.toFixed(2)),
+      subtotal_liquido: Number(subtotalLiquido.toFixed(2)),
+      ipi_valor: 0,
+      icms_valor: 0,
+      st_valor: 0,
+      total_item: Number(subtotalLiquido.toFixed(2)) // Total = subtotal líquido apenas
+    }
+  }
 
   // 3. Calcular IPI sobre o subtotal líquido
   const ipiValor = subtotalLiquido * (ipiAliquota / 100)
@@ -134,7 +149,8 @@ export function calcularItensVenda(
     st_aliquota: number // MVA
     icms_proprio_aliquota?: number // ICMS Próprio (padrão 4%)
   }>,
-  descontoTotal: number
+  descontoTotal: number,
+  semImpostos: boolean = false // Nova opção para vendas sem impostos
 ): ItemCalculado[] {
   // 1. Calcular descontos proporcionais
   const descontosProporcionais = calcularDescontosProporcionais(itens, descontoTotal)
@@ -148,7 +164,8 @@ export function calcularItensVenda(
       item.icms_aliquota,
       item.st_aliquota, // MVA
       descontosProporcionais[index],
-      item.icms_proprio_aliquota || 4 // Padrão 4%
+      item.icms_proprio_aliquota || 4, // Padrão 4%
+      semImpostos // Passar a opção sem impostos
     )
 
     return {

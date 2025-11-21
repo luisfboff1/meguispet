@@ -58,6 +58,7 @@ interface VendaFormState {
   observacoes: string
   desconto: number
   data_pagamento?: string // Data de pagamento (also used as base for installment calculation)
+  sem_impostos: boolean // Indica se a venda é sem impostos
 }
 
 const getFormaPagamentoIdFromVenda = (dados?: Venda): string => {
@@ -104,7 +105,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     estoque_id: getEstoqueIdFromVenda(venda),
     observacoes: venda?.observacoes || '',
     desconto: venda?.desconto || 0,
-    data_pagamento: new Date().toISOString().split('T')[0] // Default to today
+    data_pagamento: new Date().toISOString().split('T')[0], // Default to today
+    sem_impostos: venda?.sem_impostos || false // Default: com impostos
   })
 
   const [itens, setItens] = useState<ItemVenda[]>([])
@@ -156,7 +158,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         estoque_id: '',
         observacoes: '',
         desconto: 0,
-        data_pagamento: new Date().toISOString().split('T')[0]
+        data_pagamento: new Date().toISOString().split('T')[0],
+        sem_impostos: false
       })
       return
     }
@@ -172,7 +175,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       estoque_id: getEstoqueIdFromVenda(venda),
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0,
-      data_pagamento: venda.prazo_pagamento ? String(venda.prazo_pagamento) : new Date().toISOString().split('T')[0]
+      data_pagamento: venda.prazo_pagamento ? String(venda.prazo_pagamento) : new Date().toISOString().split('T')[0],
+      sem_impostos: venda.sem_impostos || false
     })
 
     if (venda.itens?.length) {
@@ -199,7 +203,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     void loadData()
   }, [])
 
-  // Recalcular itens e totais sempre que os itens ou desconto mudarem
+  // Recalcular itens e totais sempre que os itens, desconto ou sem_impostos mudarem
   useEffect(() => {
     if (itens.length === 0) {
       setItensCalculados([])
@@ -214,12 +218,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       return
     }
 
-    const calculados = calcularItensVenda(itensComDados, formData.desconto)
+    const calculados = calcularItensVenda(itensComDados, formData.desconto, formData.sem_impostos)
     setItensCalculados(calculados)
 
     const totaisCalculados = calcularTotaisVenda(calculados, formData.desconto)
     setTotais(totaisCalculados)
-  }, [itens, formData.desconto])
+  }, [itens, formData.desconto, formData.sem_impostos])
 
   const loadData = async () => {
     try {
@@ -1155,6 +1159,38 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               </div>
             </div>
           )}
+
+          {/* Sem Impostos Option */}
+          <div className="border-t pt-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="sem-impostos"
+                checked={formData.sem_impostos}
+                onChange={(e) => {
+                  const semImpostos = e.target.checked
+                  setFormData(prev => {
+                    const newObservacoes = semImpostos
+                      ? (prev.observacoes ? `${prev.observacoes}\n\nPEDIDO SEM IMPOSTOS` : 'PEDIDO SEM IMPOSTOS')
+                      : prev.observacoes.replace(/\n*PEDIDO SEM IMPOSTOS\n*/g, '').trim()
+                    
+                    return {
+                      ...prev,
+                      sem_impostos: semImpostos,
+                      observacoes: newObservacoes
+                    }
+                  })
+                }}
+                className="w-4 h-4 rounded border-gray-300"
+              />
+              <Label htmlFor="sem-impostos" className="cursor-pointer font-medium">
+                Venda Sem Impostos
+              </Label>
+            </div>
+            <p className="text-xs text-gray-500 mt-1 ml-6">
+              Quando marcado, os impostos (IPI, ICMS, ST) não serão calculados e a mensagem &quot;PEDIDO SEM IMPOSTOS&quot; será adicionada automaticamente nas observações
+            </p>
+          </div>
 
           <div>
             <Label htmlFor="observacoes">Observações</Label>
