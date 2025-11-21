@@ -100,28 +100,30 @@ function exportPDF(data: FinanceiroReportData, config: ExportRequestBody, res: N
 
   doc.setFontSize(10)
   const resumoY = 45
-  doc.text(`Receita Total: R$ ${data.resumo.receitaTotal.toFixed(2)}`, 14, resumoY)
+  doc.text(`Receita Total (sem impostos): R$ ${data.resumo.receitaTotal.toFixed(2)}`, 14, resumoY)
   doc.text(`Despesa Total: R$ ${data.resumo.despesaTotal.toFixed(2)}`, 14, resumoY + 7)
-  doc.text(`Lucro Líquido: R$ ${data.resumo.lucroLiquido.toFixed(2)}`, 14, resumoY + 14)
+  doc.text(`Lucro Líquido (sem impostos): R$ ${data.resumo.lucroLiquido.toFixed(2)}`, 14, resumoY + 14)
   doc.text(`Margem de Lucro: ${data.resumo.margemLucro.toFixed(2)}%`, 14, resumoY + 21)
 
   // DRE
   doc.addPage()
   doc.setFontSize(14)
   doc.text('DRE - Demonstração do Resultado do Exercício', 14, 20)
+  doc.setFontSize(8)
+  doc.text('* Receita e lucro calculados sem impostos (IPI/ST pagos pelo cliente)', 14, 27)
 
   autoTable(doc, {
-    startY: 25,
+    startY: 32,
     head: [['Item', 'Valor']],
     body: [
-      ['Receita Bruta', `R$ ${data.dre.receitaBruta.toFixed(2)}`],
+      ['Receita Bruta (sem impostos)', `R$ ${data.dre.receitaBruta.toFixed(2)}`],
       ['(-) Deduções', `R$ ${data.dre.deducoes.toFixed(2)}`],
       ['(=) Receita Líquida', `R$ ${data.dre.receitaLiquida.toFixed(2)}`],
       ['(-) Custo dos Produtos', `R$ ${data.dre.custoProdutos.toFixed(2)}`],
       ['(=) Lucro Bruto', `R$ ${data.dre.lucroBruto.toFixed(2)}`],
       ['(-) Despesas Operacionais', `R$ ${data.dre.despesasOperacionais.toFixed(2)}`],
       ['(=) Lucro Operacional', `R$ ${data.dre.lucroOperacional.toFixed(2)}`],
-      ['(-) Impostos', `R$ ${data.dre.impostos.toFixed(2)}`],
+      ['(i) Impostos IPI+ST (ref.)', `R$ ${data.dre.impostos.toFixed(2)}`],
       ['(=) Lucro Líquido', `R$ ${data.dre.lucroLiquido.toFixed(2)}`],
     ],
     styles: { fontSize: 10 },
@@ -212,11 +214,12 @@ function exportExcel(data: FinanceiroReportData, config: ExportRequestBody, res:
   const resumoData = [
     ['Relatório Financeiro'],
     [`Período: ${periodo.startDate} a ${periodo.endDate}`],
+    ['* Receita e lucro calculados SEM impostos (IPI/ST pagos pelo cliente)'],
     [],
     ['Métrica', 'Valor'],
-    ['Receita Total', `R$ ${data.resumo.receitaTotal.toFixed(2)}`],
+    ['Receita Total (sem impostos)', `R$ ${data.resumo.receitaTotal.toFixed(2)}`],
     ['Despesa Total', `R$ ${data.resumo.despesaTotal.toFixed(2)}`],
-    ['Lucro Líquido', `R$ ${data.resumo.lucroLiquido.toFixed(2)}`],
+    ['Lucro Líquido (sem impostos)', `R$ ${data.resumo.lucroLiquido.toFixed(2)}`],
     ['Margem de Lucro', `${data.resumo.margemLucro.toFixed(2)}%`],
   ]
   const resumoSheet = XLSX.utils.aoa_to_sheet(resumoData)
@@ -225,14 +228,14 @@ function exportExcel(data: FinanceiroReportData, config: ExportRequestBody, res:
   // Aba 2: DRE
   const dreData = [
     ['Item', 'Valor'],
-    ['Receita Bruta', data.dre.receitaBruta],
+    ['Receita Bruta (sem impostos)', data.dre.receitaBruta],
     ['(-) Deduções', data.dre.deducoes],
     ['(=) Receita Líquida', data.dre.receitaLiquida],
     ['(-) Custo dos Produtos', data.dre.custoProdutos],
     ['(=) Lucro Bruto', data.dre.lucroBruto],
     ['(-) Despesas Operacionais', data.dre.despesasOperacionais],
     ['(=) Lucro Operacional', data.dre.lucroOperacional],
-    ['(-) Impostos', data.dre.impostos],
+    ['(i) Impostos IPI+ST (ref.)', data.dre.impostos],
     ['(=) Lucro Líquido', data.dre.lucroLiquido],
   ]
   const dreSheet = XLSX.utils.aoa_to_sheet(dreData)

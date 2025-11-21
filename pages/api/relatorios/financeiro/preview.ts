@@ -45,17 +45,32 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const receitaTotal = receitas.reduce((sum, t) => sum + parseFloat(t.valor.toString()), 0)
     const despesaTotal = despesas.reduce((sum, t) => sum + parseFloat(t.valor.toString()), 0)
 
-    // 3. Buscar vendas do período para calcular custos
+    // 3. Buscar vendas do período para calcular custos e impostos
     const { data: vendas } = await supabase
       .from('vendas')
-      .select('valor_final, custo_total')
+      .select('valor_final, custo_total, total_produtos_liquido, total_ipi, total_st, total_icms')
       .gte('data_venda', startDate)
       .lte('data_venda', endDate)
 
     const custoProdutos = (vendas || []).reduce((sum, v) => sum + parseFloat(v.custo_total?.toString() || '0'), 0)
+    
+    // Calcular impostos totais das vendas (IPI + ST)
+    // IMPORTANTE: Impostos não fazem parte da receita da empresa, são pagos pelo cliente
+    const impostosVendas = (vendas || []).reduce((sum, v) => {
+      const ipi = parseFloat(v.total_ipi?.toString() || '0')
+      const st = parseFloat(v.total_st?.toString() || '0')
+      return sum + ipi + st
+    }, 0)
 
     // 4. Cálculos DRE
-    const receitaBruta = receitaTotal
+    // Receita bruta SEM impostos (usar total_produtos_liquido ou valor_final - impostos)
+    const receitaBrutaVendas = (vendas || []).reduce((sum, v) => {
+      const receitaVenda = v.total_produtos_liquido || (v.valor_final - parseFloat(v.total_ipi?.toString() || '0') - parseFloat(v.total_st?.toString() || '0'))
+      return sum + receitaVenda
+    }, 0)
+    
+    // Somar com receitas de transações (que já estão sem impostos)
+    const receitaBruta = receitaTotal + receitaBrutaVendas
     const deducoes = 0 // TODO: Implementar deduções (devoluções, descontos)
     const receitaLiquida = receitaBruta - deducoes
     const lucroBruto = receitaLiquida - custoProdutos
@@ -64,10 +79,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const despesasOperacionais = despesaTotal
     const lucroOperacional = lucroBruto - despesasOperacionais
 
-    // TODO: Calcular impostos reais (ICMS, PIS, COFINS, etc.)
-    const impostos = 0
-    const lucroLiquido = lucroOperacional - impostos
-    const margemLucro = receitaTotal > 0 ? (lucroLiquido / receitaTotal) * 100 : 0
+    // Impostos são mostrados separadamente mas não reduzem a receita da empresa
+    const impostos = impostosVendas
+    const lucroLiquido = lucroOperacional
+    const margemLucro = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0
 
     // 5. Agrupar por mês
     const receitasPorMesMap: Record<string, { receita: number; despesa: number }> = {}

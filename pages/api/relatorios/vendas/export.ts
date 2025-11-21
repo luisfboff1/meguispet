@@ -130,11 +130,11 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
   doc.setFontSize(10)
   const resumoY = 45
   doc.text(`Total de Vendas: ${data.resumo.totalVendas}`, 14, resumoY)
-  doc.text(`Faturamento Total: R$ ${data.resumo.faturamentoTotal.toFixed(2)}`, 14, resumoY + 7)
-  doc.text(`Ticket Médio: R$ ${data.resumo.ticketMedio.toFixed(2)}`, 14, resumoY + 14)
-  doc.text(`Total Impostos: R$ ${data.resumo.totalImpostos.toFixed(2)}`, 14, resumoY + 21)
+  doc.text(`Faturamento Total (sem impostos): R$ ${data.resumo.faturamentoTotal.toFixed(2)}`, 14, resumoY + 7)
+  doc.text(`Ticket Médio (sem impostos): R$ ${data.resumo.ticketMedio.toFixed(2)}`, 14, resumoY + 14)
+  doc.text(`Total Impostos (pagos pelo cliente): R$ ${data.resumo.totalImpostos.toFixed(2)}`, 14, resumoY + 21)
   doc.text(`Custo Total: R$ ${data.resumo.custoTotal.toFixed(2)}`, 14, resumoY + 28)
-  doc.text(`Margem de Lucro: ${data.resumo.margemLucro.toFixed(2)}%`, 14, resumoY + 35)
+  doc.text(`Margem de Lucro (sem impostos): ${data.resumo.margemLucro.toFixed(2)}%`, 14, resumoY + 35)
 
   // Tabela de vendas detalhadas
   autoTable(doc, {
@@ -271,14 +271,15 @@ function exportExcel(data: VendasReportData, config: ExportRequestBody, res: Nex
   const resumoData = [
     ['Relatório de Vendas'],
     [`Período: ${periodo.startDate} a ${periodo.endDate}`],
+    ['* Faturamento e margem calculados SEM impostos (pagos pelo cliente)'],
     [],
     ['Métrica', 'Valor'],
     ['Total de Vendas', data.resumo.totalVendas],
-    ['Faturamento Total', `R$ ${data.resumo.faturamentoTotal.toFixed(2)}`],
-    ['Ticket Médio', `R$ ${data.resumo.ticketMedio.toFixed(2)}`],
-    ['Total Impostos', `R$ ${data.resumo.totalImpostos.toFixed(2)}`],
+    ['Faturamento Total (sem impostos)', `R$ ${data.resumo.faturamentoTotal.toFixed(2)}`],
+    ['Ticket Médio (sem impostos)', `R$ ${data.resumo.ticketMedio.toFixed(2)}`],
+    ['Total Impostos (pagos pelo cliente)', `R$ ${data.resumo.totalImpostos.toFixed(2)}`],
     ['Custo Total', `R$ ${data.resumo.custoTotal.toFixed(2)}`],
-    ['Margem de Lucro', `${data.resumo.margemLucro.toFixed(2)}%`],
+    ['Margem de Lucro (sem impostos)', `${data.resumo.margemLucro.toFixed(2)}%`],
   ]
   const resumoSheet = XLSX.utils.aoa_to_sheet(resumoData)
   XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo')

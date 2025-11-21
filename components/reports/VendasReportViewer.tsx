@@ -167,14 +167,14 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
         {(metricas.incluirFaturamento === true) && (
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Faturamento Total</CardDescription>
+              <CardDescription>Faturamento Total (sem impostos)</CardDescription>
               <CardTitle className="text-3xl">
                 {formatCurrency(resumo.faturamentoTotal)}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Valor total faturado
+                Receita sem impostos (pagos pelo cliente)
               </p>
             </CardContent>
           </Card>
@@ -183,7 +183,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
         {(metricas.incluirTicketMedio === true) && (
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Ticket Médio</CardDescription>
+              <CardDescription>Ticket Médio (sem impostos)</CardDescription>
               <CardTitle className="text-3xl">
                 {formatCurrency(resumo.ticketMedio)}
               </CardTitle>
@@ -206,7 +206,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                IPI + ST
+                IPI + ST (pagos pelo cliente)
               </p>
             </CardContent>
           </Card>
@@ -231,14 +231,14 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
         {(metricas.incluirMargemLucro === true) && (
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Margem de Lucro</CardDescription>
+              <CardDescription>Margem de Lucro (sem impostos)</CardDescription>
               <CardTitle className="text-3xl">
                 {resumo.margemLucro.toFixed(2)}%
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Percentual de lucratividade
+                Calculada sobre receita sem impostos
               </p>
             </CardContent>
           </Card>
@@ -253,7 +253,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
             <CardHeader>
               <CardTitle>Vendas ao Longo do Tempo</CardTitle>
               <CardDescription>
-                Quantidade e faturamento diário
+                Quantidade e faturamento diário (sem impostos)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -306,7 +306,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
             <CardHeader>
               <CardTitle>Vendas por Vendedor</CardTitle>
               <CardDescription>
-                Top vendedores do período
+                Top vendedores do período (faturamento sem impostos)
               </CardDescription>
             </CardHeader>
             <CardContent>
