@@ -121,12 +121,22 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     // Calcular resumo
     const totalVendas = vendas.length
-    const faturamentoTotal = vendas.reduce((sum, v) => sum + (v.valor_final || 0), 0)
-    const ticketMedio = faturamentoTotal / totalVendas
+    
+    // Calcular impostos separadamente
     const totalIPI = vendas.reduce((sum, v) => sum + (v.total_ipi || 0), 0)
     const totalST = vendas.reduce((sum, v) => sum + (v.total_st || 0), 0)
     const totalICMS = vendas.reduce((sum, v) => sum + (v.total_icms || 0), 0)
     const totalImpostos = totalIPI + totalST
+    
+    // IMPORTANTE: Faturamento SEM impostos (impostos são pagos pelo cliente, não entram no faturamento da empresa)
+    // Prioridade: total_produtos_liquido > (valor_final - impostos)
+    const faturamentoTotal = vendas.reduce((sum, v) => {
+      // Usar total_produtos_liquido se disponível, senão calcular valor_final - impostos
+      const faturamentoVenda = v.total_produtos_liquido || (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0))
+      return sum + faturamentoVenda
+    }, 0)
+    
+    const ticketMedio = faturamentoTotal / totalVendas
 
     // Calcular custo total (soma dos custos dos produtos vendidos)
     let custoTotal = 0
@@ -140,18 +150,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }
     })
 
-    // Calcular margem de lucro
-    const lucroTotal = faturamentoTotal - custoTotal - totalImpostos
+    // Calcular margem de lucro (SEM considerar impostos, pois não fazem parte do faturamento da empresa)
+    const lucroTotal = faturamentoTotal - custoTotal
     const margemLucro = faturamentoTotal > 0 ? (lucroTotal / faturamentoTotal) * 100 : 0
 
-    // Vendas por dia
+    // Vendas por dia (faturamento SEM impostos)
     const vendasPorDiaMap = new Map<string, { quantidade: number; faturamento: number }>()
     vendas.forEach(venda => {
       const data = venda.data_venda.split('T')[0]
       const existing = vendasPorDiaMap.get(data) || { quantidade: 0, faturamento: 0 }
+      // Faturamento sem impostos (usar total_produtos_liquido ou valor_final - impostos)
+      const faturamentoVenda = venda.total_produtos_liquido || (venda.valor_final - (venda.total_ipi || 0) - (venda.total_st || 0))
       vendasPorDiaMap.set(data, {
         quantidade: existing.quantidade + 1,
-        faturamento: existing.faturamento + (venda.valor_final || 0),
+        faturamento: existing.faturamento + faturamentoVenda,
       })
     })
 
@@ -163,7 +175,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }))
       .sort((a, b) => a.data.localeCompare(b.data))
 
-    // Vendas por vendedor
+    // Vendas por vendedor (faturamento SEM impostos)
     const vendasPorVendedorMap = new Map<number, { nome: string; quantidade: number; faturamento: number }>()
     vendas.forEach(venda => {
       if (venda.vendedor) {
@@ -173,10 +185,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         const vendedorId = vendedor.id
         const vendedorNome = vendedor.nome
         const existing = vendasPorVendedorMap.get(vendedorId) || { nome: vendedorNome, quantidade: 0, faturamento: 0 }
+        // Faturamento sem impostos (usar total_produtos_liquido ou valor_final - impostos)
+        const faturamentoVenda = venda.total_produtos_liquido || (venda.valor_final - (venda.total_ipi || 0) - (venda.total_st || 0))
         vendasPorVendedorMap.set(vendedorId, {
           nome: vendedorNome,
           quantidade: existing.quantidade + 1,
-          faturamento: existing.faturamento + (venda.valor_final || 0),
+          faturamento: existing.faturamento + faturamentoVenda,
         })
       }
     })
@@ -215,12 +229,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
               precoCustoMedio: 0
             }
 
-            // Calcular faturamento com fallbacks apropriados
+            // Calcular faturamento com fallbacks apropriados (SEM impostos - impostos são pagos pelo cliente)
             let faturamentoItem = 0
-            // Prioridade: total_item > subtotal_liquido > subtotal_bruto > subtotal > preco_unitario
-            if (item.total_item !== null && item.total_item !== undefined && item.total_item !== 0) {
-              faturamentoItem = item.total_item
-            } else if (item.subtotal_liquido !== null && item.subtotal_liquido !== undefined && item.subtotal_liquido !== 0) {
+            // Prioridade: subtotal_liquido > subtotal_bruto > subtotal > preco_unitario
+            // NÃO usar total_item pois inclui impostos
+            if (item.subtotal_liquido !== null && item.subtotal_liquido !== undefined && item.subtotal_liquido !== 0) {
               faturamentoItem = item.subtotal_liquido
             } else if (item.subtotal_bruto !== null && item.subtotal_bruto !== undefined && item.subtotal_bruto !== 0) {
               faturamentoItem = item.subtotal_bruto
