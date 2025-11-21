@@ -168,14 +168,14 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Receita Total</CardDescription>
+            <CardDescription>Receita Total (sem impostos)</CardDescription>
             <CardTitle className="text-3xl text-green-600">
               {formatCurrency(resumo.receitaTotal)}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground">
-              Faturamento do período
+              Faturamento sem impostos (pagos pelo cliente)
             </p>
           </CardContent>
         </Card>
@@ -196,7 +196,7 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Lucro Líquido</CardDescription>
+            <CardDescription>Lucro Líquido (sem impostos)</CardDescription>
             <CardTitle className={`text-3xl ${resumo.lucroLiquido >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
               {formatCurrency(resumo.lucroLiquido)}
             </CardTitle>
@@ -214,13 +214,13 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
         <CardHeader>
           <CardTitle>DRE - Demonstração do Resultado do Exercício</CardTitle>
           <CardDescription>
-            Estrutura completa de receitas, custos e despesas
+            Receitas e custos (impostos pagos pelo cliente não entram no cálculo)
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex justify-between items-center border-b pb-2">
-              <span className="font-semibold">Receita Bruta</span>
+              <span className="font-semibold">Receita Bruta (sem impostos)</span>
               <span className="font-mono text-green-600">{formatCurrency(dre.receitaBruta)}</span>
             </div>
             <div className="flex justify-between items-center pl-4 text-sm">
@@ -247,9 +247,12 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
               <span>(=) Lucro Operacional</span>
               <span className="font-mono text-blue-600">{formatCurrency(dre.lucroOperacional)}</span>
             </div>
-            <div className="flex justify-between items-center pl-4 text-sm">
-              <span className="text-muted-foreground">(-) Impostos</span>
-              <span className="font-mono text-red-600">{formatCurrency(dre.impostos)}</span>
+            <div className="flex justify-between items-center pl-4 text-sm bg-muted/30 py-2 rounded">
+              <span className="text-muted-foreground">(i) Impostos (IPI + ST)</span>
+              <span className="font-mono text-orange-600">{formatCurrency(dre.impostos)}</span>
+            </div>
+            <div className="pl-4 text-xs text-muted-foreground italic">
+              * Impostos são pagos pelo cliente e não entram no cálculo da empresa
             </div>
             <div className="flex justify-between items-center border-t-2 border-black pt-2 font-bold text-lg">
               <span>(=) Lucro Líquido</span>
