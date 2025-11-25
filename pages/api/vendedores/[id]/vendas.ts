@@ -2,9 +2,29 @@ import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
+interface VendaDatabase {
+  id: number;
+  cliente_id: number | null;
+  numero_venda?: string;
+  data_venda: string;
+  valor_final: number | string;
+  status: string;
+  forma_pagamento_id?: number | null;
+}
+
+interface ClienteDatabase {
+  id: number;
+  nome: string;
+}
+
+interface FormaPagamentoDatabase {
+  id: number;
+  nome: string;
+}
+
 interface VendedorVenda {
   id: number;
-  numero_venda: string;
+  numero_venda: string | undefined;
   cliente: {
     id: number;
     nome: string;
@@ -100,8 +120,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     if (error) throw error;
 
     // Buscar dados relacionados (clientes e formas de pagamento) separadamente
-    const clienteIds = Array.from(new Set((vendas || []).map((v: any) => v.cliente_id).filter(Boolean)));
-    const formaPagamentoIds = Array.from(new Set((vendas || []).map((v: any) => v.forma_pagamento_id).filter(Boolean)));
+    const clienteIds = Array.from(new Set((vendas || []).map((v: VendaDatabase) => v.cliente_id).filter(Boolean)));
+    const formaPagamentoIds = Array.from(new Set((vendas || []).map((v: VendaDatabase) => v.forma_pagamento_id).filter(Boolean)));
 
     // Buscar clientes
     const clientesMap: Record<number, { id: number; nome: string }> = {};
@@ -111,7 +131,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .select('id, nome')
         .in('id', clienteIds);
 
-      (clientes || []).forEach((c: any) => {
+      (clientes || []).forEach((c: ClienteDatabase) => {
         clientesMap[c.id] = { id: c.id, nome: c.nome };
       });
     }
@@ -124,13 +144,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .select('id, nome')
         .in('id', formaPagamentoIds);
 
-      (formasPagamento || []).forEach((fp: any) => {
+      (formasPagamento || []).forEach((fp: FormaPagamentoDatabase) => {
         formasPagamentoMap[fp.id] = fp.nome;
       });
     }
 
     // Formatar dados
-    const vendasFormatadas: VendedorVenda[] = (vendas || []).map((venda: any) => ({
+    const vendasFormatadas: VendedorVenda[] = (vendas || []).map((venda: VendaDatabase) => ({
       id: venda.id,
       numero_venda: venda.numero_venda,
       cliente: venda.cliente_id && clientesMap[venda.cliente_id]

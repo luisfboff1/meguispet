@@ -2,6 +2,7 @@ import type { NextApiResponse } from 'next';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 import { withValidation } from '@/lib/validation-middleware';
 import { clienteCreateSchema, clienteUpdateSchema, ClienteInput, ClienteUpdateInput } from '@/lib/validations/cliente.schema';
+import { z } from 'zod';
 
 /**
  * GET handler - List or get single cliente
@@ -219,6 +220,33 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     return res.status(405).json({ success: false, message: 'Método não permitido' });
   } catch (error) {
     console.error('[API /clientes] Error:', error);
+
+    // Se for erro de validação Zod, retornar detalhes específicos
+    if (error && typeof error === 'object' && 'issues' in error) {
+      const zodError = error as z.ZodError;
+      console.error('[API /clientes] Validation errors:', zodError.issues);
+      return res.status(400).json({
+        success: false,
+        message: 'Dados inválidos',
+        errors: zodError.issues.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+        })),
+      });
+    }
+
+    // Se for erro do Supabase, retornar detalhes
+    if (error && typeof error === 'object' && 'code' in error) {
+      console.error('[API /clientes] Database error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro no banco de dados',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        code: (error as { code: string }).code,
+      });
+    }
+
+    // Erro genérico
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

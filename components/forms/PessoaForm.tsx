@@ -273,7 +273,7 @@ export default function PessoaForm({
                 id="inscricao_estadual"
                 value={formData.inscricao_estadual ?? ''}
                 onChange={(event) => setFormData(prev => ({ ...prev, inscricao_estadual: event.target.value }))}
-                placeholder="Inscrição Estadual"
+                placeholder="Inscrição Estadual (opcional)"
               />
             </div>
             {showVendedorField && (

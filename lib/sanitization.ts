@@ -63,7 +63,7 @@ export function sanitizeText(text: string): string {
  * @param input - Object, array, or primitive to sanitize
  * @returns Sanitized copy of the input
  */
-export function sanitizeInput(input: any): any {
+export function sanitizeInput<T = unknown>(input: T): T {
   // Handle null and undefined
   if (input === null || input === undefined) {
     return input;
@@ -71,23 +71,23 @@ export function sanitizeInput(input: any): any {
 
   // Handle strings
   if (typeof input === 'string') {
-    return sanitizeHTML(input);
+    return sanitizeHTML(input) as T;
   }
 
   // Handle arrays
   if (Array.isArray(input)) {
-    return input.map(sanitizeInput);
+    return input.map(sanitizeInput) as T;
   }
 
   // Handle objects
   if (typeof input === 'object') {
-    const sanitized: any = {};
+    const sanitized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(input)) {
       // Sanitize the key as well
       const sanitizedKey = sanitizeText(key);
       sanitized[sanitizedKey] = sanitizeInput(value);
     }
-    return sanitized;
+    return sanitized as T;
   }
 
   // Return primitives as-is (numbers, booleans, etc.)

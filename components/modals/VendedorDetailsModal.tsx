@@ -229,7 +229,7 @@ export function VendedorDetailsModal({
 
           {/* Filtro de Período */}
           <div className="flex items-center gap-4">
-            <Select value={periodo} onValueChange={(value: any) => setPeriodo(value)}>
+            <Select value={periodo} onValueChange={(value) => setPeriodo(value as '7d' | '30d' | '90d')}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Selecione o período" />
               </SelectTrigger>
@@ -371,9 +371,9 @@ export function VendedorDetailsModal({
                         <YAxis yAxisId="right" orientation="right" />
                         <Tooltip
                           labelFormatter={(value) => formatDate(value)}
-                          formatter={(value: any, name: string) => {
+                          formatter={(value: number | string, name: string) => {
                             if (name === 'faturamento') {
-                              return [formatCurrency(value), 'Faturamento']
+                              return [formatCurrency(Number(value)), 'Faturamento']
                             }
                             return [value, 'Quantidade']
                           }}

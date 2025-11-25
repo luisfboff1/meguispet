@@ -31,7 +31,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 // Apply rate limiting only to POST (login) endpoint
 // POST uses email-based rate limiting, GET uses IP-based
-export default function (req: NextApiRequest, res: NextApiResponse) {
+const authHandler = function (req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     // Login: 5 attempts per 15 minutes per email
     return withAuthRateLimit(RateLimitPresets.LOGIN, handler)(req, res);
@@ -42,6 +42,8 @@ export default function (req: NextApiRequest, res: NextApiResponse) {
     return handler(req, res);
   }
 }
+
+export default authHandler;
 
 const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
   const { email, password } = req.body;

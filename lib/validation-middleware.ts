@@ -28,7 +28,7 @@ export interface ApiError {
  */
 export function validateRequestBody<T>(
   schema: ZodSchema<T>,
-  body: any
+  body: unknown
 ): { success: true; data: T } | { success: false; errors: ValidationError[] } {
   try {
     const validatedData = schema.parse(body);
@@ -114,7 +114,7 @@ export function withValidation<T, TReq extends NextApiRequest = NextApiRequest>(
  */
 export function validateQueryParams<T>(
   schema: ZodSchema<T>,
-  query: any
+  query: unknown
 ): { success: true; data: T } | { success: false; errors: ValidationError[] } {
   return validateRequestBody(schema, query);
 }

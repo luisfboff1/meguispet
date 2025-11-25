@@ -28,7 +28,7 @@ export const clienteSchema = z.object({
   nome: z.string()
     .min(3, 'Nome deve ter no mínimo 3 caracteres')
     .max(255, 'Nome deve ter no máximo 255 caracteres')
-    .regex(/^[a-zA-ZÀ-ÿ\s.'-]+$/, 'Nome deve conter apenas letras e espaços')
+    .regex(/^[a-zA-ZÀ-ÿ0-9\s.'\-&()]+$/, 'Nome contém caracteres inválidos')
     .trim(),
 
   tipo: z.enum(['cliente', 'fornecedor', 'ambos'], {
@@ -38,7 +38,11 @@ export const clienteSchema = z.object({
   email: emailSchema,
 
   telefone: z.string()
-    .regex(PHONE_REGEX, 'Telefone inválido. Formato: (XX) XXXXX-XXXX')
+    .refine((phone) => {
+      if (!phone || phone === '') return true; // Optional
+      const cleanPhone = phone.replace(/\D/g, '');
+      return cleanPhone.length >= 10 && cleanPhone.length <= 11;
+    }, 'Telefone deve ter 10 ou 11 dígitos')
     .optional()
     .or(z.literal('')),
 
@@ -61,13 +65,20 @@ export const clienteSchema = z.object({
     .or(z.literal('')),
 
   estado: z.string()
-    .length(2, 'Estado deve ter 2 caracteres (UF)')
-    .toUpperCase()
+    .refine((estado) => {
+      if (!estado || estado === '') return true; // Optional
+      return estado.length === 2;
+    }, 'Estado deve ter 2 caracteres (UF)')
+    .transform((val) => val ? val.toUpperCase() : val)
     .optional()
     .or(z.literal('')),
 
   cep: z.string()
-    .regex(CEP_REGEX, 'CEP inválido. Formato: XXXXX-XXX')
+    .refine((cep) => {
+      if (!cep || cep === '') return true; // Optional
+      const cleanCep = cep.replace(/\D/g, '');
+      return cleanCep.length === 8;
+    }, 'CEP deve ter 8 dígitos')
     .optional()
     .or(z.literal('')),
 

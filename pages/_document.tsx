@@ -6,7 +6,6 @@ export default function Document() {
       <Head>
         {/* Meta tags globais */}
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Sistema de gestão MeguisPet - Controle vendas, estoque e clientes" />
   <meta name="author" content="MeguisPet" />
         
