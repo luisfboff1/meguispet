@@ -69,7 +69,8 @@ export default function DashboardPage() {
   const lastFetchRef = useRef<number>(0)
   const isFetchingRef = useRef<boolean>(false)
 
-  // Load chart data for selected period
+  // Load chart data for selected period (separate from full dashboard load)
+  // This allows changing the chart period without reloading metrics and top products
   const loadChartData = useCallback(async (days: 7 | 14 | 30) => {
     try {
       setChartLoading(true)
@@ -139,6 +140,7 @@ export default function DashboardPage() {
       // Fallback para dados vazios se API falhar
       setMetrics([])
       setTopProducts([])
+      setVendasPeriodo([])
     } finally {
       setLoading(false)
       isFetchingRef.current = false
