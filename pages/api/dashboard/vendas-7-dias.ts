@@ -2,14 +2,24 @@ import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
-// Simple in-memory cache (5 minutes TTL)
+// Simple in-memory cache (1 minute TTL for fresher data)
 // Reset cache to force reload with new data structure
 let vendas7DiasCache: { data: unknown; timestamp: number } | null = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 1 * 60 * 1000; // 1 minute (dados mais frescos)
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   // Check cache first
   const now = Date.now();
+
+  // Invalidar cache ao trocar de dia
+  if (vendas7DiasCache) {
+    const cacheDate = new Date(vendas7DiasCache.timestamp).toISOString().split('T')[0];
+    const currentDate = new Date().toISOString().split('T')[0];
+    if (cacheDate !== currentDate) {
+      vendas7DiasCache = null; // Limpa cache ao trocar de dia
+    }
+  }
+
   if (vendas7DiasCache && (now - vendas7DiasCache.timestamp) < CACHE_TTL) {
     return res.status(200).json(vendas7DiasCache.data);
   }
@@ -18,8 +28,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const supabase = req.supabaseClient;
 
   try {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // -6 = inclui hoje = 7 dias total
+    sevenDaysAgo.setHours(0, 0, 0, 0); // Início do dia
 
     // Buscar vendas com itens para calcular custos
     const { data: vendas, error } = await supabase
@@ -27,6 +39,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .select(`
         data_venda,
         valor_final,
+        total_produtos_liquido,
         total_ipi,
         total_st,
         itens:vendas_itens(
@@ -34,7 +47,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           produto:produtos(preco_custo)
         )
       `)
-      .gte('data_venda', sevenDaysAgo.toISOString())
+      .gte('data_venda', sevenDaysAgo.toISOString().split('T')[0])
       .neq('status', 'cancelado')
       .order('data_venda', { ascending: true });
 
@@ -48,6 +61,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     interface VendaRaw {
       data_venda: string;
       valor_final: number;
+      total_produtos_liquido: number;
       total_ipi: number;
       total_st: number;
       itens: ItemRaw[];
@@ -67,8 +81,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         acc[date] = { data: date, vendas: 0, receita: 0, despesas: 0, impostos: 0 };
       }
 
-      // Receita e contagem
-      acc[date].receita += parseFloat(String(venda.valor_final)) || 0;
+      // Receita líquida SEM impostos (consistente com relatórios)
+      const receitaLiquida = venda.total_produtos_liquido ||
+        (venda.valor_final - (venda.total_ipi || 0) - (venda.total_st || 0));
+      acc[date].receita += parseFloat(String(receitaLiquida)) || 0;
       acc[date].vendas += 1;
 
       // Impostos (IPI + ST)

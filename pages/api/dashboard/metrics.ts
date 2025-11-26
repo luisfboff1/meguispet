@@ -32,16 +32,24 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     ] = await Promise.all([
       supabase.from('vendas').select('*', { count: 'exact', head: true }).neq('status', 'cancelado'),
       supabase.from('vendas').select('*', { count: 'exact', head: true }).gte('data_venda', firstDayOfMonth).neq('status', 'cancelado'),
-      supabase.from('vendas').select('valor_final').eq('status', 'pago'),
-      supabase.from('vendas').select('valor_final').eq('status', 'pago').gte('data_venda', firstDayOfMonth),
+      supabase.from('vendas').select('valor_final, total_ipi, total_st, total_produtos_liquido').eq('status', 'pago'),
+      supabase.from('vendas').select('valor_final, total_ipi, total_st, total_produtos_liquido').eq('status', 'pago').gte('data_venda', firstDayOfMonth),
       supabase.from('clientes_fornecedores').select('*', { count: 'exact', head: true }).eq('ativo', true),
       supabase.from('produtos').select('*', { count: 'exact', head: true }).eq('ativo', true),
       supabase.from('produtos').select('*', { count: 'exact', head: true }).filter('estoque', 'lte', 'estoque_minimo').eq('ativo', true),
       supabase.from('vendas').select('*', { count: 'exact', head: true }).eq('status', 'pendente')
     ]);
 
-    const receitaTotalValue = receitaTotal?.reduce((sum, v) => sum + (parseFloat(String(v.valor_final)) || 0), 0) || 0;
-    const receitaMesValue = receitaMes?.reduce((sum, v) => sum + (parseFloat(String(v.valor_final)) || 0), 0) || 0;
+    // Receita Total = Faturamento SEM impostos (consistente com relatórios)
+    const receitaTotalValue = receitaTotal?.reduce((sum, v) => {
+      const receita = v.total_produtos_liquido || (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0));
+      return sum + (parseFloat(String(receita)) || 0);
+    }, 0) || 0;
+
+    const receitaMesValue = receitaMes?.reduce((sum, v) => {
+      const receita = v.total_produtos_liquido || (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0));
+      return sum + (parseFloat(String(receita)) || 0);
+    }, 0) || 0;
 
     const metrics = [
       {
