@@ -110,6 +110,14 @@ export function useAuth() {
             const profileEmail = response.data.email?.toLowerCase()
             const sessionEmail = session.user.email?.toLowerCase()
 
+            // Log warning if supabase_user_id is missing (falling back to email validation only)
+            if (!profileUserId) {
+              console.warn('⚠️ Profile missing supabase_user_id, using email-only validation:', {
+                profileEmail,
+                sessionEmail
+              })
+            }
+
             // Verify user ID match (primary check)
             if (profileUserId && sessionUserId && profileUserId !== sessionUserId) {
               console.error('🚨 SECURITY ALERT: User mismatch in checkAuth!', {
@@ -203,6 +211,14 @@ export function useAuth() {
         const currentUserId = user.supabase_user_id?.toString()
         const sessionEmail = session.user.email?.toLowerCase()
         const currentEmail = user.email?.toLowerCase()
+
+        // Log warning if supabase_user_id is missing (falling back to email validation only)
+        if (!currentUserId) {
+          console.warn('⚠️ Periodic check: User missing supabase_user_id, using email-only validation:', {
+            currentEmail,
+            sessionEmail
+          })
+        }
 
         // Check user ID mismatch (if we have both IDs)
         if (currentUserId && sessionUserId !== currentUserId) {

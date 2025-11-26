@@ -82,6 +82,16 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     // Return session token and user data
+    // Note: supabase_user_id fallback is for legacy users that don't have it stored yet
+    const resolvedSupabaseUserId = userProfile.supabase_user_id || data.session.user.id;
+    if (!userProfile.supabase_user_id) {
+      console.warn('[AUTH] User missing supabase_user_id in database, using session ID:', {
+        userId: userProfile.id,
+        email: userProfile.email,
+        sessionUserId: data.session.user.id
+      });
+    }
+
     return res.status(200).json({
       success: true,
       data: {
@@ -95,7 +105,7 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
           role: userProfile.role,
           permissoes: userProfile.permissoes,
           ativo: userProfile.ativo,
-          supabase_user_id: userProfile.supabase_user_id || data.session.user.id,
+          supabase_user_id: resolvedSupabaseUserId,
         },
       },
       message: 'Login realizado com sucesso',
@@ -134,6 +144,16 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
       });
     }
 
+    // Note: supabase_user_id fallback is for legacy users that don't have it stored yet
+    const resolvedSupabaseUserId = userProfile.supabase_user_id || supabaseUser.id;
+    if (!userProfile.supabase_user_id) {
+      console.warn('[AUTH] User missing supabase_user_id in database (GET profile):', {
+        userId: userProfile.id,
+        email: userProfile.email,
+        sessionUserId: supabaseUser.id
+      });
+    }
+
     return res.status(200).json({
       success: true,
       data: {
@@ -143,7 +163,7 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
         role: userProfile.role,
         permissoes: userProfile.permissoes,
         ativo: userProfile.ativo,
-        supabase_user_id: userProfile.supabase_user_id || supabaseUser.id,
+        supabase_user_id: resolvedSupabaseUserId,
       },
       message: 'Perfil carregado com sucesso',
     });

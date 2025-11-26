@@ -36,6 +36,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    // Note: supabase_user_id fallback is for legacy users that don't have it stored yet
+    const resolvedSupabaseUserId = userProfile.supabase_user_id || supabaseUser.id;
+    if (!userProfile.supabase_user_id) {
+      console.warn('[AUTH] User missing supabase_user_id in database (profile endpoint):', {
+        userId: userProfile.id,
+        email: userProfile.email,
+        sessionUserId: supabaseUser.id
+      });
+    }
+
     return res.status(200).json({
       success: true,
       data: {
@@ -45,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         role: userProfile.role,
         permissoes: userProfile.permissoes,
         ativo: userProfile.ativo,
-        supabase_user_id: userProfile.supabase_user_id || supabaseUser.id,
+        supabase_user_id: resolvedSupabaseUserId,
       },
       message: 'Perfil carregado com sucesso',
     });
