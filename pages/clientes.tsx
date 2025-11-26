@@ -112,21 +112,29 @@ export default function ClientesPage() {
         setToast({ message: editingCliente ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!', type: 'success' })
       } else {
         // Extrair erros de validação se existirem
+        interface ValidationError { field: string; message: string }
+        interface ErrorResponse { message?: string; errors?: ValidationError[] }
+
         let errorMsg = response?.message || 'Erro ao salvar cliente. Tente novamente.'
-        if ((response as any)?.errors && Array.isArray((response as any).errors)) {
-          const errorFields = (response as any).errors.map((err: any) => `${err.field}: ${err.message}`).join('\n')
+        const responseWithErrors = response as ErrorResponse
+        if (responseWithErrors?.errors && Array.isArray(responseWithErrors.errors)) {
+          const errorFields = responseWithErrors.errors.map((err: ValidationError) => `${err.field}: ${err.message}`).join('\n')
           errorMsg = `${errorMsg}\n\n${errorFields}`
         }
         setToast({ message: errorMsg, type: 'error' })
       }
     } catch (error: unknown) {
+      interface ValidationError { field: string; message: string }
+      interface ErrorData { message?: string; errors?: ValidationError[] }
+      interface ErrorObject { response?: { data?: ErrorData }; message?: string }
+
       let msg = 'Erro ao salvar cliente. Tente novamente.'
       if (typeof error === 'object' && error !== null) {
-        const errObj = error as { response?: { data?: { message?: string, errors?: any[] } }, message?: string }
+        const errObj = error as ErrorObject
 
         // Tentar extrair erros de validação da resposta
         if (errObj.response?.data?.errors && Array.isArray(errObj.response.data.errors)) {
-          const errorFields = errObj.response.data.errors.map((err: any) => `• ${err.field}: ${err.message}`).join('\n')
+          const errorFields = errObj.response.data.errors.map((err: ValidationError) => `• ${err.field}: ${err.message}`).join('\n')
           msg = `Dados inválidos:\n${errorFields}`
         } else if (errObj.response?.data?.message) {
           msg = errObj.response.data.message

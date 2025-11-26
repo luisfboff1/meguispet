@@ -9,6 +9,7 @@ export interface Usuario {
   role: 'admin' | 'convidado'
   permissoes: Record<string, unknown>
   ativo: boolean
+  supabase_user_id?: string
   created_at: string
   updated_at: string
 }

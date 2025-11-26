@@ -1173,7 +1173,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                     const newObservacoes = semImpostos
                       ? (prev.observacoes ? `${prev.observacoes}\n\nPEDIDO SEM IMPOSTOS` : 'PEDIDO SEM IMPOSTOS')
                       : prev.observacoes.replace(/\n*PEDIDO SEM IMPOSTOS\n*/g, '').trim()
-                    
+
                     return {
                       ...prev,
                       sem_impostos: semImpostos,
