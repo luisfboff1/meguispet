@@ -20,11 +20,13 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose })
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded shadow-lg text-white ${bgColors[type]} animate-fade-in`}
+      className={`fixed bottom-6 right-6 z-[9999] px-4 py-3 rounded shadow-lg text-white ${bgColors[type]} animate-fade-in max-w-md`}
       role="alert"
     >
-      <span>{message}</span>
-      <button className="ml-4 text-white/80 hover:text-white" onClick={onClose}>&times;</button>
+      <div className="flex items-start gap-4">
+        <span className="whitespace-pre-line flex-1">{message}</span>
+        <button className="text-white/80 hover:text-white text-xl leading-none" onClick={onClose}>&times;</button>
+      </div>
     </div>
   );
 };

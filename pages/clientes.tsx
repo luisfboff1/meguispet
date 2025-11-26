@@ -3,13 +3,15 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Download, 
-  Eye, 
-  Edit, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Edit,
+  Trash2,
+  RotateCcw,
   Users,
   Phone,
   Mail,
@@ -27,7 +29,7 @@ export default function ClientesPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [tipoFiltro, setTipoFiltro] = useState<'todos' | 'cliente' | 'fornecedor' | 'ambos'>('cliente')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [showInactive, setShowInactive] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [formLoading, setFormLoading] = useState(false)
@@ -35,16 +37,20 @@ export default function ClientesPage() {
 
   useEffect(() => {
     loadClientes()
-  }, [currentPage])
+  }, [showInactive])
 
   const loadClientes = async () => {
     try {
       setLoading(true)
-      const response = await clientesService.getAll(currentPage, 10)
+      // Carregar TODOS os clientes de uma vez (limit = 1000)
+      // Se showInactive for true, inclui clientes inativos
+      const response = await clientesService.getAll(1, 1000, showInactive)
+
       if (response.success && response.data) {
         setClientes(response.data)
       }
     } catch (error) {
+      console.error('Erro ao carregar clientes:', error)
     } finally {
       setLoading(false)
     }
@@ -89,6 +95,7 @@ export default function ClientesPage() {
   const handleSalvarCliente = async (clienteData: ClienteFormValues) => {
     try {
       setFormLoading(true)
+
       let response
       if (editingCliente) {
         // Editar cliente existente
@@ -97,19 +104,31 @@ export default function ClientesPage() {
         // Criar novo cliente
         response = await clientesService.create(clienteData)
       }
+
       if (response && response.success) {
         await loadClientes()
         setShowForm(false)
         setEditingCliente(null)
         setToast({ message: editingCliente ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!', type: 'success' })
       } else {
-        setToast({ message: response?.message || 'Erro ao salvar cliente. Tente novamente.', type: 'error' })
+        // Extrair erros de validação se existirem
+        let errorMsg = response?.message || 'Erro ao salvar cliente. Tente novamente.'
+        if ((response as any)?.errors && Array.isArray((response as any).errors)) {
+          const errorFields = (response as any).errors.map((err: any) => `${err.field}: ${err.message}`).join('\n')
+          errorMsg = `${errorMsg}\n\n${errorFields}`
+        }
+        setToast({ message: errorMsg, type: 'error' })
       }
     } catch (error: unknown) {
       let msg = 'Erro ao salvar cliente. Tente novamente.'
       if (typeof error === 'object' && error !== null) {
-        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
-        if (errObj.response?.data?.message) {
+        const errObj = error as { response?: { data?: { message?: string, errors?: any[] } }, message?: string }
+
+        // Tentar extrair erros de validação da resposta
+        if (errObj.response?.data?.errors && Array.isArray(errObj.response.data.errors)) {
+          const errorFields = errObj.response.data.errors.map((err: any) => `• ${err.field}: ${err.message}`).join('\n')
+          msg = `Dados inválidos:\n${errorFields}`
+        } else if (errObj.response?.data?.message) {
           msg = errObj.response.data.message
         } else if (typeof errObj.message === 'string') {
           msg = errObj.message
@@ -126,6 +145,64 @@ export default function ClientesPage() {
     setEditingCliente(null)
   }
 
+  const handleDeletarCliente = async (cliente: Cliente) => {
+    if (!confirm(`Tem certeza que deseja desativar o cliente "${cliente.nome}"?`)) {
+      return
+    }
+
+    try {
+      const response = await clientesService.delete(cliente.id)
+
+      if (response && response.success) {
+        await loadClientes()
+        setToast({ message: 'Cliente desativado com sucesso!', type: 'success' })
+      } else {
+        setToast({ message: response?.message || 'Erro ao desativar cliente.', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Erro ao desativar cliente:', error)
+      let msg = 'Erro ao desativar cliente. Tente novamente.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
+        }
+      }
+      setToast({ message: msg, type: 'error' })
+    }
+  }
+
+  const handleReativarCliente = async (cliente: Cliente) => {
+    if (!confirm(`Tem certeza que deseja reativar o cliente "${cliente.nome}"?`)) {
+      return
+    }
+
+    try {
+      const response = await clientesService.reactivate(cliente.id)
+
+      if (response && response.success) {
+        await loadClientes()
+        setToast({ message: 'Cliente reativado com sucesso!', type: 'success' })
+      } else {
+        setToast({ message: response?.message || 'Erro ao reativar cliente.', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Erro ao reativar cliente:', error)
+      let msg = 'Erro ao reativar cliente. Tente novamente.'
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
+        if (errObj.response?.data?.message) {
+          msg = errObj.response.data.message
+        } else if (typeof errObj.message === 'string') {
+          msg = errObj.message
+        }
+      }
+      setToast({ message: msg, type: 'error' })
+    }
+  }
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
@@ -137,40 +214,80 @@ export default function ClientesPage() {
       id: "acoes",
       header: () => <div className="text-sm font-medium">Ações</div>,
       enableSorting: false,
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" title="Ver detalhes">
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleEditarCliente(row.original)}
-            title="Editar cliente"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const isInactive = !row.original.ativo
+        return (
+          <div className="flex items-center gap-2">
+            {!isInactive && (
+              <>
+                <Button variant="ghost" size="sm" title="Ver detalhes">
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditarCliente(row.original)}
+                  title="Editar cliente"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeletarCliente(row.original)}
+                  title="Desativar cliente"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            {isInactive && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleReativarCliente(row.original)}
+                title="Reativar cliente"
+                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+              >
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Reativar
+              </Button>
+            )}
+          </div>
+        )
+      },
     },
     {
       accessorKey: "nome",
       header: ({ column }) => <SortableHeader column={column}>Cliente</SortableHeader>,
-      cell: ({ row }) => (
-        <div className="flex items-center space-x-3 min-w-[200px]">
-          <div className="w-10 h-10 bg-meguispet-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-medium text-meguispet-primary">
-              {getInitials(row.original.nome)}
-            </span>
-          </div>
-          <div>
-            <div className="font-medium text-gray-900">{row.original.nome}</div>
-            <div className="text-sm text-gray-500">
-              Cliente desde {formatDate(row.original.created_at)}
+      cell: ({ row }) => {
+        const isInactive = !row.original.ativo
+        return (
+          <div className="flex items-center space-x-3 min-w-[200px]">
+            <div className={`w-10 h-10 ${isInactive ? 'bg-gray-300' : 'bg-meguispet-primary/10'} rounded-full flex items-center justify-center flex-shrink-0`}>
+              <span className={`text-sm font-medium ${isInactive ? 'text-gray-600' : 'text-meguispet-primary'}`}>
+                {getInitials(row.original.nome)}
+              </span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${isInactive ? 'text-gray-500' : 'text-gray-900'}`}>
+                  {row.original.nome}
+                </span>
+                {isInactive && (
+                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    Inativo
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-gray-500">
+                Cliente desde {formatDate(row.original.created_at)}
+              </div>
             </div>
           </div>
-        </div>
-      ),
+        )
+      },
     },
     {
       accessorKey: "tipo",
@@ -340,6 +457,18 @@ export default function ClientesPage() {
                 <option value="ambos">Clientes+Fornecedores</option>
                 <option value="todos">Todos os registros</option>
               </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="showInactive"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-meguispet-primary focus:ring-meguispet-primary"
+              />
+              <label htmlFor="showInactive" className="text-sm text-gray-700 cursor-pointer">
+                Mostrar inativos
+              </label>
             </div>
           </div>
         </CardContent>

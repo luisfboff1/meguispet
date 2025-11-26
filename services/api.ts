@@ -114,8 +114,8 @@ export const dashboardService = {
 
 // 👥 CLIENTES
 export const clientesService = {
-  async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Cliente>> {
-    const response = await api.get(`/clientes?page=${page}&limit=${limit}`)
+  async getAll(page = 1, limit = 10, includeInactive = false): Promise<PaginatedResponse<Cliente>> {
+    const response = await api.get(`/clientes?page=${page}&limit=${limit}&includeInactive=${includeInactive}`)
     return response.data
   },
 
@@ -136,6 +136,11 @@ export const clientesService = {
 
   async delete(id: number): Promise<ApiResponse> {
     const response = await api.delete(`/clientes?id=${id}`)
+    return response.data
+  },
+
+  async reactivate(id: number): Promise<ApiResponse<Cliente>> {
+    const response = await api.put(`/clientes?id=${id}`, { id, ativo: true })
     return response.data
   }
 }

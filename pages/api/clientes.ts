@@ -9,7 +9,7 @@ import { z } from 'zod';
  */
 const handleGet = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const supabase = req.supabaseClient;
-  const { page = '1', limit = '10', search = '', tipo = '', id } = req.query;
+  const { page = '1', limit = '10', search = '', tipo = '', id, includeInactive = 'false' } = req.query;
 
   // If requesting a specific cliente by ID, return just that one
   if (id) {
@@ -34,6 +34,11 @@ const handleGet = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   let query = supabase
     .from('clientes_fornecedores')
     .select('*, vendedor:vendedores(id, nome)', { count: 'exact' });
+
+  // Por padrão, mostrar apenas clientes ativos
+  if (includeInactive !== 'true') {
+    query = query.eq('ativo', true);
+  }
 
   if (search) {
     const searchStr = `%${search}%`;

@@ -6,13 +6,15 @@ import {
   SortingState,
   VisibilityState,
   ColumnOrderState,
+  PaginationState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { MoreHorizontal, ArrowUpDown, ChevronDown, Columns, GripVertical } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, ChevronDown, Columns, GripVertical, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -38,6 +40,8 @@ interface DataTableProps<TData, TValue> {
   enableSorting?: boolean
   enableColumnVisibility?: boolean
   enableColumnReordering?: boolean
+  enablePagination?: boolean
+  pageSize?: number
   tableId?: string // Unique identifier for localStorage persistence
   mobileVisibleColumns?: string[] // IDs of columns to show on mobile by default
   initialColumnVisibility?: VisibilityState // Initial visibility state for columns
@@ -52,6 +56,8 @@ export function DataTable<TData, TValue>({
   enableSorting = true,
   enableColumnVisibility = true,
   enableColumnReordering = true,
+  enablePagination = true,
+  pageSize = 10,
   tableId = 'default-table',
   mobileVisibleColumns = [],
   initialColumnVisibility = {},
@@ -61,6 +67,10 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(initialColumnVisibility)
   const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
   const [columnResizeMode] = React.useState<ColumnResizeMode>("onChange")
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: pageSize,
+  })
   const [isMobile, setIsMobile] = React.useState(false)
   const isInitializedRef = React.useRef(false)
   const scrollContainerRef = useHorizontalScroll<HTMLDivElement>()
@@ -149,6 +159,8 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
+    onPaginationChange: setPagination,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
     state: {
@@ -156,6 +168,7 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnVisibility,
       columnOrder,
+      pagination,
     },
   })
 
@@ -342,6 +355,43 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {enablePagination && (
+        <div className="flex items-center justify-between px-2">
+          <div className="text-sm text-muted-foreground">
+            Mostrando {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} a{' '}
+            {Math.min(
+              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+              table.getFilteredRowModel().rows.length
+            )}{' '}
+            de {table.getFilteredRowModel().rows.length} resultado(s)
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            <div className="text-sm font-medium">
+              Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Próxima
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
