@@ -45,6 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         role: userProfile.role,
         permissoes: userProfile.permissoes,
         ativo: userProfile.ativo,
+        supabase_user_id: userProfile.supabase_user_id || supabaseUser.id,
       },
       message: 'Perfil carregado com sucesso',
     });

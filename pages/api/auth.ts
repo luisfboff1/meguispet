@@ -95,6 +95,7 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
           role: userProfile.role,
           permissoes: userProfile.permissoes,
           ativo: userProfile.ativo,
+          supabase_user_id: userProfile.supabase_user_id || data.session.user.id,
         },
       },
       message: 'Login realizado com sucesso',
@@ -142,6 +143,7 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
         role: userProfile.role,
         permissoes: userProfile.permissoes,
         ativo: userProfile.ativo,
+        supabase_user_id: userProfile.supabase_user_id || supabaseUser.id,
       },
       message: 'Perfil carregado com sucesso',
     });

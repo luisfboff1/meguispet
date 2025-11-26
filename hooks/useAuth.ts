@@ -107,13 +107,30 @@ export function useAuth() {
             // SECURITY: Verify the profile matches the session
             const profileUserId = response.data.supabase_user_id?.toString()
             const sessionUserId = session.user.id
+            const profileEmail = response.data.email?.toLowerCase()
+            const sessionEmail = session.user.email?.toLowerCase()
 
+            // Verify user ID match (primary check)
             if (profileUserId && sessionUserId && profileUserId !== sessionUserId) {
               console.error('🚨 SECURITY ALERT: User mismatch in checkAuth!', {
                 profileUserId,
-                profileEmail: response.data.email,
+                profileEmail,
                 sessionUserId,
-                sessionEmail: session.user.email
+                sessionEmail
+              })
+
+              // Clear all storage to prevent contamination
+              localStorage.clear()
+              await supabase.auth.signOut()
+              await handleLogout()
+              return
+            }
+
+            // Verify email match (secondary check - catches edge cases where supabase_user_id might be missing)
+            if (profileEmail && sessionEmail && profileEmail !== sessionEmail) {
+              console.error('🚨 SECURITY ALERT: Email mismatch in checkAuth!', {
+                profileEmail,
+                sessionEmail
               })
 
               // Clear all storage to prevent contamination
@@ -184,21 +201,38 @@ export function useAuth() {
         // Verify the session user matches our stored user
         const sessionUserId = session.user.id
         const currentUserId = user.supabase_user_id?.toString()
+        const sessionEmail = session.user.email?.toLowerCase()
+        const currentEmail = user.email?.toLowerCase()
 
-        if (sessionUserId !== currentUserId) {
-          console.error('🚨 SECURITY ALERT: User mismatch detected in periodic check!', {
+        // Check user ID mismatch (if we have both IDs)
+        if (currentUserId && sessionUserId !== currentUserId) {
+          console.error('🚨 SECURITY ALERT: User ID mismatch detected in periodic check!', {
             sessionUserId,
-            sessionEmail: session.user.email,
+            sessionEmail,
             currentUserId,
-            currentEmail: user.email
+            currentEmail
           })
           // Force immediate logout and clear all storage
           localStorage.clear()
           await supabase.auth.signOut()
           await handleLogout()
-        } else {
-          console.log('✅ Security check passed - user is still:', user.email)
+          return
         }
+
+        // Check email mismatch (fallback if supabase_user_id is missing)
+        if (sessionEmail && currentEmail && sessionEmail !== currentEmail) {
+          console.error('🚨 SECURITY ALERT: Email mismatch detected in periodic check!', {
+            sessionEmail,
+            currentEmail
+          })
+          // Force immediate logout and clear all storage
+          localStorage.clear()
+          await supabase.auth.signOut()
+          await handleLogout()
+          return
+        }
+
+        console.log('✅ Security check passed - user is still:', user.email)
       } catch (error) {
         console.error('❌ Error in security check:', error)
       }
@@ -222,16 +256,30 @@ export function useAuth() {
       if (event === 'TOKEN_REFRESHED' && session) {
         // SECURITY: Verify the session belongs to the current user before updating
         if (user && session.user) {
-          // Compare Supabase user IDs
+          // Compare Supabase user IDs and emails
           const sessionUserId = session.user.id
           const currentUserId = user.supabase_user_id?.toString()
+          const sessionEmail = session.user.email?.toLowerCase()
+          const currentEmail = user.email?.toLowerCase()
 
-          if (sessionUserId !== currentUserId) {
-            console.error('🚨 SECURITY ALERT: Session user mismatch!', {
+          // Check user ID mismatch (if we have both IDs)
+          if (currentUserId && sessionUserId !== currentUserId) {
+            console.error('🚨 SECURITY ALERT: Session user ID mismatch!', {
               sessionUserId,
               currentUserId,
-              sessionEmail: session.user.email,
-              currentEmail: user.email
+              sessionEmail,
+              currentEmail
+            })
+            // Force logout immediately - this is a serious security issue
+            await handleLogout()
+            return
+          }
+
+          // Check email mismatch (fallback if supabase_user_id is missing)
+          if (sessionEmail && currentEmail && sessionEmail !== currentEmail) {
+            console.error('🚨 SECURITY ALERT: Session email mismatch!', {
+              sessionEmail,
+              currentEmail
             })
             // Force logout immediately - this is a serious security issue
             await handleLogout()
@@ -273,11 +321,26 @@ export function useAuth() {
             // SECURITY: Verify the profile matches the session
             const profileUserId = response.data.supabase_user_id?.toString()
             const sessionUserId = session.user.id
+            const profileEmail = response.data.email?.toLowerCase()
+            const sessionEmail = session.user.email?.toLowerCase()
 
-            if (profileUserId !== sessionUserId) {
-              console.error('🚨 SECURITY ALERT: Profile user mismatch!', {
+            // Check user ID mismatch (if we have both IDs)
+            if (profileUserId && profileUserId !== sessionUserId) {
+              console.error('🚨 SECURITY ALERT: Profile user ID mismatch!', {
                 profileUserId,
-                sessionUserId
+                sessionUserId,
+                profileEmail,
+                sessionEmail
+              })
+              await handleLogout()
+              return
+            }
+
+            // Check email mismatch (fallback if supabase_user_id is missing)
+            if (profileEmail && sessionEmail && profileEmail !== sessionEmail) {
+              console.error('🚨 SECURITY ALERT: Profile email mismatch!', {
+                profileEmail,
+                sessionEmail
               })
               await handleLogout()
               return

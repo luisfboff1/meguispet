@@ -129,7 +129,7 @@ export interface AppUserProfile {
   role: string;
   permissoes: string | null;
   ativo: boolean;
-  supabase_user_id?: string;
+  supabase_user_id: string | null;
 }
 
 /**
@@ -149,7 +149,7 @@ export const getUserProfile = async (
   try {
     const { data, error } = await supabase
       .from('usuarios')
-      .select('id, nome, email, role, permissoes, ativo')
+      .select('id, nome, email, role, permissoes, ativo, supabase_user_id')
       .eq('email', email)
       .eq('ativo', true)
       .single();
