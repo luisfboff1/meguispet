@@ -3,25 +3,30 @@ import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
 // Simple in-memory cache (1 minute TTL for fresher data)
-// Reset cache to force reload with new data structure
-let vendas7DiasCache: { data: unknown; timestamp: number } | null = null;
+// Cache por período (7, 14, 30 dias)
+const vendasCache: Record<number, { data: unknown; timestamp: number }> = {};
 const CACHE_TTL = 1 * 60 * 1000; // 1 minute (dados mais frescos)
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
+  // Parse days parameter (default: 7, allowed: 7, 14, 30)
+  const daysParam = parseInt(req.query.days as string, 10);
+  const days = [7, 14, 30].includes(daysParam) ? daysParam : 7;
+  
   // Check cache first
   const now = Date.now();
+  const cacheKey = days;
 
   // Invalidar cache ao trocar de dia
-  if (vendas7DiasCache) {
-    const cacheDate = new Date(vendas7DiasCache.timestamp).toISOString().split('T')[0];
+  if (vendasCache[cacheKey]) {
+    const cacheDate = new Date(vendasCache[cacheKey].timestamp).toISOString().split('T')[0];
     const currentDate = new Date().toISOString().split('T')[0];
     if (cacheDate !== currentDate) {
-      vendas7DiasCache = null; // Limpa cache ao trocar de dia
+      delete vendasCache[cacheKey]; // Limpa cache ao trocar de dia
     }
   }
 
-  if (vendas7DiasCache && (now - vendas7DiasCache.timestamp) < CACHE_TTL) {
-    return res.status(200).json(vendas7DiasCache.data);
+  if (vendasCache[cacheKey] && (now - vendasCache[cacheKey].timestamp) < CACHE_TTL) {
+    return res.status(200).json(vendasCache[cacheKey].data);
   }
 
   // Use authenticated Supabase client for RLS
@@ -29,9 +34,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
   try {
     const currentDate = new Date();
-    const sevenDaysAgo = new Date(currentDate);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // -6 = inclui hoje = 7 dias total
-    sevenDaysAgo.setHours(0, 0, 0, 0); // Início do dia
+    const startDate = new Date(currentDate);
+    startDate.setDate(startDate.getDate() - (days - 1)); // -6 para 7 dias, -13 para 14 dias, -29 para 30 dias
+    startDate.setHours(0, 0, 0, 0); // Início do dia
 
     interface DayData {
       data: string;
@@ -41,11 +46,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       impostos: number;
     }
 
-    // Inicializar todos os 7 dias com valores zero (garante que todos os dias aparecem no gráfico)
+    // Inicializar todos os dias com valores zero (garante que todos os dias aparecem no gráfico)
     const allDays: Record<string, DayData> = {};
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(sevenDaysAgo);
-      date.setDate(sevenDaysAgo.getDate() + i);
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
       allDays[dateStr] = { data: dateStr, vendas: 0, receita: 0, despesas: 0, impostos: 0 };
     }
@@ -64,7 +69,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           produto:produtos(preco_custo)
         )
       `)
-      .gte('data_venda', sevenDaysAgo.toISOString().split('T')[0])
+      .gte('data_venda', startDate.toISOString().split('T')[0])
       .neq('status', 'cancelado')
       .order('data_venda', { ascending: true });
 
@@ -87,7 +92,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Agregar dados de vendas nos dias pré-inicializados
     ((vendas || []) as unknown as VendaRaw[]).forEach((venda: VendaRaw) => {
       const date = new Date(venda.data_venda).toISOString().split('T')[0];
-      // Só processa se a data estiver no range dos 7 dias
+      // Só processa se a data estiver no range dos dias selecionados
       if (allDays[date]) {
         // Receita líquida SEM impostos (consistente com relatórios)
         const receitaLiquida = venda.total_produtos_liquido ||
@@ -117,7 +122,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     };
 
     // Cache the response
-    vendas7DiasCache = { data: response, timestamp: now };
+    vendasCache[cacheKey] = { data: response, timestamp: now };
 
     return res.status(200).json(response);
   } catch (error) {

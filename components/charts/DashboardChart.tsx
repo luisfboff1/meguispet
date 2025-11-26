@@ -17,7 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Settings2, TrendingUp, Menu } from 'lucide-react'
+import { Settings2, TrendingUp, Menu, Calendar } from 'lucide-react'
 import type { ChartConfig } from '@/components/ui/chart'
 
 // Recharts imports (lazy loaded na página)
@@ -31,9 +31,13 @@ export interface DashboardChartData {
   impostos?: number
 }
 
+type PeriodDays = 7 | 14 | 30
+
 interface DashboardChartProps {
   data: DashboardChartData[]
   loading?: boolean
+  selectedPeriod?: PeriodDays
+  onPeriodChange?: (days: PeriodDays) => void
 }
 
 type MetricKey = 'receita' | 'vendas' | 'despesas' | 'impostos'
@@ -48,7 +52,7 @@ const metricConfig: Record<MetricKey, { label: string; color: string; scale: Met
   impostos: { label: 'Impostos', color: 'hsl(38, 92%, 50%)', scale: 'monetary' },
 }
 
-export default function DashboardChart({ data, loading = false }: DashboardChartProps) {
+export default function DashboardChart({ data, loading = false, selectedPeriod = 7, onPeriodChange }: DashboardChartProps) {
   const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
     new Set<MetricKey>(['receita', 'vendas'])
   )
@@ -482,6 +486,37 @@ export default function DashboardChart({ data, loading = false }: DashboardChart
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Period Selector */}
+            {onPeriodChange && (
+              <div className="flex rounded-md border">
+                <Button
+                  variant={selectedPeriod === 7 ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => onPeriodChange(7)}
+                  className="rounded-r-none rounded-l-md px-3"
+                >
+                  <Calendar className="h-4 w-4 mr-1" />
+                  7 dias
+                </Button>
+                <Button
+                  variant={selectedPeriod === 14 ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => onPeriodChange(14)}
+                  className="rounded-none px-3"
+                >
+                  14 dias
+                </Button>
+                <Button
+                  variant={selectedPeriod === 30 ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => onPeriodChange(30)}
+                  className="rounded-l-none rounded-r-md px-3"
+                >
+                  30 dias
+                </Button>
+              </div>
+            )}
             </div>
           )}
         </div>
