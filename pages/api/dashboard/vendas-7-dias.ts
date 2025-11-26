@@ -28,8 +28,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const supabase = req.supabaseClient;
 
   try {
-    const now = new Date();
-    const sevenDaysAgo = new Date(now);
+    const currentDate = new Date();
+    const sevenDaysAgo = new Date(currentDate);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // -6 = inclui hoje = 7 dias total
     sevenDaysAgo.setHours(0, 0, 0, 0); // Início do dia
 
