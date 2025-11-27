@@ -99,48 +99,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       if (error) throw error;
 
-      // Buscar parcelas para cada venda (não falha se a tabela não existir)
-      interface Parcela {
-        id: number;
-        venda_id: number;
-        numero_parcela: number;
-        valor_parcela: number;
-        data_vencimento: string;
-        data_pagamento: string | null;
-        status: string;
-        observacoes: string | null;
-      }
-      let vendasComParcelas = vendas || [];
-      try {
-        if (vendas && vendas.length > 0) {
-          const vendaIds = vendas.map(v => v.id);
-          const { data: parcelasData } = await supabase
-            .from('venda_parcelas')
-            .select('id, venda_id, numero_parcela, valor_parcela, data_vencimento, data_pagamento, status, observacoes')
-            .in('venda_id', vendaIds)
-            .order('numero_parcela', { ascending: true });
-          
-          if (parcelasData) {
-            // Agrupar parcelas por venda_id
-            const parcelasPorVenda = (parcelasData as Parcela[]).reduce((acc, p) => {
-              if (!acc[p.venda_id]) acc[p.venda_id] = [];
-              acc[p.venda_id].push(p);
-              return acc;
-            }, {} as Record<number, Parcela[]>);
-            
-            vendasComParcelas = vendas.map(v => ({
-              ...v,
-              parcelas: parcelasPorVenda[v.id] || []
-            }));
-          }
-        }
-      } catch {
-        // Ignore parcelas error - table may not exist yet
-      }
-
       return res.status(200).json({
         success: true,
-        data: vendasComParcelas,
+        data: vendas || [],
         pagination: {
           page: pageNum,
           limit: limitNum,
