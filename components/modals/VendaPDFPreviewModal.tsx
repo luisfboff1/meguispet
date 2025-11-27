@@ -558,6 +558,43 @@ export default function VendaPDFPreviewModal({
                       )}
                     </div>
                   )}
+
+                  {/* Datas de Pagamento (Parcelas) */}
+                  {venda.parcelas && Array.isArray(venda.parcelas) && venda.parcelas.length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-semibold mb-3">DATAS DE PAGAMENTO</h4>
+                      <div className="bg-green-50 border border-green-200 rounded-lg overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-green-100">
+                            <tr>
+                              <th className="text-left px-3 py-2 font-medium">Parcela</th>
+                              <th className="text-center px-3 py-2 font-medium">Data de Vencimento</th>
+                              <th className="text-right px-3 py-2 font-medium">Valor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(() => {
+                              const parcelasOrdenadas = [...venda.parcelas!].sort((a, b) => a.numero_parcela - b.numero_parcela)
+                              const totalParcelas = venda.parcelas?.length ?? 0
+                              return parcelasOrdenadas.map((parcela, index) => (
+                                <tr key={index} className="border-t border-green-200">
+                                  <td className="px-3 py-2">
+                                    Parcela {parcela.numero_parcela}/{totalParcelas}
+                                  </td>
+                                  <td className="text-center px-3 py-2">
+                                    {new Date(parcela.data_vencimento).toLocaleDateString('pt-BR')}
+                                  </td>
+                                  <td className="text-right px-3 py-2 font-bold">
+                                    {formatCurrency(parcela.valor_parcela)}
+                                  </td>
+                                </tr>
+                              ))
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

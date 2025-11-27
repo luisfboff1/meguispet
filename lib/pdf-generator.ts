@@ -531,6 +531,68 @@ export const generateOrderPDF = async (
     }
   }
 
+  // ==================== DATAS DE PAGAMENTO (PARCELAS) ====================
+  // Mostrar datas de pagamento das parcelas (se houver)
+  if (venda.parcelas && Array.isArray(venda.parcelas) && venda.parcelas.length > 0) {
+    // Adicionar espaçamento
+    yPos += 3
+
+    // Linha separadora
+    doc.setLineWidth(0.3)
+    doc.line(margin, yPos, pageWidth - margin, yPos)
+    yPos += 6
+
+    // Título da seção
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.text('DATAS DE PAGAMENTO', margin, yPos)
+    yPos += 5
+
+    // Ordenar parcelas por numero_parcela
+    const parcelasOrdenadas = [...venda.parcelas].sort((a, b) => a.numero_parcela - b.numero_parcela)
+    const totalParcelas = venda.parcelas.length
+
+    // Preparar dados da tabela de parcelas
+    const parcelasTableData: string[][] = parcelasOrdenadas.map((parcela) => {
+      const dataVencimento = new Date(parcela.data_vencimento).toLocaleDateString('pt-BR')
+      const valor = `R$ ${parcela.valor_parcela.toFixed(2).replace('.', ',')}`
+      return [`Parcela ${parcela.numero_parcela}/${totalParcelas}`, dataVencimento, valor]
+    })
+
+    // Criar tabela com as parcelas
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Parcela', 'Data de Vencimento', 'Valor']],
+      body: parcelasTableData,
+      theme: 'plain',
+      styles: {
+        fontSize: 9,
+        cellPadding: 2,
+        lineColor: [0, 0, 0],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [240, 240, 240],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        halign: 'center',
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0],
+      },
+      columnStyles: {
+        0: { cellWidth: 50, halign: 'left' },
+        1: { cellWidth: 60, halign: 'center' },
+        2: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+      },
+      didDrawPage: (data) => {
+        yPos = data.cursor?.y || yPos
+      }
+    })
+
+    yPos += 3
+  }
+
   // ==================== RODAPÉ ====================
   const footerY = doc.internal.pageSize.getHeight() - 15
   doc.setLineWidth(0.3)

@@ -20,7 +20,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .from('vendas')
         .select(`
           *,
-          cliente:clientes_fornecedores(id, nome, email, documento, endereco, cidade, estado, cep),
+          cliente:clientes_fornecedores(id, nome, email, documento, endereco, cidade, estado, cep, bairro, inscricao_estadual),
           vendedor:vendedores(id, nome, email),
           estoque:estoques(id, nome),
           forma_pagamento_detalhe:formas_pagamento(id, nome),
@@ -51,6 +51,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             icms_st_recolher,
             aliquota_icms,
             produto:produtos(id, nome, preco_venda, ipi, icms, icms_proprio, st)
+          ),
+          parcelas:venda_parcelas(
+            id,
+            numero_parcela,
+            valor_parcela,
+            data_vencimento,
+            data_pagamento,
+            status,
+            observacoes
           )
         `)
         .eq('id', id)

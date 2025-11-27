@@ -73,6 +73,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             icms_st_total,
             icms_st_recolher,
             produto:produtos(id, nome, preco_venda, ipi, icms, icms_proprio, st)
+          ),
+          parcelas:venda_parcelas(
+            id,
+            numero_parcela,
+            valor_parcela,
+            data_vencimento,
+            data_pagamento,
+            status,
+            observacoes
           )
         `, { count: 'exact' });
 
