@@ -100,6 +100,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       if (error) throw error;
 
       // Buscar parcelas para cada venda (não falha se a tabela não existir)
+      interface Parcela {
+        id: number;
+        venda_id: number;
+        numero_parcela: number;
+        valor_parcela: number;
+        data_vencimento: string;
+        data_pagamento: string | null;
+        status: string;
+        observacoes: string | null;
+      }
       let vendasComParcelas = vendas || [];
       try {
         if (vendas && vendas.length > 0) {
@@ -112,11 +122,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           
           if (parcelasData) {
             // Agrupar parcelas por venda_id
-            const parcelasPorVenda = parcelasData.reduce((acc, p) => {
+            const parcelasPorVenda = (parcelasData as Parcela[]).reduce((acc, p) => {
               if (!acc[p.venda_id]) acc[p.venda_id] = [];
               acc[p.venda_id].push(p);
               return acc;
-            }, {} as Record<number, typeof parcelasData>);
+            }, {} as Record<number, Parcela[]>);
             
             vendasComParcelas = vendas.map(v => ({
               ...v,
