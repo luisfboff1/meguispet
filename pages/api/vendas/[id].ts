@@ -20,7 +20,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         .from('vendas')
         .select(`
           *,
-          cliente:clientes_fornecedores(id, nome, email, documento, endereco, cidade, estado, cep, bairro, inscricao_estadual),
+          cliente:clientes_fornecedores(id, nome, email, documento, endereco, cidade, estado, cep),
           vendedor:vendedores(id, nome, email),
           estoque:estoques(id, nome),
           forma_pagamento_detalhe:formas_pagamento(id, nome),
@@ -51,15 +51,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             icms_st_recolher,
             aliquota_icms,
             produto:produtos(id, nome, preco_venda, ipi, icms, icms_proprio, st)
-          ),
-          parcelas:venda_parcelas(
-            id,
-            numero_parcela,
-            valor_parcela,
-            data_vencimento,
-            data_pagamento,
-            status,
-            observacoes
           )
         `)
         .eq('id', id)
@@ -76,9 +67,34 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         return res.status(404).json({ success: false, message: 'Venda não encontrada' });
       }
 
+      // Buscar parcelas separadamente (não falha se a tabela não existir ou estiver vazia)
+      let parcelas: Array<{
+        id: number;
+        numero_parcela: number;
+        valor_parcela: number;
+        data_vencimento: string;
+        data_pagamento: string | null;
+        status: string;
+        observacoes: string | null;
+      }> = [];
+      
+      try {
+        const { data: parcelasData, error: parcelasError } = await supabase
+          .from('venda_parcelas')
+          .select('id, numero_parcela, valor_parcela, data_vencimento, data_pagamento, status, observacoes')
+          .eq('venda_id', id)
+          .order('numero_parcela', { ascending: true });
+        
+        if (!parcelasError && parcelasData) {
+          parcelas = parcelasData;
+        }
+      } catch {
+        // Ignore parcelas errors - table may not exist
+      }
+
       return res.status(200).json({
         success: true,
-        data: venda,
+        data: { ...venda, parcelas },
       });
     }
 
