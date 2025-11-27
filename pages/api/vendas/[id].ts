@@ -51,15 +51,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             icms_st_recolher,
             aliquota_icms,
             produto:produtos(id, nome, preco_venda, ipi, icms, icms_proprio, st)
-          ),
-          parcelas:venda_parcelas(
-            id,
-            numero_parcela,
-            valor_parcela,
-            data_vencimento,
-            data_pagamento,
-            status,
-            observacoes
           )
         `)
         .eq('id', id)
@@ -76,9 +67,34 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         return res.status(404).json({ success: false, message: 'Venda não encontrada' });
       }
 
+      // Buscar parcelas separadamente (não falha se a tabela não existir)
+      interface Parcela {
+        id: number;
+        numero_parcela: number;
+        valor_parcela: number;
+        data_vencimento: string;
+        data_pagamento: string | null;
+        status: string;
+        observacoes: string | null;
+      }
+      let parcelas: Parcela[] = [];
+      try {
+        const { data: parcelasData } = await supabase
+          .from('venda_parcelas')
+          .select('id, numero_parcela, valor_parcela, data_vencimento, data_pagamento, status, observacoes')
+          .eq('venda_id', id)
+          .order('numero_parcela', { ascending: true });
+        
+        if (parcelasData) {
+          parcelas = parcelasData as Parcela[];
+        }
+      } catch {
+        // Ignore parcelas error - table may not exist yet
+      }
+
       return res.status(200).json({
         success: true,
-        data: venda,
+        data: { ...venda, parcelas },
       });
     }
 

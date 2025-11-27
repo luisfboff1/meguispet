@@ -73,15 +73,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             icms_st_total,
             icms_st_recolher,
             produto:produtos(id, nome, preco_venda, ipi, icms, icms_proprio, st)
-          ),
-          parcelas:venda_parcelas(
-            id,
-            numero_parcela,
-            valor_parcela,
-            data_vencimento,
-            data_pagamento,
-            status,
-            observacoes
           )
         `, { count: 'exact' });
 
@@ -108,9 +99,38 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       if (error) throw error;
 
+      // Buscar parcelas para cada venda (não falha se a tabela não existir)
+      let vendasComParcelas = vendas || [];
+      try {
+        if (vendas && vendas.length > 0) {
+          const vendaIds = vendas.map(v => v.id);
+          const { data: parcelasData } = await supabase
+            .from('venda_parcelas')
+            .select('id, venda_id, numero_parcela, valor_parcela, data_vencimento, data_pagamento, status, observacoes')
+            .in('venda_id', vendaIds)
+            .order('numero_parcela', { ascending: true });
+          
+          if (parcelasData) {
+            // Agrupar parcelas por venda_id
+            const parcelasPorVenda = parcelasData.reduce((acc, p) => {
+              if (!acc[p.venda_id]) acc[p.venda_id] = [];
+              acc[p.venda_id].push(p);
+              return acc;
+            }, {} as Record<number, typeof parcelasData>);
+            
+            vendasComParcelas = vendas.map(v => ({
+              ...v,
+              parcelas: parcelasPorVenda[v.id] || []
+            }));
+          }
+        }
+      } catch {
+        // Ignore parcelas error - table may not exist yet
+      }
+
       return res.status(200).json({
         success: true,
-        data: vendas || [],
+        data: vendasComParcelas,
         pagination: {
           page: pageNum,
           limit: limitNum,
