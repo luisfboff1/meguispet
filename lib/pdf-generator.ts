@@ -242,9 +242,11 @@ export const generateOrderPDF = async (
     }).join(' / ')
     
     // Se o texto for muito longo, quebrar em múltiplas linhas
-    const maxWidth = pageWidth - margin - 45 // largura disponível
+    // maxWidth = largura da página - margem - espaço para o label "VENCIMENTO(S):"
+    const labelWidth = 35
+    const maxWidth = pageWidth - margin - (margin + labelWidth)
     const lines = doc.splitTextToSize(datasVencimento, maxWidth)
-    doc.text(lines, margin + 35, yPos)
+    doc.text(lines, margin + labelWidth, yPos)
     yPos += (lines.length * 4)
   }
   yPos += 3
