@@ -59,13 +59,37 @@ export default function DashboardPage() {
   const router = useRouter()
   const [metrics, setMetrics] = useState<MetricCard[]>([])
   const [topProducts, setTopProducts] = useState<DashboardTopProduct[]>([])
-  const [vendas7Dias, setVendas7Dias] = useState<DashboardVendasDia[]>([])
+  const [vendasPeriodo, setVendasPeriodo] = useState<DashboardVendasDia[]>([])
+  const [selectedPeriod, setSelectedPeriod] = useState<7 | 14 | 30>(7)
   const [loading, setLoading] = useState(true)
+  const [chartLoading, setChartLoading] = useState(false)
   const { open, close, setData } = useModal()
   
   // Cache timestamps to prevent unnecessary refetches
   const lastFetchRef = useRef<number>(0)
   const isFetchingRef = useRef<boolean>(false)
+
+  // Load chart data for selected period (separate from full dashboard load)
+  // This allows changing the chart period without reloading metrics and top products
+  const loadChartData = useCallback(async (days: 7 | 14 | 30) => {
+    try {
+      setChartLoading(true)
+      const vendasResponse = await dashboardService.getVendasPeriodo(days)
+      if (vendasResponse.success && vendasResponse.data) {
+        setVendasPeriodo(vendasResponse.data)
+      }
+    } catch (error) {
+      // Fallback para dados vazios se API falhar
+      setVendasPeriodo([])
+    } finally {
+      setChartLoading(false)
+    }
+  }, [])
+
+  const handlePeriodChange = useCallback((days: 7 | 14 | 30) => {
+    setSelectedPeriod(days)
+    loadChartData(days)
+  }, [loadChartData])
 
   const loadDashboardData = useCallback(async (force = false) => {
     const now = Date.now()
@@ -88,7 +112,7 @@ export default function DashboardPage() {
       const [metricsResponse, productsResponse, vendasResponse] = await Promise.all([
         dashboardService.getMetrics(),
         dashboardService.getTopProducts(),
-        dashboardService.getVendas7Dias()
+        dashboardService.getVendasPeriodo(selectedPeriod)
       ])
       
       // 📊 PROCESS METRICS
@@ -105,9 +129,9 @@ export default function DashboardPage() {
         setTopProducts(productsResponse.data)
       }
       
-      // 📊 PROCESS 7-DAY SALES
+      // 📊 PROCESS SALES DATA
       if (vendasResponse.success && vendasResponse.data) {
-        setVendas7Dias(vendasResponse.data)
+        setVendasPeriodo(vendasResponse.data)
       }
       
       // Update cache timestamp
@@ -116,11 +140,12 @@ export default function DashboardPage() {
       // Fallback para dados vazios se API falhar
       setMetrics([])
       setTopProducts([])
+      setVendasPeriodo([])
     } finally {
       setLoading(false)
       isFetchingRef.current = false
     }
-  }, [])
+  }, [selectedPeriod])
 
   useEffect(() => {
     loadDashboardData()
@@ -311,7 +336,12 @@ export default function DashboardPage() {
       </AnimatedCard>
 
       {/* Customizable Chart - Full Width */}
-      <DashboardChart data={vendas7Dias} loading={loading} />
+      <DashboardChart 
+        data={vendasPeriodo} 
+        loading={loading || chartLoading}
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={handlePeriodChange}
+      />
 
       {/* Top Products Table - Full Width */}
       <TopProductsTable data={topProducts} loading={loading} />

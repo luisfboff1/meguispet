@@ -106,9 +106,14 @@ export const dashboardService = {
     return response.data
   },
 
-  async getVendas7Dias(): Promise<ApiResponse<DashboardVendasDia[]>> {
-    const response = await api.get('/dashboard/vendas-7-dias')
+  async getVendasPeriodo(days: number = 7): Promise<ApiResponse<DashboardVendasDia[]>> {
+    const response = await api.get(`/dashboard/vendas-7-dias?days=${days}`)
     return response.data
+  },
+
+  // Backwards compatibility
+  async getVendas7Dias(): Promise<ApiResponse<DashboardVendasDia[]>> {
+    return this.getVendasPeriodo(7)
   }
 }
 
