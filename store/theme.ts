@@ -25,19 +25,17 @@ const getSystemTheme = (): ResolvedTheme => {
 export const useThemeStore = create<ThemeStore>()(
   persist(
     (set) => ({
-      theme: 'system',
-      resolvedTheme: getSystemTheme(),
+      theme: 'light',
+      resolvedTheme: 'light',
       mounted: false,
-      setTheme: (theme) => {
-        set({ theme })
+      setTheme: (_theme) => {
+        // Always keep light mode
+        set({ theme: 'light' })
       },
       toggleTheme: () => {
-        set((state) => {
-          const nextTheme = state.theme === 'light' ? 'dark' : 'light'
-          return { theme: nextTheme }
-        })
+        // No-op: always light mode
       },
-      setResolvedTheme: (resolvedTheme) => set({ resolvedTheme }),
+      setResolvedTheme: (_resolvedTheme) => set({ resolvedTheme: 'light' }),
       setMounted: (mounted) => set({ mounted })
     }),
     {
@@ -57,9 +55,7 @@ export const useThemeStore = create<ThemeStore>()(
   )
 )
 
-export const resolveTheme = (theme: Theme): ResolvedTheme => {
-  if (theme === 'system') {
-    return getSystemTheme()
-  }
-  return theme
+export const resolveTheme = (_theme: Theme): ResolvedTheme => {
+  // Always return light mode
+  return 'light'
 }

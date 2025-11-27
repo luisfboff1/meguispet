@@ -13,7 +13,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cn } from '@/lib/utils'
 import { useSidebar } from '@/hooks/useSidebar'
 import { useAuth } from '@/hooks/useAuth'
@@ -231,8 +230,6 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
         </div>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle variant="icon-only" />
-
           <div className="relative" ref={userMenuRef}>
             <button
               className="group flex items-center gap-3 rounded-2xl border border-transparent bg-white/70 px-2 py-1 pl-1.5 pr-3 text-left transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/90 dark:bg-slate-900/70 dark:hover:border-slate-800/80 dark:hover:bg-slate-900/90"
