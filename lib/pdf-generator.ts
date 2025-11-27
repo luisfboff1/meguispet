@@ -222,7 +222,32 @@ export const generateOrderPDF = async (
   doc.setFont('helvetica', 'normal')
   // Deixar em branco para preenchimento manual ou usar observacoes
   doc.text('___/___/___', margin + 40, yPos)
-  yPos += 8
+  yPos += 5
+
+  // ==================== DATAS DE PAGAMENTO (PARCELAS) ====================
+  // Exibir datas de vencimento das parcelas se existirem
+  if (venda.parcelas && venda.parcelas.length > 0) {
+    yPos += 3
+    doc.setFont('helvetica', 'bold')
+    doc.text('VENCIMENTO(S):', margin, yPos)
+    doc.setFont('helvetica', 'normal')
+    
+    // Ordenar parcelas por número da parcela
+    const parcelasOrdenadas = [...venda.parcelas].sort((a, b) => a.numero_parcela - b.numero_parcela)
+    
+    // Formatar as datas de vencimento
+    const datasVencimento = parcelasOrdenadas.map(p => {
+      const data = new Date(p.data_vencimento + 'T00:00:00')
+      return data.toLocaleDateString('pt-BR')
+    }).join(' / ')
+    
+    // Se o texto for muito longo, quebrar em múltiplas linhas
+    const maxWidth = pageWidth - margin - 45 // largura disponível
+    const lines = doc.splitTextToSize(datasVencimento, maxWidth)
+    doc.text(lines, margin + 35, yPos)
+    yPos += (lines.length * 4)
+  }
+  yPos += 3
 
   // ==================== TABELA DE PRODUTOS ====================
   // Usar itensOrdenados se fornecido, caso contrário usar venda.itens

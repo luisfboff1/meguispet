@@ -270,6 +270,16 @@ export default function VendaPDFPreviewModal({
                       <span className="font-medium">Pagamento:</span>{' '}
                       {venda.prazo_pagamento ? `${venda.prazo_pagamento} dias` : venda.forma_pagamento_detalhe?.nome || 'N/A'}
                     </div>
+                    {/* Datas de Vencimento das Parcelas */}
+                    {venda.parcelas && venda.parcelas.length > 0 && (
+                      <div className="col-span-2">
+                        <span className="font-medium">Vencimento(s):</span>{' '}
+                        {[...venda.parcelas]
+                          .sort((a, b) => a.numero_parcela - b.numero_parcela)
+                          .map(p => new Date(p.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR'))
+                          .join(' / ')}
+                      </div>
+                    )}
                   </div>
 
                   {/* Produtos */}
