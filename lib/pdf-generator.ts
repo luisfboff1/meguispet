@@ -206,13 +206,29 @@ export const generateOrderPDF = async (
   doc.setFont('helvetica', 'normal')
   doc.text(venda.vendedor?.nome || 'N/A', margin + 32, yPos)
 
-  // Prazo de pagamento (em dias)
+  // Prazo de pagamento - pode ser um número de dias ou uma data
   doc.setFont('helvetica', 'bold')
   doc.text('PAGAMENTO:', pageWidth / 2, yPos)
   doc.setFont('helvetica', 'normal')
-  const pagamento = venda.prazo_pagamento 
-    ? `${venda.prazo_pagamento} dias` 
-    : getPaymentMethodName(venda)
+  let pagamento = getPaymentMethodName(venda)
+  if (venda.prazo_pagamento) {
+    // Check if prazo_pagamento is a number (days) or a date string
+    const prazoValue = venda.prazo_pagamento
+    if (typeof prazoValue === 'number' || /^\d+$/.test(String(prazoValue))) {
+      // It's a number of days
+      pagamento = `${prazoValue} dias`
+    } else if (typeof prazoValue === 'string' && prazoValue.includes('-')) {
+      // It's a date string (e.g., "2025-11-26")
+      try {
+        const dataFormatada = new Date(prazoValue).toLocaleDateString('pt-BR')
+        pagamento = dataFormatada
+      } catch {
+        pagamento = prazoValue
+      }
+    } else {
+      pagamento = String(prazoValue)
+    }
+  }
   doc.text(pagamento, pageWidth / 2 + 30, yPos)
   yPos += 5
 
