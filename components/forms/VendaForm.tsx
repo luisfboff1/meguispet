@@ -197,6 +197,22 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     } else {
       setItens([])
     }
+
+    // Carregar parcelas se existirem
+    if (venda.parcelas?.length) {
+      setUsarParcelas(true)
+      setParcelas(venda.parcelas.map(p => ({
+        numero_parcela: p.numero_parcela,
+        valor_parcela: p.valor_parcela,
+        data_vencimento: p.data_vencimento.split('T')[0], // Converter para formato YYYY-MM-DD
+        observacoes: p.observacoes || ''
+      })))
+      setNumeroParcelas(venda.parcelas.length)
+    } else {
+      setUsarParcelas(false)
+      setParcelas([])
+      setNumeroParcelas(1)
+    }
   }, [venda, produtos])
 
   useEffect(() => {

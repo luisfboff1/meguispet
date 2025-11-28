@@ -112,7 +112,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'POST') {
-      const { numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, valor_total, valor_final, desconto, data_pagamento, imposto_percentual, status, observacoes, uf_destino, itens, parcelas, sem_impostos } = req.body;
+      const { numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, condicao_pagamento_id, data_venda, valor_total, valor_final, desconto, data_pagamento, imposto_percentual, status, observacoes, uf_destino, itens, parcelas, sem_impostos } = req.body;
 
       if (!numero_venda) {
         return res.status(400).json({ success: false, message: '❌ Número da venda é obrigatório' });
@@ -161,6 +161,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           vendedor_id: vendedor_id || null,
           estoque_id: estoque_id || null,
           forma_pagamento_id: forma_pagamento_id || null,
+          condicao_pagamento_id: condicao_pagamento_id || null,
           data_venda: data_venda || new Date().toISOString(),
           // Campos antigos (manter compatibilidade)
           valor_total: vendaProcessada.totais.total_produtos_bruto, // Total sem desconto
@@ -359,7 +360,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'PUT') {
-      const { id, numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, data_venda, desconto, data_pagamento, imposto_percentual, uf_destino, status, observacoes, itens, sem_impostos } = req.body;
+      const { id, numero_venda, cliente_id, vendedor_id, estoque_id, forma_pagamento_id, condicao_pagamento_id, data_venda, desconto, data_pagamento, imposto_percentual, uf_destino, status, observacoes, itens, sem_impostos } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'ID da venda é obrigatório' });
@@ -420,6 +421,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           vendedor_id: vendedor_id || null,
           estoque_id: estoque_id || null,
           forma_pagamento_id: forma_pagamento_id || null,
+          condicao_pagamento_id: condicao_pagamento_id || null,
           data_venda,
           // Campos antigos (manter compatibilidade)
           valor_total: valor_total_calculado,

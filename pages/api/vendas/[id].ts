@@ -15,18 +15,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const supabase = req.supabaseClient;
 
     if (method === 'GET') {
-      console.log('🔍 [GET /api/vendas/[id]] Buscando venda ID:', id);
-
       // Buscar venda com todos os relacionamentos e itens
       const { data: venda, error } = await supabase
         .from('vendas')
         .select(`
           *,
-          cliente:clientes_fornecedores(id, nome, email, documento, endereco, cidade, estado, cep, inscricao_estadual),
-          vendedor:vendedores(id, nome, email),
-          estoque:estoques(id, nome),
-          forma_pagamento_detalhe:formas_pagamento(id, nome),
-          condicao_pagamento:condicoes_pagamento(id, nome, descricao),
+          cliente:clientes_fornecedores!cliente_id(id, nome, email, documento, endereco, cidade, estado, cep, inscricao_estadual),
+          vendedor:vendedores!vendedor_id(id, nome, email),
+          estoque:estoques!estoque_id(id, nome),
+          forma_pagamento_detalhe:formas_pagamento!forma_pagamento_id(id, nome),
+          condicao_pagamento:condicoes_pagamento!condicao_pagamento_id(id, nome, descricao),
           itens:vendas_itens(
             id,
             produto_id,
@@ -83,16 +81,25 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         return res.status(404).json({ success: false, message: 'Venda não encontrada' });
       }
 
-      console.log('✅ [GET /api/vendas/[id]] Venda encontrada:', {
-        id: venda.id,
-        numero_venda: venda.numero_venda,
-        cliente: venda.cliente?.nome,
-        itens_count: venda.itens?.length || 0
-      });
+      // Buscar cliente completo separadamente se houver cliente_id
+      if (venda.cliente_id) {
+        try {
+          const { data: clienteCompleto, error: clienteError } = await supabase
+            .from('clientes_fornecedores')
+            .select('id, nome, email, documento, endereco, cidade, estado, cep, inscricao_estadual')
+            .eq('id', venda.cliente_id)
+            .single();
+
+          if (clienteCompleto) {
+            venda.cliente = clienteCompleto;
+          }
+        } catch (error) {
+          // Continue even if client fetch fails
+        }
+      }
 
       // Buscar parcelas separadamente (opcional - não impede o retorno da venda se falhar)
       try {
-        console.log('🔍 [GET /api/vendas/[id]] Buscando parcelas para venda_id:', id);
         const { data: parcelas, error: parcelasError } = await supabase
           .from('venda_parcelas')
           .select('id, numero_parcela, valor_parcela, data_vencimento, data_pagamento, status, observacoes')
@@ -100,25 +107,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           .order('numero_parcela', { ascending: true });
 
         if (parcelasError) {
-          console.warn('⚠️ [GET /api/vendas/[id]] Erro ao buscar parcelas (não crítico):', {
-            error: parcelasError.message,
-            details: parcelasError.details,
-            code: parcelasError.code
-          });
           venda.parcelas = [];
         } else if (parcelas && parcelas.length > 0) {
-          console.log('✅ [GET /api/vendas/[id]] Parcelas encontradas:', parcelas.length);
           venda.parcelas = parcelas;
         } else {
-          console.log('ℹ️ [GET /api/vendas/[id]] Nenhuma parcela encontrada');
           venda.parcelas = [];
         }
       } catch (parcelasError) {
-        console.error('❌ [GET /api/vendas/[id]] Exceção ao buscar parcelas:', parcelasError);
         venda.parcelas = [];
       }
-
-      console.log('✅ [GET /api/vendas/[id]] Retornando venda com', venda.parcelas?.length || 0, 'parcelas');
 
       return res.status(200).json({
         success: true,

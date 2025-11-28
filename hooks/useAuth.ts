@@ -93,7 +93,6 @@ export function useAuth() {
 
         // If there's a session error or no session, clear auth state
         if (error || !session) {
-          console.log('⚠️ No session found or error:', error?.message)
           clear()
           setStatus('unauthenticated')
           clearTokenCookie()
@@ -109,14 +108,6 @@ export function useAuth() {
             const sessionUserId = session.user.id
             const profileEmail = response.data.email?.toLowerCase()
             const sessionEmail = session.user.email?.toLowerCase()
-
-            // Log warning if supabase_user_id is missing (falling back to email validation only)
-            if (!profileUserId) {
-              console.warn('⚠️ Profile missing supabase_user_id, using email-only validation:', {
-                profileEmail,
-                sessionEmail
-              })
-            }
 
             // Verify user ID match (primary check)
             if (profileUserId && sessionUserId && profileUserId !== sessionUserId) {
@@ -149,17 +140,14 @@ export function useAuth() {
             }
 
             // Verified - update credentials
-            console.log('✅ Auth check passed for user:', response.data.email)
             setCredentials(response.data, session.access_token)
             setTokenCookie(session.access_token)
             setStatus('authenticated')
           } else {
             // Profile not found or invalid - logout
-            console.log('❌ Profile not found or invalid')
             await handleLogout()
           }
         } catch (error: any) {
-          console.error('❌ Error fetching profile:', error?.message)
           // Handle 401 errors (expired/invalid token)
           if (error?.response?.status === 401) {
             await handleLogout()
@@ -174,7 +162,6 @@ export function useAuth() {
         setStatus('unauthenticated')
       }
     } catch (error) {
-      console.error('❌ Fatal error in checkAuth:', error)
       await handleLogout()
     }
   }, [clear, handleLogout, setCredentials, setStatus])
@@ -196,12 +183,10 @@ export function useAuth() {
 
     const securityCheckInterval = setInterval(async () => {
       try {
-        console.log('🔒 Running periodic security check...')
         const supabase = getSupabaseBrowser()
         const { data: { session }, error } = await supabase.auth.getSession()
 
         if (error || !session) {
-          console.log('⚠️ No session in security check - logging out')
           await handleLogout()
           return
         }
@@ -211,14 +196,6 @@ export function useAuth() {
         const currentUserId = user.supabase_user_id?.toString()
         const sessionEmail = session.user.email?.toLowerCase()
         const currentEmail = user.email?.toLowerCase()
-
-        // Log warning if supabase_user_id is missing (falling back to email validation only)
-        if (!currentUserId) {
-          console.warn('⚠️ Periodic check: User missing supabase_user_id, using email-only validation:', {
-            currentEmail,
-            sessionEmail
-          })
-        }
 
         // Check user ID mismatch (if we have both IDs)
         if (currentUserId && sessionUserId !== currentUserId) {
@@ -247,10 +224,8 @@ export function useAuth() {
           await handleLogout()
           return
         }
-
-        console.log('✅ Security check passed - user is still:', user.email)
       } catch (error) {
-        console.error('❌ Error in security check:', error)
+        // Silent fail - security check will retry
       }
     }, SECURITY_CHECK_INTERVAL)
 
@@ -267,8 +242,6 @@ export function useAuth() {
 
     // Listen for auth state changes (including token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state change:', event, 'User ID:', session?.user?.id, 'Current user:', user?.supabase_user_id)
-
       if (event === 'TOKEN_REFRESHED' && session) {
         // SECURITY: Verify the session belongs to the current user before updating
         if (user && session.user) {
@@ -303,12 +276,10 @@ export function useAuth() {
           }
 
           // Session verified - safe to update token
-          console.log('✅ Token refreshed for user:', user.email)
           setCredentials(user, session.access_token)
           setTokenCookie(session.access_token)
         } else if (!user && session) {
           // No user in state but we have a session - re-fetch profile
-          console.log('⚠️ Token refreshed but no user in state - fetching profile')
           try {
             const response = await authService.getProfile()
             if (response.success && response.data) {
@@ -323,13 +294,11 @@ export function useAuth() {
           }
         }
       } else if (event === 'SIGNED_OUT') {
-        console.log('👋 User signed out')
         // User signed out - clear state
         clear()
         setStatus('unauthenticated')
         clearTokenCookie()
       } else if (event === 'SIGNED_IN' && session) {
-        console.log('🔓 User signed in:', session.user.email)
         // User signed in - fetch profile
         try {
           const response = await authService.getProfile()

@@ -320,17 +320,15 @@ export default function VendasPage() {
 
   const handleExportarPDF = async (venda: Venda) => {
     try {
-      // Se a venda não tem itens, buscar a venda completa
-      let vendaCompleta = venda
-      if (!venda.itens?.length) {
-        const response = await vendasService.getById(venda.id)
-        if (response.success && response.data) {
-          vendaCompleta = response.data
-        } else {
-          setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
-          return
-        }
+      // SEMPRE buscar a venda completa para garantir que temos todos os dados
+      const response = await vendasService.getById(venda.id)
+
+      if (!response.success || !response.data) {
+        setToast({ message: 'Erro ao carregar dados da venda', type: 'error' })
+        return
       }
+
+      let vendaCompleta = response.data
 
       // Sempre buscar dados completos do cliente se houver cliente_id e não tiver cliente
       if (vendaCompleta.cliente_id && !vendaCompleta.cliente) {
