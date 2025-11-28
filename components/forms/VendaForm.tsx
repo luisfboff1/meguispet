@@ -284,6 +284,52 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     setItens(itens.filter((_, i) => i !== index))
   }
 
+  /**
+   * Recalcula o ST de todos os itens quando o UF de destino muda
+   * Busca o MVA correto para cada produto baseado no NCM e no novo UF
+   * Usa Promise.all para melhor performance (chamadas paralelas)
+   */
+  const recalcularStTodosItens = async (novoUf: string) => {
+    if (itens.length === 0) return
+
+    try {
+      const novosItens = await Promise.all(
+        itens.map(async (item) => {
+          // Só recalcula se o item tem um produto válido
+          if (item.produto_id > 0) {
+            const produto = produtos.find(p => p.id === item.produto_id)
+
+            if (produto) {
+              try {
+                // Buscar configuração fiscal do produto
+                const fiscalConfig = await impostosService.getByProdutoId(produto.id)
+
+                if (fiscalConfig && fiscalConfig.ncm && novoUf) {
+                  // Buscar MVA para o novo UF
+                  const mvaData = await impostosService.getMVA(novoUf, fiscalConfig.ncm)
+
+                  if (mvaData && mvaData.sujeito_st && mvaData.mva) {
+                    // Produto tem ST para este UF - atualizar alíquota
+                    return { ...item, st_aliquota: (mvaData.mva * 100) || 0 }
+                  }
+                }
+              } catch (error) {
+                console.error(`Erro ao recalcular ST do produto ${produto.nome}:`, error)
+              }
+            }
+          }
+
+          // Item sem ST ou erro no cálculo
+          return { ...item, st_aliquota: 0 }
+        })
+      )
+
+      setItens(novosItens)
+    } catch (error) {
+      console.error('Erro ao recalcular ST dos itens:', error)
+    }
+  }
+
   const updateItem = async <Key extends keyof ItemVenda>(index: number, field: Key, value: ItemVenda[Key]) => {
     const newItens = [...itens]
     newItens[index] = { ...newItens[index], [field]: value }
@@ -456,6 +502,13 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     }
   }, [formData.condicao_pagamento_id, formData.data_pagamento, totais?.total_geral])
 
+  // Recalcular ST de todos os itens quando o UF de destino mudar
+  useEffect(() => {
+    if (itens.length > 0 && formData.uf_destino) {
+      void recalcularStTodosItens(formData.uf_destino)
+    }
+  }, [formData.uf_destino])
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -615,11 +668,25 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   setFormData(prev => {
                     const cliente = clientes.find(c => String(c.id) === clienteId)
                     let vendedorId = prev.vendedor_id
-                    if (cliente && (cliente.vendedor_id || cliente.vendedor?.id)) {
-                      const vendedorPadrao = cliente.vendedor_id ?? cliente.vendedor?.id
-                      vendedorId = vendedorPadrao ? String(vendedorPadrao) : prev.vendedor_id
+                    let ufDestino = prev.uf_destino
+
+                    if (cliente) {
+                      // Preencher vendedor padrão do cliente
+                      if (cliente.vendedor_id || cliente.vendedor?.id) {
+                        const vendedorPadrao = cliente.vendedor_id ?? cliente.vendedor?.id
+                        vendedorId = vendedorPadrao ? String(vendedorPadrao) : prev.vendedor_id
+                      }
+
+                      // Preencher UF de destino a partir do estado do cliente
+                      if (cliente.estado) {
+                        ufDestino = cliente.estado
+                      } else {
+                        // Se cliente não tem estado cadastrado, usa SP como padrão
+                        ufDestino = 'SP'
+                      }
                     }
-                    return { ...prev, cliente_id: clienteId, vendedor_id: vendedorId }
+
+                    return { ...prev, cliente_id: clienteId, vendedor_id: vendedorId, uf_destino: ufDestino }
                   })
                 }}
                 className="w-full p-2 border rounded-md"
@@ -699,12 +766,20 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               </select>
             </div>
             <div>
-              <Label htmlFor="uf_destino">UF de Destino</Label>
+              <Label htmlFor="uf_destino">
+                UF de Destino
+                {formData.cliente_id && (
+                  <span className="text-xs text-blue-600 ml-2">
+                    (do cadastro do cliente)
+                  </span>
+                )}
+              </Label>
               <select
                 id="uf_destino"
                 value={formData.uf_destino}
                 onChange={(e) => setFormData(prev => ({ ...prev, uf_destino: e.target.value }))}
                 className="w-full p-2 border rounded-md"
+                disabled={!!formData.cliente_id}
               >
                 <option value="AC">AC - Acre</option>
                 <option value="AL">AL - Alagoas</option>
@@ -734,6 +809,15 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                 <option value="SE">SE - Sergipe</option>
                 <option value="TO">TO - Tocantins</option>
               </select>
+              {formData.cliente_id ? (
+                <p className="text-xs text-blue-600 mt-1">
+                  UF preenchido automaticamente a partir do cadastro do cliente
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  Selecione um cliente para preencher automaticamente
+                </p>
+              )}
             </div>
           </div>
 
