@@ -48,7 +48,8 @@
       "Bash(mkdir:*)",
       "Bash(npm run build:local:*)",
       "Bash(pnpm install:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

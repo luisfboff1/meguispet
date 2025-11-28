@@ -206,13 +206,28 @@ export const generateOrderPDF = async (
   doc.setFont('helvetica', 'normal')
   doc.text(venda.vendedor?.nome || 'N/A', margin + 32, yPos)
 
-  // Prazo de pagamento (em dias)
+  // Forma de pagamento
   doc.setFont('helvetica', 'bold')
   doc.text('PAGAMENTO:', pageWidth / 2, yPos)
   doc.setFont('helvetica', 'normal')
-  const pagamento = venda.prazo_pagamento 
-    ? `${venda.prazo_pagamento} dias` 
-    : getPaymentMethodName(venda)
+
+  // Determinar o texto de pagamento
+  let pagamento = 'N/A'
+
+  // Se tiver parcelas cadastradas
+  if (venda.parcelas && Array.isArray(venda.parcelas) && venda.parcelas.length > 0) {
+    // Se tiver condição de pagamento, mostrar o nome dela
+    if (venda.condicao_pagamento?.nome) {
+      pagamento = venda.condicao_pagamento.nome
+    } else {
+      // Caso contrário, mostrar "Parcelado (X parcelas)"
+      pagamento = `Parcelado (${venda.parcelas.length}x)`
+    }
+  } else {
+    // Se não tiver parcelas, mostrar a forma de pagamento
+    pagamento = getPaymentMethodName(venda)
+  }
+
   doc.text(pagamento, pageWidth / 2 + 30, yPos)
   yPos += 5
 
@@ -474,21 +489,21 @@ export const generateOrderPDF = async (
 
     // Preparar dados da tabela
     const fiscalTableData: string[][] = []
-    
+
     // IPI (se houver)
     if (totalIPI > 0) {
       fiscalTableData.push(['IPI', `R$ ${totalIPI.toFixed(2).replace('.', ',')}`])
     }
-    
+
     // ICMS-ST a Recolher (se houver)
     if (hasICMSST) {
       const totaisICMSST = {
         total_icms_st_recolher: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0)
       }
-      
+
       fiscalTableData.push(['ICMS-ST a Recolher', `R$ ${totaisICMSST.total_icms_st_recolher.toFixed(2).replace('.', ',')}`])
     }
-    
+
     // Total de Impostos (IPI + ST, sem ICMS próprio)
     const totalImpostos = totalIPI + totalST
     if (totalImpostos > 0) {
@@ -530,6 +545,78 @@ export const generateOrderPDF = async (
       yPos += (notaLines.length * 3) + 5
     }
   }
+
+  // ==================== PARCELAS DE PAGAMENTO ====================
+  // Sempre mostrar tabela de parcelas (mesmo para vendas à vista)
+  // Adicionar espaçamento
+  yPos += 3
+
+  // Linha separadora
+  doc.setLineWidth(0.3)
+  doc.line(margin, yPos, pageWidth - margin, yPos)
+  yPos += 6
+
+  // Título da seção
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'bold')
+  doc.text('PARCELAS DE PAGAMENTO', margin, yPos)
+  yPos += 5
+
+  // Preparar dados da tabela de parcelas
+  let parcelasTableData: string[][] = []
+
+  if (venda.parcelas && Array.isArray(venda.parcelas) && venda.parcelas.length > 0) {
+    // Se houver parcelas cadastradas, usar elas
+    const parcelasOrdenadas = [...venda.parcelas].sort((a, b) => a.numero_parcela - b.numero_parcela)
+    parcelasTableData = parcelasOrdenadas.map((parcela) => [
+      parcela.numero_parcela.toString(),
+      new Date(parcela.data_vencimento).toLocaleDateString('pt-BR'),
+      `R$ ${parcela.valor_parcela.toFixed(2).replace('.', ',')}`
+    ])
+  } else {
+    // Se não houver parcelas (venda à vista), criar uma parcela única
+    const dataVencimento = venda.data_venda || venda.created_at
+    parcelasTableData = [[
+      '1',
+      new Date(dataVencimento).toLocaleDateString('pt-BR'),
+      `R$ ${totalFinal.toFixed(2).replace('.', ',')}`
+    ]]
+  }
+
+  // Criar tabela de parcelas
+  autoTable(doc, {
+    startY: yPos,
+    head: [['PARCELA', 'VENCIMENTO', 'VALOR']],
+    body: parcelasTableData,
+    theme: 'plain',
+    styles: {
+      fontSize: 9,
+      cellPadding: 2,
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1,
+    },
+    headStyles: {
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      halign: 'center',
+      lineWidth: { bottom: 0.3, top: 0.3 },
+      fontSize: 9,
+    },
+    bodyStyles: {
+      textColor: [0, 0, 0],
+    },
+    columnStyles: {
+      0: { cellWidth: 30, halign: 'center' },
+      1: { cellWidth: 'auto', halign: 'center' },
+      2: { cellWidth: 50, halign: 'right' },
+    },
+    didDrawPage: (data) => {
+      yPos = data.cursor?.y || yPos
+    }
+  })
+
+  yPos += 3
 
   // ==================== RODAPÉ ====================
   const footerY = doc.internal.pageSize.getHeight() - 15
