@@ -6,7 +6,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MeguisPet is a modern pet shop management system built with Next.js 15, React 19, TypeScript, and Tailwind CSS 4. The project is deployed to Vercel in SSR (server-side rendering) mode with Supabase as the backend for authentication and database.
 
-**📊 For complete architecture documentation with detailed Mermaid diagrams, see [ARQUITETURA.md](./ARQUITETURA.md)**
+## 📚 Documentation Structure
+
+All project documentation is organized in the `docs/` folder:
+
+### Core Documentation (Numbered)
+- **[01-setup/](./docs/01-setup/)** - Setup guides (Doppler, Supabase, Agents)
+- **[02-architecture/](./docs/02-architecture/)** - Architecture documentation and diagrams
+- **[03-database/](./docs/03-database/)** - Database schema and migrations
+- **[04-features/](./docs/04-features/)** - Feature implementations and guides
+- **[05-guides/](./docs/05-guides/)** - User guides and tutorials
+- **[06-fixes/](./docs/06-fixes/)** - Bug fixes and corrections
+- **[07-changelog/](./docs/07-changelog/)** - Change history and updates
+- **[08-development/](./docs/08-development/)** - Development tools and agents
+- **[09-api/](./docs/09-api/)** - API documentation
+- **[10-deployment/](./docs/10-deployment/)** - Deployment guides
+
+### Specialized Documentation
+- **[nfe/](./docs/nfe/)** - NF-e integration documentation
+- **[performance/](./docs/performance/)** - Performance optimization guides
+- **[security/](./docs/security/)** - Security documentation
+- **[misc/](./docs/misc/)** - Miscellaneous documentation
+
+**📊 For complete architecture documentation with detailed Mermaid diagrams, see [docs/02-architecture/ARQUITETURA.md](./docs/02-architecture/ARQUITETURA.md)**
 
 ## Development Commands
 
