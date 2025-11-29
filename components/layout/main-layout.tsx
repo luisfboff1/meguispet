@@ -51,9 +51,13 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     setHydrated(true)
   }, [])
 
-  // Removed: Auth check is handled by middleware.ts
-  // No need to duplicate the check here - middleware already protects routes
-  // This improves navigation performance by removing blocking redirects
+  // Defense-in-depth: Redirect to login if no user after hydration
+  // This catches edge cases where middleware might not have redirected
+  useEffect(() => {
+    if (hydrated && !loading && !isAuthenticated && !isNoLayoutPage) {
+      router.push('/login')
+    }
+  }, [hydrated, loading, isAuthenticated, isNoLayoutPage, router])
 
   useEffect(() => {
     const handleRouteChange = () => {

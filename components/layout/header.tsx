@@ -240,10 +240,10 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
               </span>
               <span className="hidden min-w-0 flex-1 text-left md:block">
                 <span className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  {user?.nome ?? 'Admin'}
+                  {user?.nome ?? '...'}
                 </span>
                 <span className="block text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                  {user?.email ?? 'admin@meguispet.com'}
+                  {user?.email ?? '...'}
                 </span>
               </span>
               <ChevronDown size={16} className="text-slate-400 transition group-hover:text-slate-600 dark:text-slate-500" />
@@ -259,8 +259,8 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
                   className="absolute right-0 mt-3 w-60 overflow-hidden rounded-3xl border border-white/40 bg-white/95 p-3 shadow-2xl backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/90"
                 >
                   <div className="rounded-2xl bg-slate-100/60 p-3 dark:bg-slate-900/70">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{user?.nome ?? 'Admin'}</p>
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{user?.email ?? 'admin@meguispet.com'}</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{user?.nome ?? '...'}</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{user?.email ?? '...'}</p>
                   </div>
                   <div className="mt-2 space-y-1">
                     <button

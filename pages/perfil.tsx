@@ -1,20 +1,37 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { User, Mail, Phone, MapPin, Save } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function PerfilPage() {
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
-    nome: 'Admin',
-    email: 'admin@meguispet.com',
-    telefone: '(11) 99999-9999',
-    endereco: 'Rua das Flores, 123',
-    cidade: 'São Paulo',
-    estado: 'SP',
-    cep: '01234-567'
+    nome: '',
+    email: '',
+    telefone: '',
+    endereco: '',
+    cidade: '',
+    estado: '',
+    cep: ''
   })
+
+  // Carregar dados do usuário quando disponível
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        nome: user.nome || '',
+        email: user.email || '',
+        telefone: '',
+        endereco: '',
+        cidade: '',
+        estado: '',
+        cep: ''
+      })
+    }
+  }, [user])
 
   const [loading, setLoading] = useState(false)
 
