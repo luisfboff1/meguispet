@@ -93,6 +93,7 @@ export function useAuth() {
 
         // If there's a session error or no session, clear auth state
         if (error || !session) {
+          console.log('🔒 useAuth: No valid session found', { error: error?.message })
           clear()
           setStatus('unauthenticated')
           clearTokenCookie()
@@ -140,20 +141,29 @@ export function useAuth() {
             }
 
             // Verified - update credentials
+            console.log('✅ useAuth: Session verified, user authenticated')
             setCredentials(response.data, session.access_token)
             setTokenCookie(session.access_token)
             setStatus('authenticated')
           } else {
             // Profile not found or invalid - logout
-            await handleLogout()
+            console.log('⚠️ useAuth: Profile not found or invalid')
+            clear()
+            setStatus('unauthenticated')
+            clearTokenCookie()
           }
         } catch (error: any) {
+          console.log('❌ useAuth: Error fetching profile', { status: error?.response?.status })
           // Handle 401 errors (expired/invalid token)
           if (error?.response?.status === 401) {
-            await handleLogout()
+            clear()
+            setStatus('unauthenticated')
+            clearTokenCookie()
           } else {
-            // Other errors - still logout for safety
-            await handleLogout()
+            // Other errors - still clear auth for safety
+            clear()
+            setStatus('unauthenticated')
+            clearTokenCookie()
           }
         }
       } else {
@@ -162,7 +172,11 @@ export function useAuth() {
         setStatus('unauthenticated')
       }
     } catch (error) {
-      await handleLogout()
+      console.error('❌ useAuth: Unexpected error in checkAuth', error)
+      // Always ensure we end in a valid state
+      clear()
+      setStatus('unauthenticated')
+      clearTokenCookie()
     }
   }, [clear, handleLogout, setCredentials, setStatus])
 
@@ -171,6 +185,21 @@ export function useAuth() {
     // Middleware already protects routes, so we don't need to check on every render
     if (status === 'idle') {
       checkAuth()
+
+      // Safety timeout: if checkAuth doesn't complete in 10 seconds, force unauthenticated
+      // This prevents being stuck in 'loading' state forever
+      const timeoutId = setTimeout(() => {
+        // Get current status from store (not closure)
+        const currentStatus = useAuthStore.getState().status
+        if (currentStatus === 'loading' || currentStatus === 'idle') {
+          console.error('⏱️ useAuth: checkAuth timeout - forcing unauthenticated state')
+          clear()
+          setStatus('unauthenticated')
+          clearTokenCookie()
+        }
+      }, 10000) // 10 seconds
+
+      return () => clearTimeout(timeoutId)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]) // Remove checkAuth from dependencies to prevent unnecessary checks

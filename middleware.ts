@@ -74,50 +74,73 @@ export async function middleware(request: NextRequest) {
     error
   } = await supabase.auth.getUser()
 
-  // Check for session expiration based on last activity
-  if (user) {
-    const lastActivity = request.cookies.get('last_activity')?.value
-    if (lastActivity) {
-      const lastActivityTime = parseInt(lastActivity, 10)
-      const now = Date.now()
-      const timeSinceLastActivity = now - lastActivityTime
-      
-      // If session is older than 6 hours, force re-authentication
-      if (timeSinceLastActivity > SESSION_MAX_AGE * 1000) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        url.searchParams.set('reason', 'session_expired')
-        const response = NextResponse.redirect(url)
-        
-        // Clear all auth cookies
-        response.cookies.delete('sb-access-token')
-        response.cookies.delete('sb-refresh-token')
-        response.cookies.delete('last_activity')
-        
-        return response
+  // If there's an error or no user, clear auth and redirect to login
+  // This handles expired tokens, invalid sessions, etc.
+  if (error || !user) {
+    // Only redirect if not already on login page
+    if (request.nextUrl.pathname !== '/login') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      if (error) {
+        url.searchParams.set('reason', 'auth_error')
       }
+
+      // Create redirect response and clear all auth cookies
+      const response = NextResponse.redirect(url)
+
+      // Clear Supabase auth cookies
+      response.cookies.delete('sb-access-token')
+      response.cookies.delete('sb-refresh-token')
+      response.cookies.delete('last_activity')
+
+      // Clear all cookies that start with 'sb-' (Supabase cookies)
+      request.cookies.getAll().forEach(cookie => {
+        if (cookie.name.startsWith('sb-')) {
+          response.cookies.delete(cookie.name)
+        }
+      })
+
+      return response
     }
-    
-    // Update last activity timestamp
-    supabaseResponse.cookies.set('last_activity', Date.now().toString(), {
-      maxAge: SESSION_MAX_AGE,
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      path: '/',
-    })
+
+    // If already on login page, just clear cookies and continue
+    supabaseResponse.cookies.delete('sb-access-token')
+    supabaseResponse.cookies.delete('sb-refresh-token')
+    supabaseResponse.cookies.delete('last_activity')
+    return supabaseResponse
   }
 
-  // If user is not signed in and the current path is not /login, redirect to /login
-  if (!user && request.nextUrl.pathname !== '/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    // Clear any stale auth cookies
-    const response = NextResponse.redirect(url)
-    response.cookies.delete('sb-access-token')
-    response.cookies.delete('sb-refresh-token')
-    return response
+  // User is authenticated - check for session expiration based on last activity
+  const lastActivity = request.cookies.get('last_activity')?.value
+  if (lastActivity) {
+    const lastActivityTime = parseInt(lastActivity, 10)
+    const now = Date.now()
+    const timeSinceLastActivity = now - lastActivityTime
+
+    // If session is older than 6 hours, force re-authentication
+    if (timeSinceLastActivity > SESSION_MAX_AGE * 1000) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('reason', 'session_expired')
+      const response = NextResponse.redirect(url)
+
+      // Clear all auth cookies
+      response.cookies.delete('sb-access-token')
+      response.cookies.delete('sb-refresh-token')
+      response.cookies.delete('last_activity')
+
+      return response
+    }
   }
+
+  // Update last activity timestamp
+  supabaseResponse.cookies.set('last_activity', Date.now().toString(), {
+    maxAge: SESSION_MAX_AGE,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    path: '/',
+  })
 
   // If user is signed in and tries to access /login, redirect to /dashboard
   if (user && request.nextUrl.pathname === '/login') {

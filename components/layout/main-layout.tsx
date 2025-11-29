@@ -29,7 +29,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     toggleCollapsed
   } = useSidebar()
 
-  const { loading, isAuthenticated } = useAuth()
+  const { loading, isAuthenticated, user, status } = useAuth()
 
   // Páginas que não precisam de layout (login, etc)
   const noLayoutPages = ['/login', '/register', '/forgot-password']
@@ -53,11 +53,30 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
 
   // Defense-in-depth: Redirect to login if no user after hydration
   // This catches edge cases where middleware might not have redirected
+  // IMPORTANT: Also redirect if status is 'unauthenticated' (not just checking isAuthenticated)
+  // This prevents being stuck when user is null but loading is false
   useEffect(() => {
-    if (hydrated && !loading && !isAuthenticated && !isNoLayoutPage) {
-      router.push('/login')
+    if (!hydrated || isNoLayoutPage) return
+
+    // Redirect if:
+    // 1. Not loading AND not authenticated
+    // 2. OR explicitly unauthenticated (even if still loading)
+    // 3. OR no user object exists after a reasonable time (handles edge cases)
+    const shouldRedirect =
+      (!loading && !isAuthenticated) ||
+      status === 'unauthenticated' ||
+      (hydrated && !user && !loading)
+
+    if (shouldRedirect) {
+      console.log('🔒 MainLayout: Redirecting to login', {
+        loading,
+        isAuthenticated,
+        status,
+        hasUser: !!user
+      })
+      router.replace('/login')
     }
-  }, [hydrated, loading, isAuthenticated, isNoLayoutPage, router])
+  }, [hydrated, loading, isAuthenticated, status, user, isNoLayoutPage, router])
 
   useEffect(() => {
     const handleRouteChange = () => {
