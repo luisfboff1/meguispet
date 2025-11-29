@@ -17,7 +17,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import type { ProdutosReportData, ReportConfiguration, ReportFormat } from '@/types/reports'
-import { cn } from '@/lib/utils'
+import { cn, formatLocalDate } from '@/lib/utils'
 
 export interface ProdutosReportViewerProps {
   data: ProdutosReportData
@@ -36,7 +36,7 @@ export function ProdutosReportViewer({
 }: ProdutosReportViewerProps) {
   const { periodo } = configuracao.filtros
 
-  const periodoStr = `${new Date(periodo.startDate).toLocaleDateString('pt-BR')} - ${new Date(periodo.endDate).toLocaleDateString('pt-BR')}`
+  const periodoStr = `${formatLocalDate(periodo.startDate)} - ${formatLocalDate(periodo.endDate)}`
 
   // Dados para gráfico de barras (Top 10 Mais Vendidos)
   const chartDataMaisVendidos = data.produtosMaisVendidos.slice(0, 10).map(p => ({

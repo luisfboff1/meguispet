@@ -36,6 +36,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import type { Vendedor, VendedorVenda } from '@/types'
 import { useVendedorMetricas, useVendedorVendas } from '@/hooks/useVendedorDetails'
+import { formatLocalDate } from '@/lib/utils'
 
 interface VendedorDetailsModalProps {
   vendedor: Vendedor
@@ -81,7 +82,7 @@ export function VendedorDetailsModal({
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    return formatLocalDate(dateString)
   }
 
   const getVariationIcon = (variation: number) => {

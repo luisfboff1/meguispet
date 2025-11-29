@@ -23,6 +23,7 @@ import type { Cliente, ClienteForm as ClienteFormValues } from '@/types'
 import ClienteForm from '@/components/forms/ClienteForm'
 import Toast from '@/components/ui/Toast'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+import { formatLocalDate } from '@/lib/utils'
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -79,7 +80,7 @@ export default function ClientesPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    return formatLocalDate(dateString)
   }
 
   const handleNovoCliente = () => {

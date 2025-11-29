@@ -23,6 +23,7 @@ import {
 import { usuariosService, authService } from '@/services/api'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import type { Usuario } from '@/types'
+import { formatLocalDate } from '@/lib/utils'
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
@@ -316,7 +317,7 @@ export default function UsuariosPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    return formatLocalDate(dateString)
   }
 
   const getInitials = (name: string) => {

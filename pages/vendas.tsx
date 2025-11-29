@@ -30,6 +30,7 @@ import AlertDialog from '@/components/ui/AlertDialog'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { downloadOrderPDF, PDFGeneratorOptions } from '@/lib/pdf-generator'
 import VendaPDFPreviewModal, { PDFPreviewOptions } from '@/components/modals/VendaPDFPreviewModal'
+import { formatLocalDate } from '@/lib/utils'
 
 export default function VendasPage() {
   const [activeTab, setActiveTab] = useState<'vendas' | 'condicoes'>('vendas')
@@ -128,7 +129,7 @@ export default function VendasPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    return formatLocalDate(dateString)
   }
 
   const getStatusColor = (status: string) => {

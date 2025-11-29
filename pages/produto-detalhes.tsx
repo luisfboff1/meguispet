@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { produtosService, historicoPrecosService } from '@/services/api'
 import { Produto } from '@/types'
+import { parseLocalDate } from '@/lib/utils'
 
 interface HistoricoPreco {
   id: number
@@ -170,7 +171,8 @@ export default function ProdutoDetalhes() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
+    const localDate = parseLocalDate(dateString)
+    return localDate.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

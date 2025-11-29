@@ -16,6 +16,7 @@ import {
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { ReportCard } from '@/components/reports/ReportCard'
 import type { ReportType } from '@/types/reports'
+import { formatLocalDate } from '@/lib/utils'
 
 interface ReportData {
   id: string
@@ -110,7 +111,7 @@ export default function RelatoriosPage() {
       header: ({ column }) => <SortableHeader column={column}>Data de Geração</SortableHeader>,
       cell: ({ row }) => (
         <span className="text-sm text-gray-600">
-          {new Date(row.original.dataGeracao).toLocaleDateString('pt-BR')}
+          {formatLocalDate(row.original.dataGeracao)}
         </span>
       ),
     },

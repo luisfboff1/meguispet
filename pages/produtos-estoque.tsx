@@ -35,6 +35,7 @@ import type {
 import ProdutoForm from '@/components/forms/ProdutoForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+import { formatLocalDate } from '@/lib/utils'
 
 // Helper function to format currency
 const formatCurrency = (value: number) => {
@@ -396,7 +397,7 @@ export default function ProdutosEstoquePage() {
       header: ({ column }) => <SortableHeader column={column}>Data</SortableHeader>,
       cell: ({ row }) => (
         <div className="text-sm text-gray-900">
-          {new Date(row.original.data_movimentacao).toLocaleDateString('pt-BR')}
+          {formatLocalDate(row.original.data_movimentacao)}
         </div>
       ),
     },
@@ -1194,8 +1195,8 @@ export default function ProdutosEstoquePage() {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-gray-700 mb-2">Data</h3>
                   <p className="text-gray-900">
-                    {selectedMovimentacao.data_movimentacao ? 
-                      new Date(selectedMovimentacao.data_movimentacao).toLocaleDateString('pt-BR') : 
+                    {selectedMovimentacao.data_movimentacao ?
+                      formatLocalDate(selectedMovimentacao.data_movimentacao) :
                       'Data não informada'
                     }
                   </p>

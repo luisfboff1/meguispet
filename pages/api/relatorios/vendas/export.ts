@@ -5,6 +5,7 @@ import type { VendasReportData } from '@/types/reports'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
+import { formatLocalDate } from '@/lib/utils'
 
 interface ExportRequestBody extends ReportConfiguration {
   formato: 'pdf' | 'excel' | 'csv'
@@ -87,7 +88,7 @@ function addTemporalDataTable(doc: jsPDF, data: VendasReportData, startY: number
     startY: startY + 15,
     head: [['Data', 'Quantidade', 'Faturamento']],
     body: data.vendasPorDia.map(v => [
-      new Date(v.data).toLocaleDateString('pt-BR'),
+      formatLocalDate(v.data),
       v.quantidade.toString(),
       `R$ ${v.faturamento.toFixed(2)}`,
     ]),
@@ -141,7 +142,7 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
     startY: resumoY + 45,
     head: [['Data', 'Cliente', 'Vendedor', 'Qtd Prod', 'Subtotal', 'Líquido', 'IPI', 'ICMS', 'ST', 'Total', 'Status']],
     body: data.vendasDetalhadas.map(v => [
-      new Date(v.data).toLocaleDateString('pt-BR'),
+      formatLocalDate(v.data),
       v.cliente,
       v.vendedor,
       v.produtos.toString(),
@@ -288,7 +289,7 @@ function exportExcel(data: VendasReportData, config: ExportRequestBody, res: Nex
   const vendasData = [
     ['Data', 'Cliente', 'Vendedor', 'Produtos', 'Subtotal', 'Valor Líquido', 'IPI', 'ICMS', 'ST', 'Total Impostos', 'Total', 'Status'],
     ...data.vendasDetalhadas.map(v => [
-      new Date(v.data).toLocaleDateString('pt-BR'),
+      formatLocalDate(v.data),
       v.cliente,
       v.vendedor,
       v.produtos,
@@ -368,7 +369,7 @@ function exportCSV(data: VendasReportData, config: ExportRequestBody, res: NextA
   csvLines.push('Data,Cliente,Vendedor,Produtos,Subtotal,Valor Líquido,IPI,ICMS,ST,Total Impostos,Total,Status')
   data.vendasDetalhadas.forEach(v => {
     csvLines.push(
-      `${new Date(v.data).toLocaleDateString('pt-BR')},${v.cliente},${v.vendedor},${v.produtos},${v.subtotal},${v.valorLiquido},${v.ipi},${v.icms},${v.st},${v.impostos},${v.total},${v.status}`
+      `${formatLocalDate(v.data)},${v.cliente},${v.vendedor},${v.produtos},${v.subtotal},${v.valorLiquido},${v.ipi},${v.icms},${v.st},${v.impostos},${v.total},${v.status}`
     )
   })
   csvLines.push('')

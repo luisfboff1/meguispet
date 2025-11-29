@@ -20,6 +20,7 @@ import type { Fornecedor, FornecedorForm as FornecedorFormValues } from '@/types
 import FornecedorForm from '@/components/forms/FornecedorForm'
 import Toast from '@/components/ui/Toast'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+import { formatLocalDate } from '@/lib/utils'
 
 interface PaginationState {
   page: number
@@ -91,7 +92,7 @@ export default function FornecedoresPage() {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Data indisponível'
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    return formatLocalDate(dateString)
   }
 
   const getInitials = (name: string) => {

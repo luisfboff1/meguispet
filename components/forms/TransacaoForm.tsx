@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DollarSign, Calendar, FileText, Tag, MessageSquare, ShoppingBag } from 'lucide-react'
 import { TransacaoForm as TransacaoFormType, CategoriaFinanceira, Venda } from '@/types'
 import { categoriasFinanceirasService, vendasService } from '@/services/api'
+import { formatLocalDate } from '@/lib/utils'
 
 interface TransacaoFormProps {
   initialData?: Partial<TransacaoFormType>
@@ -224,7 +225,7 @@ export function TransacaoForm({
                   <option value="">Nenhuma venda selecionada</option>
                   {vendas.map((venda) => (
                     <option key={venda.id} value={venda.id}>
-                      {venda.numero_venda} - R$ {venda.valor_final.toFixed(2)} - {new Date(venda.data_venda).toLocaleDateString('pt-BR')}
+                      {venda.numero_venda} - R$ {venda.valor_final.toFixed(2)} - {formatLocalDate(venda.data_venda)}
                     </option>
                   ))}
                 </select>

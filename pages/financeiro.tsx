@@ -27,6 +27,7 @@ import { TransacaoForm } from '@/components/forms/TransacaoForm'
 import { CategoriaFinanceiraForm } from '@/components/forms/CategoriaFinanceiraForm'
 import { TransacaoRecorrenteForm } from '@/components/forms/TransacaoRecorrenteForm'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+import { formatLocalDate } from '@/lib/utils'
 
 // Lazy load do gráfico financeiro para otimização (economiza ~100KB)
 const CustomizableFinanceiroChart = dynamic(() => import('@/components/charts/CustomizableFinanceiroChart'), {
@@ -442,7 +443,7 @@ export default function FinanceiroPage() {
         <div className="flex items-center space-x-2">
           <Calendar className="h-4 w-4 text-gray-400" />
           <span className="text-sm text-gray-600">
-            {new Date(row.original.data_transacao).toLocaleDateString('pt-BR')}
+            {formatLocalDate(row.original.data_transacao)}
           </span>
         </div>
       ),
@@ -552,7 +553,7 @@ export default function FinanceiroPage() {
     // Gerar CSV
     const headers = ['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor']
     const rows = filteredTransacoes.map(t => [
-      new Date(t.data_transacao).toLocaleDateString('pt-BR'),
+      formatLocalDate(t.data_transacao),
       t.tipo === 'receita' ? 'Receita' : 'Despesa',
       t.categoria,
       t.descricao,
@@ -955,16 +956,16 @@ export default function FinanceiroPage() {
                             )}
                             <div>
                               <span className="font-medium">Próxima:</span>{' '}
-                              {new Date(recorrente.proxima_geracao).toLocaleDateString('pt-BR')}
+                              {formatLocalDate(recorrente.proxima_geracao)}
                             </div>
                             <div>
                               <span className="font-medium">Início:</span>{' '}
-                              {new Date(recorrente.data_inicio).toLocaleDateString('pt-BR')}
+                              {formatLocalDate(recorrente.data_inicio)}
                             </div>
                             {recorrente.data_fim && (
                               <div>
                                 <span className="font-medium">Fim:</span>{' '}
-                                {new Date(recorrente.data_fim).toLocaleDateString('pt-BR')}
+                                {formatLocalDate(recorrente.data_fim)}
                               </div>
                             )}
                             <div>

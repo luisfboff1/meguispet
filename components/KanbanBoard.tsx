@@ -1,5 +1,5 @@
 import React from 'react'
-import { cn } from '@/lib/utils'
+import { cn, parseLocalDate } from '@/lib/utils'
 import {
   Bug,
   Lightbulb,
@@ -79,7 +79,7 @@ export default function KanbanBoard({
   isAdmin = false
 }: KanbanBoardProps) {
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = parseLocalDate(dateString)
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'short',

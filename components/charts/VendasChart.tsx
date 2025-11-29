@@ -1,4 +1,5 @@
 import React from 'react'
+import { parseLocalDate } from '@/lib/utils'
 
 interface VendasChartProps {
   data: Array<{
@@ -72,12 +73,12 @@ export default function VendasChart({ data, loading = false }: VendasChartProps)
                 </div>
                 <div className="text-center text-xs text-gray-600">
                   <div className="font-medium uppercase tracking-wide text-gray-700">
-                    {new Date(item.data).toLocaleDateString('pt-BR', {
+                    {parseLocalDate(item.data).toLocaleDateString('pt-BR', {
                       weekday: 'short'
                     })}
                   </div>
                   <div className="text-[11px] text-gray-500">
-                    {new Date(item.data).toLocaleDateString('pt-BR', { day: '2-digit' })}
+                    {parseLocalDate(item.data).toLocaleDateString('pt-BR', { day: '2-digit' })}
                   </div>
                 </div>
               </div>

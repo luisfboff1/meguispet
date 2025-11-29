@@ -23,6 +23,7 @@ import VendedorForm from '@/components/forms/VendedorForm'
 import AlertDialog from '@/components/ui/AlertDialog'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { VendedorDetailsModal } from '@/components/modals/VendedorDetailsModal'
+import { formatLocalDate } from '@/lib/utils'
 import type { Vendedor, VendedorForm as VendedorFormValues } from '@/types'
 
 export default function VendedoresPage() {
@@ -65,7 +66,7 @@ export default function VendedoresPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    return formatLocalDate(dateString)
   }
 
   const getInitials = (name: string) => {

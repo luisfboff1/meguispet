@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollableContainer } from '@/components/ui/scrollable-container'
 import { FileText, Download, Eye, X, ArrowUpDown, GripVertical } from 'lucide-react'
 import type { Venda, ItemVenda } from '@/types'
+import { formatLocalDate } from '@/lib/utils'
 
 export interface PDFPreviewOptions {
   incluirObservacoes: boolean
@@ -69,7 +70,7 @@ export default function VendaPDFPreviewModal({
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    return formatLocalDate(dateString)
   }
 
   // Verificar se tem os novos campos de impostos (IPI, ICMS, ST)

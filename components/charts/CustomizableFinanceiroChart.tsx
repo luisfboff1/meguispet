@@ -25,11 +25,11 @@ import type { FinanceiroMetrics } from '@/types'
 
 // Lazy loading de Recharts para otimização
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
+import { formatLocalDate } from '@/lib/utils'
 
 // Utility functions FORA do componente para evitar re-renders
 const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  return formatLocalDate(dateStr, { day: '2-digit', month: '2-digit' })
 }
 
 const formatCurrency = (value: number) => {

@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { Venda, ItemVenda } from '@/types'
+import { formatLocalDate } from './utils'
 
 /**
  * Helper function to extract payment method name from venda
@@ -196,7 +197,7 @@ export const generateOrderPDF = async (
   doc.setFont('helvetica', 'bold')
   doc.text('EMISSÃO:', pageWidth / 2, yPos)
   doc.setFont('helvetica', 'normal')
-  const dataEmissao = new Date(venda.created_at).toLocaleDateString('pt-BR')
+  const dataEmissao = formatLocalDate(venda.created_at)
   doc.text(dataEmissao, pageWidth / 2 + 20, yPos)
   yPos += 5
 
@@ -570,7 +571,7 @@ export const generateOrderPDF = async (
     const parcelasOrdenadas = [...venda.parcelas].sort((a, b) => a.numero_parcela - b.numero_parcela)
     parcelasTableData = parcelasOrdenadas.map((parcela) => [
       parcela.numero_parcela.toString(),
-      new Date(parcela.data_vencimento).toLocaleDateString('pt-BR'),
+      formatLocalDate(parcela.data_vencimento),
       `R$ ${parcela.valor_parcela.toFixed(2).replace('.', ',')}`
     ])
   } else {
@@ -578,7 +579,7 @@ export const generateOrderPDF = async (
     const dataVencimento = venda.data_venda || venda.created_at
     parcelasTableData = [[
       '1',
-      new Date(dataVencimento).toLocaleDateString('pt-BR'),
+      formatLocalDate(dataVencimento),
       `R$ ${totalFinal.toFixed(2).replace('.', ',')}`
     ]]
   }

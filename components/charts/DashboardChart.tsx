@@ -18,6 +18,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart'
 import { Settings2, TrendingUp, Menu, Calendar } from 'lucide-react'
+import { formatLocalDate } from '@/lib/utils'
 import type { ChartConfig } from '@/components/ui/chart'
 
 // Recharts imports (lazy loaded na página)
@@ -95,7 +96,7 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
     if (displayMode === 'total') {
       return data.map((item) => ({
         ...item,
-        formattedDate: new Date(item.data).toLocaleDateString('pt-BR', {
+        formattedDate: formatLocalDate(item.data, {
           day: '2-digit',
           month: 'short',
         }),
@@ -109,7 +110,7 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
 
       return {
         data: item.data,
-        formattedDate: new Date(item.data).toLocaleDateString('pt-BR', {
+        formattedDate: formatLocalDate(item.data, {
           day: '2-digit',
           month: 'short',
         }),

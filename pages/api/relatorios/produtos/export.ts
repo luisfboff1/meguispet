@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import type { ReportConfiguration, ReportFormat, ProdutosReportData } from '@/types/reports'
+import { formatLocalDate } from '@/lib/utils'
 
 export default async function handler(
   req: NextApiRequest,
@@ -45,7 +46,7 @@ export default async function handler(
     const data: ProdutosReportData = previewData.data
 
     const { startDate, endDate } = config.filtros.periodo
-    const periodoStr = `${new Date(startDate).toLocaleDateString('pt-BR')} - ${new Date(endDate).toLocaleDateString('pt-BR')}`
+    const periodoStr = `${formatLocalDate(startDate)} - ${formatLocalDate(endDate)}`
 
     // 2️⃣ Gerar arquivo conforme formato
     switch (formato) {
