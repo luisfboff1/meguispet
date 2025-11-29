@@ -1,0 +1,35 @@
+# =============================================
+# .gitignore - Pasta database
+# =============================================
+
+# Diretório de backups (contém dados sensíveis!)
+backup/
+backups/
+
+# Arquivos de backup individuais
+*.sql
+*.dump
+*.backup
+
+# Logs de erro
+restore_error.log
+backup_error.log
+*.log
+
+# Arquivo de senha do PostgreSQL
+.pgpass
+pgpass.conf
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Arquivos de configuração local com credenciais
+config.local.bat
+credentials.bat
+
+# IMPORTANTE: Nunca commite backups contendo:
+# - Senhas de usuários (schema auth)
+# - CPF/CNPJ de clientes
+# - Dados pessoais (LGPD)
+# - Credenciais de banco de dados
