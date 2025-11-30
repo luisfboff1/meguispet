@@ -23,7 +23,7 @@ export default function FeedbackPage() {
     cancelado: []
   })
 
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.tipo_usuario === 'admin'
 
   const loadTickets = async () => {
     try {

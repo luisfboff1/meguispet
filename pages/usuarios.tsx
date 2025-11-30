@@ -272,7 +272,7 @@ export default function UsuariosPage() {
 
   const handleDeleteUser = async (usuario: Usuario) => {
     // Check if current user is admin
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser || currentUser.tipo_usuario !== 'admin') {
       toast({
         title: 'Acesso negado',
         description: 'Apenas administradores podem excluir usuários',
@@ -377,7 +377,7 @@ export default function UsuariosPage() {
           >
             <Edit className="h-4 w-4" />
           </Button>
-          {currentUser?.role === 'admin' && currentUser?.id !== row.original.id && (
+          {currentUser?.tipo_usuario === 'admin' && currentUser?.id !== row.original.id && (
             <Button 
               variant="ghost" 
               size="sm" 
@@ -517,7 +517,7 @@ export default function UsuariosPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {usuarios.filter(u => u.role === 'admin').length}
+              {usuarios.filter(u => u.tipo_usuario === 'admin').length}
             </div>
             <p className="text-xs text-muted-foreground truncate">Usuários</p>
           </CardContent>
