@@ -2,23 +2,16 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Info } from 'lucide-react'
+import type { UserRole } from '@/types'
 
 interface UsuarioFormData {
   nome: string
   email: string
   password: string
-  role: 'admin' | 'convidado'
-  permissoes: {
-    clientes: boolean
-    produtos: boolean
-    vendas: boolean
-    estoque: boolean
-    financeiro: boolean
-    relatorios: boolean
-    configuracoes: boolean
-  }
+  tipo_usuario: UserRole
 }
 
 interface UsuarioFormProps {
@@ -29,10 +22,30 @@ interface UsuarioFormProps {
     id?: number
     nome: string
     email: string
-    role: 'admin' | 'convidado'
-    permissoes?: Record<string, unknown>
+    tipo_usuario?: UserRole
+    role?: 'admin' | 'convidado'
   }
   mode?: 'create' | 'edit'
+}
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  admin: 'Administrador',
+  gerente: 'Gerente',
+  vendedor: 'Vendedor',
+  financeiro: 'Financeiro',
+  estoque: 'Estoque',
+  operador: 'Operador',
+  visualizador: 'Visualizador'
+}
+
+const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  admin: 'Acesso total ao sistema',
+  gerente: 'Gestão de equipe e relatórios',
+  vendedor: 'Apenas suas vendas e clientes',
+  financeiro: 'Módulo financeiro e relatórios',
+  estoque: 'Gestão de produtos e estoque',
+  operador: 'Operações básicas (PDV)',
+  visualizador: 'Apenas visualização (read-only)'
 }
 
 export default function UsuarioForm({ onSubmit, onCancel, loading = false, initialData, mode = 'create' }: UsuarioFormProps) {
@@ -40,16 +53,7 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
     nome: initialData?.nome || '',
     email: initialData?.email || '',
     password: '',
-    role: initialData?.role || 'convidado',
-    permissoes: {
-      clientes: (initialData?.permissoes?.clientes as boolean) || false,
-      produtos: (initialData?.permissoes?.produtos as boolean) || false,
-      vendas: (initialData?.permissoes?.vendas as boolean) || false,
-      estoque: (initialData?.permissoes?.estoque as boolean) || false,
-      financeiro: (initialData?.permissoes?.financeiro as boolean) || false,
-      relatorios: (initialData?.permissoes?.relatorios as boolean) || false,
-      configuracoes: (initialData?.permissoes?.configuracoes as boolean) || false,
-    },
+    tipo_usuario: initialData?.tipo_usuario || initialData?.role as UserRole || 'operador',
   })
 
   const [errors, setErrors] = useState<Partial<Record<keyof UsuarioFormData, string>>>({})
@@ -93,43 +97,10 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
     await onSubmit(formData)
   }
 
-  const togglePermission = (key: keyof UsuarioFormData['permissoes']) => {
+  const handleRoleChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
-      permissoes: {
-        ...prev.permissoes,
-        [key]: !prev.permissoes[key],
-      },
-    }))
-  }
-
-  const selectAllPermissions = () => {
-    setFormData(prev => ({
-      ...prev,
-      permissoes: {
-        clientes: true,
-        produtos: true,
-        vendas: true,
-        estoque: true,
-        financeiro: true,
-        relatorios: true,
-        configuracoes: true,
-      },
-    }))
-  }
-
-  const deselectAllPermissions = () => {
-    setFormData(prev => ({
-      ...prev,
-      permissoes: {
-        clientes: false,
-        produtos: false,
-        vendas: false,
-        estoque: false,
-        financeiro: false,
-        relatorios: false,
-        configuracoes: false,
-      },
+      tipo_usuario: value as UserRole
     }))
   }
 
@@ -208,84 +179,28 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">
+            <Label htmlFor="tipo_usuario">
               Função <span className="text-red-500">*</span>
             </Label>
-            <select
-              id="role"
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'convidado' })}
-              className="w-full p-2 border rounded-md dark:bg-slate-900 dark:border-slate-700"
-              disabled={loading}
-            >
-              <option value="convidado">Convidado</option>
-              <option value="admin">Administrador</option>
-            </select>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Administradores têm acesso completo ao sistema
+            <Select value={formData.tipo_usuario} onValueChange={handleRoleChange} disabled={loading}>
+              <SelectTrigger id="tipo_usuario" className="w-full">
+                <SelectValue placeholder="Selecione uma função" />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(ROLE_LABELS) as UserRole[]).map(role => (
+                  <SelectItem key={role} value={role}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{ROLE_LABELS[role]}</span>
+                      <span className="text-xs text-gray-500">{ROLE_DESCRIPTIONS[role]}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <Info className="h-3 w-3" />
+              Cada função possui permissões pré-definidas. Para permissões avançadas, use a página de gerenciamento de usuários.
             </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Permissões */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Permissões de Acesso</CardTitle>
-              <CardDescription>Defina quais módulos o usuário pode acessar</CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={selectAllPermissions}
-                disabled={loading}
-              >
-                Selecionar Todas
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={deselectAllPermissions}
-                disabled={loading}
-              >
-                Limpar
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries({
-              clientes: 'Clientes',
-              produtos: 'Produtos',
-              vendas: 'Vendas',
-              estoque: 'Estoque',
-              financeiro: 'Financeiro',
-              relatorios: 'Relatórios',
-              configuracoes: 'Configurações',
-            }).map(([key, label]) => (
-              <div key={key} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id={key}
-                  checked={formData.permissoes[key as keyof UsuarioFormData['permissoes']]}
-                  onChange={() => togglePermission(key as keyof UsuarioFormData['permissoes'])}
-                  disabled={loading}
-                  className="w-4 h-4 text-meguispet-primary border-gray-300 rounded focus:ring-meguispet-primary"
-                />
-                <Label
-                  htmlFor={key}
-                  className="text-sm font-medium leading-none cursor-pointer"
-                >
-                  {label}
-                </Label>
-              </div>
-            ))}
           </div>
         </CardContent>
       </Card>

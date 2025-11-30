@@ -1,6 +1,9 @@
-import type { NextApiResponse } from 'next';
-import { getSupabase } from '@/lib/supabase';
-import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import type { NextApiResponse } from "next";
+import { getSupabase } from "@/lib/supabase";
+import {
+  AuthenticatedRequest,
+  withSupabaseAuth,
+} from "@/lib/supabase-middleware";
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
@@ -9,17 +12,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Use authenticated Supabase client for RLS
     const supabase = req.supabaseClient;
 
-    if (method === 'GET') {
-      const { page = '1', limit = '10' } = req.query;
+    if (method === "GET") {
+      const { page = "1", limit = "10" } = req.query;
       const pageNum = parseInt(page as string, 10);
       const limitNum = parseInt(limit as string, 10);
       const offset = (pageNum - 1) * limitNum;
 
       const { data: usuarios, count, error } = await supabase
-        .from('usuarios')
-        .select('id, nome, email, role, permissoes, ativo, created_at, updated_at', { count: 'exact' })
-        .eq('ativo', true)
-        .order('nome', { ascending: true })
+        .from("usuarios")
+        .select(
+          "id, nome, email, role, tipo_usuario, roles, permissoes, permissoes_custom, vendedor_id, departamento, ativo, created_at, updated_at",
+          { count: "exact" },
+        )
+        .eq("ativo", true)
+        .order("nome", { ascending: true })
         .range(offset, offset + limitNum - 1);
 
       if (error) throw error;
@@ -36,11 +42,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       });
     }
 
-    if (method === 'POST') {
+    if (method === "POST") {
       const { nome, email, password, role, permissoes } = req.body;
 
       if (!nome || !email || !password) {
-        return res.status(400).json({ success: false, message: 'Nome, email e senha são obrigatórios' });
+        return res.status(400).json({
+          success: false,
+          message: "Nome, email e senha são obrigatórios",
+        });
       }
 
       // Note: User creation now needs to use Supabase Auth signup
@@ -48,20 +57,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       // It can be used for updating user metadata only
       return res.status(501).json({
         success: false,
-        message: 'Criação de usuário deve ser feita via Supabase Auth signup',
+        message: "Criação de usuário deve ser feita via Supabase Auth signup",
       });
     }
 
-    if (method === 'PUT') {
+    if (method === "PUT") {
       // Accept ID from either body or query parameter
       const idFromBody = req.body?.id;
       const idFromQuery = req.query?.id;
       const id = idFromBody || idFromQuery;
-      
-      const { nome, email, role, permissoes } = req.body;
+
+      const { nome, email, permissoes } = req.body;
 
       if (!id) {
-        return res.status(400).json({ success: false, message: 'ID do usuário é obrigatório' });
+        return res.status(400).json({
+          success: false,
+          message: "ID do usuário é obrigatório",
+        });
       }
 
       // Only update metadata in usuarios table
@@ -69,63 +81,89 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),
       };
-      
+
       // Only add fields that were provided
       if (nome !== undefined) updateData.nome = nome;
       if (email !== undefined) updateData.email = email;
-      if (role !== undefined) updateData.role = role;
+      if (req.body.tipo_usuario !== undefined) {
+        updateData.tipo_usuario = req.body.tipo_usuario;
+      }
+      if (req.body.roles !== undefined) updateData.roles = req.body.roles;
       if (permissoes !== undefined) updateData.permissoes = permissoes;
+      if (req.body.permissoes_custom !== undefined) {
+        updateData.permissoes_custom = req.body.permissoes_custom;
+      }
+      if (req.body.vendedor_id !== undefined) {
+        updateData.vendedor_id = req.body.vendedor_id;
+      }
+      if (req.body.departamento !== undefined) {
+        updateData.departamento = req.body.departamento;
+      }
 
       const { data, error } = await supabase
-        .from('usuarios')
+        .from("usuarios")
         .update(updateData)
-        .eq('id', id)
-        .select('id, nome, email, role, permissoes, ativo, created_at, updated_at');
+        .eq("id", id)
+        .select(
+          "id, nome, email, role, tipo_usuario, roles, permissoes, permissoes_custom, vendedor_id, departamento, ativo, created_at, updated_at",
+        );
 
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+        return res.status(404).json({
+          success: false,
+          message: "Usuário não encontrado",
+        });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Usuário atualizado com sucesso',
+        message: "Usuário atualizado com sucesso",
         data: data[0],
       });
     }
 
-    if (method === 'DELETE') {
+    if (method === "DELETE") {
       const { id } = req.query;
 
       if (!id) {
-        return res.status(400).json({ success: false, message: 'ID do usuário é obrigatório' });
+        return res.status(400).json({
+          success: false,
+          message: "ID do usuário é obrigatório",
+        });
       }
 
       const { data, error } = await supabase
-        .from('usuarios')
+        .from("usuarios")
         .update({ ativo: false, updated_at: new Date().toISOString() })
-        .eq('id', id)
+        .eq("id", id)
         .select();
 
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+        return res.status(404).json({
+          success: false,
+          message: "Usuário não encontrado",
+        });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Usuário removido com sucesso',
+        message: "Usuário removido com sucesso",
       });
     }
 
-    return res.status(405).json({ success: false, message: 'Método não permitido' });
+    return res.status(405).json({
+      success: false,
+      message: "Método não permitido",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      message: "Erro interno do servidor",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };

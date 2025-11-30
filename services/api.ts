@@ -451,8 +451,8 @@ export const authService = {
     return response.data
   },
 
-  async signup(email: string, password: string, nome: string, role = 'user'): Promise<ApiResponse<{ user: Usuario; auth_user_id: string }>> {
-    const response = await api.post('/auth/signup', { email, password, nome, role })
+  async signup(email: string, password: string, nome: string, tipo_usuario: import('@/types').UserRole = 'operador'): Promise<ApiResponse<{ user: Usuario; auth_user_id: string }>> {
+    const response = await api.post('/auth/signup', { email, password, nome, tipo_usuario })
     return response.data
   }
 }
