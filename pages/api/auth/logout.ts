@@ -27,6 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    // Logout successful - Supabase cookies are cleared automatically
+    console.log('✅ Logout successful');
+
     return res.status(200).json({
       success: true,
       message: 'Logout realizado com sucesso',
