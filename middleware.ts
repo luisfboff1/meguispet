@@ -3,24 +3,24 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 /**
  * Next.js Middleware with Supabase Auth (Edge Runtime)
- * 
+ *
  * This middleware runs on the Edge runtime for minimal latency and protects
  * routes that require authentication. It uses @supabase/ssr for optimal
  * cookie handling and session management.
- * 
+ *
  * Features:
  * - Runs 100% on Edge runtime
  * - Uses official Supabase helpers (@supabase/ssr)
- * - Automatic session refresh (every 6 hours)
- * - Secure cookie management with 6-hour expiration
+ * - JWT-based authentication via Supabase
  * - Redirects unauthenticated users to /login
- * - Session timeout enforcement
- * 
- * Security Enhancements (Nov 2025):
- * - Session expires every 6 hours
- * - Cookie max-age set to 21600 seconds (6 hours)
- * - SameSite=Strict for CSRF protection
- * - Secure flag enforced
+ * - Simple admin-only route protection
+ * - BACKWARD COMPATIBLE with old schema
+ *
+ * Permission System (Optional - V2.1):
+ * - Checks for new schema (tipo_usuario, permissoes fields)
+ * - If new schema exists, protects admin-only routes (/usuarios, /configuracoes)
+ * - If old schema, allows access normally
+ * - Adds headers (X-User-Id, X-User-Role, X-Vendedor-Id) for API routes
  */
 
 /**
@@ -112,8 +112,40 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // User is authenticated - allow access
-  // Permission checks can be added later in individual pages/API routes
+  // 🆕 Simple permission checks (BACKWARD COMPATIBLE)
+  // Try to get user data from database (optional, for new schema)
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('id, tipo_usuario, role, permissoes, vendedor_id')
+    .eq('supabase_user_id', user.id)
+    .maybeSingle() // Use maybeSingle() to avoid errors if user doesn't exist
+
+  // Check if new schema exists (has tipo_usuario field)
+  const hasNewSchema = usuario?.tipo_usuario !== undefined
+
+  // Simple admin-only route protection (only if new schema exists)
+  if (hasNewSchema) {
+    const ADMIN_ONLY_ROUTES = ['/usuarios', '/configuracoes']
+    const path = request.nextUrl.pathname
+    const isAdminRoute = ADMIN_ONLY_ROUTES.some(route => path.startsWith(route))
+
+    if (isAdminRoute && usuario.tipo_usuario !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      url.searchParams.set('error', 'permission_denied')
+      return NextResponse.redirect(url)
+    }
+
+    // Add user info to headers for API routes to use
+    if (usuario) {
+      supabaseResponse.headers.set('X-User-Id', usuario.id.toString())
+      supabaseResponse.headers.set('X-User-Role', usuario.tipo_usuario || usuario.role || 'user')
+      if (usuario.vendedor_id) {
+        supabaseResponse.headers.set('X-Vendedor-Id', usuario.vendedor_id.toString())
+      }
+    }
+  }
+
   return supabaseResponse
 }
 
