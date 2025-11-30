@@ -1,26 +1,17 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from "next/server";
 
 /**
  * Next.js Middleware with Supabase Auth (Edge Runtime)
  *
- * This middleware runs on the Edge runtime for minimal latency and protects
- * routes that require authentication. It uses @supabase/ssr for optimal
- * cookie handling and session management.
+ * Proteção de rotas com autenticação JWT do Supabase.
  *
  * Features:
- * - Runs 100% on Edge runtime
- * - Uses official Supabase helpers (@supabase/ssr)
- * - JWT-based authentication via Supabase
- * - Redirects unauthenticated users to /login
- * - Simple admin-only route protection
- * - BACKWARD COMPATIBLE with old schema
- *
- * Permission System (Optional - V2.1):
- * - Checks for new schema (tipo_usuario, permissoes fields)
- * - If new schema exists, protects admin-only routes (/usuarios, /configuracoes)
- * - If old schema, allows access normally
- * - Adds headers (X-User-Id, X-User-Role, X-Vendedor-Id) for API routes
+ * - Runs on Edge runtime (low latency)
+ * - JWT expiration handling (configurado no Supabase Dashboard)
+ * - Redirects para /login quando sessão expirar
+ * - Admin-only route protection
+ * - Headers com user info para API routes
  */
 
 /**
@@ -39,13 +30,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   // Allow emergency logout page without authentication
-  if (request.nextUrl.pathname === '/emergency-logout') {
-    return NextResponse.next()
+  if (request.nextUrl.pathname === "/emergency-logout") {
+    return NextResponse.next();
   }
 
   let supabaseResponse = NextResponse.next({
     request,
-  })
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,30 +44,30 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value)
-          })
+            request.cookies.set(name, value);
+          });
           supabaseResponse = NextResponse.next({
             request,
-          })
+          });
           cookiesToSet.forEach(({ name, value, options }) => {
             // Override cookie options for enhanced security
             const secureOptions = {
               ...options,
               httpOnly: true,
               secure: true,
-              sameSite: 'strict' as const,
-              path: '/',
-            }
-            supabaseResponse.cookies.set(name, value, secureOptions)
-          })
+              sameSite: "strict" as const,
+              path: "/",
+            };
+            supabaseResponse.cookies.set(name, value, secureOptions);
+          });
         },
       },
-    }
-  )
+    },
+  );
 
   // IMPORTANT: Avoid writing any logic between createServerClient and
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
@@ -86,72 +77,81 @@ export async function middleware(request: NextRequest) {
   // No need to call getSession() separately - it's duplicated work
   const {
     data: { user },
-    error
-  } = await supabase.auth.getUser()
+    error,
+  } = await supabase.auth.getUser();
 
-  // If there's an error or no user, redirect to login
-  // This handles expired JWT tokens, invalid sessions, etc.
-  // The JWT expiry is configured in Supabase Dashboard (Settings → Auth → JWT Expiry)
+  // JWT expirado ou sessão inválida → redirecionar para /login
+  // JWT expiry configurado em: Supabase Dashboard → Auth → JWT Expiry
   if (error || !user) {
-    // Only redirect if not already on login page
-    if (request.nextUrl.pathname !== '/login') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      url.searchParams.set('reason', 'session_expired')
-      return NextResponse.redirect(url)
+    // Não redirecionar se já estiver na página de login
+    if (request.nextUrl.pathname !== "/login") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set(
+        "message",
+        "Sua sessão expirou. Faça login novamente.",
+      );
+      return NextResponse.redirect(url);
     }
 
-    // If already on login page, continue
-    return supabaseResponse
+    return supabaseResponse;
   }
 
   // If user is signed in and tries to access /login, redirect to /dashboard
-  if (user && request.nextUrl.pathname === '/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  if (user && request.nextUrl.pathname === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
   }
 
-  // 🆕 Simple permission checks (BACKWARD COMPATIBLE)
-  // Try to get user data from database (optional, for new schema)
+  // Buscar dados do usuário no banco
   const { data: usuario } = await supabase
-    .from('usuarios')
-    .select('id, tipo_usuario, role, permissoes, vendedor_id')
-    .eq('supabase_user_id', user.id)
-    .maybeSingle() // Use maybeSingle() to avoid errors if user doesn't exist
+    .from("usuarios")
+    .select("id, tipo_usuario, permissoes, vendedor_id")
+    .eq("supabase_user_id", user.id)
+    .single();
 
-  // Check if new schema exists (has tipo_usuario field)
-  const hasNewSchema = usuario?.tipo_usuario !== undefined
-
-  // Simple admin-only route protection (only if new schema exists)
-  if (hasNewSchema) {
-    const ADMIN_ONLY_ROUTES = ['/usuarios', '/configuracoes']
-    const path = request.nextUrl.pathname
-    const isAdminRoute = ADMIN_ONLY_ROUTES.some(route => path.startsWith(route))
-
-    if (isAdminRoute && usuario.tipo_usuario !== 'admin') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
-      url.searchParams.set('error', 'permission_denied')
-      return NextResponse.redirect(url)
-    }
-
-    // Add user info to headers for API routes to use
-    if (usuario) {
-      supabaseResponse.headers.set('X-User-Id', usuario.id.toString())
-      supabaseResponse.headers.set('X-User-Role', usuario.tipo_usuario || usuario.role || 'user')
-      if (usuario.vendedor_id) {
-        supabaseResponse.headers.set('X-Vendedor-Id', usuario.vendedor_id.toString())
-      }
-    }
+  // Se usuário não existe no banco, redirecionar para login
+  if (!usuario) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("message", "Usuário não encontrado no sistema.");
+    return NextResponse.redirect(url);
   }
 
-  return supabaseResponse
+  // Proteção de rotas admin-only
+  const ADMIN_ONLY_ROUTES = ["/usuarios", "/configuracoes"];
+  const path = request.nextUrl.pathname;
+  const isAdminRoute = ADMIN_ONLY_ROUTES.some((route) =>
+    path.startsWith(route)
+  );
+
+  if (isAdminRoute && usuario.tipo_usuario !== "admin") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    url.searchParams.set(
+      "error",
+      "Acesso negado. Apenas administradores podem acessar esta página.",
+    );
+    return NextResponse.redirect(url);
+  }
+
+  // Adicionar headers com info do usuário para API routes
+  supabaseResponse.headers.set("X-User-Id", usuario.id.toString());
+  supabaseResponse.headers.set("X-User-Role", usuario.tipo_usuario);
+  if (usuario.vendedor_id) {
+    supabaseResponse.headers.set(
+      "X-Vendedor-Id",
+      usuario.vendedor_id.toString(),
+    );
+  }
+
+  return supabaseResponse;
 }
 
 /**
  * Matcher configuration for middleware
- * 
+ *
  * This middleware will run on all routes EXCEPT:
  * - /api routes (handled by API middleware)
  * - /_next (Next.js internals)
@@ -167,6 +167,6 @@ export const config = {
      * - /login (public login page)
      * - Static files (images, fonts, icons, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
-}
+};

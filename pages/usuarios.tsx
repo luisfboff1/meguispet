@@ -3,25 +3,32 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
 import { useModal } from '@/hooks/useModal'
 import { useAuth } from '@/hooks/useAuth'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Download, 
-  Eye, 
-  Edit, 
+import { useRouter } from 'next/router'
+import {
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Edit,
   Trash2,
   User,
   Shield,
   Mail,
   Phone,
-  Calendar
+  Calendar,
+  Settings,
+  Users,
+  Info
 } from 'lucide-react'
 import { usuariosService, authService } from '@/services/api'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
+import RolePermissionsConfig from '@/components/admin/RolePermissionsConfig'
 import type { Usuario } from '@/types'
 import { formatLocalDate } from '@/lib/utils'
 
@@ -33,6 +40,7 @@ export default function UsuariosPage() {
   const { toast } = useToast()
   const { open: openModal, close: closeModal } = useModal()
   const { user: currentUser } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
     loadUsuarios()
@@ -60,25 +68,17 @@ export default function UsuariosPage() {
     nome: string
     email: string
     password: string
-    role: 'admin' | 'convidado'
-    permissoes: Record<string, boolean>
+    tipo_usuario: import('@/types').UserRole
   }) => {
     try {
       const response = await authService.signup(
         userData.email,
         userData.password,
         userData.nome,
-        userData.role
+        userData.tipo_usuario
       )
 
       if (response.success) {
-        // Update the user's permissions in the usuarios table
-        if (response.data?.user?.id) {
-          await usuariosService.update(response.data.user.id, {
-            permissoes: userData.permissoes as any,
-          })
-        }
-
         // Close modal first
         closeModal()
 
@@ -99,7 +99,7 @@ export default function UsuariosPage() {
         })
       }
     } catch (error) {
-      
+
       // Extract error message safely
       let errorMessage = 'Erro ao criar usuário'
       if (error instanceof Error) {
@@ -108,7 +108,7 @@ export default function UsuariosPage() {
         const response = (error as { response?: { data?: { message?: string } } }).response
         errorMessage = response?.data?.message || errorMessage
       }
-      
+
       toast({
         title: 'Erro',
         description: errorMessage,
@@ -140,9 +140,16 @@ export default function UsuariosPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Função</p>
-              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(usuario.role)}`}>
-                {usuario.role}
-              </span>
+              <div className="flex flex-wrap gap-1">
+                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(getRoleLabel(usuario))}`}>
+                  {getRoleLabel(usuario)}
+                </span>
+                {usuario.roles && usuario.roles.length > 0 && usuario.roles.map(role => (
+                  <span key={role} className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(role)}`}>
+                    +{role}
+                  </span>
+                ))}
+              </div>
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Status</p>
@@ -186,23 +193,21 @@ export default function UsuariosPage() {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
+        tipo_usuario: usuario.tipo_usuario,
         role: usuario.role,
-        permissoes: usuario.permissoes,
       },
       onSubmit: async (userData: {
         nome: string
         email: string
         password: string
-        role: 'admin' | 'convidado'
-        permissoes: Record<string, boolean>
+        tipo_usuario: import('@/types').UserRole
       }) => {
         try {
           // Prepare update data (without password)
           const updateData: Partial<Usuario> = {
             nome: userData.nome,
             email: userData.email,
-            role: userData.role,
-            permissoes: userData.permissoes as any,
+            tipo_usuario: userData.tipo_usuario,
           }
 
           // Update user metadata
@@ -326,11 +331,20 @@ export default function UsuariosPage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800'
-      case 'vendedor': return 'bg-blue-100 text-blue-800'
-      case 'gerente': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'admin': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+      case 'gerente': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+      case 'vendedor': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+      case 'financeiro': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+      case 'estoque': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+      case 'operador': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+      case 'visualizador': return 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
     }
+  }
+
+  const getRoleLabel = (usuario: Usuario) => {
+    // Usar tipo_usuario se existir (novo sistema), senão usar role (compatibilidade)
+    return usuario.tipo_usuario || usuario.role
   }
 
   const filteredUsuarios = usuarios.filter(usuario =>
@@ -407,12 +421,19 @@ export default function UsuariosPage() {
       ),
     },
     {
-      accessorKey: "role",
+      accessorKey: "tipo_usuario",
       header: ({ column }) => <SortableHeader column={column}>Função</SortableHeader>,
       cell: ({ row }) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(row.original.role)}`}>
-          {row.original.role}
-        </span>
+        <div className="flex flex-wrap gap-1">
+          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(getRoleLabel(row.original))}`}>
+            {getRoleLabel(row.original)}
+          </span>
+          {row.original.roles && row.original.roles.length > 0 && row.original.roles.map(role => (
+            <Badge key={role} variant="outline" className="text-xs">
+              +{role}
+            </Badge>
+          ))}
+        </div>
       ),
     },
     {
@@ -432,12 +453,19 @@ export default function UsuariosPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Usuários</h1>
-          <p className="text-gray-600">Gerencie usuários e permissões do sistema</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Usuários</h1>
+          <p className="text-gray-600 dark:text-gray-400">Gerencie usuários e permissões do sistema</p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button 
+          <Button
+            variant="outline"
+            onClick={() => router.push('/admin/vendedores-usuarios')}
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Gerenciar Vendedores
+          </Button>
+          <Button
             className="bg-meguispet-primary hover:bg-meguispet-primary/90"
             onClick={openCreateUserModal}
           >
@@ -450,6 +478,24 @@ export default function UsuariosPage() {
           </Button>
         </div>
       </div>
+
+      {/* Info sobre novo sistema multi-role */}
+      <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 text-sm">
+              <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                Sistema Multi-Role Disponível
+              </p>
+              <p className="text-blue-700 dark:text-blue-300">
+                O novo sistema permite que usuários tenham múltiplos papéis (ex: vendedor + financeiro) e permissões granulares customizáveis.
+                Para gerenciar vinculação de vendedores a usuários, acesse <strong className="cursor-pointer underline" onClick={() => router.push('/admin/vendedores-usuarios')}>Gerenciar Vendedores</strong>.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -502,61 +548,81 @@ export default function UsuariosPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                <Input
-                  placeholder="Buscar por nome ou email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtros
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs: Lista de Usuários vs Configurações de Permissões */}
+      <Tabs defaultValue="usuarios" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="usuarios">
+            <Users className="h-4 w-4 mr-2" />
+            Lista de Usuários
+          </TabsTrigger>
+          <TabsTrigger value="configuracoes">
+            <Settings className="h-4 w-4 mr-2" />
+            Configurações de Permissões
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Usuários Table */}
-      {loading ? (
-        <Card>
-          <CardContent className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
-          </CardContent>
-        </Card>
-      ) : filteredUsuarios.length > 0 ? (
-        <DataTable 
-          columns={usuariosColumns} 
-          data={filteredUsuarios}
-          tableId="usuarios"
-          enableColumnResizing={true}
-          enableSorting={true}
-          enableColumnVisibility={true}
-          enableColumnReordering={true}
-          mobileVisibleColumns={['acoes', 'nome', 'email', 'role']}
-        />
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <User className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum usuário encontrado</h3>
-            <p className="text-gray-600 text-center">
-              {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando usuários ao sistema'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="usuarios" className="space-y-4 mt-4">
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtros</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                    <Input
+                      placeholder="Buscar por nome ou email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Button variant="outline">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Filtros
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Usuários Table */}
+          {loading ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div>
+              </CardContent>
+            </Card>
+          ) : filteredUsuarios.length > 0 ? (
+            <DataTable 
+              columns={usuariosColumns} 
+              data={filteredUsuarios}
+              tableId="usuarios"
+              enableColumnResizing={true}
+              enableSorting={true}
+              enableColumnVisibility={true}
+              enableColumnReordering={true}
+              mobileVisibleColumns={['acoes', 'nome', 'email', 'role']}
+            />
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <User className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum usuário encontrado</h3>
+                <p className="text-gray-600 text-center">
+                  {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando usuários ao sistema'}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="configuracoes" className="mt-4">
+          <RolePermissionsConfig />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

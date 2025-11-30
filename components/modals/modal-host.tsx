@@ -56,8 +56,7 @@ interface UsuarioModalPayload {
     nome: string
     email: string
     password: string
-    role: 'admin' | 'convidado'
-    permissoes: Record<string, boolean>
+    tipo_usuario: import('@/types').UserRole
   }) => Promise<void> | void
   onCancel?: () => void
   loading?: boolean
@@ -65,8 +64,8 @@ interface UsuarioModalPayload {
     id?: number
     nome: string
     email: string
-    role: 'admin' | 'convidado'
-    permissoes?: Record<string, unknown>
+    tipo_usuario?: import('@/types').UserRole
+    role?: 'admin' | 'convidado'
   }
   mode?: 'create' | 'edit'
 }

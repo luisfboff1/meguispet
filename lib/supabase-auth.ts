@@ -1,6 +1,6 @@
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { createServerClient } from '@supabase/ssr';
-import { NextApiRequest, NextApiResponse } from 'next';
+import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { NextApiRequest, NextApiResponse } from "next";
 
 /**
  * Supabase Auth utilities for server-side API routes
@@ -31,18 +31,18 @@ export const getSupabaseServiceRole = (): SupabaseClient => {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase service role credentials');
+    throw new Error("Missing Supabase service role credentials");
   }
 
   // Log usage for security audit
   const stack = new Error().stack;
-  const callerLine = stack?.split('\n')[2]?.trim() || 'unknown';
+  const callerLine = stack?.split("\n")[2]?.trim() || "unknown";
 
-  console.warn('[SECURITY] Service Role Key accessed (bypasses RLS):', {
+  console.warn("[SECURITY] Service Role Key accessed (bypasses RLS):", {
     timestamp: new Date().toISOString(),
     caller: callerLine,
     // Only log in development to avoid performance impact
-    ...(process.env.NODE_ENV === 'development' && { stack }),
+    ...(process.env.NODE_ENV === "development" && { stack }),
   });
 
   return createClient(supabaseUrl, supabaseServiceKey, {
@@ -60,13 +60,13 @@ export const getSupabaseServiceRole = (): SupabaseClient => {
  */
 export const getSupabaseServerAuth = (
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ): SupabaseClient => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables');
+    throw new Error("Missing Supabase environment variables");
   }
 
   // Use createServerClient from @supabase/ssr for better cookie handling
@@ -76,10 +76,10 @@ export const getSupabaseServerAuth = (
         const cookies: { name: string; value: string }[] = [];
         const cookieHeader = req.headers.cookie;
         if (cookieHeader) {
-          cookieHeader.split(';').forEach((cookie) => {
-            const [name, ...valueParts] = cookie.trim().split('=');
+          cookieHeader.split(";").forEach((cookie) => {
+            const [name, ...valueParts] = cookie.trim().split("=");
             if (name && valueParts.length > 0) {
-              cookies.push({ name, value: valueParts.join('=') });
+              cookies.push({ name, value: valueParts.join("=") });
             }
           });
         }
@@ -89,23 +89,23 @@ export const getSupabaseServerAuth = (
         // Build array of cookie strings
         const cookies = cookiesToSet.map(({ name, value, options }) => {
           const parts = [`${name}=${value}`];
-          parts.push(`Path=${options?.path || '/'}`);
+          parts.push(`Path=${options?.path || "/"}`);
 
-          if (options?.httpOnly) parts.push('HttpOnly');
+          if (options?.httpOnly) parts.push("HttpOnly");
 
           // Skip Secure flag in development (localhost HTTP doesn't support it)
-          if (options?.secure && process.env.NODE_ENV === 'production') {
-            parts.push('Secure');
+          if (options?.secure && process.env.NODE_ENV === "production") {
+            parts.push("Secure");
           }
 
           if (options?.sameSite) parts.push(`SameSite=${options.sameSite}`);
           if (options?.maxAge) parts.push(`Max-Age=${options.maxAge}`);
 
-          return parts.join('; ');
+          return parts.join("; ");
         });
 
         // Set all cookies at once (res.setHeader with array adds all cookies)
-        res.setHeader('Set-Cookie', cookies);
+        res.setHeader("Set-Cookie", cookies);
       },
     },
   });
@@ -119,7 +119,7 @@ export const getSupabaseServerAuth = (
  */
 export const verifySupabaseUser = async (
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ): Promise<User | null> => {
   try {
     const client = getSupabaseServerAuth(req, res);
@@ -137,14 +137,14 @@ export const verifySupabaseUser = async (
 
 /**
  * Extract user metadata from custom usuarios table
- * Maps Supabase auth user to app-specific user profile
  */
 export interface AppUserProfile {
   id: number;
   email: string;
   nome: string;
-  role: string;
-  permissoes: string | null;
+  tipo_usuario: string; // admin, gerente, vendedor, etc
+  permissoes: Record<string, boolean> | null;
+  vendedor_id: number | null;
   ativo: boolean;
   supabase_user_id: string | null;
 }
@@ -153,22 +153,21 @@ export interface AppUserProfile {
  * Get user profile from custom usuarios table
  *
  * @param email - User email to lookup
- * @param supabase - Authenticated Supabase client (required for RLS)
+ * @param supabase - Authenticated Supabase client (respects RLS)
  * @returns User profile or null if not found
- *
- * ⚠️ IMPORTANT: Always pass an authenticated supabase client.
- * This ensures RLS policies are respected and the query runs with user context.
  */
 export const getUserProfile = async (
   email: string,
-  supabase: SupabaseClient  // ✅ Now required - no more dangerous fallback
+  supabase: SupabaseClient,
 ): Promise<AppUserProfile | null> => {
   try {
     const { data, error } = await supabase
-      .from('usuarios')
-      .select('id, nome, email, role, permissoes, ativo, supabase_user_id')
-      .eq('email', email)
-      .eq('ativo', true)
+      .from("usuarios")
+      .select(
+        "id, nome, email, tipo_usuario, permissoes, vendedor_id, ativo, supabase_user_id",
+      )
+      .eq("email", email)
+      .eq("ativo", true)
       .single();
 
     if (error || !data) {

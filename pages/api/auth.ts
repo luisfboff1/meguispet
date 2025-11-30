@@ -1,6 +1,14 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { getSupabaseServerAuth, verifySupabaseUser, getUserProfile } from '@/lib/supabase-auth';
-import { withRateLimit, withAuthRateLimit, RateLimitPresets } from '@/lib/rate-limit';
+import type { NextApiRequest, NextApiResponse } from "next";
+import {
+  getSupabaseServerAuth,
+  getUserProfile,
+  verifySupabaseUser,
+} from "@/lib/supabase-auth";
+import {
+  RateLimitPresets,
+  withAuthRateLimit,
+  withRateLimit,
+} from "@/lib/rate-limit";
 
 /**
  * Authentication endpoint using Supabase Auth
@@ -13,18 +21,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
 
   try {
-    if (method === 'POST') {
+    if (method === "POST") {
       return await handleLogin(req, res);
-    } else if (method === 'GET') {
+    } else if (method === "GET") {
       return await handleGetProfile(req, res);
     } else {
-      return res.status(405).json({ success: false, message: 'Método não permitido' });
+      return res.status(405).json({
+        success: false,
+        message: "Método não permitido",
+      });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      message: "Erro interno do servidor",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 }
@@ -32,16 +43,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 // Apply rate limiting only to POST (login) endpoint
 // POST uses email-based rate limiting, GET uses IP-based
 const authHandler = function (req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
     // Login: 5 attempts per 15 minutes per email
     return withAuthRateLimit(RateLimitPresets.LOGIN, handler)(req, res);
-  } else if (req.method === 'GET') {
+  } else if (req.method === "GET") {
     // Profile: 100 requests per minute per IP
     return withRateLimit(RateLimitPresets.GENERAL, handler)(req, res);
   } else {
     return handler(req, res);
   }
-}
+};
 
 export default authHandler;
 
@@ -51,14 +62,14 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: 'Email e senha são obrigatórios',
+      message: "Email e senha são obrigatórios",
     });
   }
 
   try {
     // Use Supabase Auth for authentication with server client
     const supabase = getSupabaseServerAuth(req, res);
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -67,7 +78,7 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     if (error || !data.session) {
       return res.status(401).json({
         success: false,
-        message: 'Credenciais inválidas',
+        message: "Credenciais inválidas",
       });
     }
 
@@ -77,25 +88,29 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     if (!userProfile) {
       return res.status(401).json({
         success: false,
-        message: 'Usuário não encontrado ou inativo',
+        message: "Usuário não encontrado ou inativo",
       });
     }
 
     // Return session token and user data
     // Note: supabase_user_id fallback is for legacy users that don't have it stored yet
-    const resolvedSupabaseUserId = userProfile.supabase_user_id || data.session.user.id;
+    const resolvedSupabaseUserId = userProfile.supabase_user_id ||
+      data.session.user.id;
     if (!userProfile.supabase_user_id) {
-      console.warn('[AUTH] User missing supabase_user_id in database, using session ID:', {
-        userId: userProfile.id,
-        email: userProfile.email,
-        sessionUserId: data.session.user.id
-      });
+      console.warn(
+        "[AUTH] User missing supabase_user_id in database, using session ID:",
+        {
+          userId: userProfile.id,
+          email: userProfile.email,
+          sessionUserId: data.session.user.id,
+        },
+      );
     }
 
     // Login successful - Supabase cookies are set automatically by getSupabaseServerAuth
-    console.log('✅ Login successful', {
+    console.log("✅ Login successful", {
       email: userProfile.email,
-      userId: resolvedSupabaseUserId
+      userId: resolvedSupabaseUserId,
     });
 
     return res.status(200).json({
@@ -108,19 +123,20 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
           id: userProfile.id,
           nome: userProfile.nome,
           email: userProfile.email,
-          role: userProfile.role,
+          tipo_usuario: userProfile.tipo_usuario,
           permissoes: userProfile.permissoes,
+          vendedor_id: userProfile.vendedor_id,
           ativo: userProfile.ativo,
           supabase_user_id: resolvedSupabaseUserId,
         },
       },
-      message: 'Login realizado com sucesso',
+      message: "Login realizado com sucesso",
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erro ao realizar login',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      message: "Erro ao realizar login",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -133,7 +149,7 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
     if (!supabaseUser || !supabaseUser.email) {
       return res.status(401).json({
         success: false,
-        message: 'Token inválido ou expirado',
+        message: "Token inválido ou expirado",
       });
     }
 
@@ -146,18 +162,22 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
     if (!userProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Usuário não encontrado',
+        message: "Usuário não encontrado",
       });
     }
 
     // Note: supabase_user_id fallback is for legacy users that don't have it stored yet
-    const resolvedSupabaseUserId = userProfile.supabase_user_id || supabaseUser.id;
+    const resolvedSupabaseUserId = userProfile.supabase_user_id ||
+      supabaseUser.id;
     if (!userProfile.supabase_user_id) {
-      console.warn('[AUTH] User missing supabase_user_id in database (GET profile):', {
-        userId: userProfile.id,
-        email: userProfile.email,
-        sessionUserId: supabaseUser.id
-      });
+      console.warn(
+        "[AUTH] User missing supabase_user_id in database (GET profile):",
+        {
+          userId: userProfile.id,
+          email: userProfile.email,
+          sessionUserId: supabaseUser.id,
+        },
+      );
     }
 
     return res.status(200).json({
@@ -166,18 +186,19 @@ const handleGetProfile = async (req: NextApiRequest, res: NextApiResponse) => {
         id: userProfile.id,
         nome: userProfile.nome,
         email: userProfile.email,
-        role: userProfile.role,
+        tipo_usuario: userProfile.tipo_usuario,
         permissoes: userProfile.permissoes,
+        vendedor_id: userProfile.vendedor_id,
         ativo: userProfile.ativo,
         supabase_user_id: resolvedSupabaseUserId,
       },
-      message: 'Perfil carregado com sucesso',
+      message: "Perfil carregado com sucesso",
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erro ao carregar perfil',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      message: "Erro ao carregar perfil",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };

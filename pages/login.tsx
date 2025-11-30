@@ -25,8 +25,9 @@ export default function LoginPage() {
   // Middleware already redirects authenticated users to /dashboard
   // No need for client-side redirect check (reduces Supabase API calls)
 
-  // Check if user was redirected due to session expiration
-  const sessionExpired = router.query.reason === 'session_expired'
+  // Verificar se usuário foi redirecionado por sessão expirada ou permissão negada
+  const message = router.query.message as string | undefined
+  const error = router.query.error as string | undefined
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,11 +87,19 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Session expired warning */}
-            {sessionExpired && (
+            {/* Mensagens de alerta */}
+            {message && (
               <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                 <p className="text-sm text-yellow-800">
-                  ⚠️ Sua sessão expirou. Por favor, faça login novamente.
+                  ⚠️ {message}
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">
+                  ❌ {error}
                 </p>
               </div>
             )}
