@@ -50,34 +50,65 @@ export function useAuth() {
   }, [token, user]) // Only sync when token or user actually changes
 
   const handleLogout = useCallback(async () => {
-    try {
-      // Sign out from Supabase first
-      if (typeof window !== 'undefined') {
-        const supabase = getSupabaseBrowser()
-        await supabase.auth.signOut()
-      }
-      
-      // Then call the API logout endpoint (for any server-side cleanup)
-      await authService.logout()
-    } catch (error) {
-    } finally {
-      clear()
-      if (typeof window !== 'undefined') {
-        // Clear all auth-related storage
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        localStorage.removeItem('meguispet-auth-store')
-        
-        // Clear Supabase session storage
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-        if (supabaseUrl) {
-          const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
-          if (projectRef) {
-            localStorage.removeItem(`sb-${projectRef}-auth-token`)
+    console.log('🚪 useAuth: Starting logout process...')
+
+    // 1. AGGRESSIVE CLEANUP - Do this FIRST before any async operations
+    clear()
+
+    if (typeof window !== 'undefined') {
+      try {
+        // Clear ALL localStorage items (nuclear option to prevent contamination)
+        console.log('🧹 useAuth: Clearing ALL localStorage')
+        const keysToRemove: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key) {
+            keysToRemove.push(key)
           }
         }
+        keysToRemove.forEach(key => localStorage.removeItem(key))
+
+        // Clear ALL cookies (especially Supabase cookies)
+        console.log('🍪 useAuth: Clearing ALL cookies (including login_time)')
+        const cookies = document.cookie.split(';')
+        for (const cookie of cookies) {
+          const eqPos = cookie.indexOf('=')
+          const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
+          // Delete with all possible path/domain combinations
+          document.cookie = `${name}=; Max-Age=0; Path=/`
+          document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
+          document.cookie = `${name}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
+        }
+
+        // Explicitly delete login_time cookie
+        document.cookie = 'login_time=; Max-Age=0; Path=/'
+      } catch (cleanupError) {
+        console.error('❌ useAuth: Error during cleanup (continuing anyway)', cleanupError)
       }
-      clearTokenCookie()
+    }
+
+    // 2. ASYNC CLEANUP - Try to sign out from Supabase and API (don't wait for completion)
+    // We do this AFTER local cleanup so that even if it fails, user is logged out locally
+    if (typeof window !== 'undefined') {
+      Promise.all([
+        getSupabaseBrowser().auth.signOut().catch(err => {
+          console.error('⚠️ useAuth: Supabase signOut failed (continuing anyway)', err)
+        }),
+        authService.logout().catch(err => {
+          console.error('⚠️ useAuth: API logout failed (continuing anyway)', err)
+        })
+      ]).finally(() => {
+        console.log('✅ useAuth: Async cleanup completed')
+      })
+    }
+
+    // 3. FORCE HARD REDIRECT - Use window.location.href to ensure browser clears everything
+    console.log('🔄 useAuth: Forcing hard redirect to /login')
+    if (typeof window !== 'undefined') {
+      // Use hard redirect to force browser to clear state
+      window.location.href = '/login'
+    } else {
+      // Fallback for SSR (shouldn't happen but just in case)
       router.push('/login')
     }
   }, [clear, router])
@@ -180,88 +211,22 @@ export function useAuth() {
     }
   }, [clear, handleLogout, setCredentials, setStatus])
 
+  // checkAuth() removed to prevent rate limiting
+  // Middleware already protects all routes and verifies auth on every page request
+  // Client-side auth state is populated via login() and onAuthStateChange listener below
   useEffect(() => {
-    // Only check auth on initial mount if status is idle
-    // Middleware already protects routes, so we don't need to check on every render
-    if (status === 'idle') {
-      checkAuth()
-
-      // Safety timeout: if checkAuth doesn't complete in 10 seconds, force unauthenticated
-      // This prevents being stuck in 'loading' state forever
-      const timeoutId = setTimeout(() => {
-        // Get current status from store (not closure)
-        const currentStatus = useAuthStore.getState().status
-        if (currentStatus === 'loading' || currentStatus === 'idle') {
-          console.error('⏱️ useAuth: checkAuth timeout - forcing unauthenticated state')
-          clear()
-          setStatus('unauthenticated')
-          clearTokenCookie()
-        }
-      }, 10000) // 10 seconds
-
-      return () => clearTimeout(timeoutId)
+    // If status is idle and we have a user in store, mark as authenticated
+    // This happens on page refresh when Zustand rehydrates from localStorage
+    if (status === 'idle' && user && token) {
+      setStatus('authenticated')
+    } else if (status === 'idle' && !user) {
+      setStatus('unauthenticated')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]) // Remove checkAuth from dependencies to prevent unnecessary checks
+  }, [status, user, token, setStatus])
 
-  // Periodic security check - verify user hasn't changed every 5 minutes
-  useEffect(() => {
-    if (typeof window === 'undefined' || !isAuthenticated || !user) return
-
-    const SECURITY_CHECK_INTERVAL = 5 * 60 * 1000 // 5 minutes
-
-    const securityCheckInterval = setInterval(async () => {
-      try {
-        const supabase = getSupabaseBrowser()
-        const { data: { session }, error } = await supabase.auth.getSession()
-
-        if (error || !session) {
-          await handleLogout()
-          return
-        }
-
-        // Verify the session user matches our stored user
-        const sessionUserId = session.user.id
-        const currentUserId = user.supabase_user_id?.toString()
-        const sessionEmail = session.user.email?.toLowerCase()
-        const currentEmail = user.email?.toLowerCase()
-
-        // Check user ID mismatch (if we have both IDs)
-        if (currentUserId && sessionUserId !== currentUserId) {
-          console.error('🚨 SECURITY ALERT: User ID mismatch detected in periodic check!', {
-            sessionUserId,
-            sessionEmail,
-            currentUserId,
-            currentEmail
-          })
-          // Force immediate logout and clear all storage
-          localStorage.clear()
-          await supabase.auth.signOut()
-          await handleLogout()
-          return
-        }
-
-        // Check email mismatch (fallback if supabase_user_id is missing)
-        if (sessionEmail && currentEmail && sessionEmail !== currentEmail) {
-          console.error('🚨 SECURITY ALERT: Email mismatch detected in periodic check!', {
-            sessionEmail,
-            currentEmail
-          })
-          // Force immediate logout and clear all storage
-          localStorage.clear()
-          await supabase.auth.signOut()
-          await handleLogout()
-          return
-        }
-      } catch (error) {
-        // Silent fail - security check will retry
-      }
-    }, SECURITY_CHECK_INTERVAL)
-
-    return () => {
-      clearInterval(securityCheckInterval)
-    }
-  }, [isAuthenticated, user, handleLogout])
+  // Periodic security check removed to prevent rate limiting
+  // The middleware already protects routes on every request
+  // onAuthStateChange below handles TOKEN_REFRESHED events
 
   // Set up Supabase auth state listener for automatic token refresh
   useEffect(() => {
@@ -433,7 +398,6 @@ export function useAuth() {
     isAuthenticated,
     status,
     login,
-    logout: handleLogout,
-    checkAuth
+    logout: handleLogout
   }
 }

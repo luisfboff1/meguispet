@@ -1,18 +1,29 @@
 // 🏷️ TIPOS TYPESCRIPT - MEGUISPET SYSTEM
 // Tipos globais para todo o sistema
 
+import type { UserRole, Permissoes } from './permissions'
+
 export interface Usuario {
   id: number
   nome: string
   email: string
   password_hash: string
-  role: 'admin' | 'convidado'
-  permissoes: Record<string, unknown>
+  role: 'admin' | 'convidado'  // ⚠️ DEPRECATED - use tipo_usuario
+  tipo_usuario: UserRole       // 🆕 Role PRIMÁRIO do usuário
+  roles?: UserRole[]           // 🆕 NOVO - Array de roles adicionais (ex: ['vendedor', 'financeiro'])
+  permissoes: Permissoes        // ✏️ Permissões FINAIS calculadas (merge de roles + custom)
+  permissoes_custom?: Partial<Permissoes>  // 🆕 NOVO - Permissões customizadas pelo admin
+  vendedor_id?: number | null   // 🆕 NOVO - link para vendedor (se for vendedor)
+  departamento?: string | null  // 🆕 NOVO - departamento do usuário
   ativo: boolean
   supabase_user_id?: string
   created_at: string
   updated_at: string
 }
+
+// Exportar tipos de permissões
+export type { UserRole, Permissoes } from './permissions'
+export { PERMISSIONS_PRESETS, getDefaultPermissions, isFullAccessRole, roleRequiresVendedor, mergePermissions } from './permissions'
 
 export interface Cliente {
   id: number
@@ -85,6 +96,7 @@ export interface Estoque {
 
 export interface Vendedor {
   id: number
+  usuario_id?: number | null    // 🆕 NOVO - link para usuário (OPCIONAL)
   estoque?: {
     id: number
     nome: string

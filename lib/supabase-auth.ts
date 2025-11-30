@@ -86,9 +86,26 @@ export const getSupabaseServerAuth = (
         return cookies;
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          res.setHeader('Set-Cookie', `${name}=${value}; Path=${options?.path || '/'}; ${options?.httpOnly ? 'HttpOnly; ' : ''}${options?.secure ? 'Secure; ' : ''}${options?.sameSite ? `SameSite=${options.sameSite}; ` : ''}${options?.maxAge ? `Max-Age=${options.maxAge}` : ''}`);
+        // Build array of cookie strings
+        const cookies = cookiesToSet.map(({ name, value, options }) => {
+          const parts = [`${name}=${value}`];
+          parts.push(`Path=${options?.path || '/'}`);
+
+          if (options?.httpOnly) parts.push('HttpOnly');
+
+          // Skip Secure flag in development (localhost HTTP doesn't support it)
+          if (options?.secure && process.env.NODE_ENV === 'production') {
+            parts.push('Secure');
+          }
+
+          if (options?.sameSite) parts.push(`SameSite=${options.sameSite}`);
+          if (options?.maxAge) parts.push(`Max-Age=${options.maxAge}`);
+
+          return parts.join('; ');
         });
+
+        // Set all cookies at once (res.setHeader with array adds all cookies)
+        res.setHeader('Set-Cookie', cookies);
       },
     },
   });

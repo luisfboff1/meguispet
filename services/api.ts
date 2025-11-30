@@ -39,6 +39,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // CRITICAL: Enable cookies to be sent/received
 })
 
 if (process.env.NODE_ENV === 'development') {
@@ -217,6 +218,18 @@ export const historicoPrecosService = {
 export const vendasService = {
   async getAll(page = 1, limit = 10): Promise<PaginatedResponse<Venda>> {
     const response = await api.get(`/vendas?page=${page}&limit=${limit}`)
+    return response.data
+  },
+
+  // 🆕 NOVO: Buscar vendas do usuário atual (filtrado automaticamente)
+  async getMyVendas(): Promise<ApiResponse<Venda[]>> {
+    const response = await api.get('/vendas/my')
+    return response.data
+  },
+
+  // 🆕 NOVO: Buscar vendas de um vendedor específico
+  async getByVendedorId(vendedorId: number, page = 1, limit = 100): Promise<ApiResponse<Venda[]>> {
+    const response = await api.get(`/vendas?vendedor_id=${vendedorId}&page=${page}&limit=${limit}`)
     return response.data
   },
 

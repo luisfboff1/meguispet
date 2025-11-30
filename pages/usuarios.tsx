@@ -75,7 +75,7 @@ export default function UsuariosPage() {
         // Update the user's permissions in the usuarios table
         if (response.data?.user?.id) {
           await usuariosService.update(response.data.user.id, {
-            permissoes: userData.permissoes as Record<string, unknown>,
+            permissoes: userData.permissoes as any,
           })
         }
 
@@ -202,7 +202,7 @@ export default function UsuariosPage() {
             nome: userData.nome,
             email: userData.email,
             role: userData.role,
-            permissoes: userData.permissoes as Record<string, unknown>,
+            permissoes: userData.permissoes as any,
           }
 
           // Update user metadata

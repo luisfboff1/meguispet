@@ -20,16 +20,13 @@ export default function LoginPage() {
     email: '',
     password: ''
   })
-  const { login, isAuthenticated, status } = useAuth()
+  const { login, status } = useAuth()
 
-  useEffect(() => {
-    if (!router.isReady || !isAuthenticated || loading) return
-    const redirectParam = router.query.redirect
-    const redirectPath = typeof redirectParam === 'string' && redirectParam.startsWith('/')
-      ? redirectParam
-      : '/dashboard'
-    router.replace(redirectPath)
-  }, [isAuthenticated, loading, router, router.query.redirect])
+  // Middleware already redirects authenticated users to /dashboard
+  // No need for client-side redirect check (reduces Supabase API calls)
+
+  // Check if user was redirected due to session expiration
+  const sessionExpired = router.query.reason === 'session_expired'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,6 +86,15 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Session expired warning */}
+            {sessionExpired && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ Sua sessão expirou. Por favor, faça login novamente.
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email */}
               <div className="space-y-2">
