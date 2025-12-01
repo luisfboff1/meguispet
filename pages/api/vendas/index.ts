@@ -506,6 +506,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 });
             }
 
+            // Parse venda ID once for reuse
+            const vendaId = parseInt(id as string, 10);
+
             let oldItems: Array<{ produto_id: number; quantidade: number }> =
                 [];
             let oldEstoqueId: number | null = null;
@@ -604,7 +607,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     const revertResult = await revertSaleStock(
                         oldItems,
                         oldEstoqueId,
-                        parseInt(id as string, 10),
+                        vendaId,
                         req.user?.id,
                     );
                     if (!revertResult.success) {
@@ -621,14 +624,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     const applyResult = await applySaleStock(
                         itens as VendaItemInput[],
                         estoque_id,
-                        parseInt(id as string, 10),
+                        vendaId,
                         req.user?.id,
                     );
                     if (!applyResult.success) {
                         const compensateResult = await applySaleStock(
                             oldItems,
                             oldEstoqueId,
-                            parseInt(id as string, 10),
+                            vendaId,
                             req.user?.id,
                         );
 
@@ -655,7 +658,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         const deltaResult = await applyStockDeltas(
                             deltas,
                             estoque_id,
-                            parseInt(id as string, 10),
+                            vendaId,
                             req.user?.id,
                         );
 
@@ -678,7 +681,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
                 const itensInsert = vendaProcessada
                     ? vendaProcessada.itens.map((item) => ({
-                        venda_id: parseInt(id as string, 10),
+                        venda_id: vendaId,
                         produto_id: item.produto_id,
                         quantidade: item.quantidade,
                         preco_unitario: item.preco_unitario,
@@ -706,7 +709,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                             (item.icms_st_aliquota || item.icms_aliquota) / 100,
                     }))
                     : (itens as VendaItemInput[]).map((item) => ({
-                        venda_id: parseInt(id as string, 10),
+                        venda_id: vendaId,
                         produto_id: item.produto_id,
                         quantidade: item.quantidade,
                         preco_unitario: item.preco_unitario,
@@ -781,7 +784,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     );
                 }
 
-                return categoriaVendas?.id || null;
+                return categoriaVendas?.id ?? null;
             };
 
             // Recreate financial transactions if parcelas are provided
@@ -810,7 +813,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         observacoes?: string;
                     },
                 ) => ({
-                    venda_id: parseInt(id as string, 10),
+                    venda_id: vendaId,
                     numero_parcela: p.numero_parcela,
                     valor_parcela: p.valor_parcela,
                     data_vencimento: p.data_vencimento,
@@ -858,7 +861,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                             `Receita Venda ${numero_venda} - Parcela ${parcela.numero_parcela}/${parcelas.length}`,
                         categoria: "Vendas",
                         categoria_id,
-                        venda_id: parseInt(id as string, 10),
+                        venda_id: vendaId,
                         venda_parcela_id: parcela.id,
                         data_transacao: parcela.data_vencimento,
                         observacoes: parcela.observacoes || null,
@@ -895,9 +898,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     });
                 }
 
-                // Use sale date as fallback, not current timestamp
-                const transactionDate = data_pagamento || data_venda ||
-                    data[0].data_venda || new Date().toISOString();
+                // Prioritize request params over database value, then fallback to current time
+                const transactionDate = (data_pagamento || data_venda) ??
+                    (data[0]?.data_venda || new Date().toISOString());
 
                 const { error: transacaoError } = await supabase
                     .from("transacoes")
@@ -907,7 +910,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         descricao: `Receita Venda ${numero_venda}`,
                         categoria: "Vendas",
                         categoria_id,
-                        venda_id: parseInt(id as string, 10),
+                        venda_id: vendaId,
                         data_transacao: transactionDate,
                         observacoes: observacoes || null,
                     });
