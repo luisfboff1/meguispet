@@ -19,6 +19,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   const [hydrated, setHydrated] = useState(false)
   const [redirectAttempts, setRedirectAttempts] = useState(0)
   const [lastRedirectTime, setLastRedirectTime] = useState(0)
+  const [showCircuitBreakerError, setShowCircuitBreakerError] = useState(false)
 
   const {
     isOpen,
@@ -74,37 +75,8 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     // If we've tried too many times, stop trying to prevent infinite loop
     if (redirectAttempts >= MAX_REDIRECT_ATTEMPTS) {
       console.error('🚨 MainLayout: Too many redirect attempts, stopping to prevent infinite loop')
-      
-      // Show user-friendly error with recovery options
-      return (
-        <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100">
-          <div className="max-w-md rounded-lg border border-red-200 bg-white p-8 text-center shadow-lg">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-              <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h2 className="mb-2 text-xl font-bold text-gray-900">Erro de Autenticação</h2>
-            <p className="mb-6 text-sm text-gray-600">
-              Ocorreu um problema ao verificar sua sessão. Por favor, tente uma das opções abaixo:
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => window.location.href = '/emergency-logout'}
-                className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-              >
-                Limpar Sessão e Fazer Login
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Recarregar Página
-              </button>
-            </div>
-          </div>
-        </div>
-      )
+      setShowCircuitBreakerError(true)
+      return
     }
 
     // Redirect if:
@@ -173,6 +145,39 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
         </div>
       </div>
     </div>
+  }
+
+  // Show circuit breaker error if triggered
+  if (showCircuitBreakerError) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100">
+        <div className="max-w-md rounded-lg border border-red-200 bg-white p-8 text-center shadow-lg">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+            <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="mb-2 text-xl font-bold text-gray-900">Erro de Autenticação</h2>
+          <p className="mb-6 text-sm text-gray-600">
+            Ocorreu um problema ao verificar sua sessão. Por favor, tente uma das opções abaixo:
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => window.location.href = '/emergency-logout'}
+              className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            >
+              Limpar Sessão e Fazer Login
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Recarregar Página
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Allow rendering even if not authenticated - middleware will redirect if needed
