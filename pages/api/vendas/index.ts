@@ -496,6 +496,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 observacoes,
                 itens,
                 sem_impostos,
+                parcelas,
             } = req.body;
 
             if (!id) {
@@ -504,6 +505,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     message: "ID da venda é obrigatório",
                 });
             }
+
+            // Parse venda ID once for reuse
+            const vendaId = parseInt(id as string, 10);
 
             let oldItems: Array<{ produto_id: number; quantidade: number }> =
                 [];
@@ -603,7 +607,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     const revertResult = await revertSaleStock(
                         oldItems,
                         oldEstoqueId,
-                        parseInt(id as string, 10),
+                        vendaId,
                         req.user?.id,
                     );
                     if (!revertResult.success) {
@@ -620,14 +624,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     const applyResult = await applySaleStock(
                         itens as VendaItemInput[],
                         estoque_id,
-                        parseInt(id as string, 10),
+                        vendaId,
                         req.user?.id,
                     );
                     if (!applyResult.success) {
                         const compensateResult = await applySaleStock(
                             oldItems,
                             oldEstoqueId,
-                            parseInt(id as string, 10),
+                            vendaId,
                             req.user?.id,
                         );
 
@@ -654,7 +658,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         const deltaResult = await applyStockDeltas(
                             deltas,
                             estoque_id,
-                            parseInt(id as string, 10),
+                            vendaId,
                             req.user?.id,
                         );
 
@@ -677,7 +681,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
                 const itensInsert = vendaProcessada
                     ? vendaProcessada.itens.map((item) => ({
-                        venda_id: parseInt(id as string, 10),
+                        venda_id: vendaId,
                         produto_id: item.produto_id,
                         quantidade: item.quantidade,
                         preco_unitario: item.preco_unitario,
@@ -705,7 +709,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                             (item.icms_st_aliquota || item.icms_aliquota) / 100,
                     }))
                     : (itens as VendaItemInput[]).map((item) => ({
-                        venda_id: parseInt(id as string, 10),
+                        venda_id: vendaId,
                         produto_id: item.produto_id,
                         quantidade: item.quantidade,
                         preco_unitario: item.preco_unitario,
@@ -728,6 +732,195 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         message:
                             "❌ Venda atualizada, mas erro ao atualizar itens: " +
                             itensError.message,
+                        data: data[0],
+                    });
+                }
+            }
+
+            // Delete existing financial transactions to prevent duplication
+            const { error: deleteTransacoesError } = await supabase
+                .from("transacoes")
+                .delete()
+                .eq("venda_id", id);
+
+            if (deleteTransacoesError) {
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "❌ Erro ao deletar transações existentes: " +
+                        deleteTransacoesError.message,
+                    data: data[0],
+                });
+            }
+
+            const { error: deleteParcelasError } = await supabase
+                .from("venda_parcelas")
+                .delete()
+                .eq("venda_id", id);
+
+            if (deleteParcelasError) {
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "❌ Erro ao deletar parcelas existentes: " +
+                        deleteParcelasError.message,
+                    data: data[0],
+                });
+            }
+
+            // Helper function to get Vendas category with error handling
+            const getVendasCategory = async () => {
+                const { data: categoriaVendas, error } = await supabase
+                    .from("categorias_financeiras")
+                    .select("id")
+                    .eq("nome", "Vendas")
+                    .eq("tipo", "receita")
+                    .eq("ativo", true)
+                    .single();
+
+                if (error) {
+                    throw new Error(
+                        `Erro ao buscar categoria Vendas: ${error.message}`,
+                    );
+                }
+
+                return categoriaVendas?.id ?? null;
+            };
+
+            // Recreate financial transactions if parcelas are provided
+            if (parcelas && Array.isArray(parcelas) && parcelas.length > 0) {
+                let categoria_id: number | null = null;
+
+                try {
+                    categoria_id = await getVendasCategory();
+                } catch (error) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ " +
+                            (error instanceof Error
+                                ? error.message
+                                : "Erro ao buscar categoria financeira"),
+                        data: data[0],
+                    });
+                }
+
+                const parcelasToInsert = parcelas.map((
+                    p: {
+                        numero_parcela: number;
+                        valor_parcela: number;
+                        data_vencimento: string;
+                        observacoes?: string;
+                    },
+                ) => ({
+                    venda_id: vendaId,
+                    numero_parcela: p.numero_parcela,
+                    valor_parcela: p.valor_parcela,
+                    data_vencimento: p.data_vencimento,
+                    status: "pendente",
+                    observacoes: p.observacoes || null,
+                }));
+
+                const { data: parcelasCreated, error: parcelasError } =
+                    await supabase
+                        .from("venda_parcelas")
+                        .insert(parcelasToInsert)
+                        .select();
+
+                if (parcelasError) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ Erro ao criar parcelas: " +
+                            parcelasError.message,
+                        data: data[0],
+                    });
+                }
+
+                if (!parcelasCreated || parcelasCreated.length === 0) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ Erro inesperado: nenhuma parcela foi criada",
+                        data: data[0],
+                    });
+                }
+
+                const transacoesToInsert = parcelasCreated.map((
+                        parcela: {
+                            id: number;
+                            numero_parcela: number;
+                            valor_parcela: number;
+                            data_vencimento: string;
+                            observacoes?: string | null;
+                        },
+                    ) => ({
+                        tipo: "receita",
+                        valor: parcela.valor_parcela,
+                        descricao:
+                            `Receita Venda ${numero_venda} - Parcela ${parcela.numero_parcela}/${parcelas.length}`,
+                        categoria: "Vendas",
+                        categoria_id,
+                        venda_id: vendaId,
+                        venda_parcela_id: parcela.id,
+                        data_transacao: parcela.data_vencimento,
+                        observacoes: parcela.observacoes || null,
+                    }));
+
+                const { error: transacoesError } = await supabase
+                    .from("transacoes")
+                    .insert(transacoesToInsert);
+
+                if (transacoesError) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ Erro ao criar transações: " +
+                            transacoesError.message,
+                        data: data[0],
+                    });
+                }
+            } else if (data && data[0]) {
+                // No parcelas provided, create single transaction
+                let categoria_id: number | null = null;
+
+                try {
+                    categoria_id = await getVendasCategory();
+                } catch (error) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ " +
+                            (error instanceof Error
+                                ? error.message
+                                : "Erro ao buscar categoria financeira"),
+                        data: data[0],
+                    });
+                }
+
+                // Prioritize request params over database value, then fallback to current time
+                const transactionDate = (data_pagamento || data_venda) ??
+                    (data[0]?.data_venda || new Date().toISOString());
+
+                const { error: transacaoError } = await supabase
+                    .from("transacoes")
+                    .insert({
+                        tipo: "receita",
+                        valor: data[0].valor_final,
+                        descricao: `Receita Venda ${numero_venda}`,
+                        categoria: "Vendas",
+                        categoria_id,
+                        venda_id: vendaId,
+                        data_transacao: transactionDate,
+                        observacoes: observacoes || null,
+                    });
+
+                if (transacaoError) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ Erro ao criar transação: " +
+                            transacaoError.message,
                         data: data[0],
                     });
                 }
