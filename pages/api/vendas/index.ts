@@ -765,21 +765,42 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 });
             }
 
-            // Helper function to get Vendas category
+            // Helper function to get Vendas category with error handling
             const getVendasCategory = async () => {
-                const { data: categoriaVendas } = await supabase
+                const { data: categoriaVendas, error } = await supabase
                     .from("categorias_financeiras")
                     .select("id")
                     .eq("nome", "Vendas")
                     .eq("tipo", "receita")
                     .eq("ativo", true)
                     .single();
+
+                if (error) {
+                    throw new Error(
+                        `Erro ao buscar categoria Vendas: ${error.message}`,
+                    );
+                }
+
                 return categoriaVendas?.id || null;
             };
 
             // Recreate financial transactions if parcelas are provided
             if (parcelas && Array.isArray(parcelas) && parcelas.length > 0) {
-                const categoria_id = await getVendasCategory();
+                let categoria_id: number | null = null;
+
+                try {
+                    categoria_id = await getVendasCategory();
+                } catch (error) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ " +
+                            (error instanceof Error
+                                ? error.message
+                                : "Erro ao buscar categoria financeira"),
+                        data: data[0],
+                    });
+                }
 
                 const parcelasToInsert = parcelas.map((
                     p: {
@@ -856,9 +877,27 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         data: data[0],
                     });
                 }
-            } else if (data[0]) {
+            } else if (data && data[0]) {
                 // No parcelas provided, create single transaction
-                const categoria_id = await getVendasCategory();
+                let categoria_id: number | null = null;
+
+                try {
+                    categoria_id = await getVendasCategory();
+                } catch (error) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ " +
+                            (error instanceof Error
+                                ? error.message
+                                : "Erro ao buscar categoria financeira"),
+                        data: data[0],
+                    });
+                }
+
+                // Use sale date as fallback, not current timestamp
+                const transactionDate = data_pagamento || data_venda ||
+                    data[0].data_venda || new Date().toISOString();
 
                 const { error: transacaoError } = await supabase
                     .from("transacoes")
@@ -869,8 +908,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         categoria: "Vendas",
                         categoria_id,
                         venda_id: parseInt(id as string, 10),
-                        data_transacao: data_pagamento || data_venda ||
-                            new Date().toISOString(),
+                        data_transacao: transactionDate,
                         observacoes: observacoes || null,
                     });
 
