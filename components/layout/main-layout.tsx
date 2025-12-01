@@ -126,7 +126,22 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   if (!hydrated) {
     return <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-gray-500">Carregando...</div>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <div className="text-gray-500">Carregando...</div>
+        </div>
+      </div>
+    </div>
+  }
+
+  // Show a better loading state when verifying session
+  if (!isNoLayoutPage && status === 'loading') {
+    return <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <div className="text-gray-500">Verificando sessão...</div>
+        </div>
       </div>
     </div>
   }
