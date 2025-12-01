@@ -813,8 +813,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     });
                 }
 
-                if (parcelasCreated && parcelasCreated.length > 0) {
-                    const transacoesToInsert = parcelasCreated.map((
+                if (!parcelasCreated || parcelasCreated.length === 0) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ Erro inesperado: nenhuma parcela foi criada",
+                        data: data[0],
+                    });
+                }
+
+                const transacoesToInsert = parcelasCreated.map((
                         parcela: {
                             id: number;
                             numero_parcela: number;
@@ -835,19 +843,18 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         observacoes: parcela.observacoes || null,
                     }));
 
-                    const { error: transacoesError } = await supabase
-                        .from("transacoes")
-                        .insert(transacoesToInsert);
+                const { error: transacoesError } = await supabase
+                    .from("transacoes")
+                    .insert(transacoesToInsert);
 
-                    if (transacoesError) {
-                        return res.status(500).json({
-                            success: false,
-                            message:
-                                "❌ Erro ao criar transações: " +
-                                transacoesError.message,
-                            data: data[0],
-                        });
-                    }
+                if (transacoesError) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ Erro ao criar transações: " +
+                            transacoesError.message,
+                        data: data[0],
+                    });
                 }
             } else if (data[0]) {
                 // No parcelas provided, create single transaction
