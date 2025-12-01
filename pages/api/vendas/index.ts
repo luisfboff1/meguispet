@@ -496,6 +496,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 observacoes,
                 itens,
                 sem_impostos,
+                parcelas,
             } = req.body;
 
             if (!id) {
@@ -731,6 +732,97 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         data: data[0],
                     });
                 }
+            }
+
+            // Delete existing financial transactions to prevent duplication
+            await supabase.from("transacoes").delete().eq("venda_id", id);
+            await supabase.from("venda_parcelas").delete().eq("venda_id", id);
+
+            // Recreate financial transactions if parcelas are provided
+            if (parcelas && Array.isArray(parcelas) && parcelas.length > 0) {
+                const { data: categoriaVendas } = await supabase
+                    .from("categorias_financeiras")
+                    .select("id")
+                    .eq("nome", "Vendas")
+                    .eq("tipo", "receita")
+                    .eq("ativo", true)
+                    .single();
+
+                const categoria_id = categoriaVendas?.id || null;
+
+                const parcelasToInsert = parcelas.map((
+                    p: {
+                        numero_parcela: number;
+                        valor_parcela: number;
+                        data_vencimento: string;
+                        observacoes?: string;
+                    },
+                ) => ({
+                    venda_id: parseInt(id as string, 10),
+                    numero_parcela: p.numero_parcela,
+                    valor_parcela: p.valor_parcela,
+                    data_vencimento: p.data_vencimento,
+                    status: "pendente",
+                    observacoes: p.observacoes || null,
+                }));
+
+                const { data: parcelasCreated, error: parcelasError } =
+                    await supabase
+                        .from("venda_parcelas")
+                        .insert(parcelasToInsert)
+                        .select();
+
+                if (!parcelasError && parcelasCreated) {
+                    const transacoesToInsert = parcelasCreated.map((
+                        parcela: {
+                            id: number;
+                            numero_parcela: number;
+                            valor_parcela: number;
+                            data_vencimento: string;
+                            observacoes?: string | null;
+                        },
+                    ) => ({
+                        tipo: "receita",
+                        valor: parcela.valor_parcela,
+                        descricao:
+                            `Receita Venda ${numero_venda} - Parcela ${parcela.numero_parcela}/${parcelas.length}`,
+                        categoria: "Vendas",
+                        categoria_id,
+                        venda_id: parseInt(id as string, 10),
+                        venda_parcela_id: parcela.id,
+                        data_transacao: parcela.data_vencimento,
+                        observacoes: parcela.observacoes || null,
+                    }));
+
+                    await supabase.from("transacoes").insert(
+                        transacoesToInsert,
+                    );
+                }
+            } else if (data[0]) {
+                // No parcelas provided, create single transaction
+                const { data: categoriaVendas } = await supabase
+                    .from("categorias_financeiras")
+                    .select("id")
+                    .eq("nome", "Vendas")
+                    .eq("tipo", "receita")
+                    .eq("ativo", true)
+                    .single();
+
+                const categoria_id = categoriaVendas?.id || null;
+
+                await supabase
+                    .from("transacoes")
+                    .insert({
+                        tipo: "receita",
+                        valor: data[0].valor_final,
+                        descricao: `Receita Venda ${numero_venda}`,
+                        categoria: "Vendas",
+                        categoria_id,
+                        venda_id: parseInt(id as string, 10),
+                        data_transacao: data_pagamento || data_venda ||
+                            new Date().toISOString(),
+                        observacoes: observacoes || null,
+                    });
             }
 
             invalidateCacheAfterMutation();
