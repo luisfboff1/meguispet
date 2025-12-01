@@ -517,6 +517,32 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     }
   }, [formData.uf_destino])
 
+  // Helper function to update tax exemption observations
+  const updateTaxObservations = (currentObservacoes: string, semIpi: boolean, semSt: boolean): string => {
+    // Remove existing tax notes
+    let newObservacoes = currentObservacoes
+      .replace(/\n*PEDIDO SEM IMPOSTOS\n*/g, '')
+      .replace(/\n*SEM IPI \| SEM ST\n*/g, '')
+      .replace(/\n*SEM ST \| SEM IPI\n*/g, '')
+      .replace(/\n*SEM IPI\n*/g, '')
+      .replace(/\n*SEM ST\n*/g, '')
+      .trim()
+
+    // Build notes based on selected flags
+    const notes: string[] = []
+    if (semIpi) notes.push('SEM IPI')
+    if (semSt) notes.push('SEM ST')
+
+    // Add new notes if any
+    if (notes.length > 0) {
+      newObservacoes = newObservacoes
+        ? `${newObservacoes}\n\n${notes.join(' | ')}`
+        : notes.join(' | ')
+    }
+
+    return newObservacoes
+  }
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1280,38 +1306,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   checked={formData.sem_ipi}
                   onChange={(e) => {
                     const semIpi = e.target.checked
-                    setFormData(prev => {
-                      // Gerenciar observações baseado nas flags
-                      let newObservacoes = prev.observacoes
-
-                      // Remover notas existentes
-                      newObservacoes = newObservacoes
-                        .replace(/\n*PEDIDO SEM IMPOSTOS\n*/g, '')
-                        .replace(/\n*SEM IPI \| SEM ST\n*/g, '')
-                        .replace(/\n*SEM ST \| SEM IPI\n*/g, '')
-                        .replace(/\n*SEM IPI\n*/g, '')
-                        .replace(/\n*SEM ST\n*/g, '')
-                        .trim()
-
-                      // Adicionar notas atualizadas
-                      const notes: string[] = []
-                      if (semIpi) notes.push('SEM IPI')
-                      if (prev.sem_st) notes.push('SEM ST')
-                      
-                      if (notes.length > 0) {
-                        newObservacoes = newObservacoes
-                          ? `${newObservacoes}\n\n${notes.join(' | ')}`
-                          : notes.join(' | ')
-                      }
-
-                      return {
-                        ...prev,
-                        sem_ipi: semIpi,
-                        // Se ambos estão marcados, marcar sem_impostos para compatibilidade
-                        sem_impostos: semIpi && prev.sem_st,
-                        observacoes: newObservacoes
-                      }
-                    })
+                    setFormData(prev => ({
+                      ...prev,
+                      sem_ipi: semIpi,
+                      sem_impostos: semIpi && prev.sem_st,
+                      observacoes: updateTaxObservations(prev.observacoes, semIpi, prev.sem_st)
+                    }))
                   }}
                   className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                 />
@@ -1328,38 +1328,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   checked={formData.sem_st}
                   onChange={(e) => {
                     const semSt = e.target.checked
-                    setFormData(prev => {
-                      // Gerenciar observações baseado nas flags
-                      let newObservacoes = prev.observacoes
-
-                      // Remover notas existentes
-                      newObservacoes = newObservacoes
-                        .replace(/\n*PEDIDO SEM IMPOSTOS\n*/g, '')
-                        .replace(/\n*SEM IPI\n*/g, '')
-                        .replace(/\n*SEM ST\n*/g, '')
-                        .replace(/\n*SEM IPI \| SEM ST\n*/g, '')
-                        .replace(/\n*SEM ST \| SEM IPI\n*/g, '')
-                        .trim()
-
-                      // Adicionar notas atualizadas
-                      const notes: string[] = []
-                      if (prev.sem_ipi) notes.push('SEM IPI')
-                      if (semSt) notes.push('SEM ST')
-                      
-                      if (notes.length > 0) {
-                        newObservacoes = newObservacoes
-                          ? `${newObservacoes}\n\n${notes.join(' | ')}`
-                          : notes.join(' | ')
-                      }
-
-                      return {
-                        ...prev,
-                        sem_st: semSt,
-                        // Se ambos estão marcados, marcar sem_impostos para compatibilidade
-                        sem_impostos: prev.sem_ipi && semSt,
-                        observacoes: newObservacoes
-                      }
-                    })
+                    setFormData(prev => ({
+                      ...prev,
+                      sem_st: semSt,
+                      sem_impostos: prev.sem_ipi && semSt,
+                      observacoes: updateTaxObservations(prev.observacoes, prev.sem_ipi, semSt)
+                    }))
                   }}
                   className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                 />
