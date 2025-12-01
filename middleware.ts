@@ -28,11 +28,26 @@ import { type NextRequest, NextResponse } from "next/server";
  * Without auto-refresh, users are logged out after ABSOLUTE time since login.
  */
 
+/**
+ * Helper function to clear all Supabase auth cookies
+ */
+function clearAuthCookies(request: NextRequest, response: NextResponse): void {
+  const cookieNames = request.cookies.getAll().map(c => c.name);
+  cookieNames.forEach(name => {
+    if (name.includes('supabase') || name.includes('auth')) {
+      response.cookies.delete(name);
+    }
+  });
+}
+
 export async function middleware(request: NextRequest) {
   // Allow emergency logout page without authentication
   if (request.nextUrl.pathname === "/emergency-logout") {
     return NextResponse.next();
   }
+
+  // Check if we're already on the login page to prevent redirect loops
+  const isLoginPage = request.nextUrl.pathname === "/login";
 
   let supabaseResponse = NextResponse.next({
     request,
@@ -83,22 +98,33 @@ export async function middleware(request: NextRequest) {
   // JWT expirado ou sessão inválida → redirecionar para /login
   // JWT expiry configurado em: Supabase Dashboard → Auth → JWT Expiry
   if (error || !user) {
-    // Não redirecionar se já estiver na página de login
-    if (request.nextUrl.pathname !== "/login") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
+    // Se já estiver na página de login, não redirecionar (evita loop)
+    if (isLoginPage) {
+      // Clear any stale auth cookies when on login page
+      const response = NextResponse.next({ request });
+      clearAuthCookies(request, response);
+      return response;
+    }
+
+    // Redirecionar para login com mensagem apropriada
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    
+    // Apenas adicionar mensagem se não vier de um redirect anterior
+    if (!request.nextUrl.searchParams.has('message')) {
       url.searchParams.set(
         "message",
         "Sua sessão expirou. Faça login novamente.",
       );
-      return NextResponse.redirect(url);
     }
-
-    return supabaseResponse;
+    
+    const response = NextResponse.redirect(url);
+    clearAuthCookies(request, response);
+    return response;
   }
 
   // If user is signed in and tries to access /login, redirect to /dashboard
-  if (user && request.nextUrl.pathname === "/login") {
+  if (user && isLoginPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

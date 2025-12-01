@@ -211,18 +211,84 @@ export function useAuth() {
     }
   }, [clear, handleLogout, setCredentials, setStatus])
 
-  // checkAuth() removed to prevent rate limiting
-  // Middleware already protects all routes and verifies auth on every page request
-  // Client-side auth state is populated via login() and onAuthStateChange listener below
+  // Check session validity on mount and when coming back to the app
   useEffect(() => {
-    // If status is idle and we have a user in store, mark as authenticated
-    // This happens on page refresh when Zustand rehydrates from localStorage
-    if (status === 'idle' && user && token) {
-      setStatus('authenticated')
-    } else if (status === 'idle' && !user) {
-      setStatus('unauthenticated')
+    // Skip check if not in browser or if we're on a public page
+    if (typeof window === 'undefined') return
+    
+    // Only check once when app initializes
+    if (status !== 'idle') return
+
+    const checkSessionValidity = async () => {
+      // Add timeout to prevent hanging (5 seconds is reasonable for network requests)
+      const timeoutId = setTimeout(() => {
+        console.error('⚠️ useAuth: Session check timed out (5s), clearing auth')
+        clear()
+        setStatus('unauthenticated')
+        clearTokenCookie()
+      }, 5000) // 5 second timeout
+
+      try {
+        const supabase = getSupabaseBrowser()
+        const { data: { session }, error } = await supabase.auth.getSession()
+
+        // Clear timeout if we got a response
+        clearTimeout(timeoutId)
+
+        // If there's an error or no session, clear everything immediately
+        if (error || !session) {
+          console.log('🔒 useAuth: No valid session on mount, clearing auth state')
+          clear()
+          setStatus('unauthenticated')
+          clearTokenCookie()
+          
+          // Clear all localStorage to prevent stale data
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            localStorage.removeItem('meguispet-auth-store')
+          }
+          return
+        }
+
+        // We have a session - verify it's still valid
+        if (user && token) {
+          setStatus('authenticated')
+        } else if (!user && session) {
+          // Session exists but no user in state - re-fetch profile
+          try {
+            const response = await authService.getProfile()
+            if (response.success && response.data) {
+              setCredentials(response.data, session.access_token)
+              setTokenCookie(session.access_token)
+              setStatus('authenticated')
+            } else {
+              // Profile fetch failed - session might be invalid
+              console.log('⚠️ useAuth: Profile fetch failed on mount, clearing auth')
+              clear()
+              setStatus('unauthenticated')
+              clearTokenCookie()
+            }
+          } catch (error) {
+            console.error('❌ useAuth: Error fetching profile on mount', error)
+            clear()
+            setStatus('unauthenticated')
+            clearTokenCookie()
+          }
+        } else {
+          setStatus('unauthenticated')
+        }
+      } catch (error) {
+        clearTimeout(timeoutId)
+        console.error('❌ useAuth: Error checking session validity', error)
+        clear()
+        setStatus('unauthenticated')
+        clearTokenCookie()
+      }
     }
-  }, [status, user, token, setStatus])
+
+    checkSessionValidity()
+  }, [status, user, token, setStatus, setCredentials, clear])
 
   // Periodic security check removed to prevent rate limiting
   // The middleware already protects routes on every request

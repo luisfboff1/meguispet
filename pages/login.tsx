@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { getSupabaseBrowser } from '@/lib/supabase'
 import type { LoginForm } from '@/types'
 
 // 🔐 PÁGINA DE LOGIN - SEM LAYOUT AUTOMÁTICO
@@ -20,7 +21,49 @@ export default function LoginPage() {
     email: '',
     password: ''
   })
-  const { login, status } = useAuth()
+  const { login, status, logout } = useAuth()
+
+  // Clear any stale session data on mount
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
+    const clearStaleSession = async () => {
+      try {
+        // Check if we have any Supabase cookies
+        const hasCookies = document.cookie.includes('supabase')
+        
+        // If we're on login page with cookies, it means session expired
+        // Clear everything to prevent issues
+        if (hasCookies) {
+          console.log('🧹 Login: Clearing stale session data')
+          
+          // Clear all Supabase-related cookies
+          const cookies = document.cookie.split(';')
+          for (const cookie of cookies) {
+            const eqPos = cookie.indexOf('=')
+            const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
+            if (name.includes('supabase') || name.includes('auth') || name === 'token') {
+              document.cookie = `${name}=; Max-Age=0; Path=/`
+            }
+          }
+          
+          // Clear localStorage items
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          localStorage.removeItem('meguispet-auth-store')
+          
+          // Clear Supabase session using the existing utility
+          const supabase = getSupabaseBrowser()
+          await supabase.auth.signOut()
+        }
+      } catch (error) {
+        console.error('Error clearing stale session:', error)
+      }
+    }
+    
+    clearStaleSession()
+  }, [])
 
   // Middleware already redirects authenticated users to /dashboard
   // No need for client-side redirect check (reduces Supabase API calls)
