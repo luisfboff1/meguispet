@@ -220,9 +220,20 @@ export function useAuth() {
     if (status !== 'idle') return
 
     const checkSessionValidity = async () => {
+      // Add timeout to prevent hanging
+      const timeoutId = setTimeout(() => {
+        console.error('⚠️ useAuth: Session check timed out, clearing auth')
+        clear()
+        setStatus('unauthenticated')
+        clearTokenCookie()
+      }, 10000) // 10 second timeout
+
       try {
         const supabase = getSupabaseBrowser()
         const { data: { session }, error } = await supabase.auth.getSession()
+
+        // Clear timeout if we got a response
+        clearTimeout(timeoutId)
 
         // If there's an error or no session, clear everything immediately
         if (error || !session) {
@@ -268,6 +279,7 @@ export function useAuth() {
           setStatus('unauthenticated')
         }
       } catch (error) {
+        clearTimeout(timeoutId)
         console.error('❌ useAuth: Error checking session validity', error)
         clear()
         setStatus('unauthenticated')
