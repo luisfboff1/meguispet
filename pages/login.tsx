@@ -20,7 +20,53 @@ export default function LoginPage() {
     email: '',
     password: ''
   })
-  const { login, status } = useAuth()
+  const { login, status, logout } = useAuth()
+
+  // Clear any stale session data on mount
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
+    const clearStaleSession = async () => {
+      try {
+        // Check if we have any Supabase cookies
+        const hasCookies = document.cookie.includes('supabase')
+        
+        // If we're on login page with cookies, it means session expired
+        // Clear everything to prevent issues
+        if (hasCookies) {
+          console.log('🧹 Login: Clearing stale session data')
+          
+          // Clear all Supabase-related cookies
+          const cookies = document.cookie.split(';')
+          for (const cookie of cookies) {
+            const eqPos = cookie.indexOf('=')
+            const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
+            if (name.includes('supabase') || name.includes('auth') || name === 'token') {
+              document.cookie = `${name}=; Max-Age=0; Path=/`
+            }
+          }
+          
+          // Clear localStorage items
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          localStorage.removeItem('meguispet-auth-store')
+          
+          // Clear Supabase session
+          const { createBrowserClient } = await import('@supabase/ssr')
+          const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          )
+          await supabase.auth.signOut()
+        }
+      } catch (error) {
+        console.error('Error clearing stale session:', error)
+      }
+    }
+    
+    clearStaleSession()
+  }, [])
 
   // Middleware already redirects authenticated users to /dashboard
   // No need for client-side redirect check (reduces Supabase API calls)

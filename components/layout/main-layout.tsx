@@ -17,6 +17,8 @@ interface MainLayoutProps {
 export function MainLayout({ children, title, description }: MainLayoutProps) {
   const router = useRouter()
   const [hydrated, setHydrated] = useState(false)
+  const [redirectAttempts, setRedirectAttempts] = useState(0)
+  const [lastRedirectTime, setLastRedirectTime] = useState(0)
 
   const {
     isOpen,
@@ -55,8 +57,26 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   // This catches edge cases where middleware might not have redirected
   // IMPORTANT: Also redirect if status is 'unauthenticated' (not just checking isAuthenticated)
   // This prevents being stuck when user is null but loading is false
+  // Added circuit breaker to prevent infinite redirect loops
   useEffect(() => {
     if (!hydrated || isNoLayoutPage) return
+
+    // Circuit breaker: Prevent infinite redirects
+    const now = Date.now()
+    const REDIRECT_COOLDOWN = 5000 // 5 seconds
+    const MAX_REDIRECT_ATTEMPTS = 3
+
+    // Reset redirect attempts if enough time has passed
+    if (now - lastRedirectTime > REDIRECT_COOLDOWN) {
+      setRedirectAttempts(0)
+    }
+
+    // If we've tried too many times, stop trying to prevent infinite loop
+    if (redirectAttempts >= MAX_REDIRECT_ATTEMPTS) {
+      console.error('🚨 MainLayout: Too many redirect attempts, stopping to prevent infinite loop')
+      console.error('🚨 Please refresh the page or clear your browser cache')
+      return
+    }
 
     // Redirect if:
     // 1. Not loading AND not authenticated
@@ -72,11 +92,17 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
         loading,
         isAuthenticated,
         status,
-        hasUser: !!user
+        hasUser: !!user,
+        attempt: redirectAttempts + 1
       })
+      
+      setRedirectAttempts(prev => prev + 1)
+      setLastRedirectTime(now)
+      
+      // Use replace to avoid adding to history
       router.replace('/login')
     }
-  }, [hydrated, loading, isAuthenticated, status, user, isNoLayoutPage, router])
+  }, [hydrated, loading, isAuthenticated, status, user, isNoLayoutPage, router, redirectAttempts, lastRedirectTime])
 
   useEffect(() => {
     const handleRouteChange = () => {
