@@ -21,7 +21,9 @@ import { ItemCalculado, TotaisVenda } from '@/types'
  *
  * @param stAliquota Na verdade é o MVA (Margem de Valor Agregado)
  * @param icmsProprioAliquota Alíquota de ICMS Próprio (padrão 4%)
- * @param semImpostos Se true, não calcula impostos
+ * @param semImpostos Se true, não calcula nenhum imposto (DEPRECADO, usar semIpi e semSt)
+ * @param semIpi Se true, não calcula IPI
+ * @param semSt Se true, não calcula ST
  */
 export function calcularItemVenda(
   precoUnitario: number,
@@ -31,7 +33,9 @@ export function calcularItemVenda(
   stAliquota: number, // MVA
   descontoProporcional: number,
   icmsProprioAliquota: number = 4, // Padrão 4%
-  semImpostos: boolean = false // Nova opção para vendas sem impostos
+  semImpostos: boolean = false, // DEPRECADO - usar semIpi e semSt para controle individual
+  semIpi: boolean = false, // Nova opção para vendas sem IPI
+  semSt: boolean = false // Nova opção para vendas sem ST
 ): Omit<ItemCalculado, 'produto_id' | 'produto_nome' | 'quantidade' | 'preco_unitario' | 'ipi_aliquota' | 'icms_aliquota' | 'st_aliquota'> {
   // 1. Subtotal bruto (preço × quantidade)
   const subtotalBruto = precoUnitario * quantidade
@@ -39,30 +43,22 @@ export function calcularItemVenda(
   // 2. Subtotal líquido (após desconto proporcional)
   const subtotalLiquido = subtotalBruto - descontoProporcional
 
-  // Se a venda é sem impostos, zerar todos os valores de impostos
-  if (semImpostos) {
-    return {
-      subtotal_bruto: Number(subtotalBruto.toFixed(2)),
-      desconto_proporcional: Number(descontoProporcional.toFixed(2)),
-      subtotal_liquido: Number(subtotalLiquido.toFixed(2)),
-      ipi_valor: 0,
-      icms_valor: 0,
-      st_valor: 0,
-      total_item: Number(subtotalLiquido.toFixed(2)) // Total = subtotal líquido apenas
-    }
-  }
+  // Determinar se deve calcular cada imposto
+  // semImpostos = true é equivalente a semIpi = true E semSt = true (compatibilidade)
+  const calcularIpi = !semImpostos && !semIpi
+  const calcularSt = !semImpostos && !semSt
 
-  // 3. Calcular IPI sobre o subtotal líquido
-  const ipiValor = subtotalLiquido * (ipiAliquota / 100)
+  // 3. Calcular IPI sobre o subtotal líquido (se não estiver desabilitado)
+  const ipiValor = calcularIpi ? subtotalLiquido * (ipiAliquota / 100) : 0
 
   // 4. Calcular ICMS (informativo, não entra no total)
   const icmsValor = subtotalLiquido * (icmsAliquota / 100)
 
-  // 5. Calcular ST CORRETAMENTE usando MVA
+  // 5. Calcular ST CORRETAMENTE usando MVA (se não estiver desabilitado)
   const mva = stAliquota // stAliquota na verdade é o MVA
   let stValor = 0
 
-  if (mva > 0) {
+  if (calcularSt && mva > 0) {
     const ALIQUOTA_ST_INTERNA = 18 // Alíquota interna de ICMS-ST (18%)
 
     // Base de cálculo do ST = Valor Líquido × (1 + MVA/100)
@@ -150,7 +146,9 @@ export function calcularItensVenda(
     icms_proprio_aliquota?: number // ICMS Próprio (padrão 4%)
   }>,
   descontoTotal: number,
-  semImpostos: boolean = false // Nova opção para vendas sem impostos
+  semImpostos: boolean = false, // DEPRECADO - usar semIpi e semSt para controle individual
+  semIpi: boolean = false, // Nova opção para vendas sem IPI
+  semSt: boolean = false // Nova opção para vendas sem ST
 ): ItemCalculado[] {
   // 1. Calcular descontos proporcionais
   const descontosProporcionais = calcularDescontosProporcionais(itens, descontoTotal)
@@ -165,7 +163,9 @@ export function calcularItensVenda(
       item.st_aliquota, // MVA
       descontosProporcionais[index],
       item.icms_proprio_aliquota || 4, // Padrão 4%
-      semImpostos // Passar a opção sem impostos
+      semImpostos, // Passar a opção sem impostos (DEPRECADO)
+      semIpi, // Passar a opção sem IPI
+      semSt // Passar a opção sem ST
     )
 
     return {

@@ -58,7 +58,9 @@ interface VendaFormState {
   observacoes: string
   desconto: number
   data_pagamento?: string // Data de pagamento (also used as base for installment calculation)
-  sem_impostos: boolean // Indica se a venda é sem impostos
+  sem_impostos: boolean // Indica se a venda é sem impostos - DEPRECADO, usar sem_ipi e sem_st
+  sem_ipi: boolean // Indica se a venda é sem IPI
+  sem_st: boolean // Indica se a venda é sem ST
 }
 
 const getFormaPagamentoIdFromVenda = (dados?: Venda): string => {
@@ -106,7 +108,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     observacoes: venda?.observacoes || '',
     desconto: venda?.desconto || 0,
     data_pagamento: new Date().toISOString().split('T')[0], // Default to today
-    sem_impostos: venda?.sem_impostos || false // Default: com impostos
+    sem_impostos: venda?.sem_impostos || false, // DEPRECADO - manter para compatibilidade
+    sem_ipi: venda?.sem_ipi || false, // Default: com IPI
+    sem_st: venda?.sem_st || false // Default: com ST
   })
 
   const [itens, setItens] = useState<ItemVenda[]>([])
@@ -159,7 +163,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         observacoes: '',
         desconto: 0,
         data_pagamento: new Date().toISOString().split('T')[0],
-        sem_impostos: false
+        sem_impostos: false,
+        sem_ipi: false,
+        sem_st: false
       })
       return
     }
@@ -176,7 +182,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       observacoes: venda.observacoes || '',
       desconto: venda.desconto || 0,
       data_pagamento: venda.prazo_pagamento ? String(venda.prazo_pagamento) : new Date().toISOString().split('T')[0],
-      sem_impostos: venda.sem_impostos || false
+      sem_impostos: venda.sem_impostos || false,
+      sem_ipi: venda.sem_ipi || false,
+      sem_st: venda.sem_st || false
     })
 
     if (venda.itens?.length) {
@@ -219,7 +227,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     void loadData()
   }, [])
 
-  // Recalcular itens e totais sempre que os itens, desconto ou sem_impostos mudarem
+  // Recalcular itens e totais sempre que os itens, desconto ou configurações de impostos mudarem
   useEffect(() => {
     if (itens.length === 0) {
       setItensCalculados([])
@@ -234,12 +242,12 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       return
     }
 
-    const calculados = calcularItensVenda(itensComDados, formData.desconto, formData.sem_impostos)
+    const calculados = calcularItensVenda(itensComDados, formData.desconto, formData.sem_impostos, formData.sem_ipi, formData.sem_st)
     setItensCalculados(calculados)
 
     const totaisCalculados = calcularTotaisVenda(calculados, formData.desconto)
     setTotais(totaisCalculados)
-  }, [itens, formData.desconto, formData.sem_impostos])
+  }, [itens, formData.desconto, formData.sem_impostos, formData.sem_ipi, formData.sem_st])
 
   const loadData = async () => {
     try {
@@ -508,6 +516,32 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       void recalcularStTodosItens(formData.uf_destino)
     }
   }, [formData.uf_destino])
+
+  // Helper function to update tax exemption observations
+  const updateTaxObservations = (currentObservacoes: string, semIpi: boolean, semSt: boolean): string => {
+    // Remove existing tax notes
+    let newObservacoes = currentObservacoes
+      .replace(/\n*PEDIDO SEM IMPOSTOS\n*/g, '')
+      .replace(/\n*SEM IPI \| SEM ST\n*/g, '')
+      .replace(/\n*SEM ST \| SEM IPI\n*/g, '')
+      .replace(/\n*SEM IPI\n*/g, '')
+      .replace(/\n*SEM ST\n*/g, '')
+      .trim()
+
+    // Build notes based on selected flags
+    const notes: string[] = []
+    if (semIpi) notes.push('SEM IPI')
+    if (semSt) notes.push('SEM ST')
+
+    // Add new notes if any
+    if (notes.length > 0) {
+      newObservacoes = newObservacoes
+        ? `${newObservacoes}\n\n${notes.join(' | ')}`
+        : notes.join(' | ')
+    }
+
+    return newObservacoes
+  }
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1260,36 +1294,64 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             </div>
           )}
 
-          {/* Sem Impostos Option */}
+          {/* Opções de Impostos */}
           <div className="border-t pt-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="sem-impostos"
-                checked={formData.sem_impostos}
-                onChange={(e) => {
-                  const semImpostos = e.target.checked
-                  setFormData(prev => {
-                    const newObservacoes = semImpostos
-                      ? (prev.observacoes ? `${prev.observacoes}\n\nPEDIDO SEM IMPOSTOS` : 'PEDIDO SEM IMPOSTOS')
-                      : prev.observacoes.replace(/\n*PEDIDO SEM IMPOSTOS\n*/g, '').trim()
-
-                    return {
+            <Label className="mb-3 block font-medium">Configuração de Impostos</Label>
+            <div className="flex flex-wrap gap-6">
+              {/* Sem IPI Option */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="sem-ipi"
+                  checked={formData.sem_ipi}
+                  onChange={(e) => {
+                    const semIpi = e.target.checked
+                    setFormData(prev => ({
                       ...prev,
-                      sem_impostos: semImpostos,
-                      observacoes: newObservacoes
-                    }
-                  })
-                }}
-                className="w-4 h-4 rounded border-gray-300"
-              />
-              <Label htmlFor="sem-impostos" className="cursor-pointer font-medium">
-                Venda Sem Impostos
-              </Label>
+                      sem_ipi: semIpi,
+                      sem_impostos: semIpi && prev.sem_st,
+                      observacoes: updateTaxObservations(prev.observacoes, semIpi, prev.sem_st)
+                    }))
+                  }}
+                  className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                />
+                <Label htmlFor="sem-ipi" className="cursor-pointer font-medium text-orange-700">
+                  Sem IPI
+                </Label>
+              </div>
+
+              {/* Sem ST Option */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="sem-st"
+                  checked={formData.sem_st}
+                  onChange={(e) => {
+                    const semSt = e.target.checked
+                    setFormData(prev => ({
+                      ...prev,
+                      sem_st: semSt,
+                      sem_impostos: prev.sem_ipi && semSt,
+                      observacoes: updateTaxObservations(prev.observacoes, prev.sem_ipi, semSt)
+                    }))
+                  }}
+                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <Label htmlFor="sem-st" className="cursor-pointer font-medium text-purple-700">
+                  Sem ST
+                </Label>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1 ml-6">
-              Quando marcado, os impostos (IPI, ICMS, ST) não serão calculados e a mensagem &quot;PEDIDO SEM IMPOSTOS&quot; será adicionada automaticamente nas observações
+            <p className="text-xs text-gray-500 mt-2">
+              Selecione os impostos que deseja remover do cálculo. IPI e ST podem ser removidos individualmente ou em conjunto.
             </p>
+            {(formData.sem_ipi || formData.sem_st) && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-xs text-yellow-700">
+                  ⚠️ Impostos desabilitados: {[formData.sem_ipi && 'IPI', formData.sem_st && 'ST'].filter(Boolean).join(' e ')}
+                </p>
+              </div>
+            )}
           </div>
 
           <div>

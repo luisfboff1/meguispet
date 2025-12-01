@@ -136,7 +136,9 @@ export interface Venda {
   observacoes?: string
   prazo_pagamento?: string | number
   imposto_percentual?: number
-  sem_impostos?: boolean // Indica se a venda é sem impostos (não calcula IPI, ICMS, ST)
+  sem_impostos?: boolean // Indica se a venda é sem impostos (não calcula IPI, ICMS, ST) - DEPRECADO, usar sem_ipi e sem_st
+  sem_ipi?: boolean // Indica se a venda é sem IPI
+  sem_st?: boolean // Indica se a venda é sem ST
   // Impostos e Totais - NOVO
   total_produtos_bruto: number // Total dos produtos sem desconto
   desconto_total: number // Desconto total da venda
@@ -442,7 +444,9 @@ export interface VendaForm {
   uf_destino?: string // UF de destino da venda (para cálculo ICMS-ST)
   observacoes?: string
   parcelas?: VendaParcelaInput[] // Parcelas de pagamento
-  sem_impostos?: boolean // Indica se a venda é sem impostos (não calcula IPI, ICMS, ST)
+  sem_impostos?: boolean // Indica se a venda é sem impostos (não calcula IPI, ICMS, ST) - DEPRECADO, usar sem_ipi e sem_st
+  sem_ipi?: boolean // Indica se a venda é sem IPI
+  sem_st?: boolean // Indica se a venda é sem ST
 }
 
 export interface VendaParcelaInput {
