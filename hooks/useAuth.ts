@@ -220,13 +220,13 @@ export function useAuth() {
     if (status !== 'idle') return
 
     const checkSessionValidity = async () => {
-      // Add timeout to prevent hanging
+      // Add timeout to prevent hanging (5 seconds is reasonable for network requests)
       const timeoutId = setTimeout(() => {
-        console.error('⚠️ useAuth: Session check timed out, clearing auth')
+        console.error('⚠️ useAuth: Session check timed out (5s), clearing auth')
         clear()
         setStatus('unauthenticated')
         clearTokenCookie()
-      }, 10000) // 10 second timeout
+      }, 5000) // 5 second timeout
 
       try {
         const supabase = getSupabaseBrowser()

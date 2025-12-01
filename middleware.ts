@@ -28,6 +28,18 @@ import { type NextRequest, NextResponse } from "next/server";
  * Without auto-refresh, users are logged out after ABSOLUTE time since login.
  */
 
+/**
+ * Helper function to clear all Supabase auth cookies
+ */
+function clearAuthCookies(request: NextRequest, response: NextResponse): void {
+  const cookieNames = request.cookies.getAll().map(c => c.name);
+  cookieNames.forEach(name => {
+    if (name.includes('supabase') || name.includes('auth')) {
+      response.cookies.delete(name);
+    }
+  });
+}
+
 export async function middleware(request: NextRequest) {
   // Allow emergency logout page without authentication
   if (request.nextUrl.pathname === "/emergency-logout") {
@@ -90,15 +102,7 @@ export async function middleware(request: NextRequest) {
     if (isLoginPage) {
       // Clear any stale auth cookies when on login page
       const response = NextResponse.next({ request });
-      
-      // Clear Supabase auth cookies to ensure clean state
-      const cookieNames = request.cookies.getAll().map(c => c.name);
-      cookieNames.forEach(name => {
-        if (name.includes('supabase') || name.includes('auth')) {
-          response.cookies.delete(name);
-        }
-      });
-      
+      clearAuthCookies(request, response);
       return response;
     }
 
@@ -115,15 +119,7 @@ export async function middleware(request: NextRequest) {
     }
     
     const response = NextResponse.redirect(url);
-    
-    // Clear auth cookies on redirect to login
-    const cookieNames = request.cookies.getAll().map(c => c.name);
-    cookieNames.forEach(name => {
-      if (name.includes('supabase') || name.includes('auth')) {
-        response.cookies.delete(name);
-      }
-    });
-    
+    clearAuthCookies(request, response);
     return response;
   }
 

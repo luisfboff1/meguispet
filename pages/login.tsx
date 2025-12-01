@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { getSupabaseBrowser } from '@/lib/supabase'
 import type { LoginForm } from '@/types'
 
 // 🔐 PÁGINA DE LOGIN - SEM LAYOUT AUTOMÁTICO
@@ -52,12 +53,8 @@ export default function LoginPage() {
           localStorage.removeItem('user')
           localStorage.removeItem('meguispet-auth-store')
           
-          // Clear Supabase session
-          const { createBrowserClient } = await import('@supabase/ssr')
-          const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-          )
+          // Clear Supabase session using the existing utility
+          const supabase = getSupabaseBrowser()
           await supabase.auth.signOut()
         }
       } catch (error) {
