@@ -735,11 +735,38 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             }
 
             // Delete existing financial transactions to prevent duplication
-            await supabase.from("transacoes").delete().eq("venda_id", id);
-            await supabase.from("venda_parcelas").delete().eq("venda_id", id);
+            const { error: deleteTransacoesError } = await supabase
+                .from("transacoes")
+                .delete()
+                .eq("venda_id", id);
 
-            // Recreate financial transactions if parcelas are provided
-            if (parcelas && Array.isArray(parcelas) && parcelas.length > 0) {
+            if (deleteTransacoesError) {
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "❌ Erro ao deletar transações existentes: " +
+                        deleteTransacoesError.message,
+                    data: data[0],
+                });
+            }
+
+            const { error: deleteParcelasError } = await supabase
+                .from("venda_parcelas")
+                .delete()
+                .eq("venda_id", id);
+
+            if (deleteParcelasError) {
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "❌ Erro ao deletar parcelas existentes: " +
+                        deleteParcelasError.message,
+                    data: data[0],
+                });
+            }
+
+            // Helper function to get Vendas category
+            const getVendasCategory = async () => {
                 const { data: categoriaVendas } = await supabase
                     .from("categorias_financeiras")
                     .select("id")
@@ -747,8 +774,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     .eq("tipo", "receita")
                     .eq("ativo", true)
                     .single();
+                return categoriaVendas?.id || null;
+            };
 
-                const categoria_id = categoriaVendas?.id || null;
+            // Recreate financial transactions if parcelas are provided
+            if (parcelas && Array.isArray(parcelas) && parcelas.length > 0) {
+                const categoria_id = await getVendasCategory();
 
                 const parcelasToInsert = parcelas.map((
                     p: {
@@ -772,7 +803,17 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         .insert(parcelasToInsert)
                         .select();
 
-                if (!parcelasError && parcelasCreated) {
+                if (parcelasError) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ Erro ao criar parcelas: " +
+                            parcelasError.message,
+                        data: data[0],
+                    });
+                }
+
+                if (parcelasCreated && parcelasCreated.length > 0) {
                     const transacoesToInsert = parcelasCreated.map((
                         parcela: {
                             id: number;
@@ -794,23 +835,25 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                         observacoes: parcela.observacoes || null,
                     }));
 
-                    await supabase.from("transacoes").insert(
-                        transacoesToInsert,
-                    );
+                    const { error: transacoesError } = await supabase
+                        .from("transacoes")
+                        .insert(transacoesToInsert);
+
+                    if (transacoesError) {
+                        return res.status(500).json({
+                            success: false,
+                            message:
+                                "❌ Erro ao criar transações: " +
+                                transacoesError.message,
+                            data: data[0],
+                        });
+                    }
                 }
             } else if (data[0]) {
                 // No parcelas provided, create single transaction
-                const { data: categoriaVendas } = await supabase
-                    .from("categorias_financeiras")
-                    .select("id")
-                    .eq("nome", "Vendas")
-                    .eq("tipo", "receita")
-                    .eq("ativo", true)
-                    .single();
+                const categoria_id = await getVendasCategory();
 
-                const categoria_id = categoriaVendas?.id || null;
-
-                await supabase
+                const { error: transacaoError } = await supabase
                     .from("transacoes")
                     .insert({
                         tipo: "receita",
@@ -823,6 +866,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                             new Date().toISOString(),
                         observacoes: observacoes || null,
                     });
+
+                if (transacaoError) {
+                    return res.status(500).json({
+                        success: false,
+                        message:
+                            "❌ Erro ao criar transação: " +
+                            transacaoError.message,
+                        data: data[0],
+                    });
+                }
             }
 
             invalidateCacheAfterMutation();
