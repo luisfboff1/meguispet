@@ -14,6 +14,15 @@ export default function EmergencyLogoutPage() {
         if (typeof window !== 'undefined') {
           console.log('🚨 EMERGENCY LOGOUT: Starting aggressive cleanup...')
 
+          // Helper function to delete cookies with all possible path/domain combinations
+          const deleteCookie = (cookieName: string) => {
+            document.cookie = `${cookieName}=; Max-Age=0; Path=/`
+            document.cookie = `${cookieName}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
+            document.cookie = `${cookieName}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
+            // Also try without domain
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/`
+          }
+
           // 1. Sign out from Supabase FIRST to invalidate session on server
           console.log('🔐 Signing out from Supabase')
           try {
@@ -39,14 +48,6 @@ export default function EmergencyLogoutPage() {
           for (const cookie of cookies) {
             const eqPos = cookie.indexOf('=')
             const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
-            // Delete with all possible path/domain combinations
-            const deleteCookie = (cookieName: string) => {
-              document.cookie = `${cookieName}=; Max-Age=0; Path=/`
-              document.cookie = `${cookieName}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
-              document.cookie = `${cookieName}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
-              // Also try without domain
-              document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/`
-            }
             deleteCookie(name)
           }
 

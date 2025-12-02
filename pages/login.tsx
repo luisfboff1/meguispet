@@ -28,10 +28,24 @@ export default function LoginPage() {
     // Only run on client side
     if (typeof window === 'undefined') return
     
+    // Track if cleanup has already run to prevent duplicates
+    let cleanupComplete = false
+    
     const clearStaleSession = async () => {
+      if (cleanupComplete) return
+      cleanupComplete = true
+      
       try {
         // Check if coming from emergency logout
         const fromEmergency = router.query.from === 'emergency'
+        
+        // Helper function to delete cookies with all possible combinations
+        const deleteCookie = (cookieName: string) => {
+          document.cookie = `${cookieName}=; Max-Age=0; Path=/`
+          document.cookie = `${cookieName}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
+          document.cookie = `${cookieName}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/`
+        }
         
         // If from emergency logout, ensure everything is cleared
         if (fromEmergency) {
@@ -42,10 +56,7 @@ export default function LoginPage() {
           for (const cookie of cookies) {
             const eqPos = cookie.indexOf('=')
             const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
-            document.cookie = `${name}=; Max-Age=0; Path=/`
-            document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
-            document.cookie = `${name}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/`
+            deleteCookie(name)
           }
           
           // Clear ALL storage
@@ -70,7 +81,7 @@ export default function LoginPage() {
               const eqPos = cookie.indexOf('=')
               const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
               if (name.includes('supabase') || name.includes('auth') || name === 'token') {
-                document.cookie = `${name}=; Max-Age=0; Path=/`
+                deleteCookie(name)
               }
             }
             
@@ -90,7 +101,7 @@ export default function LoginPage() {
     }
     
     clearStaleSession()
-  }, [router.query.from])
+  }, [])
 
   // Middleware already redirects authenticated users to /dashboard
   // No need for client-side redirect check (reduces Supabase API calls)
