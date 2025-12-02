@@ -148,6 +148,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const [primeiraParcela, setPrimeiraParcela] = useState<string>('')
   const [parcelas, setParcelas] = useState<VendaParcelaInput[]>([])
 
+  // Load form data and items when venda prop changes
+  // NOTE: We only depend on 'venda', not on 'produtos', to prevent duplicate items
+  // when editing. Items are loaded from venda.itens which already includes product names.
   useEffect(() => {
     if (!venda) {
       setItens([])
