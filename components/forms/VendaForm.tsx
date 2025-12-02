@@ -221,7 +221,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       setParcelas([])
       setNumeroParcelas(1)
     }
-  }, [venda, produtos])
+  }, [venda])
 
   useEffect(() => {
     void loadData()
