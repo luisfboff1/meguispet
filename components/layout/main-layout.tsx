@@ -36,7 +36,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   const { loading, isAuthenticated, user, status } = useAuth()
 
   // Páginas que não precisam de layout (login, etc)
-  const noLayoutPages = ['/login', '/register', '/forgot-password']
+  const noLayoutPages = ['/login', '/register', '/forgot-password', '/emergency-logout']
   const isNoLayoutPage = noLayoutPages.includes(router.pathname)
 
   const sidebarWidth = useMemo(() => (isCollapsed && !isTemporary ? 88 : 268), [isCollapsed, isTemporary])
@@ -178,12 +178,13 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
           <div className="space-y-3">
             <button
               onClick={async () => {
-                // Clear circuit breaker state before navigating
+                // Clear circuit breaker state
                 setShowCircuitBreakerError(false)
                 setRedirectAttempts(0)
                 setIsEmergencyLogout(true)
-                // Use router.push to maintain React state
-                await router.push('/emergency-logout')
+                // Use window.location.href to force full page reload
+                // This ensures all React state is cleared and prevents race conditions
+                window.location.href = '/emergency-logout'
               }}
               className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
             >

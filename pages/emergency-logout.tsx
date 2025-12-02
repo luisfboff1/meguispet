@@ -49,16 +49,17 @@ export default function EmergencyLogoutPage() {
           // Wait 1 second before redirect
           setTimeout(() => {
             console.log('🔄 Redirecting to login...')
-            // Use router.push for better state management
-            router.push('/login?from=emergency')
+            // Use window.location.href to force full page reload and clear React state
+            // This prevents race conditions with MainLayout's circuit breaker
+            window.location.href = '/login?from=emergency'
           }, 1000)
         }
       } catch (error) {
         console.error('❌ EMERGENCY LOGOUT: Error during cleanup', error)
         setStatus('done')
-        // Force redirect anyway
+        // Force redirect anyway using full page reload
         setTimeout(() => {
-          router.push('/login?from=emergency')
+          window.location.href = '/login?from=emergency'
         }, 1000)
       }
     }

@@ -110,8 +110,10 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     
-    // Apenas adicionar mensagem se não vier de um redirect anterior
-    if (!request.nextUrl.searchParams.has('message')) {
+    // Don't add message if coming from emergency logout (they already cleared session intentionally)
+    // Apenas adicionar mensagem se não vier de um redirect anterior ou emergency logout
+    const fromEmergency = request.nextUrl.pathname === '/emergency-logout';
+    if (!request.nextUrl.searchParams.has('message') && !fromEmergency) {
       url.searchParams.set(
         "message",
         "Sua sessão expirou. Faça login novamente.",
