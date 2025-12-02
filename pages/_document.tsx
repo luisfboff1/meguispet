@@ -1,6 +1,8 @@
 import { Html, Head, Main, NextScript } from 'next/document'
 
 export default function Document() {
+  // Note: Build ID will be injected via the version API endpoint
+  // Meta tag is optional - the version checker will fetch from /api/version if needed
   return (
     <Html lang="pt-BR">
       <Head>
@@ -8,6 +10,11 @@ export default function Document() {
         <meta charSet="utf-8" />
   <meta name="description" content="Sistema de gestão MeguisPet - Controle vendas, estoque e clientes" />
   <meta name="author" content="MeguisPet" />
+        
+        {/* Cache control for HTML - prevent caching of HTML pages */}
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
         
         {/* Favicon */}
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />

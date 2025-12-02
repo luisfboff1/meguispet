@@ -9,9 +9,11 @@ Agora com **animações suaves em todas as seções**, **modais ainda mais acess
 - **[ARQUITETURA.md](./ARQUITETURA.md)** - 📊 Documentação completa da arquitetura do sistema com diagramas Mermaid detalhados
 - **[CLAUDE.md](./CLAUDE.md)** - Guia para desenvolvimento com Claude Code
 - **[DOPPLER_SETUP.md](./DOPPLER_SETUP.md)** - Configuração de variáveis de ambiente
+- **[Cache-Busting](./docs/04-features/CACHE_BUSTING.md)** - 🔄 Sistema automático de atualização de versão para clientes
 
 ## ✨ Características
 
+- ✅ **Cache-Busting Automático** - Clientes sempre recebem a versão mais recente sem hard refresh manual
 - ✅ **Edge Middleware** - Autenticação otimizada no Edge runtime com latência mínima
 - ✅ **Performance Otimizada** - Carregamento 70-80% mais rápido com caching e queries paralelas
 - ✅ **Layout Global Automático** - Não precisa configurar página por página
