@@ -14,53 +14,61 @@ export default function EmergencyLogoutPage() {
         if (typeof window !== 'undefined') {
           console.log('🚨 EMERGENCY LOGOUT: Starting aggressive cleanup...')
 
-          // 1. Clear ALL localStorage
+          // Helper function to delete cookies with all possible path/domain combinations
+          const deleteCookie = (cookieName: string) => {
+            document.cookie = `${cookieName}=; Max-Age=0; Path=/`
+            document.cookie = `${cookieName}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
+            document.cookie = `${cookieName}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
+            // Also try without domain
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/`
+          }
+
+          // 1. Sign out from Supabase FIRST to invalidate session on server
+          console.log('🔐 Signing out from Supabase')
+          try {
+            const supabase = getSupabaseBrowser()
+            await supabase.auth.signOut({ scope: 'local' })
+            // Wait a moment for signOut to complete
+            await new Promise(resolve => setTimeout(resolve, 300))
+          } catch (err) {
+            console.error('⚠️ Supabase signOut failed (continuing anyway)', err)
+          }
+
+          // 2. Clear ALL localStorage
           console.log('🧹 Clearing ALL localStorage')
           localStorage.clear()
 
-          // 2. Clear ALL sessionStorage
+          // 3. Clear ALL sessionStorage
           console.log('🧹 Clearing ALL sessionStorage')
           sessionStorage.clear()
 
-          // 3. Clear ALL cookies
+          // 4. Clear ALL cookies (multiple attempts with different paths/domains)
           console.log('🍪 Clearing ALL cookies')
           const cookies = document.cookie.split(';')
           for (const cookie of cookies) {
             const eqPos = cookie.indexOf('=')
             const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
-            // Delete with all possible path/domain combinations
-            document.cookie = `${name}=; Max-Age=0; Path=/`
-            document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
-            document.cookie = `${name}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
-          }
-
-          // 4. Sign out from Supabase
-          console.log('🔐 Signing out from Supabase')
-          try {
-            const supabase = getSupabaseBrowser()
-            await supabase.auth.signOut()
-          } catch (err) {
-            console.error('⚠️ Supabase signOut failed (continuing anyway)', err)
+            deleteCookie(name)
           }
 
           console.log('✅ EMERGENCY LOGOUT: Cleanup complete')
           setStatus('done')
 
-          // Wait 1 second before redirect
+          // Wait 1.5 seconds to ensure cleanup is fully processed
           setTimeout(() => {
             console.log('🔄 Redirecting to login...')
-            // Use window.location.href to force full page reload and clear React state
-            // This prevents race conditions with MainLayout's circuit breaker
-            window.location.href = '/login?from=emergency'
-          }, 1000)
+            // Use window.location.replace to force full page reload without adding to history
+            // This ensures middleware sees the cleaned state
+            window.location.replace('/login?from=emergency')
+          }, 1500)
         }
       } catch (error) {
         console.error('❌ EMERGENCY LOGOUT: Error during cleanup', error)
         setStatus('done')
         // Force redirect anyway using full page reload
         setTimeout(() => {
-          window.location.href = '/login?from=emergency'
-        }, 1000)
+          window.location.replace('/login?from=emergency')
+        }, 1500)
       }
     }
 

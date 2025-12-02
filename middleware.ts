@@ -126,7 +126,19 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is signed in and tries to access /login, redirect to /dashboard
+  // EXCEPT when coming from emergency logout (let them log in again)
   if (user && isLoginPage) {
+    const fromEmergency = request.nextUrl.searchParams.get('from') === 'emergency';
+    
+    // If coming from emergency logout, allow access to login page
+    // This ensures users can log in again after emergency logout
+    if (fromEmergency) {
+      console.log('🔓 Middleware: Allowing login page access from emergency logout');
+      const response = NextResponse.next({ request });
+      clearAuthCookies(request, response);
+      return response;
+    }
+    
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
