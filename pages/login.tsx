@@ -30,32 +30,59 @@ export default function LoginPage() {
     
     const clearStaleSession = async () => {
       try {
-        // Check if we have any Supabase cookies
-        const hasCookies = document.cookie.includes('supabase')
+        // Check if coming from emergency logout
+        const fromEmergency = router.query.from === 'emergency'
         
-        // If we're on login page with cookies, it means session expired
-        // Clear everything to prevent issues
-        if (hasCookies) {
-          console.log('🧹 Login: Clearing stale session data')
+        // If from emergency logout, ensure everything is cleared
+        if (fromEmergency) {
+          console.log('🚨 Login: Emergency logout detected, ensuring complete cleanup')
           
-          // Clear all Supabase-related cookies
+          // Clear ALL cookies (more aggressive than normal)
           const cookies = document.cookie.split(';')
           for (const cookie of cookies) {
             const eqPos = cookie.indexOf('=')
             const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
-            if (name.includes('supabase') || name.includes('auth') || name === 'token') {
-              document.cookie = `${name}=; Max-Age=0; Path=/`
-            }
+            document.cookie = `${name}=; Max-Age=0; Path=/`
+            document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
+            document.cookie = `${name}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; Path=/`
           }
           
-          // Clear localStorage items
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
-          localStorage.removeItem('meguispet-auth-store')
+          // Clear ALL storage
+          localStorage.clear()
+          sessionStorage.clear()
           
-          // Clear Supabase session using the existing utility
+          // Sign out from Supabase
           const supabase = getSupabaseBrowser()
-          await supabase.auth.signOut()
+          await supabase.auth.signOut({ scope: 'local' })
+          
+          console.log('✅ Login: Emergency cleanup complete')
+        } else {
+          // Normal login page cleanup - only if there are stale cookies
+          const hasCookies = document.cookie.includes('supabase')
+          
+          if (hasCookies) {
+            console.log('🧹 Login: Clearing stale session data')
+            
+            // Clear all Supabase-related cookies
+            const cookies = document.cookie.split(';')
+            for (const cookie of cookies) {
+              const eqPos = cookie.indexOf('=')
+              const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
+              if (name.includes('supabase') || name.includes('auth') || name === 'token') {
+                document.cookie = `${name}=; Max-Age=0; Path=/`
+              }
+            }
+            
+            // Clear localStorage items
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            localStorage.removeItem('meguispet-auth-store')
+            
+            // Clear Supabase session using the existing utility
+            const supabase = getSupabaseBrowser()
+            await supabase.auth.signOut({ scope: 'local' })
+          }
         }
       } catch (error) {
         console.error('Error clearing stale session:', error)
@@ -63,7 +90,7 @@ export default function LoginPage() {
     }
     
     clearStaleSession()
-  }, [])
+  }, [router.query.from])
 
   // Middleware already redirects authenticated users to /dashboard
   // No need for client-side redirect check (reduces Supabase API calls)
