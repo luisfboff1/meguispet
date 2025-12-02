@@ -31,10 +31,22 @@ export default async function handler(
     })
   } catch (error) {
     console.error('Error reading build ID:', error)
+    
+    // Provide specific error messages for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorCode = (error as NodeJS.ErrnoException)?.code
+    
+    let detailedMessage = 'Failed to read build ID'
+    if (errorCode === 'ENOENT') {
+      detailedMessage = 'BUILD_ID file not found - application may not be built yet'
+    } else if (errorCode === 'EACCES') {
+      detailedMessage = 'Permission denied reading BUILD_ID file'
+    }
+    
     return res.status(500).json({
       success: false,
-      message: 'Failed to read build ID',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      message: detailedMessage,
+      error: errorMessage
     })
   }
 }

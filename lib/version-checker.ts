@@ -10,6 +10,7 @@
 
 const VERSION_CHECK_INTERVAL = 5 * 60 * 1000 // Check every 5 minutes
 const VERSION_STORAGE_KEY = 'meguispet_app_version'
+const RELOAD_DELAY_MS = 3000 // 3 seconds delay before reload
 
 /**
  * Gets the current app version from the Next.js build ID
@@ -75,7 +76,7 @@ export async function checkForNewVersion(): Promise<boolean> {
 
 /**
  * Reloads the page to get the latest version
- * Uses hard reload to bypass all caches
+ * Uses multiple strategies to ensure hard reload across all browsers
  */
 export function reloadToLatestVersion(): void {
   console.log('Reloading to get latest version...')
@@ -87,8 +88,14 @@ export function reloadToLatestVersion(): void {
     })
   }
   
-  // Hard reload - bypasses cache
-  window.location.reload()
+  // Strategy 1: Try cache-busting URL parameter (most reliable)
+  const cacheBuster = Date.now()
+  const url = new URL(window.location.href)
+  url.searchParams.set('_v', cacheBuster.toString())
+  
+  // Strategy 2: Replace current URL with cache-busted version
+  // This works better than reload() in some browsers
+  window.location.replace(url.toString())
 }
 
 /**
@@ -118,10 +125,10 @@ export function startVersionChecking(
         onNewVersion()
       } else {
         // Default behavior: auto-reload after a short delay
-        console.log('New version available - reloading in 3 seconds...')
+        console.log(`New version available - reloading in ${RELOAD_DELAY_MS / 1000} seconds...`)
         setTimeout(() => {
           reloadToLatestVersion()
-        }, 3000)
+        }, RELOAD_DELAY_MS)
       }
     }
   }
