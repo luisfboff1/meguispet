@@ -20,6 +20,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   const [redirectAttempts, setRedirectAttempts] = useState(0)
   const [lastRedirectTime, setLastRedirectTime] = useState(0)
   const [showCircuitBreakerError, setShowCircuitBreakerError] = useState(false)
+  const [isEmergencyLogout, setIsEmergencyLogout] = useState(false)
 
   const {
     isOpen,
@@ -50,6 +51,16 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
     />
   )
 
+  // Reset circuit breaker state when navigating to emergency logout or login page
+  useEffect(() => {
+    if (router.pathname === '/login' || router.pathname === '/emergency-logout') {
+      setShowCircuitBreakerError(false)
+      setRedirectAttempts(0)
+      setLastRedirectTime(0)
+      setIsEmergencyLogout(false) // Reset emergency logout flag
+    }
+  }, [router.pathname])
+
   useEffect(() => {
     setHydrated(true)
   }, [])
@@ -61,6 +72,9 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   // Added circuit breaker to prevent infinite redirect loops
   useEffect(() => {
     if (!hydrated || isNoLayoutPage) return
+    
+    // Don't trigger circuit breaker during emergency logout
+    if (isEmergencyLogout) return
 
     // Circuit breaker: Prevent infinite redirects
     const now = Date.now()
@@ -103,7 +117,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
       // Use replace to avoid adding to history
       router.replace('/login')
     }
-  }, [hydrated, loading, isAuthenticated, status, user, isNoLayoutPage, router, redirectAttempts, lastRedirectTime])
+  }, [hydrated, loading, isAuthenticated, status, user, isNoLayoutPage, router, redirectAttempts, lastRedirectTime, isEmergencyLogout])
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -163,7 +177,14 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
           </p>
           <div className="space-y-3">
             <button
-              onClick={() => window.location.href = '/emergency-logout'}
+              onClick={async () => {
+                // Clear circuit breaker state before navigating
+                setShowCircuitBreakerError(false)
+                setRedirectAttempts(0)
+                setIsEmergencyLogout(true)
+                // Use router.push to maintain React state
+                await router.push('/emergency-logout')
+              }}
               className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
             >
               Limpar Sessão e Fazer Login
