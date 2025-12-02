@@ -57,6 +57,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
       setShowCircuitBreakerError(false)
       setRedirectAttempts(0)
       setLastRedirectTime(0)
+      setIsEmergencyLogout(false) // Reset emergency logout flag
     }
   }, [router.pathname])
 
