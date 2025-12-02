@@ -22,6 +22,12 @@ const nextConfig = (phase) => {
 
     // ⚙️ Build e performance
     generateEtags: false,
+    // 🔄 Generate unique build ID for cache busting
+    // This ensures clients always get the latest version without hard refresh
+    generateBuildId: async () => {
+      // Use timestamp to force new chunks on each deployment
+      return `build-${Date.now()}`
+    },
     experimental: {},
 
     outputFileTracingRoot: path.join(__dirname),

@@ -8,6 +8,7 @@ import NProgress from 'nprogress'
 import { MainLayout } from '@/components/layout/main-layout'
 import { ToastProvider } from '@/components/ui/use-toast'
 import { Toaster } from '@/components/ui/toaster'
+import { useVersionCheck } from '@/hooks/useVersionCheck'
 
 // 🏗️ LAYOUT GLOBAL AUTOMÁTICO
 // Este arquivo aplica o layout automaticamente em TODAS as páginas
@@ -22,6 +23,12 @@ NProgress.configure({
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
+  
+  // 🔄 Automatic version checking - ensures clients always have the latest version
+  // This prevents issues with cached code (e.g., duplicate sales bug fix)
+  useVersionCheck({
+    enabled: true, // Always check for updates
+  })
 
   useEffect(() => {
     const handleStart = () => NProgress.start()
