@@ -49,7 +49,8 @@ export default function EmergencyLogoutPage() {
           // Wait 1 second before redirect
           setTimeout(() => {
             console.log('🔄 Redirecting to login...')
-            window.location.href = '/login?from=emergency'
+            // Use router.push for better state management
+            router.push('/login?from=emergency')
           }, 1000)
         }
       } catch (error) {
@@ -57,7 +58,7 @@ export default function EmergencyLogoutPage() {
         setStatus('done')
         // Force redirect anyway
         setTimeout(() => {
-          window.location.href = '/login?from=emergency'
+          router.push('/login?from=emergency')
         }, 1000)
       }
     }

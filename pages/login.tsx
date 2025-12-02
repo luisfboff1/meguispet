@@ -71,6 +71,7 @@ export default function LoginPage() {
   // Verificar se usuário foi redirecionado por sessão expirada ou permissão negada
   const message = router.query.message as string | undefined
   const error = router.query.error as string | undefined
+  const fromEmergency = router.query.from === 'emergency'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,7 +132,15 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             {/* Mensagens de alerta */}
-            {message && (
+            {fromEmergency && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">
+                  ✅ Sessão limpa com sucesso! Por favor, faça login novamente.
+                </p>
+              </div>
+            )}
+
+            {message && !fromEmergency && (
               <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                 <p className="text-sm text-yellow-800">
                   ⚠️ {message}
