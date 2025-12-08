@@ -96,6 +96,27 @@ export const clienteSchema = z.object({
     .max(1000, 'Observações devem ter no máximo 1000 caracteres')
     .optional()
     .or(z.literal('')),
+
+  // Geolocation fields (optional, auto-generated)
+  latitude: z.number()
+    .min(-90, 'Latitude deve estar entre -90 e 90')
+    .max(90, 'Latitude deve estar entre -90 e 90')
+    .nullish(),
+
+  longitude: z.number()
+    .min(-180, 'Longitude deve estar entre -180 e 180')
+    .max(180, 'Longitude deve estar entre -180 e 180')
+    .nullish(),
+
+  geocoded_at: z.string()
+    .datetime()
+    .nullish(),
+
+  geocoding_source: z.enum(['manual', 'api', 'cep', 'brasilapi'])
+    .nullish(),
+
+  geocoding_precision: z.enum(['exact', 'street', 'city', 'approximate'])
+    .nullish(),
 });
 
 // Schema for creating a new client

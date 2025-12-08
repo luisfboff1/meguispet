@@ -89,6 +89,12 @@ const handlePost = withValidation(
       inscricao_estadual: validatedData.inscricao_estadual || null,
       observacoes: validatedData.observacoes || null,
       vendedor_id: validatedData.vendedor_id || null,
+      // Geolocation fields
+      latitude: validatedData.latitude ?? null,
+      longitude: validatedData.longitude ?? null,
+      geocoded_at: validatedData.geocoded_at ?? null,
+      geocoding_source: validatedData.geocoding_source ?? null,
+      geocoding_precision: validatedData.geocoding_precision ?? null,
     };
 
     const { data, error } = await supabase
@@ -138,6 +144,12 @@ const handlePut = withValidation(
       inscricao_estadual: updateFields.inscricao_estadual || null,
       observacoes: updateFields.observacoes || null,
       vendedor_id: updateFields.vendedor_id || null,
+      // Geolocation fields
+      latitude: updateFields.latitude ?? undefined,
+      longitude: updateFields.longitude ?? undefined,
+      geocoded_at: updateFields.geocoded_at ?? undefined,
+      geocoding_source: updateFields.geocoding_source ?? undefined,
+      geocoding_precision: updateFields.geocoding_precision ?? undefined,
       updated_at: new Date().toISOString(),
     };
 
