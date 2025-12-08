@@ -48,7 +48,7 @@ export interface Cliente {
   latitude?: number | null
   longitude?: number | null
   geocoded_at?: string | null
-  geocoding_source?: 'manual' | 'api' | 'cep' | 'brasilapi'
+  geocoding_source?: 'manual' | 'api' | 'cep' | 'brasilapi' | 'nominatim'
   geocoding_precision?: 'exact' | 'street' | 'city' | 'approximate'
 }
 
@@ -339,7 +339,7 @@ export interface PessoaFormInput {
   latitude?: number | null
   longitude?: number | null
   geocoded_at?: string | null
-  geocoding_source?: 'manual' | 'api' | 'cep' | 'brasilapi'
+  geocoding_source?: 'manual' | 'api' | 'cep' | 'brasilapi' | 'nominatim'
   geocoding_precision?: 'exact' | 'street' | 'city' | 'approximate'
 }
 

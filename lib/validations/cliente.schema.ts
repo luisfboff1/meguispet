@@ -112,7 +112,7 @@ export const clienteSchema = z.object({
     .datetime()
     .nullish(),
 
-  geocoding_source: z.enum(['manual', 'api', 'cep', 'brasilapi'])
+  geocoding_source: z.enum(['manual', 'api', 'cep', 'brasilapi', 'nominatim'])
     .nullish(),
 
   geocoding_precision: z.enum(['exact', 'street', 'city', 'approximate'])

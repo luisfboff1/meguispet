@@ -99,20 +99,27 @@ const handler = async (
     }
 
     // Transformar dados para formato do mapa
-    const markers: ClienteMapMarker[] = (clientes || []).map(cliente => ({
-      id: cliente.id,
-      nome: cliente.nome,
-      latitude: cliente.latitude!,
-      longitude: cliente.longitude!,
-      tipo: cliente.tipo,
-      cidade: cliente.cidade,
-      estado: cliente.estado,
-      vendedor_id: cliente.vendedor_id,
-      vendedor_nome: cliente.vendedor?.nome,
-      telefone: cliente.telefone,
-      email: cliente.email,
-      precision: cliente.geocoding_precision || 'approximate',
-    }))
+    const markers: ClienteMapMarker[] = (clientes || []).map(cliente => {
+      // Handle vendedor relation properly
+      const vendedor = Array.isArray(cliente.vendedor) 
+        ? cliente.vendedor[0] 
+        : cliente.vendedor
+      
+      return {
+        id: cliente.id,
+        nome: cliente.nome,
+        latitude: cliente.latitude!,
+        longitude: cliente.longitude!,
+        tipo: cliente.tipo,
+        cidade: cliente.cidade,
+        estado: cliente.estado,
+        vendedor_id: cliente.vendedor_id,
+        vendedor_nome: vendedor?.nome,
+        telefone: cliente.telefone,
+        email: cliente.email,
+        precision: cliente.geocoding_precision || 'approximate',
+      }
+    })
 
     // Calcular estatísticas se solicitado
     let stats = undefined
