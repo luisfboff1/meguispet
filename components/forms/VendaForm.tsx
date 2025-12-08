@@ -195,33 +195,38 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
       // Se os valores estão salvos na venda (não nulos), usar eles  
       // Se são nulos/undefined, buscar do produto quando disponível
       const itensComImpostos = venda.itens.map(item => {
-        // Se as alíquotas estão salvas na venda, usar elas diretamente
-        if (item.ipi_aliquota != null || item.st_aliquota != null || item.icms_aliquota != null) {
+        // Determinar a fonte de dados para as alíquotas
+        // Se TODAS as alíquotas principais estão salvas, usar elas (venda já processada)
+        // Senão, buscar do produto (venda ainda não tinha impostos calculados corretamente)
+        const usarValoresSalvos = item.ipi_aliquota != null && 
+                                   item.st_aliquota != null && 
+                                   item.icms_aliquota != null
+        
+        if (usarValoresSalvos) {
+          // Usar valores já calculados e salvos da venda
           return {
             produto_id: item.produto_id,
             produto_nome: item.produto?.nome || '',
             quantidade: item.quantidade,
             preco_unitario: item.preco_unitario,
-            // Usar valores salvos se não forem null, senão buscar do produto
-            ipi_aliquota: item.ipi_aliquota ?? item.produto?.ipi ?? 0,
-            icms_aliquota: item.icms_aliquota ?? item.produto?.icms ?? 0,
-            st_aliquota: item.st_aliquota ?? item.produto?.st ?? 0,
-            icms_proprio_aliquota: item.icms_proprio_aliquota ?? item.produto?.icms_proprio ?? 4
+            ipi_aliquota: item.ipi_aliquota,
+            icms_aliquota: item.icms_aliquota,
+            st_aliquota: item.st_aliquota,
+            icms_proprio_aliquota: item.icms_proprio_aliquota ?? 4
           }
         }
         
-        // Se não há valores salvos, tentar buscar do produto incluído na consulta
-        const produto = item.produto
-        if (produto) {
+        // Se não tem valores salvos completos, buscar do produto
+        if (item.produto) {
           return {
             produto_id: item.produto_id,
-            produto_nome: produto.nome || '',
+            produto_nome: item.produto.nome || '',
             quantidade: item.quantidade,
             preco_unitario: item.preco_unitario,
-            ipi_aliquota: produto.ipi ?? 0,
-            icms_aliquota: produto.icms ?? 0,
-            st_aliquota: produto.st ?? 0,
-            icms_proprio_aliquota: produto.icms_proprio ?? 4
+            ipi_aliquota: item.produto.ipi ?? 0,
+            icms_aliquota: item.produto.icms ?? 0,
+            st_aliquota: item.produto.st ?? 0,
+            icms_proprio_aliquota: item.produto.icms_proprio ?? 4
           }
         }
         
