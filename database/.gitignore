@@ -11,6 +11,9 @@ backups/
 *.dump
 *.backup
 
+# Exceção: Permitir migrations
+!migrations/*.sql
+
 # Logs de erro
 restore_error.log
 backup_error.log
