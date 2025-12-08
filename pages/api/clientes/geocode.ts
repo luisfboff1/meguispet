@@ -34,6 +34,8 @@ const handler = async (
   req: AuthenticatedRequest,
   res: NextApiResponse<GeocodeResponse>
 ) => {
+  const isDev = process.env.NODE_ENV === 'development'
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Método não permitido' })
   }
@@ -48,12 +50,14 @@ const handler = async (
       batch_size = 10  // Processar em lotes para não sobrecarregar
     } = req.body
 
-    console.log('[Geocode] Starting batch geocoding:', { 
-      cliente_ids, 
-      force, 
-      batch_size,
-      has_body: !!req.body 
-    })
+    if (isDev) {
+      console.log('[Geocode] Starting batch geocoding:', { 
+        cliente_ids, 
+        force, 
+        batch_size,
+        has_body: !!req.body 
+      })
+    }
 
     // Query para buscar clientes sem geocodificação ou com IDs específicos
     let query = supabase
@@ -78,11 +82,13 @@ const handler = async (
       console.error('[Geocode] Error fetching clients:', error)
       return res.status(500).json({ 
         success: false, 
-        message: 'Erro ao buscar clientes: ' + error.message
+        message: isDev ? 'Erro ao buscar clientes: ' + error.message : 'Erro ao buscar clientes'
       })
     }
 
-    console.log('[Geocode] Found clients:', clientes?.length || 0)
+    if (isDev) {
+      console.log('[Geocode] Found clients:', clientes?.length || 0)
+    }
 
     if (!clientes || clientes.length === 0) {
       return res.status(200).json({
@@ -111,11 +117,15 @@ const handler = async (
 
     for (const cliente of clientes) {
       try {
-        console.log('[Geocode] Processing client:', cliente.id, cliente.nome)
+        if (isDev) {
+          console.log('[Geocode] Processing client:', cliente.id, cliente.nome)
+        }
         
         // Pular se não tem CEP
         if (!cliente.cep) {
-          console.log('[Geocode] Skipping - no CEP:', cliente.id)
+          if (isDev) {
+            console.log('[Geocode] Skipping - no CEP:', cliente.id)
+          }
           skipped++
           details.push({
             cliente_id: cliente.id,
@@ -130,9 +140,13 @@ const handler = async (
         await GeocodingService.waitForRateLimit()
 
         // Tentar geocodificar
-        console.log('[Geocode] Calling geocoding service for:', cliente.id)
+        if (isDev) {
+          console.log('[Geocode] Calling geocoding service for:', cliente.id)
+        }
         const result = await GeocodingService.geocodeWithFallback(cliente)
-        console.log('[Geocode] Geocoding result:', result ? 'success' : 'failed')
+        if (isDev) {
+          console.log('[Geocode] Geocoding result:', result ? 'success' : 'failed')
+        }
 
         if (result) {
           // Atualizar no banco
@@ -159,9 +173,13 @@ const handler = async (
             status: 'success',
             message: `Geocodificado com precisão ${result.precision}`,
           })
-          console.log('[Geocode] Successfully geocoded:', cliente.id)
+          if (isDev) {
+            console.log('[Geocode] Successfully geocoded:', cliente.id)
+          }
         } else {
-          console.log('[Geocode] Geocoding returned null:', cliente.id)
+          if (isDev) {
+            console.log('[Geocode] Geocoding returned null:', cliente.id)
+          }
           failed++
           details.push({
             cliente_id: cliente.id,
@@ -177,7 +195,7 @@ const handler = async (
           cliente_id: cliente.id,
           cliente_nome: cliente.nome,
           status: 'failed',
-          message: error instanceof Error ? error.message : 'Erro desconhecido',
+          message: 'Erro ao processar cliente',
         })
       }
     }
@@ -197,7 +215,7 @@ const handler = async (
     console.error('[Geocode] Unhandled error in endpoint:', error)
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : 'Erro interno do servidor',
+      message: isDev && error instanceof Error ? error.message : 'Erro interno do servidor',
     })
   }
 }
