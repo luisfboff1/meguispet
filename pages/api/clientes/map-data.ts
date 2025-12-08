@@ -32,42 +32,12 @@ const handler = async (
   req: AuthenticatedRequest,
   res: NextApiResponse<MapDataResponse>
 ) => {
-  console.log('[MapData] Request received:', {
-    method: req.method,
-    query: req.query
-  })
-  
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, message: 'Método não permitido' })
   }
 
   try {
     const supabase = req.supabaseClient
-
-    // First, check if the geolocation columns exist
-    const { error: checkError } = await supabase
-      .from('clientes_fornecedores')
-      .select('latitude, longitude, geocoding_precision')
-      .limit(1)
-
-    if (checkError) {
-      console.error('[MapData] Database schema check failed:', checkError)
-      
-      // Check if it's a column not found error
-      if (checkError.message?.includes('column') || checkError.code === '42703') {
-        return res.status(500).json({
-          success: false,
-          message: 'A migração do banco de dados ainda não foi aplicada. Execute a migration 018_add_geolocation_to_clientes.sql no Supabase primeiro.'
-        })
-      }
-      
-      return res.status(500).json({
-        success: false,
-        message: 'Erro ao verificar schema: ' + checkError.message
-      })
-    }
-
-    console.log('[MapData] Database schema check passed')
 
     // Parâmetros de filtro
     const { 
@@ -121,15 +91,26 @@ const handler = async (
     const { data: clientes, error } = await query
 
     if (error) {
+      // If columns don't exist, return empty data instead of error
+      if (error.code === '42703' || error.message?.includes('column')) {
+        return res.status(200).json({
+          success: true,
+          data: [],
+          stats: include_stats === 'true' ? {
+            total_clientes: 0,
+            clientes_geocodificados: 0,
+            clientes_pendentes: 0,
+            porcentagem_cobertura: 0,
+          } : undefined,
+        })
+      }
+      
       console.error('[MapData] Error fetching clients:', error)
-      console.error('[MapData] Error details:', error.message, error.code, error.details)
       return res.status(500).json({ 
         success: false, 
-        message: 'Erro ao buscar dados do mapa: ' + error.message
+        message: 'Erro ao buscar dados do mapa'
       })
     }
-
-    console.log('[MapData] Found clients with coordinates:', clientes?.length || 0)
 
     // Transformar dados para formato do mapa
     const markers: ClienteMapMarker[] = (clientes || []).map(cliente => {
@@ -157,42 +138,33 @@ const handler = async (
     // Calcular estatísticas se solicitado
     let stats = undefined
     if (include_stats === 'true') {
-      console.log('[MapData] Calculating statistics...')
-      
-      const { count: totalClientes, error: totalError } = await supabase
-        .from('clientes_fornecedores')
-        .select('*', { count: 'exact', head: true })
-        .eq('ativo', true)
+      try {
+        const { count: totalClientes } = await supabase
+          .from('clientes_fornecedores')
+          .select('*', { count: 'exact', head: true })
+          .eq('ativo', true)
 
-      if (totalError) {
-        console.error('[MapData] Error counting total clients:', totalError)
+        const { count: clientesGeocoded } = await supabase
+          .from('clientes_fornecedores')
+          .select('*', { count: 'exact', head: true })
+          .eq('ativo', true)
+          .not('latitude', 'is', null)
+
+        const total = totalClientes || 0
+        const geocoded = clientesGeocoded || 0
+
+        stats = {
+          total_clientes: total,
+          clientes_geocodificados: geocoded,
+          clientes_pendentes: total - geocoded,
+          porcentagem_cobertura: total > 0 ? Math.round((geocoded / total) * 100) : 0,
+        }
+      } catch (statsError) {
+        // If stats fail (e.g., missing columns), just skip them
+        stats = undefined
       }
-
-      const { count: clientesGeocoded, error: geocodedError } = await supabase
-        .from('clientes_fornecedores')
-        .select('*', { count: 'exact', head: true })
-        .eq('ativo', true)
-        .not('latitude', 'is', null)
-
-      if (geocodedError) {
-        console.error('[MapData] Error counting geocoded clients:', geocodedError)
-      }
-
-      const total = totalClientes || 0
-      const geocoded = clientesGeocoded || 0
-
-      stats = {
-        total_clientes: total,
-        clientes_geocodificados: geocoded,
-        clientes_pendentes: total - geocoded,
-        porcentagem_cobertura: total > 0 ? Math.round((geocoded / total) * 100) : 0,
-      }
-      
-      console.log('[MapData] Statistics:', stats)
     }
 
-    console.log('[MapData] Returning', markers.length, 'markers')
-    
     return res.status(200).json({
       success: true,
       data: markers,
@@ -201,12 +173,9 @@ const handler = async (
 
   } catch (error) {
     console.error('[MapData] Unhandled error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-    console.error('[MapData] Error details:', errorMessage)
-    
     return res.status(500).json({
       success: false,
-      message: errorMessage,
+      message: 'Erro interno do servidor',
     })
   }
 }

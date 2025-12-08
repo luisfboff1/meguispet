@@ -53,33 +53,35 @@ export default function MapaClientesPage() {
         include_stats: 'true',
       })
 
-      console.log('[Frontend] Loading map data...')
       const response = await axios.get(`/api/clientes/map-data?${params.toString()}`)
-      console.log('[Frontend] Map data response:', response.data)
 
       if (response.data.success) {
         setMarkers(response.data.data || [])
         setStats(response.data.stats)
-        console.log('[Frontend] Loaded', response.data.data?.length || 0, 'markers')
+        
+        // If no markers but stats show clients, they need geocoding
+        if ((!response.data.data || response.data.data.length === 0) && response.data.stats && response.data.stats.total_clientes > 0) {
+          setToast({
+            message: `${response.data.stats.total_clientes} cliente(s) encontrado(s), mas nenhum com coordenadas. Use o botão "Geocodificar" para adicionar coordenadas.`,
+            type: 'info',
+          })
+        }
       } else {
-        console.error('[Frontend] API returned error:', response.data.message)
         setToast({
           message: response.data.message || 'Erro ao carregar dados do mapa',
           type: 'error',
         })
       }
     } catch (error) {
-      console.error('[Frontend] Error loading map:', error)
+      console.error('Erro ao carregar mapa:', error)
       if (axios.isAxiosError(error) && error.response) {
-        console.error('[Frontend] Response data:', error.response.data)
-        console.error('[Frontend] Response status:', error.response.status)
         setToast({
-          message: error.response.data?.message || 'Erro ao carregar dados do mapa',
+          message: error.response.data?.message || 'Erro ao carregar dados do mapa. Verifique se a migração do banco foi aplicada.',
           type: 'error',
         })
       } else {
         setToast({
-          message: 'Erro ao carregar dados do mapa',
+          message: 'Erro ao carregar dados do mapa. Verifique a conexão.',
           type: 'error',
         })
       }
@@ -105,12 +107,10 @@ export default function MapaClientesPage() {
         type: 'info',
       })
 
-      console.log('[Frontend] Starting geocoding...')
       const response = await axios.post('/api/clientes/geocode', {
-        batch_size: 50, // Process more clients per batch than default
+        batch_size: 50,
         force: false,
       })
-      console.log('[Frontend] Geocoding response:', response.data)
 
       if (response.data.success) {
         const { successful, failed, skipped, processed } = response.data.data
@@ -128,24 +128,21 @@ export default function MapaClientesPage() {
         // Recarregar dados do mapa
         await loadMapData()
       } else {
-        console.error('[Frontend] Geocoding error:', response.data.message)
         setToast({
           message: response.data.message || 'Erro ao geocodificar clientes',
           type: 'error',
         })
       }
     } catch (error) {
-      console.error('[Frontend] Geocoding error:', error)
+      console.error('Erro ao geocodificar:', error)
       if (axios.isAxiosError(error) && error.response) {
-        console.error('[Frontend] Response data:', error.response.data)
-        console.error('[Frontend] Response status:', error.response.status)
         setToast({
-          message: error.response.data?.message || 'Erro ao geocodificar clientes',
+          message: error.response.data?.message || 'Erro ao geocodificar. Verifique se a migração do banco foi aplicada.',
           type: 'error',
         })
       } else {
         setToast({
-          message: 'Erro ao geocodificar clientes',
+          message: 'Erro ao geocodificar clientes. Verifique a conexão.',
           type: 'error',
         })
       }
