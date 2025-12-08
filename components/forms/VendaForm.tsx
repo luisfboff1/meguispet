@@ -191,17 +191,55 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     })
 
     if (venda.itens?.length) {
-      // Carregar itens com alíquotas de impostos SALVOS na venda (não do produto!)
+      // Carregar itens com alíquotas de impostos SALVOS na venda
+      // Se os valores estão salvos na venda (não nulos), usar eles  
+      // Se são nulos/undefined, buscar do produto quando disponível
       const itensComImpostos = venda.itens.map(item => {
+        // Determinar a fonte de dados para as alíquotas
+        // Se TODAS as alíquotas principais estão salvas, usar elas (venda já processada)
+        // Senão, buscar do produto (venda ainda não tinha impostos calculados corretamente)
+        const usarValoresSalvos = item.ipi_aliquota != null && 
+                                   item.st_aliquota != null && 
+                                   item.icms_aliquota != null
+        
+        if (usarValoresSalvos) {
+          // Usar valores já calculados e salvos da venda
+          return {
+            produto_id: item.produto_id,
+            produto_nome: item.produto?.nome || '',
+            quantidade: item.quantidade,
+            preco_unitario: item.preco_unitario,
+            ipi_aliquota: item.ipi_aliquota,
+            icms_aliquota: item.icms_aliquota,
+            st_aliquota: item.st_aliquota,
+            icms_proprio_aliquota: item.icms_proprio_aliquota ?? 4
+          }
+        }
+        
+        // Se não tem valores salvos completos, buscar do produto
+        if (item.produto) {
+          return {
+            produto_id: item.produto_id,
+            produto_nome: item.produto.nome || '',
+            quantidade: item.quantidade,
+            preco_unitario: item.preco_unitario,
+            ipi_aliquota: item.produto.ipi ?? 0,
+            icms_aliquota: item.produto.icms ?? 0,
+            st_aliquota: item.produto.st ?? 0,
+            icms_proprio_aliquota: item.produto.icms_proprio ?? 4
+          }
+        }
+        
+        // Fallback se produto não encontrado
         return {
           produto_id: item.produto_id,
-          produto_nome: item.produto?.nome || '',
+          produto_nome: '',
           quantidade: item.quantidade,
           preco_unitario: item.preco_unitario,
-          // Usar alíquotas SALVAS na venda, não do produto
-          ipi_aliquota: item.ipi_aliquota || 0,
-          icms_aliquota: item.icms_aliquota || 0,
-          st_aliquota: item.st_aliquota || 0
+          ipi_aliquota: 0,
+          icms_aliquota: 0,
+          st_aliquota: 0,
+          icms_proprio_aliquota: 4
         }
       })
       setItens(itensComImpostos)
