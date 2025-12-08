@@ -36,6 +36,13 @@ const handler = async (
 ) => {
   const isDev = process.env.NODE_ENV === 'development'
   
+  // Log all requests to help debug
+  console.log('[Geocode] Request received:', {
+    method: req.method,
+    hasBody: !!req.body,
+    env: process.env.NODE_ENV
+  })
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Método não permitido' })
   }
@@ -48,16 +55,39 @@ const handler = async (
       cliente_ids,  // Array de IDs específicos (opcional)
       force = false,        // Forçar re-geocodificação mesmo se já tem coordenadas
       batch_size = 10  // Processar em lotes para não sobrecarregar
-    } = req.body
+    } = req.body || {}
 
-    if (isDev) {
-      console.log('[Geocode] Starting batch geocoding:', { 
-        cliente_ids, 
-        force, 
-        batch_size,
-        has_body: !!req.body 
+    console.log('[Geocode] Parameters:', { 
+      cliente_ids, 
+      force, 
+      batch_size,
+      has_body: !!req.body 
+    })
+
+    // First, check if the geolocation columns exist by trying a simple query
+    const { error: checkError } = await supabase
+      .from('clientes_fornecedores')
+      .select('latitude, longitude')
+      .limit(1)
+
+    if (checkError) {
+      console.error('[Geocode] Database schema check failed:', checkError)
+      
+      // Check if it's a column not found error
+      if (checkError.message?.includes('column') || checkError.code === '42703') {
+        return res.status(500).json({
+          success: false,
+          message: 'A migração do banco de dados ainda não foi aplicada. Execute a migration 018_add_geolocation_to_clientes.sql no Supabase primeiro.'
+        })
+      }
+      
+      return res.status(500).json({
+        success: false,
+        message: isDev ? `Erro ao verificar schema: ${checkError.message}` : 'Erro ao acessar banco de dados'
       })
     }
+
+    console.log('[Geocode] Database schema check passed')
 
     // Query para buscar clientes sem geocodificação ou com IDs específicos
     let query = supabase
@@ -86,9 +116,7 @@ const handler = async (
       })
     }
 
-    if (isDev) {
-      console.log('[Geocode] Found clients:', clientes?.length || 0)
-    }
+    console.log('[Geocode] Found clients:', clientes?.length || 0)
 
     if (!clientes || clientes.length === 0) {
       return res.status(200).json({
@@ -117,15 +145,11 @@ const handler = async (
 
     for (const cliente of clientes) {
       try {
-        if (isDev) {
-          console.log('[Geocode] Processing client:', cliente.id, cliente.nome)
-        }
+        console.log('[Geocode] Processing client:', cliente.id, cliente.nome)
         
         // Pular se não tem CEP
         if (!cliente.cep) {
-          if (isDev) {
-            console.log('[Geocode] Skipping - no CEP:', cliente.id)
-          }
+          console.log('[Geocode] Skipping - no CEP:', cliente.id)
           skipped++
           details.push({
             cliente_id: cliente.id,
@@ -140,13 +164,9 @@ const handler = async (
         await GeocodingService.waitForRateLimit()
 
         // Tentar geocodificar
-        if (isDev) {
-          console.log('[Geocode] Calling geocoding service for:', cliente.id)
-        }
+        console.log('[Geocode] Calling geocoding service for:', cliente.id)
         const result = await GeocodingService.geocodeWithFallback(cliente)
-        if (isDev) {
-          console.log('[Geocode] Geocoding result:', result ? 'success' : 'failed')
-        }
+        console.log('[Geocode] Geocoding result:', result ? 'success' : 'failed')
 
         if (result) {
           // Atualizar no banco
@@ -173,13 +193,9 @@ const handler = async (
             status: 'success',
             message: `Geocodificado com precisão ${result.precision}`,
           })
-          if (isDev) {
-            console.log('[Geocode] Successfully geocoded:', cliente.id)
-          }
+          console.log('[Geocode] Successfully geocoded:', cliente.id)
         } else {
-          if (isDev) {
-            console.log('[Geocode] Geocoding returned null:', cliente.id)
-          }
+          console.log('[Geocode] Geocoding returned null:', cliente.id)
           failed++
           details.push({
             cliente_id: cliente.id,
@@ -213,9 +229,12 @@ const handler = async (
 
   } catch (error) {
     console.error('[Geocode] Unhandled error in endpoint:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
+    console.error('[Geocode] Error details:', errorMessage)
+    
     return res.status(500).json({
       success: false,
-      message: isDev && error instanceof Error ? error.message : 'Erro interno do servidor',
+      message: isDev ? errorMessage : 'Erro interno do servidor',
     })
   }
 }
