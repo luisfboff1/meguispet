@@ -37,11 +37,14 @@ function MapBoundsUpdater({ markers }: { markers: ClienteMapMarker[] }) {
   const map = useMap()
   
   useEffect(() => {
+    console.log('🗺️ [MapBoundsUpdater] useEffect executado, markers:', markers.length)
     if (markers.length > 0) {
+      console.log('🗺️ [MapBoundsUpdater] Ajustando bounds do mapa...')
       const bounds = L.latLngBounds(
         markers.map(m => [m.latitude, m.longitude] as [number, number])
       )
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
+      console.log('🗺️ [MapBoundsUpdater] ✅ Bounds ajustados')
     }
   }, [markers, map])
   
@@ -54,6 +57,9 @@ export default function ClientesMap({
   initialCenter = [-15.7942, -47.8822], // Centro do Brasil (Brasília)
   initialZoom = 5, // Zoom mais afastado para ver o país todo
 }: ClientesMapProps) {
+  console.log('🗺️ [ClientesMap] Componente renderizado com', markers.length, 'marcadores')
+  console.log('🗺️ [ClientesMap] Detalhes dos marcadores:', markers)
+  
   // Criar ícones customizados por tipo
   const createCustomIcon = (tipo: ClienteMapMarker['tipo']) => {
     const color = tipo === 'cliente' ? '#10b981' : tipo === 'fornecedor' ? '#3b82f6' : '#8b5cf6'
@@ -77,6 +83,7 @@ export default function ClientesMap({
   }
 
   if (markers.length === 0) {
+    console.log('🗺️ [ClientesMap] ⚠️ Nenhum marcador - mostrando estado vazio')
     return (
       <div className="flex flex-col items-center justify-center h-[600px] bg-gray-50 rounded-lg">
         <MapPin className="h-12 w-12 text-gray-400 mb-4" />
@@ -87,6 +94,7 @@ export default function ClientesMap({
     )
   }
 
+  console.log('🗺️ [ClientesMap] ✅ Renderizando MapContainer com marcadores')
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden shadow-lg">
       <MapContainer
