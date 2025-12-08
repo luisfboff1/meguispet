@@ -27,7 +27,6 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 interface ClientesMapProps {
   markers: ClienteMapMarker[]
-  loading?: boolean
   onMarkerClick?: (cliente: ClienteMapMarker) => void
   initialCenter?: [number, number]
   initialZoom?: number
@@ -51,7 +50,6 @@ function MapBoundsUpdater({ markers }: { markers: ClienteMapMarker[] }) {
 
 export default function ClientesMap({
   markers,
-  loading = false,
   onMarkerClick,
   initialCenter = [-15.7942, -47.8822], // Centro do Brasil (Brasília)
   initialZoom = 5, // Zoom mais afastado para ver o país todo
@@ -76,14 +74,6 @@ export default function ClientesMap({
       iconAnchor: [10, 10],
       popupAnchor: [0, -10],
     })
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[600px] bg-gray-50 rounded-lg">
-        <Loader2 className="h-8 w-8 animate-spin text-meguispet-primary" />
-      </div>
-    )
   }
 
   if (markers.length === 0) {

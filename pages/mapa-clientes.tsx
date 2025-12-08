@@ -247,11 +247,17 @@ export default function MapaClientesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <ClientesMap
-            markers={markers}
-            loading={loading}
-            onMarkerClick={handleMarkerClick}
-          />
+          {!loading && (
+            <ClientesMap
+              markers={markers}
+              onMarkerClick={handleMarkerClick}
+            />
+          )}
+          {loading && (
+            <div className="flex items-center justify-center h-[600px] bg-gray-50 rounded-lg">
+              <Loader2 className="h-8 w-8 animate-spin text-meguispet-primary" />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
