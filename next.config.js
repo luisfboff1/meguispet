@@ -128,11 +128,12 @@ const nextConfig = (phase) => {
               key: 'Content-Security-Policy',
               value: [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval necessário para Next.js
-                "style-src 'self' 'unsafe-inline'",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live", // unsafe-eval necessário para Next.js, vercel.live para Vercel Toolbar
+                "style-src 'self' 'unsafe-inline' https://vercel.live",
                 "img-src 'self' data: https: blob:",
-                "font-src 'self' data:",
-                "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://viacep.com.br https://nominatim.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
+                "font-src 'self' data: https://vercel.live",
+                "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://viacep.com.br https://nominatim.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://vercel.live wss://ws-us3.pusher.com",
+                "frame-src https://vercel.live",
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'"
