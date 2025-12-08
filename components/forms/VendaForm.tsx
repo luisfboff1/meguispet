@@ -191,17 +191,50 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     })
 
     if (venda.itens?.length) {
-      // Carregar itens com alíquotas de impostos SALVOS na venda (não do produto!)
+      // Carregar itens com alíquotas de impostos SALVOS na venda
+      // Se os valores estão salvos na venda (não nulos), usar eles  
+      // Se são nulos/undefined, buscar do produto quando disponível
       const itensComImpostos = venda.itens.map(item => {
+        // Se as alíquotas estão salvas na venda, usar elas diretamente
+        if (item.ipi_aliquota != null || item.st_aliquota != null || item.icms_aliquota != null) {
+          return {
+            produto_id: item.produto_id,
+            produto_nome: item.produto?.nome || '',
+            quantidade: item.quantidade,
+            preco_unitario: item.preco_unitario,
+            // Usar valores salvos se não forem null, senão buscar do produto
+            ipi_aliquota: item.ipi_aliquota ?? item.produto?.ipi ?? 0,
+            icms_aliquota: item.icms_aliquota ?? item.produto?.icms ?? 0,
+            st_aliquota: item.st_aliquota ?? item.produto?.st ?? 0,
+            icms_proprio_aliquota: item.icms_proprio_aliquota ?? item.produto?.icms_proprio ?? 4
+          }
+        }
+        
+        // Se não há valores salvos, tentar buscar do produto incluído na consulta
+        const produto = item.produto
+        if (produto) {
+          return {
+            produto_id: item.produto_id,
+            produto_nome: produto.nome || '',
+            quantidade: item.quantidade,
+            preco_unitario: item.preco_unitario,
+            ipi_aliquota: produto.ipi ?? 0,
+            icms_aliquota: produto.icms ?? 0,
+            st_aliquota: produto.st ?? 0,
+            icms_proprio_aliquota: produto.icms_proprio ?? 4
+          }
+        }
+        
+        // Fallback se produto não encontrado
         return {
           produto_id: item.produto_id,
-          produto_nome: item.produto?.nome || '',
+          produto_nome: '',
           quantidade: item.quantidade,
           preco_unitario: item.preco_unitario,
-          // Usar alíquotas SALVAS na venda, não do produto
-          ipi_aliquota: item.ipi_aliquota || 0,
-          icms_aliquota: item.icms_aliquota || 0,
-          st_aliquota: item.st_aliquota || 0
+          ipi_aliquota: 0,
+          icms_aliquota: 0,
+          st_aliquota: 0,
+          icms_proprio_aliquota: 4
         }
       })
       setItens(itensComImpostos)
