@@ -9,6 +9,7 @@ import {
   AlertCircle,
   TrendingUp,
   Loader2,
+  RefreshCw,
 } from 'lucide-react'
 import Toast from '@/components/ui/Toast'
 import axios from 'axios'
@@ -39,6 +40,7 @@ export default function MapaClientesPage() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<MapStats | null>(null)
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' | 'info' } | null>(null)
+  const [geocoding, setGeocoding] = useState(false)
 
   useEffect(() => {
     loadMapData()
@@ -79,6 +81,55 @@ export default function MapaClientesPage() {
     // Pode abrir modal de detalhes do cliente aqui
   }
 
+  const handleGeocodeClientes = async () => {
+    if (!confirm('Deseja geocodificar os clientes pendentes? Isso pode levar alguns minutos dependendo da quantidade.')) {
+      return
+    }
+
+    try {
+      setGeocoding(true)
+      setToast({
+        message: 'Geocodificando clientes... Por favor, aguarde.',
+        type: 'info',
+      })
+
+      const response = await axios.post('/api/clientes/geocode', {
+        batch_size: 50, // Process up to 50 clients at a time
+        force: false,
+      })
+
+      if (response.data.success) {
+        const { successful, failed, skipped, processed } = response.data.data
+        
+        let message = `Geocodificação concluída: ${successful} sucesso(s)`
+        if (failed > 0) message += `, ${failed} falha(s)`
+        if (skipped > 0) message += `, ${skipped} ignorado(s)`
+        message += ` de ${processed} processado(s).`
+        
+        setToast({
+          message,
+          type: successful > 0 ? 'success' : 'info',
+        })
+        
+        // Recarregar dados do mapa
+        await loadMapData()
+      } else {
+        setToast({
+          message: response.data.message || 'Erro ao geocodificar clientes',
+          type: 'error',
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao geocodificar:', error)
+      setToast({
+        message: 'Erro ao geocodificar clientes',
+        type: 'error',
+      })
+    } finally {
+      setGeocoding(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {toast && (
@@ -86,14 +137,36 @@ export default function MapaClientesPage() {
       )}
       
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Map className="h-8 w-8 text-meguispet-primary" />
-          Mapa de Clientes
-        </h1>
-        <p className="text-muted-foreground">
-          Visualização geográfica da distribuição de clientes
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Map className="h-8 w-8 text-meguispet-primary" />
+            Mapa de Clientes
+          </h1>
+          <p className="text-muted-foreground">
+            Visualização geográfica da distribuição de clientes
+          </p>
+        </div>
+        
+        {stats && stats.clientes_pendentes > 0 && (
+          <Button 
+            onClick={handleGeocodeClientes}
+            disabled={geocoding}
+            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+          >
+            {geocoding ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Geocodificando...
+              </>
+            ) : (
+              <>
+                <MapPin className="mr-2 h-4 w-4" />
+                Geocodificar Pendentes ({stats.clientes_pendentes})
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Estatísticas */}
