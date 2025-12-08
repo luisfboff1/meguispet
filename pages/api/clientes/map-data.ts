@@ -128,12 +128,14 @@ const handler = async (
         .eq('ativo', true)
         .not('latitude', 'is', null)
 
+      const total = totalClientes || 0
+      const geocoded = clientesGeocoded || 0
+
       stats = {
-        total_clientes: totalClientes || 0,
-        clientes_geocodificados: clientesGeocoded || 0,
-        clientes_pendentes: (totalClientes || 0) - (clientesGeocoded || 0),
-        porcentagem_cobertura: totalClientes ? 
-          Math.round((clientesGeocoded! / totalClientes) * 100) : 0,
+        total_clientes: total,
+        clientes_geocodificados: geocoded,
+        clientes_pendentes: total - geocoded,
+        porcentagem_cobertura: total > 0 ? Math.round((geocoded / total) * 100) : 0,
       }
     }
 

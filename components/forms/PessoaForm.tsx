@@ -142,7 +142,7 @@ export default function PessoaForm({
                 latitude: geoResult.latitude,
                 longitude: geoResult.longitude,
                 geocoded_at: new Date().toISOString(),
-                geocoding_source: 'brasilapi',
+                geocoding_source: geoResult.source, // Use actual source from result
                 geocoding_precision: geoResult.precision
               }))
             }

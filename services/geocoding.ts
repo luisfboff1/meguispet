@@ -73,6 +73,20 @@ export class GeocodingService {
       if (nominatimResponse.data && nominatimResponse.data.length > 0) {
         const result = nominatimResponse.data[0]
         
+        // Validate coordinates
+        const lat = parseFloat(result.lat)
+        const lon = parseFloat(result.lon)
+        
+        if (isNaN(lat) || isNaN(lon)) {
+          console.error('Invalid coordinates received from Nominatim')
+          return null
+        }
+        
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+          console.error('Coordinates out of valid range')
+          return null
+        }
+        
         // Determine precision based on result type
         let precision: GeocodingResult['precision'] = 'approximate'
         if (result.class === 'building' || result.type === 'house') {
@@ -84,8 +98,8 @@ export class GeocodingService {
         }
 
         return {
-          latitude: parseFloat(result.lat),
-          longitude: parseFloat(result.lon),
+          latitude: lat,
+          longitude: lon,
           precision,
           source: 'brasilapi',
           display_name: result.display_name,
@@ -133,6 +147,20 @@ export class GeocodingService {
       if (response.data && response.data.length > 0) {
         const result = response.data[0]
         
+        // Validate coordinates
+        const lat = parseFloat(result.lat)
+        const lon = parseFloat(result.lon)
+        
+        if (isNaN(lat) || isNaN(lon)) {
+          console.error('Invalid coordinates received from Nominatim')
+          return null
+        }
+        
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+          console.error('Coordinates out of valid range')
+          return null
+        }
+        
         // Determine precision
         let precision: GeocodingResult['precision'] = 'approximate'
         if (result.class === 'building' || result.type === 'house') {
@@ -144,8 +172,8 @@ export class GeocodingService {
         }
 
         return {
-          latitude: parseFloat(result.lat),
-          longitude: parseFloat(result.lon),
+          latitude: lat,
+          longitude: lon,
           precision,
           source: 'nominatim',
           display_name: result.display_name,

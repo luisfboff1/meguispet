@@ -8,7 +8,7 @@ ADD COLUMN IF NOT EXISTS latitude DECIMAL(10, 8),
 ADD COLUMN IF NOT EXISTS longitude DECIMAL(11, 8),
 ADD COLUMN IF NOT EXISTS geocoded_at TIMESTAMP WITH TIME ZONE,
 ADD COLUMN IF NOT EXISTS geocoding_source VARCHAR(50) DEFAULT 'manual',
-ADD COLUMN IF NOT EXISTS geocoding_precision VARCHAR(20) DEFAULT 'address';
+ADD COLUMN IF NOT EXISTS geocoding_precision VARCHAR(20) DEFAULT 'approximate';
 
 -- Create index for efficient geolocation queries
 CREATE INDEX IF NOT EXISTS idx_clientes_lat_lng 
