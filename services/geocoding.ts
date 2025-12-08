@@ -1,0 +1,210 @@
+/**
+ * Geocoding Service
+ * Combines BrasilAPI (for CEP validation) and Nominatim (for lat/lng lookup)
+ */
+
+import axios from 'axios'
+
+export interface GeocodingResult {
+  latitude: number
+  longitude: number
+  precision: 'exact' | 'street' | 'city' | 'approximate'
+  source: 'nominatim' | 'brasilapi'
+  display_name: string
+}
+
+export interface BrasilAPIResponse {
+  cep: string
+  state: string
+  city: string
+  neighborhood: string
+  street: string
+  service: string
+}
+
+export class GeocodingService {
+  // Nominatim (OpenStreetMap) - Free, but rate limit 1 req/sec
+  private static readonly NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
+  
+  // BrasilAPI - Free CEP API
+  private static readonly BRASILAPI_URL = 'https://brasilapi.com.br/api/cep/v1'
+
+  /**
+   * Geocode using address components from BrasilAPI CEP lookup + Nominatim
+   */
+  static async geocodeFromCEP(cep: string): Promise<GeocodingResult | null> {
+    try {
+      // First, get address from BrasilAPI
+      const cleanCep = cep.replace(/\D/g, '')
+      
+      const brasilApiResponse = await axios.get<BrasilAPIResponse>(
+        `${this.BRASILAPI_URL}/${cleanCep}`,
+        { timeout: 5000 }
+      )
+
+      if (!brasilApiResponse.data) {
+        return null
+      }
+
+      const { street, neighborhood, city, state } = brasilApiResponse.data
+
+      // Build query for Nominatim
+      const addressParts = [street, neighborhood, city, state, 'Brasil'].filter(Boolean)
+      const query = addressParts.join(', ')
+
+      // Wait for rate limit
+      await this.waitForRateLimit()
+
+      // Get coordinates from Nominatim
+      const nominatimResponse = await axios.get(this.NOMINATIM_URL, {
+        params: {
+          q: query,
+          format: 'json',
+          limit: 1,
+          addressdetails: 1,
+          countrycodes: 'br',
+        },
+        headers: {
+          'User-Agent': 'MeguisPet-App/1.0',
+        },
+        timeout: 5000,
+      })
+
+      if (nominatimResponse.data && nominatimResponse.data.length > 0) {
+        const result = nominatimResponse.data[0]
+        
+        // Determine precision based on result type
+        let precision: GeocodingResult['precision'] = 'approximate'
+        if (result.class === 'building' || result.type === 'house') {
+          precision = 'exact'
+        } else if (result.class === 'highway' || result.type === 'road') {
+          precision = 'street'
+        } else if (result.class === 'place' && result.type === 'city') {
+          precision = 'city'
+        }
+
+        return {
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon),
+          precision,
+          source: 'brasilapi',
+          display_name: result.display_name,
+        }
+      }
+
+      return null
+    } catch (error) {
+      console.error('Error geocoding from CEP:', error)
+      return null
+    }
+  }
+
+  /**
+   * Geocode using full address
+   */
+  static async geocodeAddress(
+    endereco: string,
+    cidade: string,
+    estado: string,
+    cep?: string
+  ): Promise<GeocodingResult | null> {
+    try {
+      // Build query
+      const addressParts = [endereco, cidade, estado, 'Brasil'].filter(Boolean)
+      const query = addressParts.join(', ')
+
+      // Wait for rate limit
+      await this.waitForRateLimit()
+
+      const response = await axios.get(this.NOMINATIM_URL, {
+        params: {
+          q: query,
+          format: 'json',
+          limit: 1,
+          addressdetails: 1,
+          countrycodes: 'br',
+        },
+        headers: {
+          'User-Agent': 'MeguisPet-App/1.0',
+        },
+        timeout: 5000,
+      })
+
+      if (response.data && response.data.length > 0) {
+        const result = response.data[0]
+        
+        // Determine precision
+        let precision: GeocodingResult['precision'] = 'approximate'
+        if (result.class === 'building' || result.type === 'house') {
+          precision = 'exact'
+        } else if (result.class === 'highway' || result.type === 'road') {
+          precision = 'street'
+        } else if (result.class === 'place' && result.type === 'city') {
+          precision = 'city'
+        }
+
+        return {
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon),
+          precision,
+          source: 'nominatim',
+          display_name: result.display_name,
+        }
+      }
+
+      return null
+    } catch (error) {
+      console.error('Error geocoding address:', error)
+      return null
+    }
+  }
+
+  /**
+   * Geocode with fallback strategy
+   * 1. Try CEP first (most reliable for Brazil)
+   * 2. Fallback to full address if CEP fails
+   */
+  static async geocodeWithFallback(data: {
+    endereco?: string
+    cidade?: string
+    estado?: string
+    cep?: string
+  }): Promise<GeocodingResult | null> {
+    // Try CEP first (more reliable for Brazil)
+    if (data.cep) {
+      const result = await this.geocodeFromCEP(data.cep)
+      if (result) return result
+    }
+
+    // Fallback to address
+    if (data.endereco && data.cidade && data.estado) {
+      return await this.geocodeAddress(
+        data.endereco,
+        data.cidade,
+        data.estado,
+        data.cep
+      )
+    }
+
+    return null
+  }
+
+  /**
+   * Rate limiter for Nominatim (1 req/sec)
+   */
+  private static lastRequestTime = 0
+  
+  static async waitForRateLimit(): Promise<void> {
+    const now = Date.now()
+    const timeSinceLastRequest = now - this.lastRequestTime
+    const minInterval = 1000 // 1 second
+
+    if (timeSinceLastRequest < minInterval) {
+      await new Promise(resolve => 
+        setTimeout(resolve, minInterval - timeSinceLastRequest)
+      )
+    }
+
+    this.lastRequestTime = Date.now()
+  }
+}
