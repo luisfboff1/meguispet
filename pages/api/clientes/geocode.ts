@@ -19,6 +19,17 @@ interface GeocodeResponse {
   message?: string
 }
 
+/**
+ * Batch geocoding endpoint for existing clients
+ * 
+ * @endpoint POST /api/clientes/geocode
+ * @body {
+ *   cliente_ids?: number[] - Optional array of specific client IDs to geocode
+ *   force?: boolean - Force re-geocoding even if coordinates exist (default: false)
+ *   batch_size?: number - Maximum number of clients to process (default: 10)
+ * }
+ * @returns {GeocodeResponse} - Results with processed count and details
+ */
 const handler = async (
   req: AuthenticatedRequest,
   res: NextApiResponse<GeocodeResponse>
@@ -103,7 +114,7 @@ const handler = async (
           continue
         }
 
-        // Respeitar rate limit (1 req/sec para Nominatim)
+        // Respeitar rate limit (1 req/sec para Nominatim) - apenas quando vai fazer chamada
         await GeocodingService.waitForRateLimit()
 
         // Tentar geocodificar

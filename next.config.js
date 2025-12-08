@@ -132,7 +132,7 @@ const nextConfig = (phase) => {
                 "style-src 'self' 'unsafe-inline'",
                 "img-src 'self' data: https: blob:",
                 "font-src 'self' data:",
-                "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://viacep.com.br https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org",
+                "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://viacep.com.br https://nominatim.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'"

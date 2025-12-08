@@ -9,7 +9,6 @@ import {
   AlertCircle,
   TrendingUp,
   Loader2,
-  RefreshCw,
 } from 'lucide-react'
 import Toast from '@/components/ui/Toast'
 import axios from 'axios'
@@ -94,7 +93,7 @@ export default function MapaClientesPage() {
       })
 
       const response = await axios.post('/api/clientes/geocode', {
-        batch_size: 50, // Process up to 50 clients at a time
+        batch_size: 50, // Process more clients per batch than default
         force: false,
       })
 
