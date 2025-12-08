@@ -53,23 +53,36 @@ export default function MapaClientesPage() {
         include_stats: 'true',
       })
 
+      console.log('[Frontend] Loading map data...')
       const response = await axios.get(`/api/clientes/map-data?${params.toString()}`)
+      console.log('[Frontend] Map data response:', response.data)
 
       if (response.data.success) {
         setMarkers(response.data.data || [])
         setStats(response.data.stats)
+        console.log('[Frontend] Loaded', response.data.data?.length || 0, 'markers')
       } else {
+        console.error('[Frontend] API returned error:', response.data.message)
         setToast({
           message: response.data.message || 'Erro ao carregar dados do mapa',
           type: 'error',
         })
       }
     } catch (error) {
-      console.error('Erro ao carregar mapa:', error)
-      setToast({
-        message: 'Erro ao carregar dados do mapa',
-        type: 'error',
-      })
+      console.error('[Frontend] Error loading map:', error)
+      if (axios.isAxiosError(error) && error.response) {
+        console.error('[Frontend] Response data:', error.response.data)
+        console.error('[Frontend] Response status:', error.response.status)
+        setToast({
+          message: error.response.data?.message || 'Erro ao carregar dados do mapa',
+          type: 'error',
+        })
+      } else {
+        setToast({
+          message: 'Erro ao carregar dados do mapa',
+          type: 'error',
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -92,10 +105,12 @@ export default function MapaClientesPage() {
         type: 'info',
       })
 
+      console.log('[Frontend] Starting geocoding...')
       const response = await axios.post('/api/clientes/geocode', {
         batch_size: 50, // Process more clients per batch than default
         force: false,
       })
+      console.log('[Frontend] Geocoding response:', response.data)
 
       if (response.data.success) {
         const { successful, failed, skipped, processed } = response.data.data
@@ -113,17 +128,27 @@ export default function MapaClientesPage() {
         // Recarregar dados do mapa
         await loadMapData()
       } else {
+        console.error('[Frontend] Geocoding error:', response.data.message)
         setToast({
           message: response.data.message || 'Erro ao geocodificar clientes',
           type: 'error',
         })
       }
     } catch (error) {
-      console.error('Erro ao geocodificar:', error)
-      setToast({
-        message: 'Erro ao geocodificar clientes',
-        type: 'error',
-      })
+      console.error('[Frontend] Geocoding error:', error)
+      if (axios.isAxiosError(error) && error.response) {
+        console.error('[Frontend] Response data:', error.response.data)
+        console.error('[Frontend] Response status:', error.response.status)
+        setToast({
+          message: error.response.data?.message || 'Erro ao geocodificar clientes',
+          type: 'error',
+        })
+      } else {
+        setToast({
+          message: 'Erro ao geocodificar clientes',
+          type: 'error',
+        })
+      }
     } finally {
       setGeocoding(false)
     }
