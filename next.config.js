@@ -128,8 +128,8 @@ const nextConfig = (phase) => {
               key: 'Content-Security-Policy',
               value: [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval necessário para Next.js
-                "style-src 'self' 'unsafe-inline'",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org", // unsafe-eval necessário para Next.js
+                "style-src 'self' 'unsafe-inline' https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
                 "img-src 'self' data: https: blob:",
                 "font-src 'self' data:",
                 "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://brasilapi.com.br https://viacep.com.br https://nominatim.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
