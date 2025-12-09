@@ -38,13 +38,24 @@ function MapBoundsUpdater({ markers }: { markers: ClienteMapMarker[] }) {
   
   useEffect(() => {
     console.log('🗺️ [MapBoundsUpdater] useEffect executado, markers:', markers.length)
+    console.log('🗺️ [MapBoundsUpdater] Map object:', map ? 'existe' : 'NULL')
+    console.log('🗺️ [MapBoundsUpdater] Map container size:', map.getSize())
+    
     if (markers.length > 0) {
       console.log('🗺️ [MapBoundsUpdater] Ajustando bounds do mapa...')
       const bounds = L.latLngBounds(
         markers.map(m => [m.latitude, m.longitude] as [number, number])
       )
+      console.log('🗺️ [MapBoundsUpdater] Bounds calculados:', bounds)
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
       console.log('🗺️ [MapBoundsUpdater] ✅ Bounds ajustados')
+      
+      // Force map to invalidate size to ensure proper rendering
+      setTimeout(() => {
+        console.log('🗺️ [MapBoundsUpdater] Invalidando tamanho do mapa...')
+        map.invalidateSize()
+        console.log('🗺️ [MapBoundsUpdater] ✅ Tamanho invalidado')
+      }, 100)
     }
   }, [markers, map])
   
@@ -95,13 +106,20 @@ export default function ClientesMap({
   }
 
   console.log('🗺️ [ClientesMap] ✅ Renderizando MapContainer com marcadores')
+  console.log('🗺️ [ClientesMap] Centro inicial:', initialCenter)
+  console.log('🗺️ [ClientesMap] Zoom inicial:', initialZoom)
+  
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden shadow-lg">
+      {console.log('🗺️ [ClientesMap] Container div renderizado')}
       <MapContainer
         center={initialCenter}
         zoom={initialZoom}
         style={{ height: '100%', width: '100%' }}
         className="z-0"
+        whenReady={() => {
+          console.log('🗺️ [MapContainer] ✅ Mapa PRONTO e inicializado!')
+        }}
       >
         {/* Tiles do OpenStreetMap */}
         <TileLayer
