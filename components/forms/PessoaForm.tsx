@@ -131,6 +131,25 @@ export default function PessoaForm({
           cidade: response.localidade || prev.cidade,
           estado: response.uf || prev.estado
         }))
+
+        // Auto-geocode after CEP lookup (async, don't block form)
+        // Import the geocoding service at the top
+        import('@/services/geocoding').then(({ GeocodingService }) => {
+          GeocodingService.geocodeFromCEP(cep).then(geoResult => {
+            if (geoResult) {
+              setFormData(prev => ({
+                ...prev,
+                latitude: geoResult.latitude,
+                longitude: geoResult.longitude,
+                geocoded_at: new Date().toISOString(),
+                geocoding_source: geoResult.source, // Use actual source from result
+                geocoding_precision: geoResult.precision
+              }))
+            }
+          }).catch(err => {
+            console.error('Geocoding error (non-blocking):', err)
+          })
+        })
       }
     } catch (error) {
     } finally {

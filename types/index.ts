@@ -44,6 +44,12 @@ export interface Cliente {
   ativo: boolean
   created_at: string
   updated_at: string
+  // Geolocation fields
+  latitude?: number | null
+  longitude?: number | null
+  geocoded_at?: string | null
+  geocoding_source?: 'manual' | 'api' | 'cep' | 'brasilapi' | 'nominatim'
+  geocoding_precision?: 'exact' | 'street' | 'city' | 'approximate'
 }
 
 export interface Produto {
@@ -329,6 +335,12 @@ export interface PessoaFormInput {
   inscricao_estadual?: string
   vendedor_id?: number | null
   ativo?: boolean
+  // Geolocation fields (auto-filled)
+  latitude?: number | null
+  longitude?: number | null
+  geocoded_at?: string | null
+  geocoding_source?: 'manual' | 'api' | 'cep' | 'brasilapi' | 'nominatim'
+  geocoding_precision?: 'exact' | 'street' | 'city' | 'approximate'
 }
 
 export type ClienteForm = PessoaFormInput

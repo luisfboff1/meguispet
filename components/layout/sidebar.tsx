@@ -17,7 +17,8 @@ import {
   Truck,
   X,
   Building2,
-  MessageSquare
+  MessageSquare,
+  Map
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -36,6 +37,7 @@ const menuItems: MenuItem[] = [
   { icon: Package, label: 'Produtos & Estoque', href: '/produtos-estoque' },
   { icon: Building2, label: 'Fornecedores', href: '/fornecedores' },
   { icon: Users, label: 'Clientes', href: '/clientes' },
+  { icon: Map, label: 'Mapa de Clientes', href: '/mapa-clientes' },
   { icon: UserCheck, label: 'Vendedores', href: '/vendedores' },
   { icon: DollarSign, label: 'Financeiro', href: '/financeiro' },
   { icon: BarChart3, label: 'Relatórios', href: '/relatorios' },
