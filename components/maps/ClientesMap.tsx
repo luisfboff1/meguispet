@@ -111,7 +111,6 @@ export default function ClientesMap({
   
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden shadow-lg">
-      {console.log('🗺️ [ClientesMap] Container div renderizado')}
       <MapContainer
         center={initialCenter}
         zoom={initialZoom}

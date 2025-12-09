@@ -30,9 +30,6 @@ const nextConfig = (phase) => {
     },
     experimental: {},
 
-    // Force WASM SWC to avoid native DLL load issues on Windows builds
-    useWasmBinary: true,
-
     // Ensure Turbopack builds don't fail when a webpack config is present
     turbopack: {},
 
