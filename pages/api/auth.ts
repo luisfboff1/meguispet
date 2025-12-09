@@ -108,11 +108,6 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     // Login successful - Supabase cookies are set automatically by getSupabaseServerAuth
-    console.log("✅ Login successful", {
-      email: userProfile.email,
-      userId: resolvedSupabaseUserId,
-    });
-
     return res.status(200).json({
       success: true,
       data: {

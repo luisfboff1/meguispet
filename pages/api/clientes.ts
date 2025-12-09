@@ -3,6 +3,7 @@ import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middlewar
 import { withValidation } from '@/lib/validation-middleware';
 import { clienteCreateSchema, clienteUpdateSchema, ClienteInput, ClienteUpdateInput } from '@/lib/validations/cliente.schema';
 import { z } from 'zod';
+import { GeocodingService } from '@/services/geocoding';
 
 /**
  * GET handler - List or get single cliente
@@ -97,6 +98,28 @@ const handlePost = withValidation(
       geocoding_precision: validatedData.geocoding_precision ?? null,
     };
 
+    // Geocodificar automaticamente se houver CEP
+    if (clienteData.cep && !clienteData.latitude && !clienteData.longitude) {
+      console.log(`[API Clientes] Geocodificando automaticamente cliente: ${clienteData.nome}`);
+      try {
+        const geocodingResult = await GeocodingService.geocodeFromCEP(clienteData.cep);
+
+        if (geocodingResult) {
+          console.log(`[API Clientes] ✅ Geocodificação bem-sucedida (${geocodingResult.precision})`);
+          clienteData.latitude = geocodingResult.latitude;
+          clienteData.longitude = geocodingResult.longitude;
+          clienteData.geocoded_at = new Date().toISOString();
+          clienteData.geocoding_source = geocodingResult.source;
+          clienteData.geocoding_precision = geocodingResult.precision;
+        } else {
+          console.log(`[API Clientes] ⚠️ Geocodificação falhou - cliente será criado sem coordenadas`);
+        }
+      } catch (geocodingError) {
+        console.error(`[API Clientes] ❌ Erro na geocodificação:`, geocodingError);
+        // Continuar criando o cliente mesmo se a geocodificação falhar
+      }
+    }
+
     const { data, error } = await supabase
       .from('clientes_fornecedores')
       .insert(clienteData)
@@ -131,8 +154,15 @@ const handlePut = withValidation(
     // Prepare update data (exclude id from update)
     const { id, ...updateFields } = validatedData;
 
+    // Get current cliente data to check if CEP changed
+    const { data: currentCliente } = await supabase
+      .from('clientes_fornecedores')
+      .select('cep, latitude, longitude')
+      .eq('id', id)
+      .single();
+
     // Convert empty strings to null for optional fields
-    const updateData = {
+    const updateData: any = {
       ...updateFields,
       email: updateFields.email || null,
       telefone: updateFields.telefone || null,
@@ -152,6 +182,29 @@ const handlePut = withValidation(
       geocoding_precision: updateFields.geocoding_precision ?? undefined,
       updated_at: new Date().toISOString(),
     };
+
+    // Geocodificar automaticamente se o CEP foi alterado
+    const cepChanged = updateData.cep && currentCliente && updateData.cep !== currentCliente.cep;
+    if (cepChanged) {
+      console.log(`[API Clientes] CEP alterado, re-geocodificando cliente ID ${id}`);
+      try {
+        const geocodingResult = await GeocodingService.geocodeFromCEP(updateData.cep);
+
+        if (geocodingResult) {
+          console.log(`[API Clientes] ✅ Re-geocodificação bem-sucedida (${geocodingResult.precision})`);
+          updateData.latitude = geocodingResult.latitude;
+          updateData.longitude = geocodingResult.longitude;
+          updateData.geocoded_at = new Date().toISOString();
+          updateData.geocoding_source = geocodingResult.source;
+          updateData.geocoding_precision = geocodingResult.precision;
+        } else {
+          console.log(`[API Clientes] ⚠️ Re-geocodificação falhou - coordenadas antigas serão mantidas`);
+        }
+      } catch (geocodingError) {
+        console.error(`[API Clientes] ❌ Erro na re-geocodificação:`, geocodingError);
+        // Continuar atualizando o cliente mesmo se a geocodificação falhar
+      }
+    }
 
     const { data, error } = await supabase
       .from('clientes_fornecedores')

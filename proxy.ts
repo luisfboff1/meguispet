@@ -140,7 +140,6 @@ export async function proxy(request: NextRequest) {
     // If coming from emergency logout, allow access to login page
     // This ensures users can log in again after emergency logout
     if (fromEmergency) {
-      console.log('🔓 Middleware: Allowing login page access from emergency logout');
       const response = NextResponse.next({ request });
       clearAuthCookies(request, response);
       return response;

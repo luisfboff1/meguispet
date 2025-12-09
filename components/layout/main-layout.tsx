@@ -103,14 +103,6 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
       (hydrated && !user && !loading)
 
     if (shouldRedirect) {
-      console.log('🔒 MainLayout: Redirecting to login', {
-        loading,
-        isAuthenticated,
-        status,
-        hasUser: !!user,
-        attempt: redirectAttempts + 1
-      })
-      
       setRedirectAttempts(prev => prev + 1)
       setLastRedirectTime(now)
       

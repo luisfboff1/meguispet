@@ -24,7 +24,6 @@ export default function EmergencyLogoutPage() {
           }
 
           // 1. Sign out from Supabase FIRST to invalidate session on server
-          console.log('🔐 Signing out from Supabase')
           try {
             const supabase = getSupabaseBrowser()
             await supabase.auth.signOut({ scope: 'local' })
@@ -35,15 +34,12 @@ export default function EmergencyLogoutPage() {
           }
 
           // 2. Clear ALL localStorage
-          console.log('🧹 Clearing ALL localStorage')
           localStorage.clear()
 
           // 3. Clear ALL sessionStorage
-          console.log('🧹 Clearing ALL sessionStorage')
           sessionStorage.clear()
 
           // 4. Clear ALL cookies (multiple attempts with different paths/domains)
-          console.log('🍪 Clearing ALL cookies')
           const cookies = document.cookie.split(';')
           for (const cookie of cookies) {
             const eqPos = cookie.indexOf('=')
@@ -56,7 +52,6 @@ export default function EmergencyLogoutPage() {
 
           // Wait 1.5 seconds to ensure cleanup is fully processed
           setTimeout(() => {
-            console.log('🔄 Redirecting to login...')
             // Use window.location.replace to force full page reload without adding to history
             // This ensures middleware sees the cleaned state
             window.location.replace('/login?from=emergency')

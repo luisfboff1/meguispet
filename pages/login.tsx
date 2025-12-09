@@ -49,8 +49,6 @@ export default function LoginPage() {
         
         // If from emergency logout, ensure everything is cleared
         if (fromEmergency) {
-          console.log('🚨 Login: Emergency logout detected, ensuring complete cleanup')
-          
           // Clear ALL cookies (more aggressive than normal)
           const cookies = document.cookie.split(';')
           for (const cookie of cookies) {
@@ -58,22 +56,19 @@ export default function LoginPage() {
             const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
             deleteCookie(name)
           }
-          
+
           // Clear ALL storage
           localStorage.clear()
           sessionStorage.clear()
-          
+
           // Sign out from Supabase
           const supabase = getSupabaseBrowser()
           await supabase.auth.signOut({ scope: 'local' })
-          
-          console.log('✅ Login: Emergency cleanup complete')
         } else {
           // Normal login page cleanup - only if there are stale cookies
           const hasCookies = document.cookie.includes('supabase')
-          
+
           if (hasCookies) {
-            console.log('🧹 Login: Clearing stale session data')
             
             // Clear all Supabase-related cookies
             const cookies = document.cookie.split(';')

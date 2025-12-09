@@ -43,24 +43,15 @@ function MapBoundsUpdater({
   const map = useMap()
 
   useEffect(() => {
-    console.log('🗺️ [MapBoundsUpdater] useEffect executado, markers:', markers.length)
-    console.log('🗺️ [MapBoundsUpdater] Map object:', map ? 'existe' : 'NULL')
-    console.log('🗺️ [MapBoundsUpdater] Map container size:', map.getSize())
-
     if (markers.length > 0) {
-      console.log('🗺️ [MapBoundsUpdater] Ajustando bounds do mapa...')
       const bounds = L.latLngBounds(
         markers.map(m => [m.latitude, m.longitude] as [number, number])
       )
-      console.log('🗺️ [MapBoundsUpdater] Bounds calculados:', bounds)
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
-      console.log('🗺️ [MapBoundsUpdater] ✅ Bounds ajustados')
 
       // Force map to invalidate size to ensure proper rendering
       setTimeout(() => {
-        console.log('🗺️ [MapBoundsUpdater] Invalidando tamanho do mapa...')
         map.invalidateSize()
-        console.log('🗺️ [MapBoundsUpdater] ✅ Tamanho invalidado')
       }, 100)
     }
   }, [markers, map])
@@ -68,7 +59,6 @@ function MapBoundsUpdater({
   // Reset view when resetView changes to true
   useEffect(() => {
     if (resetView && markers.length > 0) {
-      console.log('🗺️ [MapBoundsUpdater] Reset view acionado')
       const bounds = L.latLngBounds(
         markers.map(m => [m.latitude, m.longitude] as [number, number])
       )
@@ -98,7 +88,6 @@ function SelectedClienteZoom({
     if (selectedClienteId) {
       const cliente = markers.find(m => m.id === selectedClienteId)
       if (cliente) {
-        console.log('🗺️ [SelectedClienteZoom] Zoom para cliente:', cliente.nome)
         map.setView([cliente.latitude, cliente.longitude], 15, {
           animate: true,
           duration: 0.5
@@ -118,9 +107,6 @@ export default function ClientesMap({
   selectedClienteId = null,
   resetView = false,
 }: ClientesMapProps) {
-  console.log('🗺️ [ClientesMap] Componente renderizado com', markers.length, 'marcadores')
-  console.log('🗺️ [ClientesMap] Detalhes dos marcadores:', markers)
-  
   // Criar ícones customizados por tipo
   const createCustomIcon = (tipo: ClienteMapMarker['tipo']) => {
     const color = tipo === 'cliente' ? '#10b981' : tipo === 'fornecedor' ? '#3b82f6' : '#8b5cf6'
@@ -144,7 +130,6 @@ export default function ClientesMap({
   }
 
   if (markers.length === 0) {
-    console.log('🗺️ [ClientesMap] ⚠️ Nenhum marcador - mostrando estado vazio')
     return (
       <div className="flex flex-col items-center justify-center h-[600px] bg-gray-50 rounded-lg">
         <MapPin className="h-12 w-12 text-gray-400 mb-4" />
@@ -155,10 +140,6 @@ export default function ClientesMap({
     )
   }
 
-  console.log('🗺️ [ClientesMap] ✅ Renderizando MapContainer com marcadores')
-  console.log('🗺️ [ClientesMap] Centro inicial:', initialCenter)
-  console.log('🗺️ [ClientesMap] Zoom inicial:', initialZoom)
-
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden shadow-lg">
       <MapContainer
@@ -166,9 +147,6 @@ export default function ClientesMap({
         zoom={initialZoom}
         style={{ height: '100%', width: '100%' }}
         className="z-0"
-        whenReady={() => {
-          console.log('🗺️ [MapContainer] ✅ Mapa PRONTO e inicializado!')
-        }}
       >
         {/* Tiles do OpenStreetMap */}
         <TileLayer

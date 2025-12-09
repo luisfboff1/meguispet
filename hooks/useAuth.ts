@@ -50,15 +50,12 @@ export function useAuth() {
   }, [token, user]) // Only sync when token or user actually changes
 
   const handleLogout = useCallback(async () => {
-    console.log('🚪 useAuth: Starting logout process...')
-
     // 1. AGGRESSIVE CLEANUP - Do this FIRST before any async operations
     clear()
 
     if (typeof window !== 'undefined') {
       try {
         // Clear ALL localStorage items (nuclear option to prevent contamination)
-        console.log('🧹 useAuth: Clearing ALL localStorage')
         const keysToRemove: string[] = []
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i)
@@ -69,7 +66,6 @@ export function useAuth() {
         keysToRemove.forEach(key => localStorage.removeItem(key))
 
         // Clear ALL cookies (especially Supabase cookies)
-        console.log('🍪 useAuth: Clearing ALL cookies (including login_time)')
         const cookies = document.cookie.split(';')
         for (const cookie of cookies) {
           const eqPos = cookie.indexOf('=')
@@ -97,13 +93,10 @@ export function useAuth() {
         authService.logout().catch(err => {
           console.error('⚠️ useAuth: API logout failed (continuing anyway)', err)
         })
-      ]).finally(() => {
-        console.log('✅ useAuth: Async cleanup completed')
-      })
+      ])
     }
 
     // 3. FORCE HARD REDIRECT - Use window.location.href to ensure browser clears everything
-    console.log('🔄 useAuth: Forcing hard redirect to /login')
     if (typeof window !== 'undefined') {
       // Use hard redirect to force browser to clear state
       window.location.href = '/login'
@@ -124,7 +117,6 @@ export function useAuth() {
 
         // If there's a session error or no session, clear auth state
         if (error || !session) {
-          console.log('🔒 useAuth: No valid session found', { error: error?.message })
           clear()
           setStatus('unauthenticated')
           clearTokenCookie()
@@ -172,19 +164,16 @@ export function useAuth() {
             }
 
             // Verified - update credentials
-            console.log('✅ useAuth: Session verified, user authenticated')
             setCredentials(response.data, session.access_token)
             setTokenCookie(session.access_token)
             setStatus('authenticated')
           } else {
             // Profile not found or invalid - logout
-            console.log('⚠️ useAuth: Profile not found or invalid')
             clear()
             setStatus('unauthenticated')
             clearTokenCookie()
           }
         } catch (error: any) {
-          console.log('❌ useAuth: Error fetching profile', { status: error?.response?.status })
           // Handle 401 errors (expired/invalid token)
           if (error?.response?.status === 401) {
             clear()
@@ -237,11 +226,10 @@ export function useAuth() {
 
         // If there's an error or no session, clear everything immediately
         if (error || !session) {
-          console.log('🔒 useAuth: No valid session on mount, clearing auth state')
           clear()
           setStatus('unauthenticated')
           clearTokenCookie()
-          
+
           // Clear all localStorage to prevent stale data
           if (typeof window !== 'undefined') {
             localStorage.removeItem('token')
@@ -264,13 +252,11 @@ export function useAuth() {
               setStatus('authenticated')
             } else {
               // Profile fetch failed - session might be invalid
-              console.log('⚠️ useAuth: Profile fetch failed on mount, clearing auth')
               clear()
               setStatus('unauthenticated')
               clearTokenCookie()
             }
           } catch (error) {
-            console.error('❌ useAuth: Error fetching profile on mount', error)
             clear()
             setStatus('unauthenticated')
             clearTokenCookie()
@@ -280,7 +266,6 @@ export function useAuth() {
         }
       } catch (error) {
         clearTimeout(timeoutId)
-        console.error('❌ useAuth: Error checking session validity', error)
         clear()
         setStatus('unauthenticated')
         clearTokenCookie()

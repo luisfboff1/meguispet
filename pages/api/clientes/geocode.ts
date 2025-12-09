@@ -106,7 +106,6 @@ const handler = async (
           continue
         }
 
-        console.log(`[API Geocode] Processando ${cliente.nome} (ID: ${cliente.id}) - CEP: ${cliente.cep}`)
         const result = await GeocodingService.geocodeFromCEP(cliente.cep)
 
         if (result && result.latitude && result.longitude) {
@@ -130,7 +129,6 @@ const handler = async (
               error: 'Erro ao salvar no banco de dados'
             })
           } else {
-            console.log(`[API Geocode] ✅ ${cliente.nome} geocodificado com precisão "${result.precision}"`)
             results.successful++
           }
         } else {

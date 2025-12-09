@@ -65,70 +65,49 @@ export default function MapaClientesPage() {
 
   const loadMapData = async () => {
     try {
-      console.log('🗺️ [Mapa] Iniciando carregamento dos dados do mapa...')
       setLoading(true)
 
       const params = new URLSearchParams({
         include_stats: 'true',
       })
 
-      console.log('🗺️ [Mapa] Chamando API:', `/api/clientes/map-data?${params.toString()}`)
       const response = await axios.get(`/api/clientes/map-data?${params.toString()}`)
-      console.log('🗺️ [Mapa] Resposta da API recebida:', response.status)
-      console.log('🗺️ [Mapa] Dados recebidos:', {
-        success: response.data.success,
-        markers_count: response.data.data?.length || 0,
-        stats: response.data.stats
-      })
 
       if (response.data.success) {
-        console.log('🗺️ [Mapa] Setando markers:', response.data.data?.length || 0, 'marcadores')
         setMarkers(response.data.data || [])
-        console.log('🗺️ [Mapa] Setando stats:', response.data.stats)
         setStats(response.data.stats)
-        
+
         // If no markers but stats show clients, they need geocoding
         if ((!response.data.data || response.data.data.length === 0) && response.data.stats && response.data.stats.total_clientes > 0) {
-          console.log('🗺️ [Mapa] Clientes sem coordenadas detectados')
           setToast({
             message: `${response.data.stats.total_clientes} cliente(s) encontrado(s), mas nenhum com coordenadas. Use o botão "Geocodificar" para adicionar coordenadas.`,
             type: 'info',
           })
         }
-        console.log('🗺️ [Mapa] ✅ Dados carregados com sucesso!')
       } else {
-        console.error('🗺️ [Mapa] ❌ API retornou success=false:', response.data.message)
         setToast({
           message: response.data.message || 'Erro ao carregar dados do mapa',
           type: 'error',
         })
       }
     } catch (error) {
-      console.error('🗺️ [Mapa] ❌ Erro ao carregar mapa:', error)
       if (axios.isAxiosError(error) && error.response) {
-        console.error('🗺️ [Mapa] Detalhes do erro HTTP:', {
-          status: error.response.status,
-          data: error.response.data
-        })
         setToast({
           message: error.response.data?.message || 'Erro ao carregar dados do mapa. Verifique se a migração do banco foi aplicada.',
           type: 'error',
         })
       } else {
-        console.error('🗺️ [Mapa] Erro de rede ou desconhecido:', error)
         setToast({
           message: 'Erro ao carregar dados do mapa. Verifique a conexão.',
           type: 'error',
         })
       }
     } finally {
-      console.log('🗺️ [Mapa] Finalizando loading (setLoading(false))')
       setLoading(false)
     }
   }
 
   const handleMarkerClick = (cliente: ClienteMapMarker) => {
-    console.log('Cliente clicado:', cliente)
     setSelectedCliente(cliente)
     setShowClienteList(true)
   }
@@ -412,15 +391,12 @@ export default function MapaClientesPage() {
                 </div>
               </div>
             ) : (
-              <>
-                {console.log('🗺️ [Mapa] Renderizando componente ClientesMap com', markers.length, 'marcadores')}
-                <ClientesMap
-                  markers={markers}
-                  onMarkerClick={handleMarkerClick}
-                  selectedClienteId={selectedCliente?.id || null}
-                  resetView={resetMapView}
-                />
-              </>
+              <ClientesMap
+                markers={markers}
+                onMarkerClick={handleMarkerClick}
+                selectedClienteId={selectedCliente?.id || null}
+                resetView={resetMapView}
+              />
             )}
           </CardContent>
         </Card>
