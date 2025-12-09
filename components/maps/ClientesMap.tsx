@@ -28,17 +28,25 @@ interface ClientesMapProps {
   onMarkerClick?: (cliente: ClienteMapMarker) => void
   initialCenter?: [number, number]
   initialZoom?: number
+  selectedClienteId?: number | null
+  resetView?: boolean
 }
 
 // Component to fit bounds when markers change
-function MapBoundsUpdater({ markers }: { markers: ClienteMapMarker[] }) {
+function MapBoundsUpdater({
+  markers,
+  resetView
+}: {
+  markers: ClienteMapMarker[]
+  resetView?: boolean
+}) {
   const map = useMap()
-  
+
   useEffect(() => {
     console.log('🗺️ [MapBoundsUpdater] useEffect executado, markers:', markers.length)
     console.log('🗺️ [MapBoundsUpdater] Map object:', map ? 'existe' : 'NULL')
     console.log('🗺️ [MapBoundsUpdater] Map container size:', map.getSize())
-    
+
     if (markers.length > 0) {
       console.log('🗺️ [MapBoundsUpdater] Ajustando bounds do mapa...')
       const bounds = L.latLngBounds(
@@ -47,7 +55,7 @@ function MapBoundsUpdater({ markers }: { markers: ClienteMapMarker[] }) {
       console.log('🗺️ [MapBoundsUpdater] Bounds calculados:', bounds)
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
       console.log('🗺️ [MapBoundsUpdater] ✅ Bounds ajustados')
-      
+
       // Force map to invalidate size to ensure proper rendering
       setTimeout(() => {
         console.log('🗺️ [MapBoundsUpdater] Invalidando tamanho do mapa...')
@@ -56,7 +64,49 @@ function MapBoundsUpdater({ markers }: { markers: ClienteMapMarker[] }) {
       }, 100)
     }
   }, [markers, map])
-  
+
+  // Reset view when resetView changes to true
+  useEffect(() => {
+    if (resetView && markers.length > 0) {
+      console.log('🗺️ [MapBoundsUpdater] Reset view acionado')
+      const bounds = L.latLngBounds(
+        markers.map(m => [m.latitude, m.longitude] as [number, number])
+      )
+      map.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 12,
+        animate: true,
+        duration: 0.5
+      })
+    }
+  }, [resetView, markers, map])
+
+  return null
+}
+
+// Component to zoom to selected cliente
+function SelectedClienteZoom({
+  selectedClienteId,
+  markers
+}: {
+  selectedClienteId: number | null
+  markers: ClienteMapMarker[]
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (selectedClienteId) {
+      const cliente = markers.find(m => m.id === selectedClienteId)
+      if (cliente) {
+        console.log('🗺️ [SelectedClienteZoom] Zoom para cliente:', cliente.nome)
+        map.setView([cliente.latitude, cliente.longitude], 15, {
+          animate: true,
+          duration: 0.5
+        })
+      }
+    }
+  }, [selectedClienteId, markers, map])
+
   return null
 }
 
@@ -65,6 +115,8 @@ export default function ClientesMap({
   onMarkerClick,
   initialCenter = [-15.7942, -47.8822], // Centro do Brasil (Brasília)
   initialZoom = 5, // Zoom mais afastado para ver o país todo
+  selectedClienteId = null,
+  resetView = false,
 }: ClientesMapProps) {
   console.log('🗺️ [ClientesMap] Componente renderizado com', markers.length, 'marcadores')
   console.log('🗺️ [ClientesMap] Detalhes dos marcadores:', markers)
@@ -106,7 +158,7 @@ export default function ClientesMap({
   console.log('🗺️ [ClientesMap] ✅ Renderizando MapContainer com marcadores')
   console.log('🗺️ [ClientesMap] Centro inicial:', initialCenter)
   console.log('🗺️ [ClientesMap] Zoom inicial:', initialZoom)
-  
+
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden shadow-lg">
       <MapContainer
@@ -125,7 +177,10 @@ export default function ClientesMap({
         />
 
         {/* Auto-fit bounds to markers */}
-        <MapBoundsUpdater markers={markers} />
+        <MapBoundsUpdater markers={markers} resetView={resetView} />
+
+        {/* Zoom to selected cliente */}
+        <SelectedClienteZoom selectedClienteId={selectedClienteId} markers={markers} />
 
         {/* Markers */}
         {markers.map(marker => (

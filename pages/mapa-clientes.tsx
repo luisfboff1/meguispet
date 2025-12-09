@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Map,
   MapPin,
@@ -9,6 +10,12 @@ import {
   AlertCircle,
   TrendingUp,
   Loader2,
+  XCircle,
+  Target,
+  Navigation,
+  Building2,
+  ChevronRight,
+  List,
 } from 'lucide-react'
 import Toast from '@/components/ui/Toast'
 import axios from 'axios'
@@ -34,12 +41,23 @@ interface MapStats {
   porcentagem_cobertura: number
 }
 
+interface GeocodeError {
+  id: number
+  nome: string
+  error: string
+}
+
 export default function MapaClientesPage() {
   const [markers, setMarkers] = useState<ClienteMapMarker[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<MapStats | null>(null)
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' | 'info' } | null>(null)
   const [geocoding, setGeocoding] = useState(false)
+  const [geocodeErrors, setGeocodeErrors] = useState<GeocodeError[]>([])
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [selectedCliente, setSelectedCliente] = useState<ClienteMapMarker | null>(null)
+  const [showClienteList, setShowClienteList] = useState(false)
+  const [resetMapView, setResetMapView] = useState(false)
 
   useEffect(() => {
     loadMapData()
@@ -111,7 +129,50 @@ export default function MapaClientesPage() {
 
   const handleMarkerClick = (cliente: ClienteMapMarker) => {
     console.log('Cliente clicado:', cliente)
-    // Pode abrir modal de detalhes do cliente aqui
+    setSelectedCliente(cliente)
+    setShowClienteList(true)
+  }
+
+  const handleClienteSelect = (cliente: ClienteMapMarker) => {
+    if (selectedCliente?.id === cliente.id) {
+      // Desselecionar se clicar no mesmo cliente
+      setSelectedCliente(null)
+      setResetMapView(true)
+      setTimeout(() => setResetMapView(false), 100)
+    } else {
+      // Selecionar novo cliente
+      setSelectedCliente(cliente)
+      setResetMapView(false)
+    }
+  }
+
+  const getPrecisionBadge = (precision: string) => {
+    switch (precision) {
+      case 'exact':
+        return {
+          label: 'Endereço Exato',
+          icon: Target,
+          color: 'bg-green-100 text-green-800 border-green-300'
+        }
+      case 'street':
+        return {
+          label: 'Rua',
+          icon: Navigation,
+          color: 'bg-blue-100 text-blue-800 border-blue-300'
+        }
+      case 'city':
+        return {
+          label: 'Cidade',
+          icon: Building2,
+          color: 'bg-yellow-100 text-yellow-800 border-yellow-300'
+        }
+      default:
+        return {
+          label: 'Aproximado',
+          icon: MapPin,
+          color: 'bg-gray-100 text-gray-800 border-gray-300'
+        }
+    }
   }
 
   const handleGeocodeClientes = async () => {
@@ -132,18 +193,24 @@ export default function MapaClientesPage() {
       })
 
       if (response.data.success) {
-        const { successful, failed, skipped, processed } = response.data.data
-        
+        const { successful, failed, skipped, processed, errors } = response.data.data
+
         let message = `Geocodificação concluída: ${successful} sucesso(s)`
         if (failed > 0) message += `, ${failed} falha(s)`
         if (skipped > 0) message += `, ${skipped} ignorado(s)`
         message += ` de ${processed} processado(s).`
-        
+
+        // Save errors for detailed view
+        if (errors && errors.length > 0) {
+          setGeocodeErrors(errors)
+          message += ' Clique em "Ver Detalhes" para mais informações.'
+        }
+
         setToast({
           message,
-          type: successful > 0 ? 'success' : 'info',
+          type: successful > 0 ? 'success' : (failed > 0 ? 'error' : 'info'),
         })
-        
+
         // Recarregar dados do mapa
         await loadMapData()
       } else {
@@ -175,6 +242,49 @@ export default function MapaClientesPage() {
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
+
+      {/* Error Dialog */}
+      {showErrorDialog && geocodeErrors.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <CardHeader className="flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-red-600" />
+                  Erros de Geocodificação
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowErrorDialog(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+              <CardDescription>
+                {geocodeErrors.length} cliente(s) não puderam ser geocodificados
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-y-auto">
+              <div className="space-y-3">
+                {geocodeErrors.map((err) => (
+                  <div key={err.id} className="border rounded-lg p-3 bg-red-50 border-red-200">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-gray-900">
+                          {err.nome} <span className="text-gray-500">(ID: {err.id})</span>
+                        </p>
+                        <p className="text-sm text-red-600 mt-1">{err.error}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -187,26 +297,39 @@ export default function MapaClientesPage() {
             Visualização geográfica da distribuição de clientes
           </p>
         </div>
-        
-        {stats && stats.clientes_pendentes > 0 && (
-          <Button 
-            onClick={handleGeocodeClientes}
-            disabled={geocoding}
-            className="bg-meguispet-primary hover:bg-meguispet-primary/90"
-          >
-            {geocoding ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Geocodificando...
-              </>
-            ) : (
-              <>
-                <MapPin className="mr-2 h-4 w-4" />
-                Geocodificar Pendentes ({stats.clientes_pendentes})
-              </>
-            )}
-          </Button>
-        )}
+
+        <div className="flex gap-2">
+          {geocodeErrors.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setShowErrorDialog(true)}
+              className="border-red-300 text-red-700 hover:bg-red-50"
+            >
+              <AlertCircle className="mr-2 h-4 w-4" />
+              Ver Detalhes dos Erros ({geocodeErrors.length})
+            </Button>
+          )}
+
+          {stats && stats.clientes_pendentes > 0 && (
+            <Button
+              onClick={handleGeocodeClientes}
+              disabled={geocoding}
+              className="bg-meguispet-primary hover:bg-meguispet-primary/90"
+            >
+              {geocoding ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Geocodificando...
+                </>
+              ) : (
+                <>
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Geocodificar Pendentes ({stats.clientes_pendentes})
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Estatísticas */}
@@ -257,33 +380,132 @@ export default function MapaClientesPage() {
         </div>
       )}
 
-      {/* Mapa */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Localização dos Clientes</CardTitle>
-          <CardDescription>
-            Mapa interativo com a distribuição geográfica dos clientes
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center h-[600px] bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-meguispet-primary mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Carregando dados do mapa...</p>
+      {/* Mapa + Lista */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Mapa */}
+        <Card className={`${showClienteList ? 'lg:col-span-2' : 'lg:col-span-3'} transition-all duration-300`}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Localização dos Clientes</CardTitle>
+                <CardDescription>
+                  Mapa interativo com a distribuição geográfica dos clientes
+                </CardDescription>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowClienteList(!showClienteList)}
+                className="flex items-center gap-2"
+              >
+                <List className="h-4 w-4" />
+                {showClienteList ? 'Ocultar' : 'Mostrar'} Lista
+              </Button>
             </div>
-          ) : (
-            <>
-              {console.log('🗺️ [Mapa] Renderizando componente ClientesMap com', markers.length, 'marcadores')}
-              <ClientesMap
-                markers={markers}
-                onMarkerClick={handleMarkerClick}
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex items-center justify-center h-[600px] bg-gray-50 rounded-lg">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-meguispet-primary mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Carregando dados do mapa...</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {console.log('🗺️ [Mapa] Renderizando componente ClientesMap com', markers.length, 'marcadores')}
+                <ClientesMap
+                  markers={markers}
+                  onMarkerClick={handleMarkerClick}
+                  selectedClienteId={selectedCliente?.id || null}
+                  resetView={resetMapView}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Lista de Clientes */}
+        {showClienteList && (
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-lg">Clientes no Mapa</CardTitle>
+              <CardDescription>
+                {markers.length} cliente(s) geocodificado(s)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="max-h-[600px] overflow-y-auto">
+                {markers.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>Nenhum cliente geocodificado</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {markers.map((cliente) => {
+                      const precision = getPrecisionBadge(cliente.precision)
+                      const PrecisionIcon = precision.icon
+                      const isSelected = selectedCliente?.id === cliente.id
+
+                      return (
+                        <button
+                          key={cliente.id}
+                          onClick={() => handleClienteSelect(cliente)}
+                          className={`w-full p-3 text-left hover:bg-gray-50 transition-colors ${
+                            isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <ChevronRight className={`h-5 w-5 mt-0.5 flex-shrink-0 transition-transform ${
+                              isSelected ? 'rotate-90 text-blue-600' : 'text-gray-400'
+                            }`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{cliente.nome}</p>
+                              {cliente.cidade && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {cliente.cidade}/{cliente.estado}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs ${precision.color}`}
+                                >
+                                  <PrecisionIcon className="h-3 w-3 mr-1" />
+                                  {precision.label}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Detalhes expandidos */}
+                          {isSelected && (
+                            <div className="mt-2 pt-2 border-t space-y-1 text-xs text-muted-foreground">
+                              {cliente.telefone && (
+                                <p>📞 {cliente.telefone}</p>
+                              )}
+                              {cliente.email && (
+                                <p className="truncate">✉️ {cliente.email}</p>
+                              )}
+                              {cliente.vendedor_nome && (
+                                <p>👤 {cliente.vendedor_nome}</p>
+                              )}
+                              <p className="text-gray-400">
+                                📍 {cliente.latitude.toFixed(6)}, {cliente.longitude.toFixed(6)}
+                              </p>
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

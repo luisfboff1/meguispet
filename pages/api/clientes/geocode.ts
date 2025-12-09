@@ -15,7 +15,7 @@ interface GeocodeResponse {
     successful: number
     failed: number
     skipped: number
-    errors: Array<{ id: number; error: string }>
+    errors: Array<{ id: number; nome: string; error: string }>
   }
   message?: string
 }
@@ -91,16 +91,22 @@ const handler = async (
       successful: 0,
       failed: 0,
       skipped: 0,
-      errors: [] as Array<{ id: number; error: string }>
+      errors: [] as Array<{ id: number; nome: string; error: string }>
     }
 
     for (const cliente of clientes) {
       try {
         if (!cliente.cep) {
           results.skipped++
+          results.errors.push({
+            id: cliente.id,
+            nome: cliente.nome,
+            error: 'CEP não cadastrado'
+          })
           continue
         }
 
+        console.log(`[API Geocode] Processando ${cliente.nome} (ID: ${cliente.id}) - CEP: ${cliente.cep}`)
         const result = await GeocodingService.geocodeFromCEP(cliente.cep)
 
         if (result && result.latitude && result.longitude) {
@@ -116,14 +122,25 @@ const handler = async (
             .eq('id', cliente.id)
 
           if (updateError) {
+            console.error(`[API Geocode] ❌ Erro ao salvar ${cliente.nome}:`, updateError)
             results.failed++
-            results.errors.push({ id: cliente.id, error: 'Erro ao salvar' })
+            results.errors.push({
+              id: cliente.id,
+              nome: cliente.nome,
+              error: 'Erro ao salvar no banco de dados'
+            })
           } else {
+            console.log(`[API Geocode] ✅ ${cliente.nome} geocodificado com precisão "${result.precision}"`)
             results.successful++
           }
         } else {
+          console.error(`[API Geocode] ❌ ${cliente.nome}: Endereço não encontrado pelo Nominatim`)
           results.failed++
-          results.errors.push({ id: cliente.id, error: 'Não foi possível geocodificar' })
+          results.errors.push({
+            id: cliente.id,
+            nome: cliente.nome,
+            error: 'Endereço não encontrado pelo OpenStreetMap. Verifique se o endereço/cidade está correto ou tente novamente mais tarde.'
+          })
         }
 
         results.processed++
@@ -135,7 +152,16 @@ const handler = async (
 
       } catch (error) {
         results.failed++
-        results.errors.push({ id: cliente.id, error: 'Erro ao processar' })
+        const errorMessage = error instanceof Error
+          ? (error.message.includes('timeout')
+              ? 'Timeout: API de geolocalização demorou muito para responder'
+              : error.message)
+          : 'Erro desconhecido ao processar'
+        results.errors.push({
+          id: cliente.id,
+          nome: cliente.nome,
+          error: errorMessage
+        })
         results.processed++
       }
     }

@@ -2,7 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 /**
- * Next.js Middleware with Supabase Auth (Edge Runtime)
+ * Next.js Proxy with Supabase Auth (Edge Runtime)
+ *
+ * RENAMED FROM middleware.ts: Next.js 16+ uses "proxy" convention instead of "middleware"
  *
  * Proteção de rotas com autenticação JWT do Supabase.
  *
@@ -12,6 +14,11 @@ import { type NextRequest, NextResponse } from "next/server";
  * - Redirects para /login quando sessão expirar
  * - Admin-only route protection
  * - Headers com user info para API routes
+ *
+ * NOTE: Build warnings about Node.js APIs (process.versions/process.version) in
+ * @supabase/realtime-js are expected and benign. The Realtime module is not used
+ * in this proxy, but is bundled as part of @supabase/supabase-js dependencies.
+ * These warnings do not affect Edge Runtime functionality.
  */
 
 /**
@@ -40,7 +47,7 @@ function clearAuthCookies(request: NextRequest, response: NextResponse): void {
   });
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Allow emergency logout page without authentication
   if (request.nextUrl.pathname === "/emergency-logout") {
     return NextResponse.next();
@@ -190,10 +197,10 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Matcher configuration for middleware
+ * Matcher configuration for proxy
  *
- * This middleware will run on all routes EXCEPT:
- * - /api routes (handled by API middleware)
+ * This proxy will run on all routes EXCEPT:
+ * - /api routes (handled by API proxy)
  * - /_next (Next.js internals)
  * - /login (public auth page)
  * - Static files (images, fonts, etc.)
@@ -202,7 +209,7 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * - /api (API routes use their own middleware)
+     * - /api (API routes use their own proxy)
      * - /_next (Next.js internals)
      * - /login (public login page)
      * - Static files (images, fonts, icons, etc.)

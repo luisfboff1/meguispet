@@ -28,7 +28,10 @@ const nextConfig = (phase) => {
       // Use timestamp to force new chunks on each deployment
       return `build-${Date.now()}`
     },
-    experimental: {},
+    experimental: {
+      // Disable SWC on Windows to avoid DLL initialization errors
+      forceSwcTransforms: false,
+    },
 
     outputFileTracingRoot: path.join(__dirname),
 
