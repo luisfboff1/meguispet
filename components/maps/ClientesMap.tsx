@@ -2,9 +2,7 @@
 
 import React, { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import { MapPin, Phone, Mail, User } from 'lucide-react'
 import type { ClienteMapMarker } from '@/pages/api/clientes/map-data'
 
@@ -129,22 +127,17 @@ export default function ClientesMap({
         {/* Auto-fit bounds to markers */}
         <MapBoundsUpdater markers={markers} />
 
-        {/* Marker Clustering para melhor performance */}
-        <MarkerClusterGroup
-          chunkedLoading
-          showCoverageOnHover={false}
-          maxClusterRadius={50}
-        >
-          {markers.map(marker => (
-            <Marker
-              key={marker.id}
-              position={[marker.latitude, marker.longitude]}
-              icon={createCustomIcon(marker.tipo)}
-              eventHandlers={{
-                click: () => onMarkerClick?.(marker),
-              }}
-            >
-              <Popup>
+        {/* Markers */}
+        {markers.map(marker => (
+          <Marker
+            key={marker.id}
+            position={[marker.latitude, marker.longitude]}
+            icon={createCustomIcon(marker.tipo)}
+            eventHandlers={{
+              click: () => onMarkerClick?.(marker),
+            }}
+          >
+            <Popup>
                 <div className="p-2 min-w-[200px]">
                   <h3 className="font-semibold text-lg mb-2">{marker.nome}</h3>
                   <div className="space-y-1 text-sm">
@@ -177,7 +170,6 @@ export default function ClientesMap({
               </Popup>
             </Marker>
           ))}
-        </MarkerClusterGroup>
       </MapContainer>
 
       {/* Legend */}

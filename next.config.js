@@ -30,9 +30,6 @@ const nextConfig = (phase) => {
     },
     experimental: {},
 
-    // Ensure Turbopack builds don't fail when a webpack config is present
-    turbopack: {},
-
     outputFileTracingRoot: path.join(__dirname),
 
     compiler: {
