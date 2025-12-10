@@ -351,7 +351,8 @@ export const vendedoresService = {
   },
 
   async update(id: number, vendedor: Partial<Vendedor>): Promise<ApiResponse<Vendedor>> {
-    const response = await api.put(`/vendedores?id=${id}`, vendedor)
+    // Send id in body as the API expects
+    const response = await api.put('/vendedores', { id, ...vendedor })
     return response.data
   },
 

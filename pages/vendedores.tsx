@@ -50,7 +50,15 @@ export default function VendedoresPage() {
       setLoading(true)
       const response = await vendedoresService.getAll(currentPage, 10)
       if (response.success && response.data) {
-        setVendedores(response.data)
+        // Handle paginated response structure
+        if (typeof response.data === 'object' && 'items' in response.data) {
+          const items = (response.data as any).items
+          setVendedores(Array.isArray(items) ? items : [])
+        } else if (Array.isArray(response.data)) {
+          setVendedores(response.data)
+        } else {
+          setVendedores([])
+        }
       }
     } catch (error) {
     } finally {

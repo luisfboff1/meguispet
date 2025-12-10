@@ -3,6 +3,9 @@ import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
+  // Set UTF-8 encoding for proper character display
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
   const { method } = req;
 
   try {
@@ -77,7 +80,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'POST') {
-      const { nome, email, telefone, comissao } = req.body;
+      const { nome, email, telefone, comissao, usuario_id } = req.body;
 
       if (!nome) {
         return res.status(400).json({ success: false, message: 'Nome do vendedor é obrigatório' });
@@ -90,11 +93,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           email: email || null,
           telefone: telefone || null,
           comissao: comissao || 0,
+          usuario_id: usuario_id || null,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Sync bidirectional relationship with usuarios table
+      if (usuario_id && data) {
+        await supabase
+          .from('usuarios')
+          .update({ vendedor_id: data.id })
+          .eq('id', usuario_id);
+      }
 
       return res.status(201).json({
         success: true,
@@ -104,12 +116,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === 'PUT') {
-      const { id, nome, email, telefone, comissao } = req.body;
+      const { id, nome, email, telefone, comissao, usuario_id } = req.body;
 
       if (!id) {
         return res.status(400).json({ success: false, message: 'ID do vendedor é obrigatório' });
       }
 
+      // Get current vendedor to check old usuario_id
+      const { data: vendedorAtual } = await supabase
+        .from('vendedores')
+        .select('usuario_id')
+        .eq('id', id)
+        .single();
+
+      // Update vendedor
       const { data, error } = await supabase
         .from('vendedores')
         .update({
@@ -117,6 +137,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           email: email || null,
           telefone: telefone || null,
           comissao: comissao || 0,
+          usuario_id: usuario_id !== undefined ? usuario_id : null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -126,6 +147,31 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       if (!data || data.length === 0) {
         return res.status(404).json({ success: false, message: 'Vendedor não encontrado' });
+      }
+
+      // Sync bidirectional relationship with usuarios table
+      if (usuario_id !== undefined) {
+        // Remove old link if exists
+        if (vendedorAtual?.usuario_id && vendedorAtual.usuario_id !== usuario_id) {
+          await supabase
+            .from('usuarios')
+            .update({ vendedor_id: null })
+            .eq('id', vendedorAtual.usuario_id);
+        }
+
+        // Set new link
+        if (usuario_id) {
+          await supabase
+            .from('usuarios')
+            .update({ vendedor_id: id })
+            .eq('id', usuario_id);
+        } else if (vendedorAtual?.usuario_id) {
+          // Remove link if usuario_id is now null
+          await supabase
+            .from('usuarios')
+            .update({ vendedor_id: null })
+            .eq('id', vendedorAtual.usuario_id);
+        }
       }
 
       return res.status(200).json({

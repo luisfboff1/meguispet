@@ -19,6 +19,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ApiResponse>
 ) {
+  // Set UTF-8 encoding for proper character display
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+
   // Only allow DELETE requests
   if (req.method !== 'DELETE') {
     return res.status(405).json({
@@ -104,7 +107,10 @@ export default async function handler(
       })
     }
 
-    // Unlink vendedor from usuario (trigger will sync bidirectionally)
+    // Store the usuario_id before unlinking for bidirectional sync
+    const previousUsuarioId = vendedor.usuario_id
+
+    // Unlink vendedor from usuario with bidirectional sync
     const { error: updateError } = await supabase
       .from('vendedores')
       .update({
@@ -119,6 +125,22 @@ export default async function handler(
         success: false,
         error: 'Erro ao desvincular vendedor do usuário'
       })
+    }
+
+    // Sync bidirectional relationship: remove usuario.vendedor_id
+    if (previousUsuarioId) {
+      const { error: syncError } = await supabase
+        .from('usuarios')
+        .update({
+          vendedor_id: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', previousUsuarioId)
+
+      if (syncError) {
+        console.error('Error syncing usuario.vendedor_id removal:', syncError)
+        // Don't fail the request, but log the error
+      }
     }
 
     return res.status(200).json({

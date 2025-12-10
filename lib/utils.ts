@@ -60,3 +60,20 @@ export function formatLocalDate(
 
   return dateObj.toLocaleDateString('pt-BR', options)
 }
+
+/**
+ * Format number as Brazilian currency (BRL)
+ *
+ * @param value - Number to format
+ * @returns Formatted currency string
+ *
+ * @example
+ * formatCurrency(1234.56) // "R$ 1.234,56"
+ * formatCurrency(0) // "R$ 0,00"
+ */
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value)
+}

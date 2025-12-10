@@ -542,6 +542,7 @@ export interface VendedorForm {
   cpf?: string
   comissao: number
   ativo?: boolean
+  usuario_id?: number | null
 }
 
 // Tipos para detalhes do vendedor (modal)

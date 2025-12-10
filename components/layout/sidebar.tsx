@@ -23,26 +23,30 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSidebar } from '@/hooks/useSidebar'
+import { usePermissions } from '@/hooks/usePermissions'
+import type { Permissoes } from '@/types'
 
 interface MenuItem {
   icon: LucideIcon
   label: string
   href: string
   badge?: number
+  permission?: keyof Permissoes // 🆕 Permissão necessária para exibir o item
 }
 
+// 🆕 Menu items com permissões associadas
 const menuItems: MenuItem[] = [
-  { icon: Home, label: 'Dashboard', href: '/dashboard' },
-  { icon: ShoppingCart, label: 'Vendas', href: '/vendas' },
-  { icon: Package, label: 'Produtos & Estoque', href: '/produtos-estoque' },
-  { icon: Building2, label: 'Fornecedores', href: '/fornecedores' },
-  { icon: Users, label: 'Clientes', href: '/clientes' },
-  { icon: Map, label: 'Mapa de Clientes', href: '/mapa-clientes' },
-  { icon: UserCheck, label: 'Vendedores', href: '/vendedores' },
-  { icon: DollarSign, label: 'Financeiro', href: '/financeiro' },
-  { icon: BarChart3, label: 'Relatórios', href: '/relatorios' },
-  { icon: MessageSquare, label: 'Feedback', href: '/feedback' },
-  { icon: Settings, label: 'Usuários', href: '/usuarios' },
+  { icon: Home, label: 'Dashboard', href: '/dashboard', permission: 'dashboard' },
+  { icon: ShoppingCart, label: 'Vendas', href: '/vendas', permission: 'vendas' },
+  { icon: Package, label: 'Produtos & Estoque', href: '/produtos-estoque', permission: 'produtos' },
+  { icon: Building2, label: 'Fornecedores', href: '/fornecedores', permission: 'produtos' }, // Usar mesma permissão de produtos
+  { icon: Users, label: 'Clientes', href: '/clientes', permission: 'clientes' },
+  { icon: Map, label: 'Mapa de Clientes', href: '/mapa-clientes', permission: 'clientes' }, // Requer permissão de clientes
+  { icon: UserCheck, label: 'Vendedores', href: '/vendedores', permission: 'config_usuarios' }, // Admin/Gerente
+  { icon: DollarSign, label: 'Financeiro', href: '/financeiro', permission: 'financeiro' },
+  { icon: BarChart3, label: 'Relatórios', href: '/relatorios', permission: 'relatorios' },
+  { icon: MessageSquare, label: 'Feedback', href: '/feedback' }, // Sem permissão = sempre visível
+  { icon: Settings, label: 'Usuários', href: '/usuarios', permission: 'config_usuarios' },
 ]
 
 interface SidebarProps {
@@ -55,16 +59,26 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
   const router = useRouter()
   const { logout } = useAuth()
   const { handleItemSelect, isTemporary, close } = useSidebar()
+  const { hasPermission } = usePermissions()
 
   const activePath = router.pathname
 
+  // 🆕 FILTRAR MENU POR PERMISSÕES
+  // Apenas mostra itens que o usuário tem permissão de acessar
   const navigation = useMemo(
     () =>
-      menuItems.map((item) => ({
-        ...item,
-        active: activePath === item.href
-      })),
-    [activePath]
+      menuItems
+        .filter((item) => {
+          // Se o item não requer permissão, sempre mostrar
+          if (!item.permission) return true
+          // Se requer permissão, verificar se o usuário tem
+          return hasPermission(item.permission)
+        })
+        .map((item) => ({
+          ...item,
+          active: activePath === item.href
+        })),
+    [activePath, hasPermission]
   )
 
   const renderLabel = (label: string) => (

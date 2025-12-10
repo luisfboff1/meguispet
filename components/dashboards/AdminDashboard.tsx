@@ -8,29 +8,15 @@ import {
   ShoppingCart,
   Users,
   Package,
-  TrendingUp,
-  TrendingDown,
   Eye,
-  Package2
+  Package2,
+  Settings,
+  UserCheck,
 } from 'lucide-react'
 import { dashboardService, produtosService, clientesService, movimentacoesService, vendasService } from '@/services/api'
 import TopProductsTable from '@/components/tables/TopProductsTable'
-import { cn } from '@/lib/utils'
 import { usePermissions } from '@/hooks/usePermissions'
-
-// 🆕 DASHBOARDS PERSONALIZADOS POR ROLE
-import { VendedorDashboard } from '@/components/dashboards/VendedorDashboard'
-import { FinanceiroDashboard } from '@/components/dashboards/FinanceiroDashboard'
-import { GerenteDashboard } from '@/components/dashboards/GerenteDashboard'
-import { AdminDashboard } from '@/components/dashboards/AdminDashboard'
-
-// Lazy load do gráfico para otimização (economiza ~100KB)
-const DashboardChart = dynamic(() => import('@/components/charts/DashboardChart'), {
-  ssr: false,
-  loading: () => <div className="h-80 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div></div>
-})
-import { useModal } from '@/hooks/useModal'
-import { AnimatedCard } from '@/components/ui/animated-card'
+import { WelcomeCard } from './shared/WelcomeCard'
 import type {
   DashboardTopProduct,
   DashboardVendasDia,
@@ -39,17 +25,14 @@ import type {
   ClienteForm as ClienteFormValues,
   MovimentacaoForm as MovimentacaoFormValues
 } from '@/types'
+import { useModal } from '@/hooks/useModal'
+import { AnimatedCard } from '@/components/ui/animated-card'
 
-// 📊 PÁGINA DASHBOARD - DADOS REAIS DO BANCO
-// Esta página não precisa configurar layout - é automático!
-// O layout é aplicado pelo _app.tsx globalmente
-
-// 🚀 FEATURE FLAG - DASHBOARDS PERSONALIZADOS
-// Para ativar os dashboards personalizados por role, defina esta env var:
-// NEXT_PUBLIC_CUSTOM_DASHBOARDS=true
-//
-// ⚠️ IMPORTANTE: Testar em staging antes de ativar em produção!
-const ENABLE_CUSTOM_DASHBOARDS = process.env.NEXT_PUBLIC_CUSTOM_DASHBOARDS === 'true'
+// Lazy load do gráfico
+const DashboardChart = dynamic(() => import('@/components/charts/DashboardChart'), {
+  ssr: false,
+  loading: () => <div className="h-80 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-meguispet-primary"></div></div>
+})
 
 // Cache duration: 5 minutes
 const CACHE_DURATION = 5 * 60 * 1000
@@ -69,9 +52,19 @@ interface MetricCard {
   icon: React.ComponentType<{ className?: string }>
 }
 
-export default function DashboardPage() {
+/**
+ * AdminDashboard - Dashboard completo para administradores
+ *
+ * Mostra:
+ * - Todas as métricas do sistema
+ * - Acesso a todos os módulos
+ * - Gráficos e relatórios completos
+ * - Produtos mais vendidos
+ * - Ações administrativas
+ */
+export function AdminDashboard() {
   const router = useRouter()
-  const { userRole } = usePermissions()
+  const { userName } = usePermissions()
   const [metrics, setMetrics] = useState<MetricCard[]>([])
   const [topProducts, setTopProducts] = useState<DashboardTopProduct[]>([])
   const [vendasPeriodo, setVendasPeriodo] = useState<DashboardVendasDia[]>([])
@@ -80,33 +73,11 @@ export default function DashboardPage() {
   const [chartLoading, setChartLoading] = useState(false)
   const { open, close, setData } = useModal()
 
-  // 🚀 ROUTING DE DASHBOARDS PERSONALIZADOS POR ROLE
-  // Se feature flag estiver ativa, renderizar dashboard específico por role
-  if (ENABLE_CUSTOM_DASHBOARDS) {
-    switch (userRole) {
-      case 'vendedor':
-        return <VendedorDashboard />
-      case 'financeiro':
-        return <FinanceiroDashboard />
-      case 'gerente':
-        return <GerenteDashboard />
-      case 'admin':
-        return <AdminDashboard />
-      default:
-        // Fallback: usar dashboard genérico para roles não mapeados
-        break
-    }
-  }
-
-  // 📊 DASHBOARD GENÉRICO (FALLBACK)
-  // Usado quando feature flag está desabilitada ou role não tem dashboard específico
-  
-  // Cache timestamps to prevent unnecessary refetches
+  // Cache timestamps
   const lastFetchRef = useRef<number>(0)
   const isFetchingRef = useRef<boolean>(false)
 
-  // Load chart data for selected period (separate from full dashboard load)
-  // This allows changing the chart period without reloading metrics and top products
+  // Load chart data for selected period
   const loadChartData = useCallback(async (days: 7 | 14 | 30) => {
     try {
       setChartLoading(true)
@@ -115,7 +86,6 @@ export default function DashboardPage() {
         setVendasPeriodo(vendasResponse.data)
       }
     } catch (error) {
-      // Fallback para dados vazios se API falhar
       setVendasPeriodo([])
     } finally {
       setChartLoading(false)
@@ -129,13 +99,11 @@ export default function DashboardPage() {
 
   const loadDashboardData = useCallback(async (force = false) => {
     const now = Date.now()
-    
-    // If data was fetched recently and not forcing, skip
+
     if (!force && now - lastFetchRef.current < CACHE_DURATION) {
       return
     }
-    
-    // Prevent multiple simultaneous fetches
+
     if (isFetchingRef.current) {
       return
     }
@@ -143,15 +111,14 @@ export default function DashboardPage() {
     try {
       isFetchingRef.current = true
       setLoading(true)
-      
-      // 🚀 PARALLEL LOADING - Load all dashboard data simultaneously
+
+      // Parallel loading
       const [metricsResponse, productsResponse, vendasResponse] = await Promise.all([
         dashboardService.getMetrics(),
         dashboardService.getTopProducts(),
         dashboardService.getVendasPeriodo(selectedPeriod)
       ])
-      
-      // 📊 PROCESS METRICS
+
       if (metricsResponse.success && metricsResponse.data) {
         const mappedMetrics: MetricCard[] = metricsResponse.data.map((metric) => ({
           ...metric,
@@ -159,21 +126,17 @@ export default function DashboardPage() {
         }))
         setMetrics(mappedMetrics)
       }
-      
-      // 📈 PROCESS TOP PRODUCTS
+
       if (productsResponse.success && productsResponse.data) {
         setTopProducts(productsResponse.data)
       }
-      
-      // 📊 PROCESS SALES DATA
+
       if (vendasResponse.success && vendasResponse.data) {
         setVendasPeriodo(vendasResponse.data)
       }
-      
-      // Update cache timestamp
+
       lastFetchRef.current = now
     } catch (error) {
-      // Fallback para dados vazios se API falhar
       setMetrics([])
       setTopProducts([])
       setVendasPeriodo([])
@@ -205,18 +168,16 @@ export default function DashboardPage() {
       onSubmit: async (values: VendaFormValues) => {
         try {
           updateModalLoading(true)
-          // Salvar venda via API
           const response = await vendasService.create(values)
           if (response.success) {
-            await loadDashboardData(true) // Force refresh after successful operation
+            await loadDashboardData(true)
             close()
-            // Mostrar mensagem de sucesso
-            window.alert(response.message || '✅ Venda realizada com sucesso! Estoque atualizado.')
+            window.alert(response.message || '✅ Venda realizada com sucesso!')
           } else {
-            window.alert('❌ Erro ao criar venda: ' + (response.message || response.error || 'não especificado'))
+            window.alert('❌ Erro: ' + (response.message || response.error))
           }
         } catch (error) {
-          window.alert('❌ Erro ao salvar venda. Tente novamente.')
+          window.alert('❌ Erro ao salvar venda')
         } finally {
           updateModalLoading(false)
         }
@@ -229,13 +190,12 @@ export default function DashboardPage() {
       onSubmit: async (values: ProdutoFormValues) => {
         try {
           updateModalLoading(true)
-          // Persist the product via API and reload dashboard if successful
           const response = await produtosService.create(values)
           if (response.success) {
-            await loadDashboardData(true) // Force refresh after successful operation
+            await loadDashboardData(true)
             close()
           } else {
-            window.alert('Erro ao criar produto: ' + (response.message || response.error || 'não especificado'))
+            window.alert('Erro: ' + (response.message || response.error))
           }
         } catch (error) {
         } finally {
@@ -250,18 +210,16 @@ export default function DashboardPage() {
       onSubmit: async (values: ClienteFormValues) => {
         try {
           updateModalLoading(true)
-          // Salvar cliente via API
           const response = await clientesService.create(values)
           if (response.success) {
-            await loadDashboardData(true) // Force refresh after successful operation
+            await loadDashboardData(true)
             close()
-            // Mostrar mensagem de sucesso
             window.alert('✅ Cliente cadastrado com sucesso!')
           } else {
-            window.alert('❌ Erro ao criar cliente: ' + (response.message || response.error || 'não especificado'))
+            window.alert('❌ Erro: ' + (response.message || response.error))
           }
         } catch (error) {
-          window.alert('❌ Erro ao salvar cliente. Tente novamente.')
+          window.alert('❌ Erro ao salvar cliente')
         } finally {
           updateModalLoading(false)
         }
@@ -274,18 +232,16 @@ export default function DashboardPage() {
       onSubmit: async (values: MovimentacaoFormValues) => {
         try {
           updateModalLoading(true)
-          // Salvar movimentação via API
           const response = await movimentacoesService.create(values)
           if (response.success) {
-            await loadDashboardData(true) // Force refresh after successful operation
+            await loadDashboardData(true)
             close()
-            // Mostrar mensagem de sucesso
-            window.alert('✅ Movimentação cadastrada com sucesso!')
+            window.alert('✅ Movimentação cadastrada!')
           } else {
-            window.alert('❌ Erro ao criar movimentação: ' + (response.message || response.error || 'não especificado'))
+            window.alert('❌ Erro: ' + (response.message || response.error))
           }
         } catch (error) {
-          window.alert('❌ Erro ao salvar movimentação. Tente novamente.')
+          window.alert('❌ Erro ao salvar movimentação')
         } finally {
           updateModalLoading(false)
         }
@@ -293,59 +249,40 @@ export default function DashboardPage() {
     })
   }, [close, loadDashboardData, open, updateModalLoading])
 
-  // Funções para formulários
-  const handleNovaVenda = showVendaModal
-  const handleNovoProduto = showProdutoModal
-  const handleNovoCliente = showClienteModal
-  const handleNovaMovimentacao = showMovimentacaoModal
-
-  const handleVerRelatorios = () => {
-    // Redirecionar para página de relatórios usando Next.js routing
-    router.push('/relatorios')
-  }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Visão geral do seu negócio</p>
-        </div>
-      </div>
+      {/* Welcome Card */}
+      <WelcomeCard
+        name={userName || 'Administrador'}
+        role="Administrador"
+        message="Bem-vindo ao painel administrativo completo"
+      />
 
-      {/* Quick Actions - Botões de Acesso Rápido */}
+      {/* Quick Actions */}
       <AnimatedCard>
         <CardHeader>
           <CardTitle>Ações Rápidas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             <Button
               className="bg-meguispet-primary hover:bg-meguispet-primary/90 h-20 flex-col"
-              onClick={handleNovaVenda}
+              onClick={showVendaModal}
             >
               <ShoppingCart className="h-6 w-6 mb-2" />
               <span className="text-sm">Nova Venda</span>
             </Button>
             <Button
               variant="outline"
-              onClick={handleNovoProduto}
+              onClick={showProdutoModal}
               className="h-20 flex-col"
             >
               <Package className="h-6 w-6 mb-2" />
-              <span className="text-sm">Cadastrar Produto</span>
+              <span className="text-sm">Novo Produto</span>
             </Button>
             <Button
               variant="outline"
-              onClick={handleNovoCliente}
+              onClick={showClienteModal}
               className="h-20 flex-col"
             >
               <Users className="h-6 w-6 mb-2" />
@@ -353,39 +290,46 @@ export default function DashboardPage() {
             </Button>
             <Button
               variant="outline"
-              onClick={handleNovaMovimentacao}
+              onClick={showMovimentacaoModal}
               className="h-20 flex-col"
             >
               <Package2 className="h-6 w-6 mb-2" />
-              <span className="text-sm">Nova Movimentação</span>
+              <span className="text-sm">Movimentação</span>
             </Button>
             <Button
               variant="outline"
-              onClick={handleVerRelatorios}
+              onClick={() => router.push('/vendedores')}
               className="h-20 flex-col"
             >
-              <Eye className="h-6 w-6 mb-2" />
-              <span className="text-sm">Ver Relatórios</span>
+              <UserCheck className="h-6 w-6 mb-2" />
+              <span className="text-sm">Vendedores</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/usuarios')}
+              className="h-20 flex-col"
+            >
+              <Settings className="h-6 w-6 mb-2" />
+              <span className="text-sm">Usuários</span>
             </Button>
           </div>
         </CardContent>
       </AnimatedCard>
 
-      {/* Customizable Chart - Full Width */}
-      <DashboardChart 
-        data={vendasPeriodo} 
+      {/* Chart */}
+      <DashboardChart
+        data={vendasPeriodo}
         loading={loading || chartLoading}
         selectedPeriod={selectedPeriod}
         onPeriodChange={handlePeriodChange}
       />
 
-      {/* Top Products Table - Full Width */}
+      {/* Top Products */}
       <TopProductsTable data={topProducts} loading={loading} />
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {loading ? (
-          // Loading skeleton
           Array.from({ length: 4 }).map((_, index) => (
             <Card key={index} className="animate-pulse">
               <CardHeader className="space-y-0 pb-2">
@@ -397,7 +341,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           ))
-        ) : metrics.length > 0 ? (
+        ) : (
           metrics.map((metric, index) => {
             const Icon = metric.icon
             return (
@@ -412,39 +356,13 @@ export default function DashboardPage() {
                   <div className="text-2xl font-bold text-gray-900 break-words">
                     {metric.value}
                   </div>
-                  <div className="flex items-center text-xs">
-                    {metric.changeType === 'positive' ? (
-                      <TrendingUp className="mr-1 h-3 w-3 text-green-600 flex-shrink-0" />
-                    ) : (
-                      <TrendingDown className="mr-1 h-3 w-3 text-red-600 flex-shrink-0" />
-                    )}
-                    <span className={cn(
-                      'whitespace-nowrap',
-                      metric.changeType === 'positive'
-                        ? 'text-green-600'
-                        : 'text-red-600'
-                    )}>
-                      {metric.change}
-                    </span>
-                    <span className="text-gray-500 ml-1 truncate">vs. ontem</span>
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {metric.change} vs. ontem
+                  </p>
                 </CardContent>
               </AnimatedCard>
             )
           })
-        ) : (
-          // Fallback quando não há dados
-          <div className="col-span-full">
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <Package className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum dado disponível</h3>
-                <p className="text-gray-600 text-center">
-                  Os dados do dashboard serão carregados quando houver vendas e produtos cadastrados
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         )}
       </div>
     </div>

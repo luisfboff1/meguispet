@@ -31,18 +31,33 @@ export default function VendedoresUsuariosPage() {
     try {
       setLoading(true)
 
-      // Carregar vendedores e usu�rios em paralelo
+      // Carregar vendedores e usuários em paralelo
       const [vendedoresRes, usuariosRes] = await Promise.all([
         vendedoresService.getAll(1, 100),
         usuariosService.getAll(1, 100)
       ])
 
       if (vendedoresRes.success && vendedoresRes.data) {
-        // Enriquecer vendedores com dados do usu�rio vinculado
+        // Enriquecer vendedores com dados do usuário vinculado
+        // Handle paginated response structure
+        const vendedoresList = typeof vendedoresRes.data === 'object' && 'items' in vendedoresRes.data
+          ? (vendedoresRes.data as any).items
+          : Array.isArray(vendedoresRes.data)
+          ? vendedoresRes.data
+          : []
+
+        const usuariosList = usuariosRes.success && usuariosRes.data
+          ? (typeof usuariosRes.data === 'object' && 'items' in usuariosRes.data
+            ? (usuariosRes.data as any).items
+            : Array.isArray(usuariosRes.data)
+            ? usuariosRes.data
+            : [])
+          : []
+
         const vendedoresEnriquecidos = await Promise.all(
-          vendedoresRes.data.map(async (vendedor) => {
-            if (vendedor.usuario_id && usuariosRes.success && usuariosRes.data) {
-              const usuario = usuariosRes.data.find(u => u.id === vendedor.usuario_id)
+          vendedoresList.map(async (vendedor: Vendedor) => {
+            if (vendedor.usuario_id && usuariosList.length > 0) {
+              const usuario = usuariosList.find((u: Usuario) => u.id === vendedor.usuario_id)
               return {
                 ...vendedor,
                 usuario: usuario ? {
@@ -58,15 +73,12 @@ export default function VendedoresUsuariosPage() {
         )
 
         setVendedores(vendedoresEnriquecidos)
-      }
-
-      if (usuariosRes.success && usuariosRes.data) {
-        setUsuarios(usuariosRes.data)
+        setUsuarios(usuariosList)
       }
     } catch (error) {
       toast({
         title: 'Erro',
-        description: 'N�o foi poss�vel carregar os dados',
+        description: 'Não foi possível carregar os dados',
         variant: 'destructive'
       })
     } finally {
@@ -83,7 +95,7 @@ export default function VendedoresUsuariosPage() {
       if (response.data.success) {
         toast({
           title: 'Sucesso',
-          description: 'Vendedor vinculado ao usu�rio com sucesso'
+          description: 'Vendedor vinculado ao usuário com sucesso'
         })
         await loadData()
       } else {
@@ -110,7 +122,7 @@ export default function VendedoresUsuariosPage() {
 
   const handleUnlink = async (vendedorId: number) => {
     try {
-      const response = await api.delete(`/api/vendedores/${vendedorId}/unlink-usuario`)
+      const response = await api.delete(`/vendedores/${vendedorId}/unlink-usuario`)
 
       if (response.data.success) {
         toast({
@@ -145,17 +157,17 @@ export default function VendedoresUsuariosPage() {
     if (!vendedor || !vendedor.email) {
       toast({
         title: 'Erro',
-        description: 'Vendedor n�o possui email cadastrado',
+        description: 'Vendedor não possui email cadastrado',
         variant: 'destructive'
       })
       return
     }
 
-    const senha = window.prompt('Digite a senha para o novo usu�rio:')
+    const senha = window.prompt('Digite a senha para o novo usuário:')
     if (!senha) return
 
     try {
-      const response = await api.post(`/api/vendedores/${vendedorId}/create-usuario`, {
+      const response = await api.post(`/vendedores/${vendedorId}/create-usuario`, {
         email: vendedor.email,
         nome: vendedor.nome,
         password: senha
@@ -164,13 +176,13 @@ export default function VendedoresUsuariosPage() {
       if (response.data.success) {
         toast({
           title: 'Sucesso',
-          description: 'Usu�rio criado e vinculado com sucesso'
+          description: 'Usuário criado e vinculado com sucesso'
         })
         await loadData()
       } else {
         toast({
           title: 'Erro',
-          description: response.data.message || 'Erro ao criar usu�rio',
+          description: response.data.message || 'Erro ao criar usuário',
           variant: 'destructive'
         })
       }
@@ -196,32 +208,32 @@ export default function VendedoresUsuariosPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Users className="h-7 w-7" />
-            Gerenciar Vendedores e Usu�rios
+            Gerenciar Vendedores e Usuários
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Vincule vendedores existentes a usu�rios do sistema para rastreamento individual de vendas
+            Vincule vendedores existentes a usuários do sistema para rastreamento individual de vendas
           </p>
         </div>
 
-        {/* Prote��o Admin */}
+        {/* Proteção Admin */}
         <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
               <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div className="flex-1 text-sm">
                 <p className="font-medium text-blue-900 dark:text-blue-100">
-                  �rea Administrativa
+                  Área Administrativa
                 </p>
                 <p className="text-blue-700 dark:text-blue-300 mt-1">
-                  Esta p�gina permite gerenciar a vincula��o entre vendedores e usu�rios do sistema.
-                  Apenas administradores t�m acesso a esta funcionalidade.
+                  Esta página permite gerenciar a vinculação entre vendedores e usuários do sistema.
+                  Apenas administradores têm acesso a esta funcionalidade.
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Conte�do Principal */}
+        {/* Conteúdo Principal */}
         {loading ? (
           <Card>
             <CardContent className="flex items-center justify-center py-12">

@@ -74,7 +74,7 @@ export default async function handler(
         *,
         cliente:cliente_id(id, nome, documento, telefone, email),
         vendedor:vendedor_id(id, nome, email, comissao),
-        itens:itens_venda(
+        itens:vendas_itens(
           *,
           produto:produto_id(id, nome, preco_venda)
         ),

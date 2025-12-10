@@ -25,6 +25,9 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ApiResponse>
 ) {
+  // Set UTF-8 encoding for proper character display
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({
@@ -140,7 +143,7 @@ export default async function handler(
       })
     }
 
-    // Link vendedor to usuario (trigger will sync bidirectionally)
+    // Link vendedor to usuario with bidirectional sync
     const { error: updateError } = await supabase
       .from('vendedores')
       .update({
@@ -155,6 +158,20 @@ export default async function handler(
         success: false,
         error: 'Erro ao vincular vendedor ao usuário'
       })
+    }
+
+    // Sync bidirectional relationship: update usuario.vendedor_id
+    const { error: syncError } = await supabase
+      .from('usuarios')
+      .update({
+        vendedor_id: parseInt(id),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', usuario_id)
+
+    if (syncError) {
+      console.error('Error syncing usuario.vendedor_id:', syncError)
+      // Don't fail the request, but log the error
     }
 
     return res.status(200).json({

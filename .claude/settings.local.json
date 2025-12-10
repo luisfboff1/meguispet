@@ -50,7 +50,8 @@
       "Bash(pnpm install:*)",
       "WebSearch",
       "Bash(npm run lint)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(doppler run:*)"
     ],
     "deny": [],
     "ask": []
