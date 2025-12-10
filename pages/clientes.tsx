@@ -8,6 +8,7 @@ import {
   Search,
   Filter,
   Download,
+  Upload,
   Eye,
   Edit,
   Trash2,
@@ -21,6 +22,7 @@ import {
 import { clientesService } from '@/services/api'
 import type { Cliente, ClienteForm as ClienteFormValues } from '@/types'
 import ClienteForm from '@/components/forms/ClienteForm'
+import ClienteImportModal from '@/components/modals/ClienteImportModal'
 import Toast from '@/components/ui/Toast'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { formatLocalDate } from '@/lib/utils'
@@ -32,6 +34,7 @@ export default function ClientesPage() {
   const [tipoFiltro, setTipoFiltro] = useState<'todos' | 'cliente' | 'fornecedor' | 'ambos'>('cliente')
   const [showInactive, setShowInactive] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' | 'info' } | null>(null)
@@ -86,6 +89,15 @@ export default function ClientesPage() {
   const handleNovoCliente = () => {
     setEditingCliente(null)
     setShowForm(true)
+  }
+
+  const handleImportarClientes = () => {
+    setShowImportModal(true)
+  }
+
+  const handleImportSuccess = () => {
+    loadClientes()
+    setToast({ message: 'Clientes importados com sucesso!', type: 'success' })
   }
 
   const handleEditarCliente = (cliente: Cliente) => {
@@ -365,12 +377,19 @@ export default function ClientesPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button 
+          <Button
             className="bg-meguispet-primary hover:bg-meguispet-primary/90"
             onClick={handleNovoCliente}
           >
             <Plus className="mr-2 h-4 w-4" />
             Novo Cliente
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleImportarClientes}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Importar
           </Button>
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
@@ -524,6 +543,13 @@ export default function ClientesPage() {
           />
         </div>
       )}
+
+      {/* Modal de Importação */}
+      <ClienteImportModal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccess={handleImportSuccess}
+      />
     </div>
   )
 }

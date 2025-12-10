@@ -37,7 +37,6 @@ export default function VendasPage() {
   const [vendas, setVendas] = useState<Venda[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
   const [showForm, setShowForm] = useState(false)
   const [editingVenda, setEditingVenda] = useState<Venda | null>(null)
   const [formLoading, setFormLoading] = useState(false)
@@ -67,7 +66,7 @@ export default function VendasPage() {
 
   useEffect(() => {
     loadVendas()
-  }, [currentPage])
+  }, [])
 
   useEffect(() => {
     if (activeTab === 'condicoes') {
@@ -78,7 +77,8 @@ export default function VendasPage() {
   const loadVendas = async () => {
     try {
       setLoading(true)
-      const response = await vendasService.getAll(currentPage, 10)
+      // Carregar TODAS as vendas de uma vez (limit = 1000) para paginação no frontend
+      const response = await vendasService.getAll(1, 1000)
       if (response.success && response.data) {
         setVendas(response.data)
         if (selectedVenda) {
