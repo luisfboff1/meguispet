@@ -73,6 +73,38 @@ export default function VendaPDFPreviewModal({
     return formatLocalDate(dateString)
   }
 
+  const formatCNPJ = (cnpj: string | null | undefined): string => {
+    if (!cnpj) return ''
+
+    // Remove todos os caracteres não numéricos
+    const numbers = cnpj.replace(/\D/g, '')
+
+    // Formata CNPJ (14 dígitos) ou CPF (11 dígitos)
+    if (numbers.length === 14) {
+      return numbers.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
+    } else if (numbers.length === 11) {
+      return numbers.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4')
+    }
+
+    // Se não tiver 11 ou 14 dígitos, retorna como está
+    return cnpj
+  }
+
+  const formatCEP = (cep: string | null | undefined): string => {
+    if (!cep) return ''
+
+    // Remove todos os caracteres não numéricos
+    const numbers = cep.replace(/\D/g, '')
+
+    // Formata CEP (8 dígitos)
+    if (numbers.length === 8) {
+      return numbers.replace(/^(\d{5})(\d{3})$/, '$1-$2')
+    }
+
+    // Se não tiver 8 dígitos, retorna como está
+    return cep
+  }
+
   // Verificar se tem os novos campos de impostos (IPI, ICMS, ST)
   const hasNovosImpostos = venda.total_ipi != null || venda.total_icms != null || venda.total_st != null
 
@@ -217,7 +249,7 @@ export default function VendaPDFPreviewModal({
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs text-muted-foreground">MEGUISPET Produtos Pets LTDA</p>
-                      <p className="text-xs text-muted-foreground">CNPJ: 60.826.400/0001-82</p>
+                      <p className="text-xs text-muted-foreground">CNPJ: {formatCNPJ('60826400000182')}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium">Pedido: {venda.numero_venda || `#${venda.id}`}</p>
@@ -236,7 +268,12 @@ export default function VendaPDFPreviewModal({
                         </div>
                         {venda.cliente?.documento && (
                           <div>
-                            <span className="font-medium">CNPJ/CPF:</span> {venda.cliente.documento}
+                            <span className="font-medium">CNPJ/CPF:</span> {formatCNPJ(venda.cliente.documento)}
+                          </div>
+                        )}
+                        {venda.cliente?.inscricao_estadual && (
+                          <div className="col-span-2">
+                            <span className="font-medium">Inscrição Estadual:</span> {venda.cliente.inscricao_estadual}
                           </div>
                         )}
                         {options.incluirEnderecoCompleto && (
@@ -251,9 +288,19 @@ export default function VendaPDFPreviewModal({
                                 <span className="font-medium">Bairro:</span> {venda.cliente.bairro}
                               </div>
                             )}
+                            {venda.cliente?.cep && (
+                              <div>
+                                <span className="font-medium">CEP:</span> {formatCEP(venda.cliente.cep)}
+                              </div>
+                            )}
                             {venda.cliente?.cidade && (
                               <div>
                                 <span className="font-medium">Cidade:</span> {venda.cliente.cidade}
+                              </div>
+                            )}
+                            {venda.cliente?.estado && (
+                              <div>
+                                <span className="font-medium">Estado:</span> {venda.cliente.estado}
                               </div>
                             )}
                           </>

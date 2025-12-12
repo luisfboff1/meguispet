@@ -4,6 +4,54 @@ import type { Venda, ItemVenda } from '@/types'
 import { formatLocalDate } from './utils'
 
 /**
+ * Formata CNPJ para o padrão XX.XXX.XXX/XXXX-XX ou CPF para XXX.XXX.XXX-XX
+ */
+const formatCNPJ = (cnpj: string | null | undefined): string => {
+  if (!cnpj) return ''
+
+  // Remove todos os caracteres não numéricos
+  const numbers = cnpj.replace(/\D/g, '')
+
+  // Formata CNPJ (14 dígitos) ou CPF (11 dígitos)
+  if (numbers.length === 14) {
+    return numbers.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
+  } else if (numbers.length === 11) {
+    return numbers.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4')
+  }
+
+  // Se não tiver 11 ou 14 dígitos, retorna como está
+  return cnpj
+}
+
+/**
+ * Formata CEP para o padrão XXXXX-XXX
+ */
+const formatCEP = (cep: string | null | undefined): string => {
+  if (!cep) return ''
+
+  // Remove todos os caracteres não numéricos
+  const numbers = cep.replace(/\D/g, '')
+
+  // Formata CEP (8 dígitos)
+  if (numbers.length === 8) {
+    return numbers.replace(/^(\d{5})(\d{3})$/, '$1-$2')
+  }
+
+  // Se não tiver 8 dígitos, retorna como está
+  return cep
+}
+
+/**
+ * Formata valor monetário para o padrão brasileiro (X.XXX,XX)
+ */
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value)
+}
+
+/**
  * Helper function to extract payment method name from venda
  */
 const getPaymentMethodName = (venda: Venda): string => {
@@ -11,12 +59,12 @@ const getPaymentMethodName = (venda: Venda): string => {
   if (venda.forma_pagamento_detalhe?.nome) {
     return venda.forma_pagamento_detalhe.nome
   }
-  
+
   // Priority 2: forma_pagamento as string
   if (typeof venda.forma_pagamento === 'string' && venda.forma_pagamento) {
     return venda.forma_pagamento
   }
-  
+
   // Default fallback
   return 'N/A'
 }
@@ -100,11 +148,11 @@ export const generateOrderPDF = async (
   doc.setFont('helvetica', 'bold')
   const empresaNome = 'Meguispet Produtos Pets LTDA'
   doc.text(empresaNome, margin + 25, yPos + 6)
-  
+
   // CNPJ da empresa abaixo do nome
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  doc.text('60.826.400/0001-82', margin + 25, yPos + 12)
+  doc.text(`CNPJ: ${formatCNPJ('60826400000182')}`, margin + 25, yPos + 12)
   
   yPos += 22
 
@@ -124,12 +172,12 @@ export const generateOrderPDF = async (
     doc.text(clienteNome, margin + 20, yPos)
     yPos += 6
 
-    // CNPJ/CPF abaixo do nome - sempre exibir o campo
+    // CNPJ/CPF abaixo do nome - sempre exibir o campo formatado
     doc.setFont('helvetica', 'bold')
-    doc.text('CNPJ:', margin, yPos)
+    doc.text('CNPJ/CPF:', margin, yPos)
     doc.setFont('helvetica', 'normal')
-    const clienteDocumento = venda.cliente?.documento || ''
-    doc.text(clienteDocumento, margin + 20, yPos)
+    const clienteDocumento = formatCNPJ(venda.cliente?.documento)
+    doc.text(clienteDocumento || 'N/A', margin + 25, yPos)
     yPos += 6
 
     // Inscrição Estadual - exibir se disponível
@@ -151,11 +199,11 @@ export const generateOrderPDF = async (
         yPos += 6
       }
 
-      // Bairro e Cidade na mesma linha
+      // Bairro e CEP na mesma linha
       const hasBairro = venda.cliente?.bairro
-      const hasCidade = venda.cliente?.cidade
+      const hasCEP = venda.cliente?.cep
 
-      if (hasBairro || hasCidade) {
+      if (hasBairro || hasCEP) {
         if (hasBairro) {
           doc.setFont('helvetica', 'bold')
           doc.text('BAIRRO:', margin, yPos)
@@ -163,13 +211,34 @@ export const generateOrderPDF = async (
           doc.text(venda.cliente!.bairro!, margin + 20, yPos)
         }
 
-        if (hasCidade) {
-          const cidadeX = hasBairro ? pageWidth / 2 : margin
-          const cidadeLabel = hasBairro ? pageWidth / 2 : margin
+        if (hasCEP) {
+          const cepX = hasBairro ? pageWidth / 2 : margin
           doc.setFont('helvetica', 'bold')
-          doc.text('CIDADE:', cidadeX, yPos)
+          doc.text('CEP:', cepX, yPos)
           doc.setFont('helvetica', 'normal')
-          doc.text(venda.cliente!.cidade!, cidadeX + 20, yPos)
+          doc.text(formatCEP(venda.cliente!.cep!), cepX + 12, yPos)
+        }
+        yPos += 6
+      }
+
+      // Cidade e Estado na mesma linha
+      const hasCidade = venda.cliente?.cidade
+      const hasEstado = venda.cliente?.estado
+
+      if (hasCidade || hasEstado) {
+        if (hasCidade) {
+          doc.setFont('helvetica', 'bold')
+          doc.text('CIDADE:', margin, yPos)
+          doc.setFont('helvetica', 'normal')
+          doc.text(venda.cliente!.cidade!, margin + 20, yPos)
+        }
+
+        if (hasEstado) {
+          const estadoX = hasCidade ? pageWidth / 2 : margin
+          doc.setFont('helvetica', 'bold')
+          doc.text('ESTADO:', estadoX, yPos)
+          doc.setFont('helvetica', 'normal')
+          doc.text(venda.cliente!.estado!, estadoX + 18, yPos)
         }
         yPos += 6
       }
@@ -289,42 +358,42 @@ export const generateOrderPDF = async (
       const row = [
         item.produto?.nome || 'Produto sem nome',
         item.quantidade.toString().replace('.', ','),
-        `R$ ${item.preco_unitario.toFixed(2).replace('.', ',')}`,
-        `R$ ${(item.subtotal_bruto || item.subtotal || 0).toFixed(2).replace('.', ',')}`
+        `R$ ${formatCurrency(item.preco_unitario)}`,
+        `R$ ${formatCurrency(item.subtotal_bruto || item.subtotal || 0)}`
       ]
       if (valorDesconto > 0) {
-        row.push(item.desconto_proporcional ? `-R$ ${item.desconto_proporcional.toFixed(2).replace('.', ',')}` : '-')
+        row.push(item.desconto_proporcional ? `-R$ ${formatCurrency(item.desconto_proporcional)}` : '-')
       }
-      row.push(`R$ ${(item.subtotal_liquido || (item.subtotal - (item.desconto_proporcional || 0))).toFixed(2).replace('.', ',')}`)
+      row.push(`R$ ${formatCurrency(item.subtotal_liquido || (item.subtotal - (item.desconto_proporcional || 0)))}`)
       if (totalIPI > 0) {
-        row.push(item.ipi_valor ? `R$ ${item.ipi_valor.toFixed(2).replace('.', ',')}` : '-')
+        row.push(item.ipi_valor ? `R$ ${formatCurrency(item.ipi_valor)}` : '-')
       }
       if (totalICMS > 0) {
-        row.push(item.icms_valor ? `R$ ${item.icms_valor.toFixed(2).replace('.', ',')}` : '-')
+        row.push(item.icms_valor ? `R$ ${formatCurrency(item.icms_valor)}` : '-')
       }
       if (totalST > 0) {
-        row.push(item.st_valor ? `R$ ${item.st_valor.toFixed(2).replace('.', ',')}` : '-')
+        row.push(item.st_valor ? `R$ ${formatCurrency(item.st_valor)}` : '-')
       }
-      row.push(`R$ ${(item.total_item || item.subtotal).toFixed(2).replace('.', ',')}`)
+      row.push(`R$ ${formatCurrency(item.total_item || item.subtotal)}`)
       return row
     })
     
     // Footer com totais por coluna
-    const footerRow = ['TOTAIS', '', '', `R$ ${totalProdutosBruto.toFixed(2).replace('.', ',')}`]
+    const footerRow = ['TOTAIS', '', '', `R$ ${formatCurrency(totalProdutosBruto)}`]
     if (valorDesconto > 0) {
-      footerRow.push(`-R$ ${valorDesconto.toFixed(2).replace('.', ',')}`)
+      footerRow.push(`-R$ ${formatCurrency(valorDesconto)}`)
     }
-    footerRow.push(`R$ ${totalProdutosLiquido.toFixed(2).replace('.', ',')}`)
+    footerRow.push(`R$ ${formatCurrency(totalProdutosLiquido)}`)
     if (totalIPI > 0) {
-      footerRow.push(`R$ ${totalIPI.toFixed(2).replace('.', ',')}`)
+      footerRow.push(`R$ ${formatCurrency(totalIPI)}`)
     }
     if (totalICMS > 0) {
-      footerRow.push(`R$ ${totalICMS.toFixed(2).replace('.', ',')}`)
+      footerRow.push(`R$ ${formatCurrency(totalICMS)}`)
     }
     if (totalST > 0) {
-      footerRow.push(`R$ ${totalST.toFixed(2).replace('.', ',')}`)
+      footerRow.push(`R$ ${formatCurrency(totalST)}`)
     }
-    footerRow.push(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`)
+    footerRow.push(`R$ ${formatCurrency(totalFinal)}`)
     
     autoTable(doc, {
       startY: yPos,
@@ -333,10 +402,12 @@ export const generateOrderPDF = async (
       foot: [footerRow],
       theme: 'plain',
       styles: {
-        fontSize: 7,
-        cellPadding: 2,
+        fontSize: 6,
+        cellPadding: 1.5,
         lineColor: [0, 0, 0],
         lineWidth: 0.1,
+        overflow: 'linebreak',
+        cellWidth: 'wrap',
       },
       headStyles: {
         fillColor: [255, 255, 255],
@@ -344,25 +415,26 @@ export const generateOrderPDF = async (
         fontStyle: 'bold',
         halign: 'center',
         lineWidth: { bottom: 0.3, top: 0.3 },
-        fontSize: 7,
+        fontSize: 6,
       },
       bodyStyles: {
         textColor: [0, 0, 0],
-        fontSize: 7,
+        fontSize: 6,
       },
       footStyles: {
         fillColor: [220, 220, 220],
         textColor: [0, 0, 0],
         fontStyle: 'bold',
-        fontSize: 11,
+        fontSize: 8,
         lineWidth: { top: 0.5, bottom: 0.5 },
+        minCellHeight: 6,
       },
       columnStyles: {
         0: { cellWidth: 'auto', halign: 'left' },
-        1: { cellWidth: 12, halign: 'center' },
-        2: { cellWidth: 18, halign: 'right' },
-        3: { cellWidth: 18, halign: 'right' },
-        ...(valorDesconto > 0 ? { 4: { cellWidth: 16, halign: 'right' } } : {}),
+        1: { cellWidth: 10, halign: 'center' },
+        2: { cellWidth: 16, halign: 'right' },
+        3: { cellWidth: 16, halign: 'right' },
+        ...(valorDesconto > 0 ? { 4: { cellWidth: 14, halign: 'right' } } : {}),
       },
       didDrawPage: (data) => {
         yPos = data.cursor?.y || yPos
@@ -374,8 +446,8 @@ export const generateOrderPDF = async (
       item.produto?.id?.toString() || '',
       item.produto?.nome || 'Produto sem nome',
       item.quantidade.toString().replace('.', ','),
-      `R$ ${item.preco_unitario.toFixed(2).replace('.', ',')}`,
-      `R$ ${item.subtotal.toFixed(2).replace('.', ',')}`
+      `R$ ${formatCurrency(item.preco_unitario)}`,
+      `R$ ${formatCurrency(item.subtotal)}`
     ])
 
     autoTable(doc, {
@@ -384,10 +456,12 @@ export const generateOrderPDF = async (
       body: tableData,
       theme: 'plain',
       styles: {
-        fontSize: 9,
-        cellPadding: 3,
+        fontSize: 8,
+        cellPadding: 2,
         lineColor: [0, 0, 0],
         lineWidth: 0.1,
+        overflow: 'linebreak',
+        cellWidth: 'wrap',
       },
       headStyles: {
         fillColor: [255, 255, 255],
@@ -395,16 +469,18 @@ export const generateOrderPDF = async (
         fontStyle: 'bold',
         halign: 'left',
         lineWidth: { bottom: 0.3, top: 0.3 },
+        fontSize: 8,
       },
       bodyStyles: {
         textColor: [0, 0, 0],
+        fontSize: 8,
       },
       columnStyles: {
-        0: { cellWidth: 20, halign: 'center' },
+        0: { cellWidth: 18, halign: 'center' },
         1: { cellWidth: 'auto' },
-        2: { cellWidth: 20, halign: 'center' },
-        3: { cellWidth: 30, halign: 'right' },
-        4: { cellWidth: 30, halign: 'right' },
+        2: { cellWidth: 18, halign: 'center' },
+        3: { cellWidth: 28, halign: 'right' },
+        4: { cellWidth: 28, halign: 'right' },
       },
       didDrawPage: (data) => {
         yPos = data.cursor?.y || yPos
@@ -416,30 +492,31 @@ export const generateOrderPDF = async (
 
   // ==================== TOTAIS ====================
   // Ajustar posição baseada no tamanho da página para ser responsivo
-  const totalsX = pageWidth - margin - 70
+  const totalsX = pageWidth - margin - 60
   const valueX = pageWidth - margin - 5 // Valores sempre alinhados à direita com margem fixa
 
-  doc.setFontSize(10)
+  doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
 
   // Mostrar resumo de totais apenas se não tiver os novos impostos (já mostrados na tabela)
   if (!hasNovosImpostos) {
     // Total de Produtos
     doc.text('Total de Produtos:', totalsX, yPos)
-    doc.text(`R$ ${totalProdutosBruto.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
-    yPos += 5
+    doc.text(`R$ ${formatCurrency(totalProdutosBruto)}`, valueX, yPos, { align: 'right' })
+    yPos += 4.5
 
     // Desconto (se aplicável)
     if (valorDesconto > 0) {
       doc.text('Desconto:', totalsX, yPos)
-      doc.text(`R$ ${valorDesconto.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
-      yPos += 5
+      doc.text(`R$ ${formatCurrency(valorDesconto)}`, valueX, yPos, { align: 'right' })
+      yPos += 4.5
     }
 
     // Total final - mostrar "TOTAL COM IMPOSTO" apenas se houver imposto e incluirImpostos estiver ativo
     doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
     doc.text(hasImposto && opts.incluirImpostos ? 'TOTAL COM IMPOSTO:' : 'TOTAL:', totalsX, yPos)
-    doc.text(`R$ ${totalFinal.toFixed(2).replace('.', ',')}`, valueX, yPos, { align: 'right' })
+    doc.text(`R$ ${formatCurrency(totalFinal)}`, valueX, yPos, { align: 'right' })
     yPos += 8
   }
 
@@ -493,7 +570,7 @@ export const generateOrderPDF = async (
 
     // IPI (se houver)
     if (totalIPI > 0) {
-      fiscalTableData.push(['IPI', `R$ ${totalIPI.toFixed(2).replace('.', ',')}`])
+      fiscalTableData.push(['IPI', `R$ ${formatCurrency(totalIPI)}`])
     }
 
     // ICMS-ST a Recolher (se houver)
@@ -502,13 +579,13 @@ export const generateOrderPDF = async (
         total_icms_st_recolher: itensParaPDF.reduce((sum, item) => sum + (item.icms_st_recolher || 0), 0)
       }
 
-      fiscalTableData.push(['ICMS-ST a Recolher', `R$ ${totaisICMSST.total_icms_st_recolher.toFixed(2).replace('.', ',')}`])
+      fiscalTableData.push(['ICMS-ST a Recolher', `R$ ${formatCurrency(totaisICMSST.total_icms_st_recolher)}`])
     }
 
     // Total de Impostos (IPI + ST, sem ICMS próprio)
     const totalImpostos = totalIPI + totalST
     if (totalImpostos > 0) {
-      fiscalTableData.push(['TOTAL DE IMPOSTOS', `R$ ${totalImpostos.toFixed(2).replace('.', ',')}`])
+      fiscalTableData.push(['TOTAL DE IMPOSTOS', `R$ ${formatCurrency(totalImpostos)}`])
     }
 
     // Criar tabela com os totalizadores
@@ -517,17 +594,20 @@ export const generateOrderPDF = async (
       body: fiscalTableData,
       theme: 'plain',
       styles: {
-        fontSize: 9,
+        fontSize: 8,
         cellPadding: 2,
         lineColor: [0, 0, 0],
         lineWidth: 0.1,
+        overflow: 'linebreak',
+        cellWidth: 'wrap',
       },
       bodyStyles: {
         textColor: [0, 0, 0],
+        fontSize: 8,
       },
       columnStyles: {
         0: { cellWidth: 'auto', fontStyle: 'bold' },
-        1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+        1: { cellWidth: 45, halign: 'right', fontStyle: 'bold' },
       },
       didDrawPage: (data) => {
         yPos = data.cursor?.y || yPos
@@ -572,7 +652,7 @@ export const generateOrderPDF = async (
     parcelasTableData = parcelasOrdenadas.map((parcela) => [
       parcela.numero_parcela.toString(),
       formatLocalDate(parcela.data_vencimento),
-      `R$ ${parcela.valor_parcela.toFixed(2).replace('.', ',')}`
+      `R$ ${formatCurrency(parcela.valor_parcela)}`
     ])
   } else {
     // Se não houver parcelas (venda à vista), criar uma parcela única
@@ -580,7 +660,7 @@ export const generateOrderPDF = async (
     parcelasTableData = [[
       '1',
       formatLocalDate(dataVencimento),
-      `R$ ${totalFinal.toFixed(2).replace('.', ',')}`
+      `R$ ${formatCurrency(totalFinal)}`
     ]]
   }
 
@@ -591,10 +671,12 @@ export const generateOrderPDF = async (
     body: parcelasTableData,
     theme: 'plain',
     styles: {
-      fontSize: 9,
+      fontSize: 8,
       cellPadding: 2,
       lineColor: [0, 0, 0],
       lineWidth: 0.1,
+      overflow: 'linebreak',
+      cellWidth: 'wrap',
     },
     headStyles: {
       fillColor: [255, 255, 255],
@@ -602,15 +684,16 @@ export const generateOrderPDF = async (
       fontStyle: 'bold',
       halign: 'center',
       lineWidth: { bottom: 0.3, top: 0.3 },
-      fontSize: 9,
+      fontSize: 8,
     },
     bodyStyles: {
       textColor: [0, 0, 0],
+      fontSize: 8,
     },
     columnStyles: {
-      0: { cellWidth: 30, halign: 'center' },
+      0: { cellWidth: 28, halign: 'center' },
       1: { cellWidth: 'auto', halign: 'center' },
-      2: { cellWidth: 50, halign: 'right' },
+      2: { cellWidth: 45, halign: 'right' },
     },
     didDrawPage: (data) => {
       yPos = data.cursor?.y || yPos
