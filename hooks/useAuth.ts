@@ -442,6 +442,40 @@ export function useAuth() {
     [setCredentials, setStatus]
   )
 
+  /**
+   * Recarrega dados do usuário (útil após admin alterar permissões)
+   */
+  const refreshUser = useCallback(async (): Promise<boolean> => {
+    try {
+      if (!token) return false
+
+      const supabase = getSupabaseBrowser()
+      const { data: session } = await supabase.auth.getSession()
+
+      if (!session?.session) return false
+
+      // Buscar perfil atualizado do usuário
+      const response = await authService.getProfile()
+
+      if (response.success && response.data) {
+        // Atualizar store com novas permissões
+        setCredentials(response.data, session.session.access_token)
+
+        // Atualizar localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(response.data))
+        }
+
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.error('❌ useAuth: Error refreshing user', error)
+      return false
+    }
+  }, [token, setCredentials])
+
   return {
     user,
     token,
@@ -449,6 +483,7 @@ export function useAuth() {
     isAuthenticated,
     status,
     login,
-    logout: handleLogout
+    logout: handleLogout,
+    refreshUser, // 🆕 Nova função para recarregar permissões
   }
 }

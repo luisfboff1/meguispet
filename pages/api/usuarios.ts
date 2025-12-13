@@ -4,6 +4,7 @@ import {
   AuthenticatedRequest,
   withSupabaseAuth,
 } from "@/lib/supabase-middleware";
+import { getSupabaseServiceRole } from "@/lib/supabase-auth";
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
@@ -13,12 +14,50 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const supabase = req.supabaseClient;
 
     if (method === "GET") {
+      // HOTFIX: Admin needs to see all users, but RLS only allows own record
+      // Solution: Check if user is admin, then use service role
+
+      // Get current user from auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        return res.status(401).json({
+          success: false,
+          message: "Não autenticado",
+        });
+      }
+
+      // Get current user's tipo_usuario (RLS allows reading own record)
+      const { data: currentUser, error: userError } = await supabase
+        .from("usuarios")
+        .select("tipo_usuario")
+        .eq("supabase_user_id", user.id)
+        .single();
+
+      if (userError || !currentUser) {
+        return res.status(403).json({
+          success: false,
+          message: "Usuário não encontrado no sistema",
+        });
+      }
+
+      // Only admin and gerente can list all users
+      if (!['admin', 'gerente'].includes(currentUser.tipo_usuario)) {
+        return res.status(403).json({
+          success: false,
+          message: "Sem permissão para listar usuários",
+        });
+      }
+
+      // Use service role to list all users (bypasses RLS)
+      const supabaseAdmin = getSupabaseServiceRole();
+
       const { page = "1", limit = "10" } = req.query;
       const pageNum = parseInt(page as string, 10);
       const limitNum = parseInt(limit as string, 10);
       const offset = (pageNum - 1) * limitNum;
 
-      const { data: usuarios, count, error } = await supabase
+      const { data: usuarios, count, error } = await supabaseAdmin
         .from("usuarios")
         .select(
           "id, nome, email, role, tipo_usuario, roles, permissoes, permissoes_custom, vendedor_id, departamento, ativo, created_at, updated_at",
@@ -62,6 +101,32 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === "PUT") {
+      // HOTFIX: Check if user is admin before updating (use service role)
+
+      // Get current user from auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        return res.status(401).json({
+          success: false,
+          message: "Não autenticado",
+        });
+      }
+
+      // Get current user's tipo_usuario (RLS allows reading own record)
+      const { data: currentUser, error: userError } = await supabase
+        .from("usuarios")
+        .select("tipo_usuario, id")
+        .eq("supabase_user_id", user.id)
+        .single();
+
+      if (userError || !currentUser) {
+        return res.status(403).json({
+          success: false,
+          message: "Usuário não encontrado no sistema",
+        });
+      }
+
       // Accept ID from either body or query parameter
       const idFromBody = req.body?.id;
       const idFromQuery = req.query?.id;
@@ -75,6 +140,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           message: "ID do usuário é obrigatório",
         });
       }
+
+      // Check permissions: admin can update anyone, users can only update themselves
+      const isUpdatingSelf = currentUser.id === parseInt(id as string);
+      const isAdmin = ['admin', 'gerente'].includes(currentUser.tipo_usuario);
+
+      if (!isUpdatingSelf && !isAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: "Sem permissão para atualizar este usuário",
+        });
+      }
+
+      // Use appropriate client based on permissions
+      const clientToUse = isAdmin ? getSupabaseServiceRole() : supabase;
 
       // Only update metadata in usuarios table
       // Password changes should be done via Supabase Auth
@@ -100,7 +179,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         updateData.departamento = req.body.departamento;
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await clientToUse
         .from("usuarios")
         .update(updateData)
         .eq("id", id)
@@ -125,6 +204,40 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     if (method === "DELETE") {
+      // HOTFIX: Check if user is admin before deleting (use service role)
+
+      // Get current user from auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        return res.status(401).json({
+          success: false,
+          message: "Não autenticado",
+        });
+      }
+
+      // Get current user's tipo_usuario (RLS allows reading own record)
+      const { data: currentUser, error: userError } = await supabase
+        .from("usuarios")
+        .select("tipo_usuario")
+        .eq("supabase_user_id", user.id)
+        .single();
+
+      if (userError || !currentUser) {
+        return res.status(403).json({
+          success: false,
+          message: "Usuário não encontrado no sistema",
+        });
+      }
+
+      // Only admin can delete users
+      if (currentUser.tipo_usuario !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: "Sem permissão para deletar usuários",
+        });
+      }
+
       const { id } = req.query;
 
       if (!id) {
@@ -134,7 +247,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         });
       }
 
-      const { data, error } = await supabase
+      // Use service role for delete operation
+      const supabaseAdmin = getSupabaseServiceRole();
+
+      const { data, error } = await supabaseAdmin
         .from("usuarios")
         .update({ ativo: false, updated_at: new Date().toISOString() })
         .eq("id", id)

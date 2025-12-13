@@ -51,7 +51,8 @@
       "WebSearch",
       "Bash(npm run lint)",
       "Bash(tree:*)",
-      "Bash(doppler run:*)"
+      "Bash(doppler run:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

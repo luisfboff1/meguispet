@@ -144,6 +144,7 @@ export interface AppUserProfile {
   nome: string;
   tipo_usuario: string; // admin, gerente, vendedor, etc
   permissoes: Record<string, boolean> | null;
+  permissoes_custom: Record<string, boolean> | null;
   vendedor_id: number | null;
   ativo: boolean;
   supabase_user_id: string | null;
@@ -164,7 +165,7 @@ export const getUserProfile = async (
     const { data, error } = await supabase
       .from("usuarios")
       .select(
-        "id, nome, email, tipo_usuario, permissoes, vendedor_id, ativo, supabase_user_id",
+        "id, nome, email, tipo_usuario, permissoes, permissoes_custom, vendedor_id, ativo, supabase_user_id",
       )
       .eq("email", email)
       .eq("ativo", true)

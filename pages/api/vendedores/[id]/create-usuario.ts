@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import type { ApiResponse, Usuario } from '@/types'
 import bcrypt from 'bcryptjs'
+import { getSupabaseServiceRole } from '@/lib/supabase-auth'
 
 /**
  * POST /api/vendedores/[id]/create-usuario
@@ -130,8 +131,12 @@ export default async function handler(
     // Hash password
     const password_hash = await bcrypt.hash(senha, 10)
 
+    // Use service role client for admin operations (bypasses RLS)
+    // Permission check already done above (lines 82-92)
+    const supabaseAdmin = getSupabaseServiceRole()
+
     // Create user in Supabase Auth
-    const { data: authUser, error: createAuthError } = await supabase.auth.admin.createUser({
+    const { data: authUser, error: createAuthError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: senha,
       email_confirm: true // Auto-confirm email
@@ -145,8 +150,8 @@ export default async function handler(
       })
     }
 
-    // Create user in database
-    const { data: novoUsuario, error: createUserError } = await supabase
+    // Create user in database (using service role to bypass RLS)
+    const { data: novoUsuario, error: createUserError } = await supabaseAdmin
       .from('usuarios')
       .insert({
         nome: vendedor.nome,
@@ -165,7 +170,7 @@ export default async function handler(
       console.error('Error creating user in database:', createUserError)
 
       // Rollback: delete auth user
-      await supabase.auth.admin.deleteUser(authUser.user.id)
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
 
       return res.status(500).json({
         success: false,
@@ -174,7 +179,8 @@ export default async function handler(
     }
 
     // Link vendedor to usuario (trigger will sync bidirectionally and apply permissions)
-    const { error: linkError } = await supabase
+    // Use service role for this operation too
+    const { error: linkError } = await supabaseAdmin
       .from('vendedores')
       .update({
         usuario_id: novoUsuario.id,

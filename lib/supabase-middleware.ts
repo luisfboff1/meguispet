@@ -63,13 +63,19 @@ export const withSupabaseAuth = (
         });
       }
 
+      // Merge base permissions with custom permissions (custom overrides base)
+      const mergedPermissions = {
+        ...(userProfile.permissoes || {}),
+        ...(userProfile.permissoes_custom || {}),
+      };
+
       // Anexar info do usuário ao request
       const authenticatedReq = req as AuthenticatedRequest;
       authenticatedReq.user = {
         id: userProfile.id,
         email: userProfile.email,
         tipo_usuario: userProfile.tipo_usuario,
-        permissoes: userProfile.permissoes,
+        permissoes: mergedPermissions,
         vendedor_id: userProfile.vendedor_id,
         supabaseUser,
       };

@@ -56,6 +56,7 @@ type RawUserRecord = {
     role?: string | null;
     tipo_usuario?: string | null;
     permissoes?: unknown;
+    permissoes_custom?: unknown;
     vendedor_id?: number | null;
 };
 
@@ -112,7 +113,12 @@ export const fetchUserAccessProfile = async (
     if (!record?.id) {
         return null;
     }
-    const permissions = parsePermissions(record?.permissoes);
+
+    // Merge permissoes (default) with permissoes_custom (user-specific overrides)
+    const basePermissions = parsePermissions(record?.permissoes);
+    const customPermissions = parsePermissions(record?.permissoes_custom);
+    const permissions = { ...basePermissions, ...customPermissions };
+
     const tipoUsuario = record?.tipo_usuario ?? record?.role ?? "operador";
     const vendedorId = usedLegacyQuery ? null : record?.vendedor_id ?? null;
 
