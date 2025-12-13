@@ -479,6 +479,26 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         }
 
         if (method === "PUT") {
+            // Check permissions first
+            const accessProfile = await fetchUserAccessProfile(supabase, {
+                id: req.user.id,
+                email: req.user.email,
+            });
+
+            if (!accessProfile) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Usuário sem perfil configurado",
+                });
+            }
+
+            if (!accessProfile.canEditAllSales) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Você não tem permissão para editar vendas. Apenas administradores e gerentes podem editar vendas.",
+                });
+            }
+
             const {
                 id,
                 numero_venda,
@@ -936,6 +956,26 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         }
 
         if (method === "DELETE") {
+            // Check permissions first
+            const accessProfile = await fetchUserAccessProfile(supabase, {
+                id: req.user.id,
+                email: req.user.email,
+            });
+
+            if (!accessProfile) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Usuário sem perfil configurado",
+                });
+            }
+
+            if (!accessProfile.canDeleteAllSales) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Você não tem permissão para excluir vendas. Apenas administradores e gerentes podem excluir vendas.",
+                });
+            }
+
             const { id } = req.query;
 
             if (!id) {

@@ -14,6 +14,8 @@ export type UserAccessProfile = {
     vendedorId: number | null;
     permissions: Record<string, boolean>;
     canViewAllSales: boolean;
+    canDeleteAllSales: boolean;
+    canEditAllSales: boolean;
     schemaVersion: "modern" | "legacy";
 };
 
@@ -21,6 +23,8 @@ const FULL_COLUMN_SET =
     "id, email, role, tipo_usuario, roles, permissoes, permissoes_custom, vendedor_id";
 const LEGACY_COLUMN_SET = "id, email, role, permissoes";
 const VIEW_ALL_ROLES = new Set(["admin", "gerente", "financeiro"]);
+const DELETE_ALL_ROLES = new Set(["admin", "gerente"]);
+const EDIT_ALL_ROLES = new Set(["admin", "gerente"]);
 
 const isMissingColumnError = (error?: PostgrestError | null) => {
     if (!error) return false;
@@ -117,6 +121,16 @@ export const fetchUserAccessProfile = async (
         : VIEW_ALL_ROLES.has(tipoUsuario) ||
             permissions.vendas_visualizar_todas === true;
 
+    const canDeleteAllSales = usedLegacyQuery
+        ? true
+        : DELETE_ALL_ROLES.has(tipoUsuario) ||
+            permissions.vendas_deletar === true;
+
+    const canEditAllSales = usedLegacyQuery
+        ? true
+        : EDIT_ALL_ROLES.has(tipoUsuario) ||
+            permissions.vendas_editar === true;
+
     return {
         id: record.id,
         email: record?.email ?? null,
@@ -125,6 +139,8 @@ export const fetchUserAccessProfile = async (
         vendedorId,
         permissions,
         canViewAllSales,
+        canDeleteAllSales,
+        canEditAllSales,
         schemaVersion: usedLegacyQuery ? "legacy" : "modern",
     };
 };

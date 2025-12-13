@@ -31,8 +31,10 @@ import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { downloadOrderPDF, PDFGeneratorOptions } from '@/lib/pdf-generator'
 import VendaPDFPreviewModal, { PDFPreviewOptions } from '@/components/modals/VendaPDFPreviewModal'
 import { formatLocalDate } from '@/lib/utils'
+import { usePermissions } from '@/hooks/usePermissions'
 
 export default function VendasPage() {
+  const { hasPermission } = usePermissions()
   const [activeTab, setActiveTab] = useState<'vendas' | 'condicoes'>('vendas')
   const [vendas, setVendas] = useState<Venda[]>([])
   const [loading, setLoading] = useState(true)
@@ -601,14 +603,16 @@ export default function VendasPage() {
           >
             <FileText className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleEditarVenda(row.original)}
-            title="Editar venda"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
+          {hasPermission('vendas_editar') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEditarVenda(row.original)}
+              title="Editar venda"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
           {row.original.status === 'pendente' && (
             <Button 
               variant="ghost" 
@@ -620,20 +624,22 @@ export default function VendasPage() {
               <Check className="h-4 w-4" />
             </Button>
           )}
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="text-red-600 hover:text-red-700"
-            onClick={() => handleExcluirVenda(row.original)}
-            disabled={deletingId === row.original.id}
-            title="Excluir venda"
-          >
-            {deletingId === row.original.id ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
-          </Button>
+          {hasPermission('vendas_deletar') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-600 hover:text-red-700"
+              onClick={() => handleExcluirVenda(row.original)}
+              disabled={deletingId === row.original.id}
+              title="Excluir venda"
+            >
+              {deletingId === row.original.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
       ),
     },
