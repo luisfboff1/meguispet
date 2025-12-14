@@ -63,19 +63,14 @@ export const withSupabaseAuth = (
         });
       }
 
-      // Merge base permissions with custom permissions (custom overrides base)
-      const mergedPermissions = {
-        ...(userProfile.permissoes || {}),
-        ...(userProfile.permissoes_custom || {}),
-      };
-
       // Anexar info do usuário ao request
+      // permissoes já vem merged de getUserProfile (role_permissions_config + custom)
       const authenticatedReq = req as AuthenticatedRequest;
       authenticatedReq.user = {
         id: userProfile.id,
         email: userProfile.email,
         tipo_usuario: userProfile.tipo_usuario,
-        permissoes: mergedPermissions,
+        permissoes: userProfile.permissoes,
         vendedor_id: userProfile.vendedor_id,
         supabaseUser,
       };

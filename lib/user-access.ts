@@ -1,4 +1,6 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import { getUserFinalPermissions } from "./role-permissions";
+import type { UserRole, Permissoes } from "@/types";
 
 export type UserAccessQuery = {
     id?: number;
@@ -12,7 +14,7 @@ export type UserAccessProfile = {
     tipoUsuario: string;
     role: string | null;
     vendedorId: number | null;
-    permissions: Record<string, boolean>;
+    permissions: Permissoes;
     canViewAllSales: boolean;
     canDeleteAllSales: boolean;
     canEditAllSales: boolean;
@@ -20,8 +22,8 @@ export type UserAccessProfile = {
 };
 
 const FULL_COLUMN_SET =
-    "id, email, role, tipo_usuario, roles, permissoes, permissoes_custom, vendedor_id";
-const LEGACY_COLUMN_SET = "id, email, role, permissoes";
+    "id, email, role, tipo_usuario, roles, permissoes_custom, vendedor_id";
+const LEGACY_COLUMN_SET = "id, email, role";
 const VIEW_ALL_ROLES = new Set(["admin", "gerente", "financeiro"]);
 const DELETE_ALL_ROLES = new Set(["admin", "gerente"]);
 const EDIT_ALL_ROLES = new Set(["admin", "gerente"]);
@@ -114,13 +116,16 @@ export const fetchUserAccessProfile = async (
         return null;
     }
 
-    // Merge permissoes (default) with permissoes_custom (user-specific overrides)
-    const basePermissions = parsePermissions(record?.permissoes);
-    const customPermissions = parsePermissions(record?.permissoes_custom);
-    const permissions = { ...basePermissions, ...customPermissions };
-
-    const tipoUsuario = record?.tipo_usuario ?? record?.role ?? "operador";
+    const tipoUsuario = (record?.tipo_usuario ?? record?.role ?? "operador") as UserRole;
     const vendedorId = usedLegacyQuery ? null : record?.vendedor_id ?? null;
+
+    // Buscar permissões DINÂMICAS de role_permissions_config + custom
+    const customPermissions = parsePermissions(record?.permissoes_custom);
+    const permissions = await getUserFinalPermissions(
+        supabase,
+        tipoUsuario,
+        customPermissions
+    );
 
     const canViewAllSales = usedLegacyQuery
         ? true
