@@ -6,6 +6,54 @@ import { z } from 'zod';
 import { GeocodingService } from '@/services/geocoding';
 
 /**
+ * Helper function to translate Supabase/PostgreSQL errors into user-friendly messages
+ */
+const translateDatabaseError = (error: any): string => {
+  // PostgreSQL error codes: https://www.postgresql.org/docs/current/errcodes-appendix.html
+  const code = error?.code;
+  const message = error?.message || '';
+  const details = error?.details || '';
+
+  // 23505: unique_violation - Duplicate key value violates unique constraint
+  if (code === '23505') {
+    if (message.includes('documento') || details.includes('documento')) {
+      return 'Já existe um cliente/fornecedor cadastrado com este CPF/CNPJ';
+    }
+    if (message.includes('email') || details.includes('email')) {
+      return 'Já existe um cliente/fornecedor cadastrado com este e-mail';
+    }
+    return 'Este registro já existe no banco de dados';
+  }
+
+  // 23503: foreign_key_violation - Referenced record doesn't exist
+  if (code === '23503') {
+    if (message.includes('vendedor_id') || details.includes('vendedor_id')) {
+      return 'O vendedor selecionado não existe';
+    }
+    return 'Erro de relacionamento: um dos registros referenciados não existe';
+  }
+
+  // 23502: not_null_violation - Required field is missing
+  if (code === '23502') {
+    const field = message.match(/column "([^"]+)"/)?.[1];
+    return `O campo ${field || 'obrigatório'} não pode estar vazio`;
+  }
+
+  // 23514: check_violation - Check constraint violated
+  if (code === '23514') {
+    return 'Os dados fornecidos violam as regras de validação do banco';
+  }
+
+  // 42P01: undefined_table - Table doesn't exist (shouldn't happen in production)
+  if (code === '42P01') {
+    return 'Erro de configuração do banco de dados';
+  }
+
+  // Default error message
+  return 'Erro no banco de dados';
+};
+
+/**
  * GET handler - List or get single cliente
  */
 const handleGet = async (req: AuthenticatedRequest, res: NextApiResponse) => {
@@ -126,7 +174,15 @@ const handlePost = withValidation(
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[API Clientes] Erro ao criar cliente:', error);
+      const userFriendlyMessage = translateDatabaseError(error);
+      return res.status(400).json({
+        success: false,
+        message: userFriendlyMessage,
+        code: error.code,
+      });
+    }
 
     return res.status(201).json({
       success: true,
@@ -212,7 +268,15 @@ const handlePut = withValidation(
       .eq('id', id)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[API Clientes] Erro ao atualizar cliente:', error);
+      const userFriendlyMessage = translateDatabaseError(error);
+      return res.status(400).json({
+        success: false,
+        message: userFriendlyMessage,
+        code: error.code,
+      });
+    }
 
     if (!data || data.length === 0) {
       return res.status(404).json({
@@ -305,13 +369,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       });
     }
 
-    // Se for erro do Supabase, retornar detalhes
+    // Se for erro do Supabase, retornar detalhes com mensagem amigável
     if (error && typeof error === 'object' && 'code' in error) {
       console.error('[API /clientes] Database error:', error);
-      return res.status(500).json({
+      const userFriendlyMessage = translateDatabaseError(error);
+      return res.status(400).json({
         success: false,
-        message: 'Erro no banco de dados',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        message: userFriendlyMessage,
         code: (error as { code: string }).code,
       });
     }
