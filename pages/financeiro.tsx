@@ -78,21 +78,28 @@ export default function FinanceiroPage() {
     }
   }, [])
 
+  // Recarregar transações quando filtro mudar
+  useEffect(() => {
+    loadFinancialData()
+  }, [filterTipo])
+
   const loadFinancialData = async () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       // Carregar métricas e transações
+      // Limite aumentado para 1000 para carregar todas as transações
+      // Filtro por tipo aplicado no backend para melhor performance
       const [metricsResponse, transacoesResponse] = await Promise.all([
         transacoesService.getMetricas(),
-        transacoesService.getAll(1, 50)
+        transacoesService.getAll(1, 1000, filterTipo || undefined)
       ])
-      
+
       if (metricsResponse.success && metricsResponse.data) {
         setMetrics(metricsResponse.data)
       }
-      
+
       if (transacoesResponse.success && transacoesResponse.data) {
         setTransacoes(transacoesResponse.data)
       }
@@ -330,11 +337,12 @@ export default function FinanceiroPage() {
     }
   }
 
+  // Filtro por busca textual (tipo já filtrado no backend)
   const filteredTransacoes = transacoes.filter(transacao => {
+    if (!searchTerm) return true
     const matchesSearch = transacao.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transacao.categoria.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesTipo = !filterTipo || transacao.tipo === filterTipo
-    return matchesSearch && matchesTipo
+    return matchesSearch
   })
 
   // Column definitions for categorias table
