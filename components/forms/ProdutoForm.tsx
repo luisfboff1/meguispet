@@ -3,10 +3,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Package } from 'lucide-react'
+import { Loader2, Package, History } from 'lucide-react'
 import type { Produto, ProdutoEstoqueInput, ProdutoForm as ProdutoFormValues, ImpostoProduto, ImpostoProdutoForm as ImpostoProdutoFormValues } from '@/types'
 import ProdutoEstoqueDistribution from './ProdutoEstoqueDistribution'
 import { impostosService } from '@/services/impostosService'
+import { historicoPrecosService } from '@/services/api'
+
+interface HistoricoPreco {
+  id: number
+  produto_id: number
+  preco_venda_anterior: number | null
+  preco_venda_novo: number | null
+  preco_custo_anterior: number | null
+  preco_custo_novo: number | null
+  tipo_alteracao: 'manual' | 'automatico' | 'movimentacao'
+  observacao: string | null
+  created_at: string
+}
 
 interface ProdutoFormProps {
   produto?: Produto
@@ -53,6 +66,8 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
 
   const [loadingFiscal, setLoadingFiscal] = useState(false)
   const [savingImposto, setSavingImposto] = useState(false)
+  const [historicoPrecos, setHistoricoPrecos] = useState<HistoricoPreco[]>([])
+  const [loadingHistorico, setLoadingHistorico] = useState(false)
 
   useEffect(() => {
     setEstoquesDistribuidos(
@@ -66,8 +81,24 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
   useEffect(() => {
     if (produto?.id) {
       loadFiscalConfig(produto.id)
+      loadHistoricoPrecos(produto.id)
     }
   }, [produto?.id])
+
+  const loadHistoricoPrecos = async (produtoId: number) => {
+    setLoadingHistorico(true)
+    try {
+      const response = await historicoPrecosService.getByProdutoId(produtoId, 50)
+      if (response.success && response.data) {
+        setHistoricoPrecos(Array.isArray(response.data) ? response.data : [])
+      }
+    } catch (error) {
+      console.error('Erro ao carregar histórico de preços:', error)
+      setHistoricoPrecos([])
+    } finally {
+      setLoadingHistorico(false)
+    }
+  }
 
   const loadFiscalConfig = async (produtoId: number) => {
     setLoadingFiscal(true)
@@ -140,6 +171,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
   }
 
   return (
+    <>
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center">
@@ -382,5 +414,120 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
         </form>
       </CardContent>
     </Card>
+
+    {/* Histórico de Preços */}
+    {produto?.id && (
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Histórico de Preços
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingHistorico ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-meguispet-primary" />
+              <span className="ml-2 text-gray-500">Carregando histórico...</span>
+            </div>
+          ) : historicoPrecos.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Custo Anterior
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Custo Novo
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Variação
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Preço Venda Anterior
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Preço Venda Novo
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Observação
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {historicoPrecos.map((hist) => {
+                    const custoAnterior = hist.preco_custo_anterior || 0
+                    const custoNovo = hist.preco_custo_novo || 0
+                    const variacao = custoAnterior > 0 ? ((custoNovo - custoAnterior) / custoAnterior) * 100 : 0
+
+                    return (
+                      <tr key={hist.id}>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(hist.created_at).toLocaleString('pt-BR')}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            hist.tipo_alteracao === 'movimentacao' ? 'bg-blue-100 text-blue-800' :
+                            hist.tipo_alteracao === 'automatico' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {hist.tipo_alteracao === 'movimentacao' ? 'Movimentação' :
+                             hist.tipo_alteracao === 'automatico' ? 'Automático' : 'Manual'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-700">
+                          {hist.preco_custo_anterior !== null ?
+                            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(hist.preco_custo_anterior)
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+                          {hist.preco_custo_novo !== null ?
+                            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(hist.preco_custo_novo)
+                            : '-'}
+                        </td>
+                        <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-bold ${
+                          variacao > 0 ? 'text-red-600' : variacao < 0 ? 'text-green-600' : 'text-gray-500'
+                        }`}>
+                          {variacao !== 0 ? `${variacao > 0 ? '+' : ''}${variacao.toFixed(2)}%` : '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-700">
+                          {hist.preco_venda_anterior !== null ?
+                            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(hist.preco_venda_anterior)
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+                          {hist.preco_venda_novo !== null ?
+                            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(hist.preco_venda_novo)
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {hist.observacao || '-'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8">
+              <History className="h-12 w-12 text-gray-400 mb-2" />
+              <p className="text-gray-500">Nenhum histórico de preços disponível</p>
+              <p className="text-xs text-gray-400 mt-1">
+                O histórico será registrado automaticamente quando houver alterações de preço
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )}
+  </>
   )
 }

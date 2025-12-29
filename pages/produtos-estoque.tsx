@@ -4,13 +4,13 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Download, 
-  Eye, 
-  Edit, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Edit,
   Trash2,
   Package,
   DollarSign,
@@ -21,9 +21,10 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Settings,
-  X
+  X,
+  ClipboardCheck
 } from 'lucide-react'
-import { produtosService, movimentacoesService, estoquesService } from '@/services/api'
+import { produtosService, movimentacoesService, estoquesService, auditoriaEstoqueService } from '@/services/api'
 import AlertDialog from '@/components/ui/AlertDialog'
 import type {
   Produto,
@@ -34,6 +35,7 @@ import type {
 } from '@/types'
 import ProdutoForm from '@/components/forms/ProdutoForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
+import EstoqueHistoricoModal from '@/components/modals/EstoqueHistoricoModal'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { formatLocalDate } from '@/lib/utils'
 
@@ -74,12 +76,26 @@ const getStockByLocation = (produto: Produto, locationName: string): number => {
   return stockItem ? Number(stockItem.quantidade || 0) : 0
 }
 
+interface AuditoriaEstoque {
+  produto_id: number
+  produto_nome: string
+  estoque_inicial: number
+  total_entradas: number
+  total_saidas: number
+  total_vendas: number
+  estoque_calculado: number
+  estoque_atual: number
+  diferenca: number
+  status: 'ok' | 'divergente'
+}
+
 export default function ProdutosEstoquePage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'produtos' | 'estoque' | 'movimentacoes'>('produtos')
+  const [activeTab, setActiveTab] = useState<'produtos' | 'estoque' | 'movimentacoes' | 'auditoria'>('produtos')
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [estoques, setEstoques] = useState<Estoque[]>([])
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([])
+  const [auditoriaData, setAuditoriaData] = useState<AuditoriaEstoque[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'low' | 'out' | 'ok'>('all')
@@ -97,6 +113,10 @@ export default function ProdutosEstoquePage() {
   const [showMovimentacaoDetails, setShowMovimentacaoDetails] = useState(false)
   const [selectedMovimentacao, setSelectedMovimentacao] = useState<MovimentacaoEstoque | null>(null)
 
+  // Estado para modal de histórico de estoque
+  const [showHistoricoModal, setShowHistoricoModal] = useState(false)
+  const [selectedProdutoHistorico, setSelectedProdutoHistorico] = useState<{ id: number; nome: string } | null>(null)
+
   // Handlers para produtos
   const handleNovoProduto = () => {
     setEditingProduto(null)
@@ -106,6 +126,11 @@ export default function ProdutosEstoquePage() {
   const handleEditarProduto = (produto: Produto) => {
     setEditingProduto(produto)
     setShowProdutoForm(true)
+  }
+
+  const handleVerHistoricoProduto = (produtoId: number, produtoNome: string) => {
+    setSelectedProdutoHistorico({ id: produtoId, nome: produtoNome })
+    setShowHistoricoModal(true)
   }
 
   // Column definitions for products table
@@ -439,18 +464,6 @@ export default function ProdutosEstoquePage() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          {row.original.status === 'pendente' && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-green-600 hover:text-green-700"
-              onClick={() => handleConfirmarMovimentacao(row.original)}
-              disabled={formLoading}
-              title="Confirmar movimentação (atualiza estoque)"
-            >
-              <ArrowUpCircle className="h-4 w-4" />
-            </Button>
-          )}
           <Button 
             variant="ghost" 
             size="sm" 
@@ -478,6 +491,12 @@ export default function ProdutosEstoquePage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === 'auditoria') {
+      loadAuditoria()
+    }
+  }, [activeTab])
 
   const loadData = async () => {
     try {
@@ -511,6 +530,31 @@ export default function ProdutosEstoquePage() {
       }
       
     } catch (error) {
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadAuditoria = async () => {
+    try {
+      setLoading(true)
+      const response = await auditoriaEstoqueService.getAuditoria()
+
+      if (response.success && response.data) {
+        setAuditoriaData(response.data)
+      } else {
+        setAlertDialog({
+          title: 'Erro',
+          message: response.message || 'Erro ao carregar auditoria de estoque',
+          type: 'error'
+        })
+      }
+    } catch (error) {
+      setAlertDialog({
+        title: 'Erro',
+        message: error instanceof Error ? error.message : 'Erro ao carregar auditoria de estoque',
+        type: 'error'
+      })
     } finally {
       setLoading(false)
     }
@@ -622,12 +666,42 @@ export default function ProdutosEstoquePage() {
   const handleSalvarMovimentacao = async (movimentacaoData: MovimentacaoFormValues) => {
     try {
       setFormLoading(true)
-      const response = await movimentacoesService.create(movimentacaoData)
+
+      let response
+      if (editingMovimentacao) {
+        // Editar movimentação existente
+        response = await movimentacoesService.update(editingMovimentacao.id, movimentacaoData)
+      } else {
+        // Criar nova movimentação
+        response = await movimentacoesService.create(movimentacaoData)
+      }
+
       if (response.success) {
+        setAlertDialog({
+          title: 'Sucesso!',
+          message: editingMovimentacao
+            ? 'Movimentação atualizada com sucesso. Estoque ajustado.'
+            : 'Movimentação criada com sucesso. Estoque atualizado.',
+          type: 'success'
+        })
         await loadData()
         setShowMovimentacaoForm(false)
+        setEditingMovimentacao(null)
+      } else {
+        setAlertDialog({
+          title: 'Erro',
+          message: response.message || (editingMovimentacao ? 'Erro ao atualizar movimentação' : 'Erro ao criar movimentação'),
+          type: 'error'
+        })
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : (editingMovimentacao ? 'Erro ao atualizar movimentação' : 'Erro ao criar movimentação')
+      setAlertDialog({
+        title: 'Erro',
+        message: errorMessage,
+        type: 'error'
+      })
+      console.error('Erro ao salvar movimentação:', error)
     } finally {
       setFormLoading(false)
     }
@@ -635,63 +709,85 @@ export default function ProdutosEstoquePage() {
 
   const handleEditarMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
     try {
+      setFormLoading(true)
       // Buscar detalhes completos da movimentação
       const response = await movimentacoesService.getById(movimentacao.id)
-      
+
       if (response.success && response.data) {
         setEditingMovimentacao(response.data)
         setShowMovimentacaoForm(true)
       } else {
-        alert('Erro ao carregar dados para edição')
+        setAlertDialog({
+          title: 'Erro',
+          message: response.message || 'Erro ao carregar dados para edição',
+          type: 'error'
+        })
       }
     } catch (error) {
-      alert('Erro ao carregar dados para edição')
+      setAlertDialog({
+        title: 'Erro',
+        message: error instanceof Error ? error.message : 'Erro ao carregar dados para edição',
+        type: 'error'
+      })
+    } finally {
+      setFormLoading(false)
     }
   }
 
   const handleVerDetalhesMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
     try {
+      setFormLoading(true)
       // Buscar detalhes completos da movimentação
       const response = await movimentacoesService.getById(movimentacao.id)
-      
+
       if (response.success && response.data) {
         setSelectedMovimentacao(response.data)
         setShowMovimentacaoDetails(true)
       } else {
-        alert('Erro ao carregar detalhes da movimentação')
+        setAlertDialog({
+          title: 'Erro',
+          message: response.message || 'Erro ao carregar detalhes da movimentação',
+          type: 'error'
+        })
       }
     } catch (error) {
-      alert('Erro ao carregar detalhes da movimentação')
+      setAlertDialog({
+        title: 'Erro',
+        message: error instanceof Error ? error.message : 'Erro ao carregar detalhes da movimentação',
+        type: 'error'
+      })
+    } finally {
+      setFormLoading(false)
     }
   }
 
   const handleExcluirMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
-    if (confirm(`Tem certeza que deseja excluir a movimentação #${movimentacao.id}?`)) {
+    if (confirm(`Tem certeza que deseja excluir a movimentação #${movimentacao.id}?\n\nO estoque será revertido automaticamente.`)) {
       try {
         setFormLoading(true)
-        // TODO: Implementar exclusão quando a API estiver pronta
-        alert('Funcionalidade de exclusão será implementada em breve')
-      } catch (error) {
-        alert('Erro ao excluir movimentação')
-      } finally {
-        setFormLoading(false)
-      }
-    }
-  }
+        const response = await movimentacoesService.delete(movimentacao.id)
 
-  const handleConfirmarMovimentacao = async (movimentacao: MovimentacaoEstoque) => {
-    if (confirm(`Confirmar a movimentação #${movimentacao.id}?\n\nIsso irá atualizar o estoque dos produtos.`)) {
-      try {
-        setFormLoading(true)
-        const response = await movimentacoesService.updateStatus(movimentacao.id, 'confirmado')
         if (response.success) {
-          await loadData() // Recarregar dados para atualizar estoque
-          alert('Movimentação confirmada! Estoque atualizado com sucesso.')
+          setAlertDialog({
+            title: 'Sucesso!',
+            message: 'Movimentação excluída com sucesso. Estoque revertido.',
+            type: 'success'
+          })
+          await loadData() // Recarregar dados
         } else {
-          alert('Erro ao confirmar movimentação: ' + response.message)
+          setAlertDialog({
+            title: 'Erro',
+            message: response.message || 'Erro ao excluir movimentação',
+            type: 'error'
+          })
         }
       } catch (error) {
-        alert('Erro ao confirmar movimentação')
+        const errorMessage = error instanceof Error ? error.message : 'Erro ao excluir movimentação'
+        setAlertDialog({
+          title: 'Erro',
+          message: errorMessage,
+          type: 'error'
+        })
       } finally {
         setFormLoading(false)
       }
@@ -848,6 +944,17 @@ export default function ProdutosEstoquePage() {
           >
             <Truck className="inline mr-2 h-4 w-4" />
             Movimentações
+          </button>
+          <button
+            onClick={() => setActiveTab('auditoria')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'auditoria'
+                ? 'border-meguispet-primary text-meguispet-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <ClipboardCheck className="inline mr-2 h-4 w-4" />
+            Auditoria
           </button>
         </nav>
       </div>
@@ -1091,8 +1198,8 @@ export default function ProdutosEstoquePage() {
               </CardContent>
             </Card>
           ) : movimentacoes.length > 0 ? (
-            <DataTable 
-              columns={movimentacoesColumns} 
+            <DataTable
+              columns={movimentacoesColumns}
               data={movimentacoes}
               enableColumnResizing={true}
               enableSorting={true}
@@ -1107,7 +1214,7 @@ export default function ProdutosEstoquePage() {
                 <p className="text-gray-600 text-center mb-4">
                   Crie sua primeira movimentação para começar
                 </p>
-                <Button 
+                <Button
                   className="bg-meguispet-primary hover:bg-meguispet-primary/90"
                   onClick={handleNovaMovimentacao}
                 >
@@ -1117,6 +1224,149 @@ export default function ProdutosEstoquePage() {
               </CardContent>
             </Card>
           )}
+        </>
+      )}
+
+      {activeTab === 'auditoria' && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Auditoria de Estoque</CardTitle>
+              <CardDescription>
+                Validação e reconciliação de estoque: compara estoque calculado (movimentações + vendas) com estoque atual
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-gray-500">Carregando auditoria...</div>
+                </div>
+              ) : auditoriaData && auditoriaData.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Produto
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Estoque Inicial
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Entradas
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Saídas
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Vendas
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Estoque Calculado
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Estoque Atual
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Diferença
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {auditoriaData.map((item) => (
+                        <tr
+                          key={item.produto_id}
+                          className={item.status === 'divergente' ? 'bg-red-50' : ''}
+                        >
+                          <td
+                            className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                            onClick={() => handleVerHistoricoProduto(item.produto_id, item.produto_nome)}
+                            title="Clique para ver histórico de estoque"
+                          >
+                            {item.produto_nome}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-700">
+                            {item.estoque_inicial.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-green-600">
+                            +{item.total_entradas.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-orange-600">
+                            -{item.total_saidas.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-red-600">
+                            -{item.total_vendas.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-blue-600">
+                            {item.estoque_calculado.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+                            {item.estoque_atual.toFixed(2)}
+                          </td>
+                          <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-bold ${
+                            item.diferenca === 0 ? 'text-green-600' :
+                            item.diferenca > 0 ? 'text-blue-600' : 'text-red-600'
+                          }`}>
+                            {item.diferenca > 0 ? '+' : ''}{item.diferenca.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-center">
+                            {item.status === 'ok' ? (
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                OK
+                              </span>
+                            ) : (
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                Divergente
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <ClipboardCheck className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum dado de auditoria disponível</h3>
+                  <p className="text-gray-600 text-center">
+                    Não há produtos ou movimentações para auditar
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Legend */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Legenda e Cálculos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="mb-2"><strong>Estoque Inicial:</strong> Primeiro registro do histórico de estoque (quantidade antes da primeira movimentação registrada). Se não houver histórico, calcula retroativamente: Atual - Entradas + Saídas + Vendas.</p>
+                  <p className="mb-2"><strong>Entradas:</strong> Soma de todas as movimentações de entrada confirmadas</p>
+                  <p className="mb-2"><strong>Saídas:</strong> Soma de todas as movimentações de saída confirmadas (não inclui vendas)</p>
+                  <p className="mb-2"><strong>Vendas:</strong> Soma de todas as vendas com status "pago" (exclui canceladas e pendentes)</p>
+                </div>
+                <div>
+                  <p className="mb-2"><strong>Estoque Calculado:</strong> Inicial + Entradas - Saídas - Vendas (deve igualar o Atual)</p>
+                  <p className="mb-2"><strong>Estoque Atual:</strong> Quantidade registrada atualmente no sistema</p>
+                  <p className="mb-2"><strong>Diferença:</strong> Atual - Calculado. Deve ser zero se todos os dados estão corretos. Positivo indica estoque extra não contabilizado, negativo indica falta.</p>
+                  <p className="mb-2"><strong>Status:</strong> "OK" se diferença &lt; 0.01, "Divergente" se maior</p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-xs text-blue-800">
+                  <strong>💡 Prova Real:</strong> O sistema usa o primeiro registro do histórico como base verdadeira e valida contra vendas reais existentes. Registros duplicados no histórico (ex: múltiplos estornos) são automaticamente ignorados no cálculo. Clique no nome do produto para ver o histórico completo.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
 
@@ -1311,22 +1561,22 @@ export default function ProdutosEstoquePage() {
                 >
                   Fechar
                 </Button>
-                {selectedMovimentacao.status === 'pendente' && (
-                  <Button
-                    onClick={() => {
-                      setShowMovimentacaoDetails(false)
-                      handleConfirmarMovimentacao(selectedMovimentacao)
-                    }}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <ArrowUpCircle className="h-4 w-4 mr-2" />
-                    Confirmar Movimentação
-                  </Button>
-                )}
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Histórico de Estoque */}
+      {showHistoricoModal && selectedProdutoHistorico && (
+        <EstoqueHistoricoModal
+          produtoId={selectedProdutoHistorico.id}
+          produtoNome={selectedProdutoHistorico.nome}
+          onClose={() => {
+            setShowHistoricoModal(false)
+            setSelectedProdutoHistorico(null)
+          }}
+        />
       )}
     </div>
   )

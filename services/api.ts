@@ -498,17 +498,78 @@ export const movimentacoesService = {
   },
 
   async getById(id: number): Promise<ApiResponse<MovimentacaoEstoque>> {
-    const response = await api.get(`/movimentacoes/${id}`)
+    const response = await api.get(`/movimentacoes?id=${id}`)
     return response.data
   },
 
   async create(movimentacao: MovimentacaoFormPayload): Promise<ApiResponse<MovimentacaoEstoque>> {
-    const response = await api.post('/movimentacoes', movimentacao)
+    // Transformar dados do formato frontend para formato API
+    const payload = {
+      tipo: movimentacao.tipo_movimentacao,
+      fornecedor_id: movimentacao.fornecedor_id,
+      cliente_id: movimentacao.cliente_id,
+      vendedor_id: movimentacao.vendedor_id,
+      observacoes: movimentacao.observacoes,
+      itens: movimentacao.produtos.map(p => ({
+        produto_id: p.produto_id,
+        quantidade: p.quantidade,
+        preco_unitario: p.preco_unitario,
+        subtotal: p.valor_total ?? (p.quantidade * p.preco_unitario)
+      })),
+      // Calcular valor total da movimentação
+      valor_total: movimentacao.produtos.reduce((acc, p) => acc + (p.valor_total ?? (p.quantidade * p.preco_unitario)), 0)
+    }
+
+    const response = await api.post('/movimentacoes', payload)
+    return response.data
+  },
+
+  async update(id: number, movimentacao: MovimentacaoFormPayload): Promise<ApiResponse<MovimentacaoEstoque>> {
+    // Transformar dados do formato frontend para formato API
+    const payload = {
+      id,
+      tipo: movimentacao.tipo_movimentacao,
+      fornecedor_id: movimentacao.fornecedor_id,
+      cliente_id: movimentacao.cliente_id,
+      vendedor_id: movimentacao.vendedor_id,
+      observacoes: movimentacao.observacoes,
+      itens: movimentacao.produtos.map(p => ({
+        produto_id: p.produto_id,
+        quantidade: p.quantidade,
+        preco_unitario: p.preco_unitario,
+        subtotal: p.valor_total ?? (p.quantidade * p.preco_unitario)
+      })),
+      // Calcular valor total da movimentação
+      valor_total: movimentacao.produtos.reduce((acc, p) => acc + (p.valor_total ?? (p.quantidade * p.preco_unitario)), 0)
+    }
+
+    const response = await api.put('/movimentacoes', payload)
     return response.data
   },
 
   async updateStatus(id: number, status: string): Promise<ApiResponse> {
     const response = await api.put(`/movimentacoes/${id}/status`, { id, status })
+    return response.data
+  },
+
+  async delete(id: number): Promise<ApiResponse> {
+    const response = await api.delete(`/movimentacoes?id=${id}`)
+    return response.data
+  }
+}
+
+// 📊 AUDITORIA DE ESTOQUE
+export const auditoriaEstoqueService = {
+  async getAuditoria(): Promise<ApiResponse<any[]>> {
+    const response = await api.get('/estoque-auditoria')
+    return response.data
+  }
+}
+
+// 📜 HISTÓRICO DE ESTOQUE
+export const estoqueHistoricoService = {
+  async getByProdutoId(produtoId: number, limit = 100): Promise<ApiResponse<any>> {
+    const response = await api.get(`/estoque-historico?produto_id=${produtoId}&limit=${limit}`)
     return response.data
   }
 }

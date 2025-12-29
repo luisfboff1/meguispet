@@ -1,0 +1,62 @@
+-- ============================================================================
+-- PREVENT DUPLICATE STOCK HISTORY RECORDS (DOCUMENTATION ONLY)
+-- ============================================================================
+-- This migration was originally designed to add a unique constraint to prevent
+-- duplicate stock history records. However, this is now handled by triggers
+-- in migration 023, which is a better approach.
+--
+-- This file is kept for documentation purposes only.
+-- ============================================================================
+
+-- Migration 023 handles duplicate prevention through triggers with time-based
+-- deduplication logic (2-second window check before inserting history).
+--
+-- No database changes needed here - proceed to migration 023.
+
+-- ============================================================================
+-- DIAGNOSTIC: Find existing duplicates (for cleanup purposes)
+-- ============================================================================
+
+-- Find duplicates by grouping identical records within the same second:
+-- SELECT
+--   produto_id,
+--   estoque_id,
+--   tipo_operacao,
+--   operacao_id,
+--   quantidade_mudanca,
+--   date_trunc('second', created_at) as created_second,
+--   COUNT(*) as duplicate_count,
+--   array_agg(id ORDER BY id) as duplicate_ids
+-- FROM estoques_historico
+-- GROUP BY
+--   produto_id,
+--   estoque_id,
+--   tipo_operacao,
+--   operacao_id,
+--   quantidade_mudanca,
+--   date_trunc('second', created_at)
+-- HAVING COUNT(*) > 1
+-- ORDER BY duplicate_count DESC;
+
+-- To delete duplicates (keeping only the first occurrence):
+-- DELETE FROM estoques_historico
+-- WHERE id IN (
+--   SELECT unnest(duplicate_ids[2:]) -- Keep first, delete rest
+--   FROM (
+--     SELECT
+--       array_agg(id ORDER BY id) as duplicate_ids
+--     FROM estoques_historico
+--     GROUP BY
+--       produto_id,
+--       estoque_id,
+--       tipo_operacao,
+--       operacao_id,
+--       quantidade_mudanca,
+--       date_trunc('second', created_at)
+--     HAVING COUNT(*) > 1
+--   ) duplicates
+-- );
+
+-- ============================================================================
+-- END OF MIGRATION
+-- ============================================================================
