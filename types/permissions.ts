@@ -17,6 +17,8 @@ export type UserRole =
  * true = permitido, false = negado
  */
 export interface Permissoes {
+  [key: string]: boolean                // Index signature para acesso dinâmico
+
   // ===== MÓDULOS PRINCIPAIS =====
   dashboard: boolean                    // Acesso ao dashboard
   vendas: boolean                       // Módulo de vendas

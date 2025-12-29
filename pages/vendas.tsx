@@ -5,19 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Download, 
-  Eye, 
-  Edit, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Edit,
   Trash2,
   ShoppingCart,
   DollarSign,
   Calendar,
   Loader2,
-  Check,
   FileText,
   CreditCard,
   X
@@ -286,32 +285,6 @@ export default function VendasPage() {
       setToast({ message: msg, type: 'error' })
     } finally {
       setDeletingId(null)
-    }
-  }
-
-  const handleConfirmarVenda = async (venda: Venda) => {
-    const confirmar = window.confirm(`Confirmar pagamento da venda #${venda.id}?`)
-    if (!confirmar) return
-
-    try {
-      const response = await vendasService.updateStatus(venda.id, 'pago')
-      if (response.success) {
-        await loadVendas()
-        setToast({ message: 'Venda confirmada com sucesso!', type: 'success' })
-      } else {
-        setToast({ message: response.message || 'Erro ao confirmar venda', type: 'error' })
-      }
-    } catch (error: unknown) {
-      let msg = 'Não foi possível confirmar a venda.'
-      if (typeof error === 'object' && error !== null) {
-        const errObj = error as { response?: { data?: { message?: string } }, message?: string }
-        if (errObj.response?.data?.message) {
-          msg = errObj.response.data.message
-        } else if (typeof errObj.message === 'string') {
-          msg = errObj.message
-        }
-      }
-      setToast({ message: msg, type: 'error' })
     }
   }
 
@@ -611,17 +584,6 @@ export default function VendasPage() {
               title="Editar venda"
             >
               <Edit className="h-4 w-4" />
-            </Button>
-          )}
-          {row.original.status === 'pendente' && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="text-green-600 hover:text-green-700"
-              onClick={() => handleConfirmarVenda(row.original)}
-              title="Confirmar pagamento"
-            >
-              <Check className="h-4 w-4" />
             </Button>
           )}
           {hasPermission('vendas_deletar') && (

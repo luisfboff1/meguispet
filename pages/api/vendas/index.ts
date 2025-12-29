@@ -291,7 +291,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     total_ipi: vendaProcessada.totais.total_ipi,
                     total_icms: vendaProcessada.totais.total_icms,
                     total_st: vendaProcessada.totais.total_st,
-                    status: status || "pendente",
+                    status: status || "pago",
                     observacoes: observacoes || null,
                 })
                 .select()

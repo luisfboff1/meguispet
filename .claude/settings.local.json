@@ -52,7 +52,8 @@
       "Bash(npm run lint)",
       "Bash(tree:*)",
       "Bash(doppler run:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
