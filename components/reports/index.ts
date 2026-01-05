@@ -13,6 +13,9 @@ export type { FilterPanelProps } from './FilterPanel'
 export { MetricsSelector } from './MetricsSelector'
 export type { MetricsSelectorProps } from './MetricsSelector'
 
+export { ProductSelector } from './ProductSelector'
+export type { ProductSelectorProps } from './ProductSelector'
+
 export { ReportConfigWizard } from './ReportConfigWizard'
 export type { ReportConfigWizardProps } from './ReportConfigWizard'
 

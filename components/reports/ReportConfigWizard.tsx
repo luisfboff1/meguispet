@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react'
 import { PeriodSelector } from './PeriodSelector'
 import { FilterPanel } from './FilterPanel'
 import { MetricsSelector } from './MetricsSelector'
+import { ProductSelector } from './ProductSelector'
 import type {
   ReportType,
   ReportPeriod,
@@ -24,7 +25,7 @@ export interface ReportConfigWizardProps {
   className?: string
 }
 
-const steps = ['Período', 'Filtros', 'Métricas', 'Formato']
+const steps = ['Período', 'Filtros', 'Métricas', 'Produtos', 'Formato']
 
 const defaultPeriod = (): ReportPeriod => {
   const today = new Date()
@@ -51,6 +52,7 @@ export const ReportConfigWizard: React.FC<ReportConfigWizardProps> = ({
   const [filters, setFilters] = useState<Partial<ReportFilters>>({})
   const [metrics, setMetrics] = useState<ReportMetrics>({})
   const [charts, setCharts] = useState<ReportCharts>({})
+  const [produtosExibir, setProdutosExibir] = useState<number[] | 'todos'>('todos')
   const [formato, setFormato] = useState<ReportFormat>('web')
 
   const handleNext = () => {
@@ -77,6 +79,7 @@ export const ReportConfigWizard: React.FC<ReportConfigWizardProps> = ({
         },
         metricas: metrics,
         graficos: charts,
+        produtosExibir: produtosExibir,
       }
 
       await onGenerate(config, formato)
@@ -119,6 +122,13 @@ export const ReportConfigWizard: React.FC<ReportConfigWizardProps> = ({
           />
         )
       case 3:
+        return (
+          <ProductSelector
+            value={produtosExibir}
+            onChange={setProdutosExibir}
+          />
+        )
+      case 4:
         return (
           <Card>
             <CardHeader>

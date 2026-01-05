@@ -259,14 +259,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }
     })
 
-    const vendasPorProduto = Array.from(vendasPorProdutoMap.entries())
+    let vendasPorProduto = Array.from(vendasPorProdutoMap.entries())
       .map(([produtoId, valores]) => {
         // Calcular preço de venda médio (faturamento / quantidade)
         const precoVendaMedio = valores.quantidade > 0 ? valores.faturamento / valores.quantidade : 0
-        
+
         // Calcular margem de lucro percentual
-        const margemLucro = valores.faturamento > 0 
-          ? ((valores.faturamento - valores.custoTotal) / valores.faturamento) * 100 
+        const margemLucro = valores.faturamento > 0
+          ? ((valores.faturamento - valores.custoTotal) / valores.faturamento) * 100
           : 0
 
         return {
@@ -280,7 +280,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         }
       })
       .sort((a, b) => b.quantidade - a.quantidade)
-      .slice(0, 10)
+
+    // Filtrar produtos conforme configuração
+    if (config.produtosExibir && config.produtosExibir !== 'todos') {
+      // Filtrar apenas produtos selecionados
+      const selectedIds = config.produtosExibir // TypeScript narrowing: number[]
+      vendasPorProduto = vendasPorProduto.filter(p => selectedIds.includes(p.produtoId))
+    } else {
+      // Comportamento padrão: Top 10
+      vendasPorProduto = vendasPorProduto.slice(0, 10)
+    }
 
     // Vendas detalhadas (limitado a 100 para preview)
     const vendasDetalhadas = vendas.slice(0, 100).map(venda => {

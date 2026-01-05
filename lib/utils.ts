@@ -77,3 +77,22 @@ export function formatCurrency(value: number): string {
     currency: 'BRL'
   }).format(value)
 }
+
+/**
+ * Format number with thousand separators (Brazilian format)
+ *
+ * @param value - Number to format
+ * @param decimals - Number of decimal places (default: 2)
+ * @returns Formatted number string
+ *
+ * @example
+ * formatNumber(168986.70) // "168.986,70"
+ * formatNumber(1234.5) // "1.234,50"
+ * formatNumber(1234.5, 1) // "1.234,5"
+ */
+export function formatNumber(value: number, decimals: number = 2): string {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value)
+}

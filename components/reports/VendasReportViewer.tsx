@@ -28,11 +28,27 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
+const formatNumber = (value: number, decimals: number = 2) => {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value)
+}
+
 const formatDate = (dateString: string) => {
   try {
     return format(new Date(dateString), 'dd/MM', { locale: ptBR })
   } catch {
     return dateString
+  }
+}
+
+const formatPeriodDate = (dateStr: string) => {
+  try {
+    const [year, month, day] = dateStr.split('-')
+    return `${day}/${month}/${year}`
+  } catch {
+    return dateStr
   }
 }
 
@@ -44,6 +60,9 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
 }) => {
   const { resumo, vendasPorDia, vendasPorVendedor, vendasPorProduto, vendasDetalhadas } = data
   const { metricas = {}, graficos = {} } = configuracao
+
+  // Calcular total de lucro
+  const totalLucro = resumo.faturamentoTotal - resumo.custoTotal
 
   // Refs para capturar gráficos
   const graficoTemporalRef = useRef<HTMLDivElement>(null)
@@ -116,7 +135,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
         <div>
           <h2 className="text-2xl font-bold">Relatório de Vendas</h2>
           <p className="text-muted-foreground">
-            Período: {configuracao.filtros.periodo.startDate} a {configuracao.filtros.periodo.endDate}
+            Período: {formatPeriodDate(configuracao.filtros.periodo.startDate)} a {formatPeriodDate(configuracao.filtros.periodo.endDate)}
           </p>
         </div>
 
@@ -228,12 +247,28 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
           </Card>
         )}
 
+        {(metricas.incluirCustos === true || metricas.incluirFaturamento === true) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total de Lucro</CardDescription>
+              <CardTitle className="text-3xl">
+                {formatCurrency(totalLucro)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Faturamento - Custo Total
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {(metricas.incluirMargemLucro === true) && (
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Margem de Lucro (sem impostos)</CardDescription>
               <CardTitle className="text-3xl">
-                {resumo.margemLucro.toFixed(2)}%
+                {formatNumber(resumo.margemLucro)}%
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -365,31 +400,37 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                     <th className="text-right p-2 text-sm font-medium">Preço Custo</th>
                     <th className="text-right p-2 text-sm font-medium">Preço Venda</th>
                     <th className="text-right p-2 text-sm font-medium">Faturamento</th>
+                    <th className="text-right p-2 text-sm font-medium">Lucro</th>
                     <th className="text-right p-2 text-sm font-medium">Lucro %</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {vendasPorProduto.map((produto, index) => (
-                    <tr key={produto.produtoId} className="border-b hover:bg-muted/50">
-                      <td className="p-2 text-sm">{index + 1}</td>
-                      <td className="p-2 text-sm font-medium">{produto.produtoNome}</td>
-                      <td className="p-2 text-sm text-right">{produto.quantidade}</td>
-                      <td className="p-2 text-sm text-right">{formatCurrency(produto.precoCusto || 0)}</td>
-                      <td className="p-2 text-sm text-right">{formatCurrency(produto.precoVenda || 0)}</td>
-                      <td className="p-2 text-sm text-right">{formatCurrency(produto.faturamento)}</td>
-                      <td className="p-2 text-sm text-right">
-                        <span className={`font-medium ${
-                          (produto.margemLucro || 0) > 20 
-                            ? 'text-green-600' 
-                            : (produto.margemLucro || 0) > 10 
-                              ? 'text-yellow-600' 
-                              : 'text-red-600'
-                        }`}>
-                          {(produto.margemLucro || 0).toFixed(1)}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {vendasPorProduto.map((produto, index) => {
+                    const custoTotal = produto.quantidade * (produto.precoCusto || 0)
+                    const lucro = produto.faturamento - custoTotal
+                    return (
+                      <tr key={produto.produtoId} className="border-b hover:bg-muted/50">
+                        <td className="p-2 text-sm">{index + 1}</td>
+                        <td className="p-2 text-sm font-medium">{produto.produtoNome}</td>
+                        <td className="p-2 text-sm text-right">{formatNumber(produto.quantidade, 0)}</td>
+                        <td className="p-2 text-sm text-right">{formatCurrency(produto.precoCusto || 0)}</td>
+                        <td className="p-2 text-sm text-right">{formatCurrency(produto.precoVenda || 0)}</td>
+                        <td className="p-2 text-sm text-right">{formatCurrency(produto.faturamento)}</td>
+                        <td className="p-2 text-sm text-right">{formatCurrency(lucro)}</td>
+                        <td className="p-2 text-sm text-right">
+                          <span className={`font-medium ${
+                            (produto.margemLucro || 0) > 20
+                              ? 'text-green-600'
+                              : (produto.margemLucro || 0) > 10
+                                ? 'text-yellow-600'
+                                : 'text-red-600'
+                          }`}>
+                            {formatNumber(produto.margemLucro || 0, 1)}%
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </ScrollableContainer>
@@ -432,7 +473,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                       </td>
                       <td className="p-2 text-sm">{venda.cliente}</td>
                       <td className="p-2 text-sm">{venda.vendedor}</td>
-                      <td className="p-2 text-sm text-right">{venda.produtos}</td>
+                      <td className="p-2 text-sm text-right">{formatNumber(venda.produtos, 0)}</td>
                       <td className="p-2 text-sm text-right">
                         {formatCurrency(venda.subtotal)}
                       </td>

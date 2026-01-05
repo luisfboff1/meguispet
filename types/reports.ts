@@ -87,6 +87,8 @@ export interface ReportConfiguration {
     direcao: 'asc' | 'desc'
   }
   limite?: number
+  // Produtos específicos para incluir na tabela de produtos do relatório
+  produtosExibir?: number[] | 'todos' // Array de IDs ou 'todos' para Top 10
 }
 
 export interface SavedReport {
