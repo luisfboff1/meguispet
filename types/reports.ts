@@ -282,16 +282,34 @@ export interface FinanceiroReportData {
     valor: number
     percentual: number
   }>
+  receitasDetalhadas: Array<{
+    id: number
+    data: string
+    descricao: string
+    categoria: string
+    valor: number
+    tipo: string
+  }>
+  despesasDetalhadas: Array<{
+    id: number
+    data: string
+    descricao: string
+    categoria: string
+    valor: number
+    tipo: string
+  }>
   dre: {
     receitaBruta: number
     deducoes: number
     receitaLiquida: number
     custoProdutos: number
     lucroBruto: number
-    despesasOperacionais: number
-    lucroOperacional: number
-    impostos: number
     lucroLiquido: number
+  }
+  validacao: {
+    faturamentoVendas: number
+    receitasTransacoes: number
+    diferenca: number
   }
 }
 

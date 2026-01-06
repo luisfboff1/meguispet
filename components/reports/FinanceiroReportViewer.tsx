@@ -14,6 +14,7 @@ import type { FinanceiroReportData, ReportConfiguration, ReportFormat } from '@/
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import html2canvas from 'html2canvas'
+import { formatNumber } from '@/lib/utils'
 
 export interface FinanceiroReportViewerProps {
   data: FinanceiroReportData
@@ -35,13 +36,22 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
+const formatPeriodDate = (dateStr: string): string => {
+  try {
+    const [year, month, day] = dateStr.split('-')
+    return `${day}/${month}/${year}`
+  } catch {
+    return dateStr
+  }
+}
+
 export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
   data,
   configuracao,
   onExport,
   className,
 }) => {
-  const { resumo, receitasPorMes, receitasPorCategoria, despesasPorCategoria, dre } = data
+  const { resumo, receitasPorMes, receitasPorCategoria, despesasPorCategoria, receitasDetalhadas, despesasDetalhadas, dre, validacao } = data
   const { graficos = {} } = configuracao
 
   // Refs para capturar gráficos
@@ -132,7 +142,7 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
         <div>
           <h2 className="text-2xl font-bold">Relatório Financeiro</h2>
           <p className="text-muted-foreground">
-            Período: {configuracao.filtros.periodo.startDate} a {configuracao.filtros.periodo.endDate}
+            Período: {formatPeriodDate(configuracao.filtros.periodo.startDate)} a {formatPeriodDate(configuracao.filtros.periodo.endDate)}
           </p>
         </div>
 
@@ -214,55 +224,131 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
         <CardHeader>
           <CardTitle>DRE - Demonstração do Resultado do Exercício</CardTitle>
           <CardDescription>
-            Receitas e custos (impostos pagos pelo cliente não entram no cálculo)
+            Análise de resultados do período (faturamento de vendas)
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex justify-between items-center border-b pb-2">
-              <span className="font-semibold">Receita Bruta (sem impostos)</span>
-              <span className="font-mono text-green-600">{formatCurrency(dre.receitaBruta)}</span>
+              <span className="font-semibold">Receita Bruta (vendas)</span>
+              <span className="font-mono text-green-600">R$ {formatNumber(dre.receitaBruta)}</span>
             </div>
             <div className="flex justify-between items-center pl-4 text-sm">
-              <span className="text-muted-foreground">(-) Deduções</span>
-              <span className="font-mono text-red-600">{formatCurrency(dre.deducoes)}</span>
+              <span className="text-muted-foreground">(-) Deduções (despesas)</span>
+              <span className="font-mono text-red-600">R$ {formatNumber(dre.deducoes)}</span>
             </div>
             <div className="flex justify-between items-center border-b pb-2 font-semibold">
               <span>(=) Receita Líquida</span>
-              <span className="font-mono">{formatCurrency(dre.receitaLiquida)}</span>
+              <span className="font-mono">R$ {formatNumber(dre.receitaLiquida)}</span>
             </div>
             <div className="flex justify-between items-center pl-4 text-sm">
               <span className="text-muted-foreground">(-) Custo dos Produtos</span>
-              <span className="font-mono text-red-600">{formatCurrency(dre.custoProdutos)}</span>
+              <span className="font-mono text-red-600">R$ {formatNumber(dre.custoProdutos)}</span>
             </div>
             <div className="flex justify-between items-center border-b pb-2 font-semibold">
               <span>(=) Lucro Bruto</span>
-              <span className="font-mono text-blue-600">{formatCurrency(dre.lucroBruto)}</span>
-            </div>
-            <div className="flex justify-between items-center pl-4 text-sm">
-              <span className="text-muted-foreground">(-) Despesas Operacionais</span>
-              <span className="font-mono text-red-600">{formatCurrency(dre.despesasOperacionais)}</span>
-            </div>
-            <div className="flex justify-between items-center border-b pb-2 font-semibold">
-              <span>(=) Lucro Operacional</span>
-              <span className="font-mono text-blue-600">{formatCurrency(dre.lucroOperacional)}</span>
-            </div>
-            <div className="flex justify-between items-center pl-4 text-sm bg-muted/30 py-2 rounded">
-              <span className="text-muted-foreground">(i) Impostos (IPI + ST)</span>
-              <span className="font-mono text-orange-600">{formatCurrency(dre.impostos)}</span>
-            </div>
-            <div className="pl-4 text-xs text-muted-foreground italic">
-              * Impostos são pagos pelo cliente e não entram no cálculo da empresa
+              <span className="font-mono text-blue-600">R$ {formatNumber(dre.lucroBruto)}</span>
             </div>
             <div className="flex justify-between items-center border-t-2 border-black pt-2 font-bold text-lg">
               <span>(=) Lucro Líquido</span>
               <span className={`font-mono ${dre.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(dre.lucroLiquido)}
+                R$ {formatNumber(dre.lucroLiquido)}
               </span>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Tabelas Detalhadas de Receitas e Despesas */}
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Receitas Detalhadas */}
+        {receitasDetalhadas && receitasDetalhadas.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Receitas do Período</CardTitle>
+              <CardDescription>
+                Todas as receitas registradas ({receitasDetalhadas.length} transações)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-96 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-background border-b">
+                    <tr>
+                      <th className="text-left p-2">Data</th>
+                      <th className="text-left p-2">Descrição</th>
+                      <th className="text-left p-2">Categoria</th>
+                      <th className="text-right p-2">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {receitasDetalhadas.map((receita) => (
+                      <tr key={receita.id} className="border-b hover:bg-muted/50">
+                        <td className="p-2">{formatPeriodDate(receita.data)}</td>
+                        <td className="p-2">{receita.descricao}</td>
+                        <td className="p-2 text-xs text-muted-foreground">{receita.categoria}</td>
+                        <td className="p-2 text-right font-mono text-green-600">R$ {formatNumber(receita.valor)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t-2 font-semibold">
+                    <tr>
+                      <td colSpan={3} className="p-2 text-right">Total:</td>
+                      <td className="p-2 text-right font-mono text-green-600">
+                        R$ {formatNumber(receitasDetalhadas.reduce((sum, r) => sum + r.valor, 0))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Despesas Detalhadas */}
+        {despesasDetalhadas && despesasDetalhadas.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Despesas do Período</CardTitle>
+              <CardDescription>
+                Todas as despesas registradas ({despesasDetalhadas.length} transações)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-96 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-background border-b">
+                    <tr>
+                      <th className="text-left p-2">Data</th>
+                      <th className="text-left p-2">Descrição</th>
+                      <th className="text-left p-2">Categoria</th>
+                      <th className="text-right p-2">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {despesasDetalhadas.map((despesa) => (
+                      <tr key={despesa.id} className="border-b hover:bg-muted/50">
+                        <td className="p-2">{formatPeriodDate(despesa.data)}</td>
+                        <td className="p-2">{despesa.descricao}</td>
+                        <td className="p-2 text-xs text-muted-foreground">{despesa.categoria}</td>
+                        <td className="p-2 text-right font-mono text-red-600">R$ {formatNumber(despesa.valor)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t-2 font-semibold">
+                    <tr>
+                      <td colSpan={3} className="p-2 text-right">Total:</td>
+                      <td className="p-2 text-right font-mono text-red-600">
+                        R$ {formatNumber(despesasDetalhadas.reduce((sum, d) => sum + d.valor, 0))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Gráficos */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -430,6 +516,45 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
                 </BarChart>
               )}
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Validação: Vendas vs Receitas */}
+      {validacao && (
+        <Card className="mt-6 border-orange-200 bg-orange-50/50">
+          <CardHeader>
+            <CardTitle className="text-orange-900">Validação: Vendas vs Receitas</CardTitle>
+            <CardDescription>
+              Comparação entre faturamento de vendas e receitas lançadas manualmente
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Faturamento de Vendas:</span>
+                <span className="font-mono font-semibold">R$ {formatNumber(validacao.faturamentoVendas)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Receitas de Transações:</span>
+                <span className="font-mono font-semibold">R$ {formatNumber(validacao.receitasTransacoes)}</span>
+              </div>
+              <div className="flex justify-between items-center border-t pt-2 mt-2">
+                <span className="text-sm font-semibold">Diferença:</span>
+                <span className={`font-mono font-bold ${validacao.diferenca === 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                  R$ {formatNumber(Math.abs(validacao.diferenca))}
+                  {validacao.diferenca !== 0 && (
+                    <span className="text-xs ml-2">
+                      ({validacao.diferenca > 0 ? 'vendas maiores' : 'receitas maiores'})
+                    </span>
+                  )}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3 italic">
+                * Se houver diferença, pode indicar receitas lançadas manualmente que já foram contabilizadas nas vendas,
+                ou receitas extras (não operacionais) que não vieram de vendas.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}

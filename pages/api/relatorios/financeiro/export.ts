@@ -5,6 +5,23 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 
+// Helper functions for formatting
+function formatNumber(value: number, decimals: number = 2): string {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value)
+}
+
+function formatPeriodDate(dateStr: string): string {
+  try {
+    const [year, month, day] = dateStr.split('-')
+    return `${day}/${month}/${year}`
+  } catch {
+    return dateStr
+  }
+}
+
 interface ExportRequestBody extends ReportConfiguration {
   formato: 'pdf' | 'excel' | 'csv'
   chartImages?: {
@@ -92,7 +109,7 @@ function exportPDF(data: FinanceiroReportData, config: ExportRequestBody, res: N
 
   // Período
   doc.setFontSize(10)
-  doc.text(`Período: ${periodo.startDate} a ${periodo.endDate}`, 14, 28)
+  doc.text(`Período: ${formatPeriodDate(periodo.startDate)} a ${formatPeriodDate(periodo.endDate)}`, 14, 28)
 
   // Resumo
   doc.setFontSize(14)
@@ -100,37 +117,111 @@ function exportPDF(data: FinanceiroReportData, config: ExportRequestBody, res: N
 
   doc.setFontSize(10)
   const resumoY = 45
-  doc.text(`Receita Total (sem impostos): R$ ${data.resumo.receitaTotal.toFixed(2)}`, 14, resumoY)
-  doc.text(`Despesa Total: R$ ${data.resumo.despesaTotal.toFixed(2)}`, 14, resumoY + 7)
-  doc.text(`Lucro Líquido (sem impostos): R$ ${data.resumo.lucroLiquido.toFixed(2)}`, 14, resumoY + 14)
-  doc.text(`Margem de Lucro: ${data.resumo.margemLucro.toFixed(2)}%`, 14, resumoY + 21)
+  doc.text(`Receita Total: R$ ${formatNumber(data.resumo.receitaTotal)}`, 14, resumoY)
+  doc.text(`Despesa Total: R$ ${formatNumber(data.resumo.despesaTotal)}`, 14, resumoY + 7)
+  doc.text(`Lucro Líquido: R$ ${formatNumber(data.resumo.lucroLiquido)}`, 14, resumoY + 14)
+  doc.text(`Margem de Lucro: ${formatNumber(data.resumo.margemLucro)}%`, 14, resumoY + 21)
 
   // DRE
   doc.addPage()
   doc.setFontSize(14)
   doc.text('DRE - Demonstração do Resultado do Exercício', 14, 20)
   doc.setFontSize(8)
-  doc.text('* Receita e lucro calculados sem impostos (IPI/ST pagos pelo cliente)', 14, 27)
+  doc.text('Análise de resultados do período (faturamento de vendas)', 14, 27)
 
   autoTable(doc, {
     startY: 32,
     head: [['Item', 'Valor']],
     body: [
-      ['Receita Bruta (sem impostos)', `R$ ${data.dre.receitaBruta.toFixed(2)}`],
-      ['(-) Deduções', `R$ ${data.dre.deducoes.toFixed(2)}`],
-      ['(=) Receita Líquida', `R$ ${data.dre.receitaLiquida.toFixed(2)}`],
-      ['(-) Custo dos Produtos', `R$ ${data.dre.custoProdutos.toFixed(2)}`],
-      ['(=) Lucro Bruto', `R$ ${data.dre.lucroBruto.toFixed(2)}`],
-      ['(-) Despesas Operacionais', `R$ ${data.dre.despesasOperacionais.toFixed(2)}`],
-      ['(=) Lucro Operacional', `R$ ${data.dre.lucroOperacional.toFixed(2)}`],
-      ['(i) Impostos IPI+ST (ref.)', `R$ ${data.dre.impostos.toFixed(2)}`],
-      ['(=) Lucro Líquido', `R$ ${data.dre.lucroLiquido.toFixed(2)}`],
+      ['Receita Bruta (vendas)', `R$ ${formatNumber(data.dre.receitaBruta)}`],
+      ['(-) Deduções (despesas)', `R$ ${formatNumber(data.dre.deducoes)}`],
+      ['(=) Receita Líquida', `R$ ${formatNumber(data.dre.receitaLiquida)}`],
+      ['(-) Custo dos Produtos', `R$ ${formatNumber(data.dre.custoProdutos)}`],
+      ['(=) Lucro Bruto', `R$ ${formatNumber(data.dre.lucroBruto)}`],
+      ['(=) Lucro Líquido', `R$ ${formatNumber(data.dre.lucroLiquido)}`],
     ],
     styles: { fontSize: 10 },
     headStyles: { fillColor: [41, 128, 185] },
   })
 
   let currentY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 100
+
+  // Receitas Detalhadas
+  if (data.receitasDetalhadas && data.receitasDetalhadas.length > 0) {
+    doc.addPage()
+    doc.setFontSize(14)
+    doc.text('Receitas do Período', 14, 20)
+    doc.setFontSize(8)
+    doc.text(`Total: ${data.receitasDetalhadas.length} transações`, 14, 27)
+
+    autoTable(doc, {
+      startY: 32,
+      head: [['Data', 'Descrição', 'Categoria', 'Valor']],
+      body: data.receitasDetalhadas.map(r => [
+        formatPeriodDate(r.data),
+        r.descricao,
+        r.categoria,
+        `R$ ${formatNumber(r.valor)}`,
+      ]),
+      foot: [['', '', 'Total:', `R$ ${formatNumber(data.receitasDetalhadas.reduce((sum, r) => sum + r.valor, 0))}`]],
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [22, 163, 74] },
+      footStyles: { fillColor: [22, 163, 74], fontStyle: 'bold' },
+    })
+    currentY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 100
+  }
+
+  // Despesas Detalhadas
+  if (data.despesasDetalhadas && data.despesasDetalhadas.length > 0) {
+    doc.addPage()
+    doc.setFontSize(14)
+    doc.text('Despesas do Período', 14, 20)
+    doc.setFontSize(8)
+    doc.text(`Total: ${data.despesasDetalhadas.length} transações`, 14, 27)
+
+    autoTable(doc, {
+      startY: 32,
+      head: [['Data', 'Descrição', 'Categoria', 'Valor']],
+      body: data.despesasDetalhadas.map(d => [
+        formatPeriodDate(d.data),
+        d.descricao,
+        d.categoria,
+        `R$ ${formatNumber(d.valor)}`,
+      ]),
+      foot: [['', '', 'Total:', `R$ ${formatNumber(data.despesasDetalhadas.reduce((sum, d) => sum + d.valor, 0))}`]],
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [239, 68, 68] },
+      footStyles: { fillColor: [239, 68, 68], fontStyle: 'bold' },
+    })
+    currentY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 100
+  }
+
+  // Validação: Vendas vs Receitas
+  if (data.validacao) {
+    doc.addPage()
+    doc.setFontSize(14)
+    doc.text('Validação: Vendas vs Receitas', 14, 20)
+    doc.setFontSize(8)
+    doc.text('Comparação entre faturamento de vendas e receitas lançadas manualmente', 14, 27)
+
+    autoTable(doc, {
+      startY: 32,
+      head: [['Item', 'Valor']],
+      body: [
+        ['Faturamento de Vendas', `R$ ${formatNumber(data.validacao.faturamentoVendas)}`],
+        ['Receitas de Transações', `R$ ${formatNumber(data.validacao.receitasTransacoes)}`],
+        ['Diferença', `R$ ${formatNumber(Math.abs(data.validacao.diferenca))} ${data.validacao.diferenca > 0 ? '(vendas maiores)' : data.validacao.diferenca < 0 ? '(receitas maiores)' : ''}`],
+      ],
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [249, 115, 22] },
+    })
+
+    currentY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 100
+
+    doc.setFontSize(8)
+    doc.text('* Se houver diferença, pode indicar receitas lançadas manualmente que já foram', 14, currentY + 10)
+    doc.text('contabilizadas nas vendas, ou receitas extras (não operacionais) que não vieram de vendas.', 14, currentY + 15)
+  }
 
   // Gráficos (se disponíveis)
   if (chartImages?.receitasMes) {
@@ -213,14 +304,14 @@ function exportExcel(data: FinanceiroReportData, config: ExportRequestBody, res:
   // Aba 1: Resumo
   const resumoData = [
     ['Relatório Financeiro'],
-    [`Período: ${periodo.startDate} a ${periodo.endDate}`],
-    ['* Receita e lucro calculados SEM impostos (IPI/ST pagos pelo cliente)'],
+    [`Período: ${formatPeriodDate(periodo.startDate)} a ${formatPeriodDate(periodo.endDate)}`],
+    ['Análise de resultados do período (faturamento de vendas)'],
     [],
     ['Métrica', 'Valor'],
-    ['Receita Total (sem impostos)', `R$ ${data.resumo.receitaTotal.toFixed(2)}`],
-    ['Despesa Total', `R$ ${data.resumo.despesaTotal.toFixed(2)}`],
-    ['Lucro Líquido (sem impostos)', `R$ ${data.resumo.lucroLiquido.toFixed(2)}`],
-    ['Margem de Lucro', `${data.resumo.margemLucro.toFixed(2)}%`],
+    ['Receita Total', formatNumber(data.resumo.receitaTotal)],
+    ['Despesa Total', formatNumber(data.resumo.despesaTotal)],
+    ['Lucro Líquido', formatNumber(data.resumo.lucroLiquido)],
+    ['Margem de Lucro (%)', formatNumber(data.resumo.margemLucro)],
   ]
   const resumoSheet = XLSX.utils.aoa_to_sheet(resumoData)
   XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo')
@@ -228,15 +319,12 @@ function exportExcel(data: FinanceiroReportData, config: ExportRequestBody, res:
   // Aba 2: DRE
   const dreData = [
     ['Item', 'Valor'],
-    ['Receita Bruta (sem impostos)', data.dre.receitaBruta],
-    ['(-) Deduções', data.dre.deducoes],
-    ['(=) Receita Líquida', data.dre.receitaLiquida],
-    ['(-) Custo dos Produtos', data.dre.custoProdutos],
-    ['(=) Lucro Bruto', data.dre.lucroBruto],
-    ['(-) Despesas Operacionais', data.dre.despesasOperacionais],
-    ['(=) Lucro Operacional', data.dre.lucroOperacional],
-    ['(i) Impostos IPI+ST (ref.)', data.dre.impostos],
-    ['(=) Lucro Líquido', data.dre.lucroLiquido],
+    ['Receita Bruta (vendas)', formatNumber(data.dre.receitaBruta)],
+    ['(-) Deduções (despesas)', formatNumber(data.dre.deducoes)],
+    ['(=) Receita Líquida', formatNumber(data.dre.receitaLiquida)],
+    ['(-) Custo dos Produtos', formatNumber(data.dre.custoProdutos)],
+    ['(=) Lucro Bruto', formatNumber(data.dre.lucroBruto)],
+    ['(=) Lucro Líquido', formatNumber(data.dre.lucroLiquido)],
   ]
   const dreSheet = XLSX.utils.aoa_to_sheet(dreData)
   XLSX.utils.book_append_sheet(workbook, dreSheet, 'DRE')
@@ -255,10 +343,60 @@ function exportExcel(data: FinanceiroReportData, config: ExportRequestBody, res:
   if (data.despesasPorCategoria.length > 0) {
     const despesasData = [
       ['Categoria', 'Valor', 'Percentual'],
-      ...data.despesasPorCategoria.map(d => [d.categoria, d.valor, d.percentual])
+      ...data.despesasPorCategoria.map(d => [d.categoria, formatNumber(d.valor), formatNumber(d.percentual, 1)])
     ]
     const despesasSheet = XLSX.utils.aoa_to_sheet(despesasData)
     XLSX.utils.book_append_sheet(workbook, despesasSheet, 'Despesas Categoria')
+  }
+
+  // Aba 5: Receitas Detalhadas
+  if (data.receitasDetalhadas && data.receitasDetalhadas.length > 0) {
+    const receitasDetalhadasData = [
+      ['Data', 'Descrição', 'Categoria', 'Valor'],
+      ...data.receitasDetalhadas.map(r => [
+        formatPeriodDate(r.data),
+        r.descricao,
+        r.categoria,
+        formatNumber(r.valor)
+      ]),
+      ['', '', 'Total:', formatNumber(data.receitasDetalhadas.reduce((sum, r) => sum + r.valor, 0))]
+    ]
+    const receitasDetalhadasSheet = XLSX.utils.aoa_to_sheet(receitasDetalhadasData)
+    XLSX.utils.book_append_sheet(workbook, receitasDetalhadasSheet, 'Receitas Detalhadas')
+  }
+
+  // Aba 6: Despesas Detalhadas
+  if (data.despesasDetalhadas && data.despesasDetalhadas.length > 0) {
+    const despesasDetalhadasData = [
+      ['Data', 'Descrição', 'Categoria', 'Valor'],
+      ...data.despesasDetalhadas.map(d => [
+        formatPeriodDate(d.data),
+        d.descricao,
+        d.categoria,
+        formatNumber(d.valor)
+      ]),
+      ['', '', 'Total:', formatNumber(data.despesasDetalhadas.reduce((sum, d) => sum + d.valor, 0))]
+    ]
+    const despesasDetalhadasSheet = XLSX.utils.aoa_to_sheet(despesasDetalhadasData)
+    XLSX.utils.book_append_sheet(workbook, despesasDetalhadasSheet, 'Despesas Detalhadas')
+  }
+
+  // Aba 7: Validação
+  if (data.validacao) {
+    const validacaoData = [
+      ['Validação: Vendas vs Receitas'],
+      ['Comparação entre faturamento de vendas e receitas lançadas manualmente'],
+      [],
+      ['Item', 'Valor'],
+      ['Faturamento de Vendas', formatNumber(data.validacao.faturamentoVendas)],
+      ['Receitas de Transações', formatNumber(data.validacao.receitasTransacoes)],
+      ['Diferença', `${formatNumber(Math.abs(data.validacao.diferenca))} ${data.validacao.diferenca > 0 ? '(vendas maiores)' : data.validacao.diferenca < 0 ? '(receitas maiores)' : ''}`],
+      [],
+      ['* Se houver diferença, pode indicar receitas lançadas manualmente que já foram contabilizadas nas vendas,'],
+      ['ou receitas extras (não operacionais) que não vieram de vendas.']
+    ]
+    const validacaoSheet = XLSX.utils.aoa_to_sheet(validacaoData)
+    XLSX.utils.book_append_sheet(workbook, validacaoSheet, 'Validação')
   }
 
   const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
@@ -274,30 +412,61 @@ function exportCSV(data: FinanceiroReportData, config: ExportRequestBody, res: N
 
   // Cabeçalho
   csvLines.push('Relatório Financeiro')
-  csvLines.push(`Período: ${periodo.startDate} a ${periodo.endDate}`)
+  csvLines.push(`Período: ${formatPeriodDate(periodo.startDate)} a ${formatPeriodDate(periodo.endDate)}`)
   csvLines.push('')
 
   // Resumo
   csvLines.push('Resumo')
   csvLines.push('Métrica,Valor')
-  csvLines.push(`Receita Total,R$ ${data.resumo.receitaTotal.toFixed(2)}`)
-  csvLines.push(`Despesa Total,R$ ${data.resumo.despesaTotal.toFixed(2)}`)
-  csvLines.push(`Lucro Líquido,R$ ${data.resumo.lucroLiquido.toFixed(2)}`)
-  csvLines.push(`Margem de Lucro,${data.resumo.margemLucro.toFixed(2)}%`)
+  csvLines.push(`Receita Total,R$ ${formatNumber(data.resumo.receitaTotal)}`)
+  csvLines.push(`Despesa Total,R$ ${formatNumber(data.resumo.despesaTotal)}`)
+  csvLines.push(`Lucro Líquido,R$ ${formatNumber(data.resumo.lucroLiquido)}`)
+  csvLines.push(`Margem de Lucro,${formatNumber(data.resumo.margemLucro)}%`)
   csvLines.push('')
 
   // DRE
   csvLines.push('DRE')
   csvLines.push('Item,Valor')
-  csvLines.push(`Receita Bruta,${data.dre.receitaBruta}`)
-  csvLines.push(`(-) Deduções,${data.dre.deducoes}`)
-  csvLines.push(`(=) Receita Líquida,${data.dre.receitaLiquida}`)
-  csvLines.push(`(-) Custo dos Produtos,${data.dre.custoProdutos}`)
-  csvLines.push(`(=) Lucro Bruto,${data.dre.lucroBruto}`)
-  csvLines.push(`(-) Despesas Operacionais,${data.dre.despesasOperacionais}`)
-  csvLines.push(`(=) Lucro Operacional,${data.dre.lucroOperacional}`)
-  csvLines.push(`(-) Impostos,${data.dre.impostos}`)
-  csvLines.push(`(=) Lucro Líquido,${data.dre.lucroLiquido}`)
+  csvLines.push(`Receita Bruta (vendas),${formatNumber(data.dre.receitaBruta)}`)
+  csvLines.push(`(-) Deduções (despesas),${formatNumber(data.dre.deducoes)}`)
+  csvLines.push(`(=) Receita Líquida,${formatNumber(data.dre.receitaLiquida)}`)
+  csvLines.push(`(-) Custo dos Produtos,${formatNumber(data.dre.custoProdutos)}`)
+  csvLines.push(`(=) Lucro Bruto,${formatNumber(data.dre.lucroBruto)}`)
+  csvLines.push(`(=) Lucro Líquido,${formatNumber(data.dre.lucroLiquido)}`)
+  csvLines.push('')
+
+  // Receitas Detalhadas
+  if (data.receitasDetalhadas && data.receitasDetalhadas.length > 0) {
+    csvLines.push('Receitas do Período')
+    csvLines.push('Data,Descrição,Categoria,Valor')
+    data.receitasDetalhadas.forEach(r => {
+      csvLines.push(`${formatPeriodDate(r.data)},${r.descricao},${r.categoria},R$ ${formatNumber(r.valor)}`)
+    })
+    csvLines.push(`,,,Total: R$ ${formatNumber(data.receitasDetalhadas.reduce((sum, r) => sum + r.valor, 0))}`)
+    csvLines.push('')
+  }
+
+  // Despesas Detalhadas
+  if (data.despesasDetalhadas && data.despesasDetalhadas.length > 0) {
+    csvLines.push('Despesas do Período')
+    csvLines.push('Data,Descrição,Categoria,Valor')
+    data.despesasDetalhadas.forEach(d => {
+      csvLines.push(`${formatPeriodDate(d.data)},${d.descricao},${d.categoria},R$ ${formatNumber(d.valor)}`)
+    })
+    csvLines.push(`,,,Total: R$ ${formatNumber(data.despesasDetalhadas.reduce((sum, d) => sum + d.valor, 0))}`)
+    csvLines.push('')
+  }
+
+  // Validação
+  if (data.validacao) {
+    csvLines.push('Validação: Vendas vs Receitas')
+    csvLines.push('Item,Valor')
+    csvLines.push(`Faturamento de Vendas,R$ ${formatNumber(data.validacao.faturamentoVendas)}`)
+    csvLines.push(`Receitas de Transações,R$ ${formatNumber(data.validacao.receitasTransacoes)}`)
+    csvLines.push(`Diferença,R$ ${formatNumber(Math.abs(data.validacao.diferenca))} ${data.validacao.diferenca > 0 ? '(vendas maiores)' : data.validacao.diferenca < 0 ? '(receitas maiores)' : ''}`)
+    csvLines.push('')
+    csvLines.push('* Se houver diferença pode indicar receitas lançadas manualmente que já foram contabilizadas nas vendas')
+  }
 
   const csvContent = csvLines.join('\n')
   const csvBuffer = Buffer.from(csvContent, 'utf-8')
