@@ -179,6 +179,13 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
     doc.setFontSize(14)
     doc.text('Top 10 Produtos', 14, finalY + 15)
 
+    const totalQtd = data.vendasPorProduto.reduce((sum, p) => sum + p.quantidade, 0)
+    const totalFaturamento = data.vendasPorProduto.reduce((sum, p) => sum + p.faturamento, 0)
+    const totalLucro = data.vendasPorProduto.reduce((sum, p) => {
+      const custoTotal = p.quantidade * (p.precoCusto || 0)
+      return sum + (p.faturamento - custoTotal)
+    }, 0)
+
     autoTable(doc, {
       startY: finalY + 20,
       head: [['Produto', 'Qtd', 'Preço Custo', 'Preço Venda', 'Faturamento', 'Lucro', 'Lucro %']],
@@ -195,8 +202,10 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
           `${formatNumber(p.margemLucro || 0, 1)}%`,
         ]
       }),
+      foot: [['TOTAL', formatNumber(totalQtd, 0), '-', '-', `R$ ${formatNumber(totalFaturamento)}`, `R$ ${formatNumber(totalLucro)}`, '-']],
       styles: { fontSize: 7 },
       headStyles: { fillColor: [39, 174, 96] },
+      footStyles: { fillColor: [39, 174, 96], fontStyle: 'bold' },
     })
   }
 
@@ -276,6 +285,52 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
     }
   }
 
+  // Vendas por Vendedor (Detalhadas)
+  if (data.vendasDetalhadasPorVendedor && data.vendasDetalhadasPorVendedor.length > 0) {
+    data.vendasDetalhadasPorVendedor.forEach((vendedorData, index) => {
+      // Adicionar nova página para cada vendedor
+      doc.addPage()
+
+      // Título do vendedor
+      doc.setFontSize(16)
+      doc.text(`Vendas de ${vendedorData.vendedorNome}`, 14, 20)
+
+      // Resumo do vendedor
+      doc.setFontSize(10)
+      doc.text(`Total de Vendas: ${formatNumber(vendedorData.totalVendas, 0)}`, 14, 30)
+      doc.text(`Faturamento Total: R$ ${formatNumber(vendedorData.faturamentoTotal)}`, 14, 37)
+
+      // Tabela de vendas do vendedor
+      const vendedorTotalQtdProdutos = vendedorData.vendas.reduce((sum, v) => sum + v.produtos, 0)
+      const vendedorTotalLiquido = vendedorData.vendas.reduce((sum, v) => sum + v.valorLiquido, 0)
+      const vendedorTotalFinal = vendedorData.vendas.reduce((sum, v) => sum + v.total, 0)
+
+      autoTable(doc, {
+        startY: 45,
+        head: [['Data', 'Cliente', 'Qtd Prod', 'Valor Líquido', 'Total', 'Status']],
+        body: vendedorData.vendas.map(v => [
+          formatLocalDate(v.data),
+          v.cliente,
+          formatNumber(v.produtos, 0),
+          `R$ ${formatNumber(v.valorLiquido)}`,
+          `R$ ${formatNumber(v.total)}`,
+          v.status,
+        ]),
+        foot: [[
+          'TOTAL',
+          `${formatNumber(vendedorData.vendas.length, 0)} vendas`,
+          formatNumber(vendedorTotalQtdProdutos, 0),
+          `R$ ${formatNumber(vendedorTotalLiquido)}`,
+          `R$ ${formatNumber(vendedorTotalFinal)}`,
+          '-'
+        ]],
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [155, 89, 182] },
+        footStyles: { fillColor: [155, 89, 182], fontStyle: 'bold' },
+      })
+    })
+  }
+
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'))
 
   res.setHeader('Content-Type', 'application/pdf')
@@ -331,6 +386,13 @@ function exportExcel(data: VendasReportData, config: ExportRequestBody, res: Nex
 
   // Aba 3: Produtos
   if (data.vendasPorProduto.length > 0) {
+    const totalQtdExcel = data.vendasPorProduto.reduce((sum, p) => sum + p.quantidade, 0)
+    const totalFaturamentoExcel = data.vendasPorProduto.reduce((sum, p) => sum + p.faturamento, 0)
+    const totalLucroExcel = data.vendasPorProduto.reduce((sum, p) => {
+      const custoTotal = p.quantidade * (p.precoCusto || 0)
+      return sum + (p.faturamento - custoTotal)
+    }, 0)
+
     const produtosData = [
       ['Produto', 'Quantidade', 'Preço Custo', 'Preço Venda', 'Faturamento', 'Lucro', 'Margem Lucro %'],
       ...data.vendasPorProduto.map(p => {
@@ -345,7 +407,8 @@ function exportExcel(data: VendasReportData, config: ExportRequestBody, res: Nex
           formatNumber(lucro),
           formatNumber(p.margemLucro || 0, 1),
         ]
-      })
+      }),
+      ['TOTAL', formatNumber(totalQtdExcel, 0), '-', '-', formatNumber(totalFaturamentoExcel), formatNumber(totalLucroExcel), '-']
     ]
     const produtosSheet = XLSX.utils.aoa_to_sheet(produtosData)
     XLSX.utils.book_append_sheet(workbook, produtosSheet, 'Produtos')
@@ -363,6 +426,55 @@ function exportExcel(data: VendasReportData, config: ExportRequestBody, res: Nex
     ]
     const vendedoresSheet = XLSX.utils.aoa_to_sheet(vendedoresData)
     XLSX.utils.book_append_sheet(workbook, vendedoresSheet, 'Vendedores')
+  }
+
+  // Aba 5: Vendas Detalhadas por Vendedor
+  if (data.vendasDetalhadasPorVendedor && data.vendasDetalhadasPorVendedor.length > 0) {
+    const vendasPorVendedorDetalhadas: any[][] = []
+
+    data.vendasDetalhadasPorVendedor.forEach((vendedorData, index) => {
+      // Se não é o primeiro vendedor, adicionar linha em branco
+      if (index > 0) {
+        vendasPorVendedorDetalhadas.push([])
+      }
+
+      // Cabeçalho do vendedor
+      vendasPorVendedorDetalhadas.push([`Vendedor: ${vendedorData.vendedorNome}`])
+      vendasPorVendedorDetalhadas.push([`Total de Vendas: ${formatNumber(vendedorData.totalVendas, 0)} | Faturamento: R$ ${formatNumber(vendedorData.faturamentoTotal)}`])
+      vendasPorVendedorDetalhadas.push([])
+
+      // Cabeçalhos da tabela
+      vendasPorVendedorDetalhadas.push(['Data', 'Cliente', 'Qtd Produtos', 'Valor Líquido', 'Total', 'Status'])
+
+      // Vendas do vendedor
+      vendedorData.vendas.forEach(v => {
+        vendasPorVendedorDetalhadas.push([
+          formatLocalDate(v.data),
+          v.cliente,
+          formatNumber(v.produtos, 0),
+          formatNumber(v.valorLiquido),
+          formatNumber(v.total),
+          v.status,
+        ])
+      })
+
+      // Totais do vendedor
+      const totalQtdProdutos = vendedorData.vendas.reduce((sum, v) => sum + v.produtos, 0)
+      const totalLiquido = vendedorData.vendas.reduce((sum, v) => sum + v.valorLiquido, 0)
+      const totalFinal = vendedorData.vendas.reduce((sum, v) => sum + v.total, 0)
+
+      vendasPorVendedorDetalhadas.push([
+        'TOTAL',
+        `${formatNumber(vendedorData.vendas.length, 0)} vendas`,
+        formatNumber(totalQtdProdutos, 0),
+        formatNumber(totalLiquido),
+        formatNumber(totalFinal),
+        '-'
+      ])
+    })
+
+    const vendasPorVendedorSheet = XLSX.utils.aoa_to_sheet(vendasPorVendedorDetalhadas)
+    XLSX.utils.book_append_sheet(workbook, vendasPorVendedorSheet, 'Vendas por Vendedor')
   }
 
   const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
@@ -408,12 +520,52 @@ function exportCSV(data: VendasReportData, config: ExportRequestBody, res: NextA
 
   // Produtos
   if (data.vendasPorProduto.length > 0) {
+    const totalQtdCsv = data.vendasPorProduto.reduce((sum, p) => sum + p.quantidade, 0)
+    const totalFaturamentoCsv = data.vendasPorProduto.reduce((sum, p) => sum + p.faturamento, 0)
+    const totalLucroCsv = data.vendasPorProduto.reduce((sum, p) => {
+      const custoTotal = p.quantidade * (p.precoCusto || 0)
+      return sum + (p.faturamento - custoTotal)
+    }, 0)
+
     csvLines.push('Produtos Mais Vendidos')
     csvLines.push('Produto,Quantidade,Preço Custo,Preço Venda,Faturamento,Lucro,Margem Lucro %')
     data.vendasPorProduto.forEach(p => {
       const custoTotal = p.quantidade * (p.precoCusto || 0)
       const lucro = p.faturamento - custoTotal
       csvLines.push(`${p.produtoNome},${formatNumber(p.quantidade, 0)},${formatNumber(p.precoCusto || 0)},${formatNumber(p.precoVenda || 0)},${formatNumber(p.faturamento)},${formatNumber(lucro)},${formatNumber(p.margemLucro || 0, 1)}`)
+    })
+    csvLines.push(`TOTAL,${formatNumber(totalQtdCsv, 0)},-,-,${formatNumber(totalFaturamentoCsv)},${formatNumber(totalLucroCsv)},-`)
+    csvLines.push('')
+  }
+
+  // Vendas por Vendedor (Detalhadas)
+  if (data.vendasDetalhadasPorVendedor && data.vendasDetalhadasPorVendedor.length > 0) {
+    csvLines.push('Vendas Detalhadas por Vendedor')
+    csvLines.push('')
+
+    data.vendasDetalhadasPorVendedor.forEach((vendedorData, index) => {
+      if (index > 0) {
+        csvLines.push('')
+      }
+
+      csvLines.push(`Vendedor: ${vendedorData.vendedorNome}`)
+      csvLines.push(`Total de Vendas: ${formatNumber(vendedorData.totalVendas, 0)} | Faturamento: R$ ${formatNumber(vendedorData.faturamentoTotal)}`)
+      csvLines.push('')
+      csvLines.push('Data,Cliente,Qtd Produtos,Valor Líquido,Total,Status')
+
+      vendedorData.vendas.forEach(v => {
+        csvLines.push(
+          `${formatLocalDate(v.data)},${v.cliente},${formatNumber(v.produtos, 0)},${formatNumber(v.valorLiquido)},${formatNumber(v.total)},${v.status}`
+        )
+      })
+
+      const totalQtdProdutos = vendedorData.vendas.reduce((sum, v) => sum + v.produtos, 0)
+      const totalLiquido = vendedorData.vendas.reduce((sum, v) => sum + v.valorLiquido, 0)
+      const totalFinal = vendedorData.vendas.reduce((sum, v) => sum + v.total, 0)
+
+      csvLines.push(
+        `TOTAL,${formatNumber(vendedorData.vendas.length, 0)} vendas,${formatNumber(totalQtdProdutos, 0)},${formatNumber(totalLiquido)},${formatNumber(totalFinal)},-`
+      )
     })
   }
 

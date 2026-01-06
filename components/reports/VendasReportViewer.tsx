@@ -58,7 +58,7 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
   onExport,
   className,
 }) => {
-  const { resumo, vendasPorDia, vendasPorVendedor, vendasPorProduto, vendasDetalhadas } = data
+  const { resumo, vendasPorDia, vendasPorVendedor, vendasDetalhadasPorVendedor, vendasPorProduto, vendasDetalhadas } = data
   const { metricas = {}, graficos = {} } = configuracao
 
   // Calcular total de lucro
@@ -432,10 +432,102 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                     )
                   })}
                 </tbody>
+                <tfoot className="border-t-2 font-semibold bg-muted/30">
+                  <tr>
+                    <td colSpan={2} className="p-2 text-sm text-right">TOTAL:</td>
+                    <td className="p-2 text-sm text-right">
+                      {formatNumber(vendasPorProduto.reduce((sum, p) => sum + p.quantidade, 0), 0)}
+                    </td>
+                    <td className="p-2 text-sm text-right">-</td>
+                    <td className="p-2 text-sm text-right">-</td>
+                    <td className="p-2 text-sm text-right">
+                      {formatCurrency(vendasPorProduto.reduce((sum, p) => sum + p.faturamento, 0))}
+                    </td>
+                    <td className="p-2 text-sm text-right">
+                      {formatCurrency(vendasPorProduto.reduce((sum, p) => {
+                        const custoTotal = p.quantidade * (p.precoCusto || 0)
+                        return sum + (p.faturamento - custoTotal)
+                      }, 0))}
+                    </td>
+                    <td className="p-2 text-sm text-right">-</td>
+                  </tr>
+                </tfoot>
               </table>
             </ScrollableContainer>
           </CardContent>
         </Card>
+      )}
+
+      {/* Vendas por Vendedor */}
+      {vendasDetalhadasPorVendedor && vendasDetalhadasPorVendedor.length > 0 && (
+        <div className="mb-6 space-y-6">
+          <h3 className="text-xl font-bold">Vendas por Vendedor</h3>
+          {vendasDetalhadasPorVendedor.map((vendedorData) => (
+            <Card key={vendedorData.vendedorId}>
+              <CardHeader>
+                <CardTitle>{vendedorData.vendedorNome}</CardTitle>
+                <CardDescription>
+                  {vendedorData.totalVendas} vendas • Total: {formatCurrency(vendedorData.faturamentoTotal)}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollableContainer>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2 text-sm font-medium">ID</th>
+                        <th className="text-left p-2 text-sm font-medium">Data</th>
+                        <th className="text-left p-2 text-sm font-medium">Cliente</th>
+                        <th className="text-right p-2 text-sm font-medium">Produtos</th>
+                        <th className="text-right p-2 text-sm font-medium">Valor Líquido</th>
+                        <th className="text-right p-2 text-sm font-medium">Total</th>
+                        <th className="text-center p-2 text-sm font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendedorData.vendas.map((venda) => (
+                        <tr key={venda.id} className="border-b hover:bg-muted/50">
+                          <td className="p-2 text-sm">{venda.id}</td>
+                          <td className="p-2 text-sm">{formatDate(venda.data)}</td>
+                          <td className="p-2 text-sm font-medium">{venda.cliente}</td>
+                          <td className="p-2 text-sm text-right">{venda.produtos}</td>
+                          <td className="p-2 text-sm text-right">{formatCurrency(venda.valorLiquido)}</td>
+                          <td className="p-2 text-sm text-right font-medium">{formatCurrency(venda.total)}</td>
+                          <td className="p-2 text-sm text-center">
+                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                              venda.status === 'pago'
+                                ? 'bg-green-50 text-green-700'
+                                : venda.status === 'cancelado'
+                                  ? 'bg-red-50 text-red-700'
+                                  : 'bg-yellow-50 text-yellow-700'
+                            }`}>
+                              {venda.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="border-t-2 font-semibold bg-muted/30">
+                      <tr>
+                        <td colSpan={3} className="p-2 text-sm text-right">TOTAL ({vendedorData.vendas.length} vendas):</td>
+                        <td className="p-2 text-sm text-right">
+                          {vendedorData.vendas.reduce((sum, v) => sum + v.produtos, 0)} itens
+                        </td>
+                        <td className="p-2 text-sm text-right">
+                          {formatCurrency(vendedorData.vendas.reduce((sum, v) => sum + v.valorLiquido, 0))}
+                        </td>
+                        <td className="p-2 text-sm text-right font-bold">
+                          {formatCurrency(vendedorData.vendas.reduce((sum, v) => sum + v.total, 0))}
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </ScrollableContainer>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* Vendas Detalhadas */}

@@ -159,6 +159,21 @@ export interface VendasReportData {
     quantidade: number
     faturamento: number
   }>
+  vendasDetalhadasPorVendedor: Array<{
+    vendedorId: number
+    vendedorNome: string
+    totalVendas: number
+    faturamentoTotal: number
+    vendas: Array<{
+      id: number
+      data: string
+      cliente: string
+      produtos: number
+      valorLiquido: number
+      total: number
+      status: string
+    }>
+  }>
   vendasPorProduto: Array<{
     produtoId: number
     produtoNome: string
@@ -310,6 +325,32 @@ export interface FinanceiroReportData {
     faturamentoVendas: number
     receitasTransacoes: number
     diferenca: number
+  }
+}
+
+// 👨‍💼 Relatório de Vendedores Detalhado
+export interface VendedoresReportData {
+  periodo: ReportPeriod
+  vendedores: Array<{
+    vendedorId: number
+    vendedorNome: string
+    totalVendas: number
+    faturamentoTotal: number
+    ticketMedio: number
+    vendas: Array<{
+      id: number
+      data: string
+      cliente: string
+      produtos: number
+      valorLiquido: number
+      total: number
+      status: string
+    }>
+  }>
+  resumoGeral: {
+    totalVendedores: number
+    totalVendas: number
+    faturamentoTotal: number
   }
 }
 

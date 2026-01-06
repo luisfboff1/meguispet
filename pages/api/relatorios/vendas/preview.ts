@@ -112,6 +112,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           },
           vendasPorDia: [],
           vendasPorVendedor: [],
+          vendasDetalhadasPorVendedor: [],
           vendasPorProduto: [],
           vendasDetalhadas: [],
         },
@@ -203,6 +204,64 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         faturamento: valores.faturamento,
       }))
       .sort((a, b) => b.faturamento - a.faturamento)
+
+    // Vendas detalhadas por vendedor (para tabelas individuais)
+    type VendaDetalhada = {
+      id: number
+      data: string
+      cliente: string
+      produtos: number
+      valorLiquido: number
+      total: number
+      status: string
+    }
+
+    const vendasDetalhadasPorVendedorMap = new Map<number, {
+      vendedorNome: string
+      vendas: VendaDetalhada[]
+    }>()
+
+    vendas.forEach(venda => {
+      if (venda.vendedor) {
+        const vendedor = Array.isArray(venda.vendedor) ? venda.vendedor[0] : venda.vendedor
+        if (!vendedor) return
+
+        const vendedorId = vendedor.id
+        const vendedorNome = vendedor.nome
+        const cliente = Array.isArray(venda.cliente) ? venda.cliente[0] : venda.cliente
+        const clienteNome = cliente?.nome || 'Cliente não informado'
+
+        const vendasDoVendedor = vendasDetalhadasPorVendedorMap.get(vendedorId) || {
+          vendedorNome,
+          vendas: [] as VendaDetalhada[]
+        }
+
+        const totalProdutos = venda.itens?.length || 0
+        const valorLiquido = venda.total_produtos_liquido || (venda.valor_final - (venda.total_ipi || 0) - (venda.total_st || 0))
+
+        vendasDoVendedor.vendas.push({
+          id: venda.id,
+          data: venda.data_venda,
+          cliente: clienteNome,
+          produtos: totalProdutos,
+          valorLiquido,
+          total: venda.valor_final,
+          status: venda.status || 'pendente'
+        })
+
+        vendasDetalhadasPorVendedorMap.set(vendedorId, vendasDoVendedor)
+      }
+    })
+
+    const vendasDetalhadasPorVendedor = Array.from(vendasDetalhadasPorVendedorMap.entries())
+      .map(([vendedorId, data]) => ({
+        vendedorId,
+        vendedorNome: data.vendedorNome,
+        totalVendas: data.vendas.length,
+        faturamentoTotal: data.vendas.reduce((sum, v) => sum + v.valorLiquido, 0),
+        vendas: data.vendas.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+      }))
+      .sort((a, b) => b.faturamentoTotal - a.faturamentoTotal)
 
     // Vendas por produto (Top 10)
     const vendasPorProdutoMap = new Map<number, { 
@@ -348,6 +407,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       },
       vendasPorDia,
       vendasPorVendedor,
+      vendasDetalhadasPorVendedor,
       vendasPorProduto,
       vendasDetalhadas,
     }
