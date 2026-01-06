@@ -25,6 +25,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Use authenticated supabase client from middleware to respect RLS policies
     const supabase = req.supabaseClient
 
+    // Adicionar 1 dia à data final para incluir todo o dia limite
+    const endDatePlusOne = new Date(endDate)
+    endDatePlusOne.setDate(endDatePlusOne.getDate() + 1)
+    const endDateAdjusted = endDatePlusOne.toISOString().split('T')[0]
+
     // 1. Buscar todas as transações do período
     const { data: transacoes, error: transacoesError } = await supabase
       .from('transacoes')
@@ -33,7 +38,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         categoria_detalhe:categorias_financeiras(id, nome, tipo, cor, icone)
       `)
       .gte('data_transacao', startDate)
-      .lte('data_transacao', endDate)
+      .lt('data_transacao', endDateAdjusted)
       .order('data_transacao', { ascending: true })
 
     if (transacoesError) throw transacoesError
@@ -46,17 +51,45 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const despesaTotal = despesas.reduce((sum, t) => sum + parseFloat(t.valor.toString()), 0)
 
     // 3. Buscar vendas do período para calcular faturamento e custos
-    const { data: vendas } = await supabase
+    const { data: vendas, error: vendasError } = await supabase
       .from('vendas')
-      .select('valor_final, custo_total')
+      .select(`
+        valor_final,
+        total_ipi,
+        total_st,
+        total_produtos_liquido,
+        itens:vendas_itens(
+          quantidade,
+          produto:produtos(preco_custo)
+        )
+      `)
       .gte('data_venda', startDate)
-      .lte('data_venda', endDate)
+      .lt('data_venda', endDateAdjusted)
+
+    if (vendasError) {
+      console.error('Erro ao buscar vendas:', vendasError)
+      throw vendasError
+    }
 
     // Faturamento total das vendas (mesmo cálculo do relatório de vendas)
-    const faturamentoVendas = (vendas || []).reduce((sum, v) => sum + parseFloat(v.valor_final?.toString() || '0'), 0)
+    // IMPORTANTE: Faturamento SEM impostos (impostos são pagos pelo cliente)
+    const faturamentoVendas = (vendas || []).reduce((sum, v) => {
+      // Usar total_produtos_liquido se disponível, senão calcular valor_final - impostos
+      const faturamentoVenda = v.total_produtos_liquido || (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0))
+      return sum + faturamentoVenda
+    }, 0)
 
-    // Custo total dos produtos vendidos
-    const custoProdutos = (vendas || []).reduce((sum, v) => sum + parseFloat(v.custo_total?.toString() || '0'), 0)
+    // Custo total dos produtos vendidos (calcular a partir dos itens)
+    let custoProdutos = 0
+    ;(vendas || []).forEach(venda => {
+      if (venda.itens) {
+        venda.itens.forEach((item: any) => {
+          const produto = Array.isArray(item.produto) ? item.produto[0] : item.produto
+          const precoCusto = produto?.preco_custo || 0
+          custoProdutos += precoCusto * item.quantidade
+        })
+      }
+    })
 
     // 4. Cálculos DRE (nova estrutura)
     // Receita Bruta = APENAS vendas (não somar transações para evitar duplicação)
