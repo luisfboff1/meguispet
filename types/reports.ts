@@ -39,6 +39,7 @@ export interface ReportFilters {
   // Filtros financeiros
   tipoTransacao?: 'receita' | 'despesa' | 'todas'
   categoriaIds?: number[]
+  ocultarComprasMercadorias?: boolean // Oculta categoria "Compras de Mercadorias" do DRE (padrão: true)
 }
 
 export interface ReportMetrics {

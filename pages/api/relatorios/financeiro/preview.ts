@@ -43,9 +43,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     if (transacoesError) throw transacoesError
 
-    // 2. Calcular totais
-    const receitas = (transacoes || []).filter(t => t.tipo === 'receita')
-    const despesas = (transacoes || []).filter(t => t.tipo === 'despesa')
+    // 2. Filtrar transações (ocultar Compras de Mercadorias por padrão)
+    const ocultarComprasMercadorias = config.filtros.ocultarComprasMercadorias !== false // padrão true
+
+    const transacoesFiltradas = (transacoes || []).filter(t => {
+      if (!ocultarComprasMercadorias) return true // Mostrar tudo se filtro desativado
+
+      // Ocultar se for categoria "Compras de Mercadorias"
+      const categoria = t.categoria_detalhe?.nome || t.categoria || ''
+      const isCompraMercadoria = categoria.toLowerCase().includes('compra') &&
+                                 categoria.toLowerCase().includes('mercadoria')
+
+      return !isCompraMercadoria
+    })
+
+    // 3. Calcular totais (usando transações filtradas)
+    const receitas = transacoesFiltradas.filter(t => t.tipo === 'receita')
+    const despesas = transacoesFiltradas.filter(t => t.tipo === 'despesa')
 
     const receitaTotal = receitas.reduce((sum, t) => sum + parseFloat(t.valor.toString()), 0)
     const despesaTotal = despesas.reduce((sum, t) => sum + parseFloat(t.valor.toString()), 0)
@@ -110,10 +124,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Margem de Lucro
     const margemLucro = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0
 
-    // 5. Agrupar por mês
+    // 5. Agrupar por mês (usando transações filtradas)
     const receitasPorMesMap: Record<string, { receita: number; despesa: number }> = {}
 
-    ;(transacoes || []).forEach(t => {
+    transacoesFiltradas.forEach(t => {
       const data = new Date(t.data_transacao)
       const mesAno = data.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '')
       const mesKey = mesAno.charAt(0).toUpperCase() + mesAno.slice(1)

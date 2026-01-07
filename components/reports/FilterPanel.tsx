@@ -301,6 +301,28 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           <option value="despesa">Despesas</option>
         </select>
       </div>
+
+      <div className="space-y-2">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={filters.ocultarComprasMercadorias !== false}
+            onChange={(e) => {
+              onChange({
+                ...filters,
+                ocultarComprasMercadorias: e.target.checked,
+              })
+            }}
+            className="mt-0.5 h-4 w-4 rounded border-input"
+          />
+          <div className="flex-1">
+            <div className="text-sm font-medium">Ocultar Compras de Mercadorias</div>
+            <div className="text-xs text-muted-foreground">
+              Não incluir "Compras de Mercadorias" nas despesas e deduções do DRE
+            </div>
+          </div>
+        </label>
+      </div>
     </>
   )
 
