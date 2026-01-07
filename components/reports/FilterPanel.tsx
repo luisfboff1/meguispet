@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Filter, X } from 'lucide-react'
 import type { ReportType, ReportFilters } from '@/types/reports'
+import { vendedoresService } from '@/services/api'
+import type { Vendedor } from '@/types'
 
 export interface FilterPanelProps {
   tipo: ReportType
@@ -19,6 +21,26 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   onClear,
   className,
 }) => {
+  const [vendedores, setVendedores] = useState<Vendedor[]>([])
+  const [loadingVendedores, setLoadingVendedores] = useState(false)
+
+  // Buscar vendedores quando o filtro é para vendas
+  useEffect(() => {
+    if (tipo === 'vendas') {
+      setLoadingVendedores(true)
+      vendedoresService.getAll(1, 999)
+        .then(response => {
+          setVendedores(response.data || [])
+        })
+        .catch(error => {
+          console.error('Erro ao buscar vendedores:', error)
+        })
+        .finally(() => {
+          setLoadingVendedores(false)
+        })
+    }
+  }, [tipo])
+
   const renderVendasFilters = () => (
     <>
       <div className="space-y-2">
@@ -86,6 +108,35 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             })
           }}
         />
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="vendedor" className="text-sm font-medium">
+          Vendedor
+        </label>
+        <select
+          id="vendedor"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          value={filters.vendedorIds?.[0] || ''}
+          onChange={(e) => {
+            const value = e.target.value
+            onChange({
+              ...filters,
+              vendedorIds: value ? [parseInt(value)] : undefined,
+            })
+          }}
+          disabled={loadingVendedores}
+        >
+          <option value="">Todos os Vendedores</option>
+          {vendedores.map(vendedor => (
+            <option key={vendedor.id} value={vendedor.id}>
+              {vendedor.nome}
+            </option>
+          ))}
+        </select>
+        {loadingVendedores && (
+          <p className="text-xs text-muted-foreground">Carregando vendedores...</p>
+        )}
       </div>
     </>
   )
