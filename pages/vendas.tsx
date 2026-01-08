@@ -107,6 +107,23 @@ export default function VendasPage() {
     }
   }
 
+  // Filtrar vendas do mês atual para os cards
+  const vendasMesAtual = useMemo(() => {
+    const hoje = new Date()
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59)
+
+    return vendas.filter(venda => {
+      const dataVenda = new Date(venda.data_venda)
+      return dataVenda >= inicioMes && dataVenda <= fimMes
+    })
+  }, [vendas])
+
+  // Calcular métricas do mês atual
+  const totalVendasMes = vendasMesAtual.length
+  const faturamentoMes = vendasMesAtual.reduce((sum, venda) => sum + Number(venda.valor_final || 0), 0)
+  const ticketMedioMes = totalVendasMes > 0 ? faturamentoMes / totalVendasMes : 0
+
   const filteredVendas = vendas.filter(venda => {
     const searchLower = searchTerm.toLowerCase()
     const clienteMatch = venda.cliente?.nome?.toLowerCase().includes(searchLower)
@@ -1080,7 +1097,7 @@ export default function VendasPage() {
             <ShoppingCart className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold whitespace-nowrap">{vendas.length}</div>
+            <div className="text-2xl font-bold whitespace-nowrap">{totalVendasMes}</div>
             <p className="text-xs text-muted-foreground truncate">Este mês</p>
           </CardContent>
         </Card>
@@ -1092,7 +1109,7 @@ export default function VendasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold whitespace-nowrap">
-              {formatCurrency(vendas.reduce((sum, venda) => sum + Number(venda.valor_final || 0), 0))}
+              {formatCurrency(faturamentoMes)}
             </div>
             <p className="text-xs text-muted-foreground truncate">Este mês</p>
           </CardContent>
@@ -1105,9 +1122,9 @@ export default function VendasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold whitespace-nowrap">
-              {vendas.length > 0 ? formatCurrency(vendas.reduce((sum, venda) => sum + Number(venda.valor_final || 0), 0) / vendas.length) : 'R$ 0,00'}
+              {formatCurrency(ticketMedioMes)}
             </div>
-            <p className="text-xs text-muted-foreground truncate">Por venda</p>
+            <p className="text-xs text-muted-foreground truncate">Este mês</p>
           </CardContent>
         </Card>
 
