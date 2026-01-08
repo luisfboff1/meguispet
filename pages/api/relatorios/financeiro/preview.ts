@@ -68,6 +68,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const { data: vendas, error: vendasError } = await supabase
       .from('vendas')
       .select(`
+        data_venda,
         valor_final,
         total_ipi,
         total_st,
@@ -124,10 +125,25 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Margem de Lucro
     const margemLucro = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0
 
-    // 5. Agrupar por mês (usando transações filtradas)
+    // 5. Agrupar por mês (vendas como receita + despesas filtradas)
     const receitasPorMesMap: Record<string, { receita: number; despesa: number }> = {}
 
-    transacoesFiltradas.forEach(t => {
+    // Adicionar vendas (receitas) por mês
+    ;(vendas || []).forEach(v => {
+      const data = new Date(v.data_venda)
+      const mesAno = data.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '')
+      const mesKey = mesAno.charAt(0).toUpperCase() + mesAno.slice(1)
+
+      if (!receitasPorMesMap[mesKey]) {
+        receitasPorMesMap[mesKey] = { receita: 0, despesa: 0 }
+      }
+
+      const faturamento = v.total_produtos_liquido || (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0))
+      receitasPorMesMap[mesKey].receita += faturamento
+    })
+
+    // Adicionar despesas por mês
+    despesas.forEach(t => {
       const data = new Date(t.data_transacao)
       const mesAno = data.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '')
       const mesKey = mesAno.charAt(0).toUpperCase() + mesAno.slice(1)
@@ -136,12 +152,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         receitasPorMesMap[mesKey] = { receita: 0, despesa: 0 }
       }
 
-      const valor = parseFloat(t.valor.toString())
-      if (t.tipo === 'receita') {
-        receitasPorMesMap[mesKey].receita += valor
-      } else {
-        receitasPorMesMap[mesKey].despesa += valor
-      }
+      receitasPorMesMap[mesKey].despesa += parseFloat(t.valor.toString())
     })
 
     const receitasPorMes = Object.entries(receitasPorMesMap).map(([mes, valores]) => ({
@@ -151,18 +162,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       lucro: valores.receita - valores.despesa
     }))
 
-    // 6. Agrupar receitas por categoria
-    const receitasPorCategoriaMap: Record<string, number> = {}
-    receitas.forEach(t => {
-      const categoria = t.categoria_detalhe?.nome || t.categoria || 'Sem Categoria'
-      receitasPorCategoriaMap[categoria] = (receitasPorCategoriaMap[categoria] || 0) + parseFloat(t.valor.toString())
-    })
+    // 6. Agrupar receitas por categoria (vendas)
+    const receitasPorCategoriaMap: Record<string, number> = {
+      'Vendas': faturamentoVendas // Todas as vendas em uma categoria
+    }
 
     const receitasPorCategoria = Object.entries(receitasPorCategoriaMap)
       .map(([categoria, valor]) => ({
         categoria,
         valor,
-        percentual: receitaTotal > 0 ? (valor / receitaTotal) * 100 : 0
+        percentual: faturamentoVendas > 0 ? (valor / faturamentoVendas) * 100 : 0
       }))
       .sort((a, b) => b.valor - a.valor)
 
@@ -181,15 +190,42 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }))
       .sort((a, b) => b.valor - a.valor)
 
-    // 8. Montar arrays de receitas e despesas detalhadas
-    const receitasDetalhadas = receitas.map(t => ({
-      id: t.id,
-      data: t.data_transacao,
-      descricao: t.descricao || 'Sem descrição',
-      categoria: t.categoria_detalhe?.nome || t.categoria || 'Sem Categoria',
-      valor: parseFloat(t.valor.toString()),
-      tipo: t.tipo
-    }))
+    // 8. Buscar vendas detalhadas para usar como receitas (regime de competência)
+    const { data: vendasDetalhadas, error: vendasDetalhadasError } = await supabase
+      .from('vendas')
+      .select(`
+        id,
+        numero_venda,
+        data_venda,
+        valor_final,
+        total_produtos_liquido,
+        total_ipi,
+        total_st,
+        cliente:clientes_fornecedores(nome)
+      `)
+      .gte('data_venda', startDate)
+      .lt('data_venda', endDateAdjusted)
+      .order('data_venda', { ascending: true })
+
+    if (vendasDetalhadasError) {
+      console.error('Erro ao buscar vendas detalhadas:', vendasDetalhadasError)
+      throw vendasDetalhadasError
+    }
+
+    // 9. Montar arrays de receitas (vendas) e despesas detalhadas
+    const receitasDetalhadas = (vendasDetalhadas || []).map(v => {
+      const cliente = Array.isArray(v.cliente) ? v.cliente[0] : v.cliente
+      const faturamento = v.total_produtos_liquido || (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0))
+
+      return {
+        id: v.id,
+        data: v.data_venda,
+        descricao: `Venda ${v.numero_venda || v.id} - ${cliente?.nome || 'Cliente não informado'}`,
+        categoria: 'Vendas',
+        valor: parseFloat(faturamento.toFixed(2)),
+        tipo: 'receita'
+      }
+    })
 
     const despesasDetalhadas = despesas.map(t => ({
       id: t.id,
@@ -210,7 +246,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // 10. Montar relatório completo
     const reportData: FinanceiroReportData = {
       resumo: {
-        receitaTotal: parseFloat(receitaTotal.toFixed(2)),
+        receitaTotal: parseFloat(faturamentoVendas.toFixed(2)), // Usar faturamento de vendas, não parcelas recebidas
         despesaTotal: parseFloat(despesaTotal.toFixed(2)),
         lucroBruto: parseFloat(lucroBruto.toFixed(2)),
         lucroLiquido: parseFloat(lucroLiquido.toFixed(2)),
