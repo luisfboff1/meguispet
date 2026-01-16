@@ -218,7 +218,9 @@ export async function processarVendaComImpostos(
     st_aliquota?: number; // MVA
   }>,
   descontoTotal: number,
-  semImpostos: boolean = false // Nova opção para vendas sem impostos
+  semImpostos: boolean = false, // Opção para vendas sem impostos (DEPRECADO - usar semIpi e semSt)
+  semIpi: boolean = false, // Nova opção para vendas sem IPI
+  semSt: boolean = false // Nova opção para vendas sem ST
 ): Promise<VendaProcessada> {
   // 1. Buscar alíquotas de impostos dos produtos (apenas se não vier no item)
   const produtoIds = itens.map(item => item.produto_id)
@@ -228,10 +230,14 @@ export async function processarVendaComImpostos(
   const descontosProporcionais = calcularDescontosProporcionais(itens, descontoTotal)
 
   // 3. Calcular cada item com impostos
+  // Determinar quais impostos calcular baseado nos flags
+  const calcularIpi = !semImpostos && !semIpi
+  const calcularSt = !semImpostos && !semSt
+
   const itensCalculados: VendaItemComImpostos[] = itens.map((item, index) => {
     const impostosDb = mapImpostos.get(item.produto_id) || { ipi: 0, icms: 0, icms_proprio: 4, st: 0 }
 
-    // Se a venda é sem impostos, zerar todas as alíquotas
+    // Se a venda é sem todos os impostos (deprecado), zerar todas as alíquotas
     if (semImpostos) {
       return calcularItemComImpostos(
         item.produto_id,
@@ -246,10 +252,14 @@ export async function processarVendaComImpostos(
     }
 
     // Usar alíquotas do item se já estiverem definidas, senão usa do produto
-    const ipiAliquota = item.ipi_aliquota !== undefined ? item.ipi_aliquota : impostosDb.ipi
+    const ipiAliquotaBase = item.ipi_aliquota !== undefined ? item.ipi_aliquota : impostosDb.ipi
     const icmsAliquota = item.icms_aliquota !== undefined ? item.icms_aliquota : impostosDb.icms
     const icmsProprioAliquota = item.icms_proprio_aliquota !== undefined ? item.icms_proprio_aliquota : impostosDb.icms_proprio
-    const stAliquota = item.st_aliquota !== undefined ? item.st_aliquota : impostosDb.st
+    const stAliquotaBase = item.st_aliquota !== undefined ? item.st_aliquota : impostosDb.st
+
+    // Aplicar flags individuais: zerar IPI se semIpi=true, zerar ST se semSt=true
+    const ipiAliquota = calcularIpi ? ipiAliquotaBase : 0
+    const stAliquota = calcularSt ? stAliquotaBase : 0
 
     if (process.env.NODE_ENV === 'development') {
     }

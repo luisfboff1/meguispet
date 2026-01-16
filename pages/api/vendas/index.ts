@@ -217,6 +217,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 itens,
                 parcelas,
                 sem_impostos,
+                sem_ipi,
+                sem_st,
             } = req.body;
 
             if (!numero_venda) {
@@ -264,6 +266,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 itens as VendaItemInput[],
                 descontoValor,
                 sem_impostos || false,
+                sem_ipi || false,
+                sem_st || false,
             );
 
             const { data: venda, error } = await supabase
@@ -283,6 +287,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     imposto_percentual: imposto_percentual || 0,
                     uf_destino: uf_destino || null,
                     sem_impostos: sem_impostos || false,
+                    sem_ipi: sem_ipi || false,
+                    sem_st: sem_st || false,
                     total_produtos_bruto:
                         vendaProcessada.totais.total_produtos_bruto,
                     desconto_total: vendaProcessada.totais.desconto_total,
@@ -516,6 +522,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 observacoes,
                 itens,
                 sem_impostos,
+                sem_ipi,
+                sem_st,
                 parcelas,
             } = req.body;
 
@@ -568,6 +576,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     itens as VendaItemInput[],
                     descontoValor,
                     sem_impostos || false,
+                    sem_ipi || false,
+                    sem_st || false,
                 );
 
                 valor_total_calculado =
@@ -592,6 +602,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                     imposto_percentual: imposto_percentual || 0,
                     uf_destino: uf_destino || null,
                     sem_impostos: sem_impostos || false,
+                    sem_ipi: sem_ipi || false,
+                    sem_st: sem_st || false,
                     total_produtos_bruto:
                         vendaProcessada?.totais.total_produtos_bruto ||
                         valor_total_calculado,

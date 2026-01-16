@@ -54,7 +54,9 @@
       "Bash(doppler run:*)",
       "Bash(npx tsc:*)",
       "Bash(grep:*)",
-      "Bash(pnpm clean:*)"
+      "Bash(pnpm clean:*)",
+      "Bash(dir /b \"c:\\\\Users\\\\Luisf\\\\Documents\\\\GITHUB\\\\meguispet\\\\pages\\\\api\"\")",
+      "Bash(pnpm build:local:*)"
     ],
     "deny": [],
     "ask": []
