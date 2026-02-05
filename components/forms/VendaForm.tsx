@@ -8,6 +8,7 @@ import { Loader2, Plus, Trash2, ShoppingCart, Settings, Calendar } from 'lucide-
 import { clientesService, vendedoresService, produtosService, formasPagamentoService, estoquesService, condicoesPagamentoService } from '@/services/api'
 import { impostosService } from '@/services/impostosService'
 import { calcularItensVenda, calcularTotaisVenda, formatCurrency } from '@/services/vendaCalculations'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import AlertDialog from '@/components/ui/AlertDialog'
 import VendaTabelaColunas from './VendaTabelaColunas'
 import type {
@@ -294,9 +295,9 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
     try {
       setLoadingData(true)
       const [clientesRes, vendedoresRes, produtosRes, formasPagamentoRes, condicoesPagamentoRes, estoquesRes] = await Promise.all([
-        clientesService.getAll(1, 100),
-        vendedoresService.getAll(1, 100),
-        produtosService.getAll(1, 100),
+        clientesService.getAll(1, 1000),
+        vendedoresService.getAll(1, 1000),
+        produtosService.getAll(1, 1000),
         formasPagamentoService.getAll(true),
         condicoesPagamentoService.getAll(true),
         estoquesService.getAll(true)
@@ -735,28 +736,22 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="cliente_id">Cliente</Label>
-              <select
-                id="cliente_id"
+              <SearchableSelect<Cliente>
                 value={formData.cliente_id}
-                onChange={(e) => {
-                  const clienteId = e.target.value
+                onValueChange={(clienteId, cliente) => {
                   setFormData(prev => {
-                    const cliente = clientes.find(c => String(c.id) === clienteId)
                     let vendedorId = prev.vendedor_id
                     let ufDestino = prev.uf_destino
 
                     if (cliente) {
-                      // Preencher vendedor padrão do cliente
                       if (cliente.vendedor_id || cliente.vendedor?.id) {
                         const vendedorPadrao = cliente.vendedor_id ?? cliente.vendedor?.id
                         vendedorId = vendedorPadrao ? String(vendedorPadrao) : prev.vendedor_id
                       }
 
-                      // Preencher UF de destino a partir do estado do cliente
                       if (cliente.estado) {
                         ufDestino = cliente.estado
                       } else {
-                        // Se cliente não tem estado cadastrado, usa SP como padrão
                         ufDestino = 'SP'
                       }
                     }
@@ -764,15 +759,16 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                     return { ...prev, cliente_id: clienteId, vendedor_id: vendedorId, uf_destino: ufDestino }
                   })
                 }}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="">Selecione um cliente</option>
-                {clientes.map(cliente => (
-                  <option key={cliente.id} value={cliente.id}>
-                    {cliente.nome}
-                  </option>
-                ))}
-              </select>
+                onSearch={async (term) => {
+                  const res = await clientesService.search(term, 20)
+                  return res.success && res.data ? res.data : []
+                }}
+                initialItems={clientes}
+                getItemValue={(c) => String(c.id)}
+                getItemLabel={(c) => c.nome}
+                placeholder="Selecione um cliente"
+                searchPlaceholder="Buscar por nome, email ou documento..."
+              />
             </div>
 
             <div>

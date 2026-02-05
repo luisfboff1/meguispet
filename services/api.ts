@@ -148,6 +148,11 @@ export const clientesService = {
   async reactivate(id: number): Promise<ApiResponse<Cliente>> {
     const response = await api.put(`/clientes?id=${id}`, { id, ativo: true })
     return response.data
+  },
+
+  async search(term: string, limit = 20): Promise<PaginatedResponse<Cliente>> {
+    const response = await api.get(`/clientes?search=${encodeURIComponent(term)}&limit=${limit}`)
+    return response.data
   }
 }
 
