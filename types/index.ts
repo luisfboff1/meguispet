@@ -947,3 +947,129 @@ export interface FeedbackComentarioForm {
   ticket_id: string
   comentario: string
 }
+
+// ============================================================================
+// TIPOS PARA INTEGRAÇÃO BLING ERP
+// ============================================================================
+
+export interface BlingVenda {
+  id: number
+  bling_id: number
+  numero_pedido: string
+  numero_pedido_loja?: string
+  data_pedido: string
+  data_saida?: string
+  contato_nome: string
+  contato_documento?: string
+  contato_email?: string
+  contato_telefone?: string
+  bling_contato_id?: number
+  canal_venda?: string
+  loja_id?: number
+  loja_nome?: string
+  total_produtos: number
+  total_desconto: number
+  total_frete: number
+  total_outras_despesas?: number
+  valor_total: number
+  forma_pagamento?: string
+  situacao_id?: number
+  situacao_nome?: string
+  bling_vendedor_id?: number
+  vendedor_nome?: string
+  observacoes?: string
+  observacoes_internas?: string
+  intermediador_cnpj?: string
+  intermediador_usuario?: string
+  taxa_comissao?: number
+  custo_frete_marketplace?: number
+  endereco_entrega?: Record<string, unknown>
+  transporte?: Record<string, unknown>
+  bling_nfe_id?: number
+  venda_local_id?: number
+  itens?: BlingVendaItem[]
+  raw_data?: Record<string, unknown>
+  synced_at: string
+  updated_at?: string
+}
+
+export interface BlingVendaItem {
+  id: number
+  bling_venda_id?: number
+  bling_produto_id?: number
+  codigo_produto?: string
+  descricao: string
+  quantidade: number
+  valor_unitario: number
+  valor_desconto?: number
+  valor_total: number
+  produto_local_id?: number
+}
+
+export interface BlingNfe {
+  id: number
+  bling_id: number
+  numero?: number
+  serie?: number
+  chave_acesso?: string
+  tipo: number
+  situacao: number
+  situacao_nome?: string
+  data_emissao?: string
+  data_operacao?: string
+  bling_contato_id?: number
+  contato_nome?: string
+  contato_documento?: string
+  contato_endereco?: Record<string, unknown>
+  valor_produtos?: number
+  valor_frete?: number
+  valor_icms?: number
+  valor_ipi?: number
+  valor_total: number
+  xml_url?: string
+  danfe_url?: string
+  pdf_url?: string
+  finalidade?: number
+  bling_pedido_id?: number
+  bling_venda_id?: number
+  itens?: BlingNfeItem[]
+  raw_data?: Record<string, unknown>
+  synced_at: string
+  updated_at?: string
+}
+
+export interface BlingNfeItem {
+  id: number
+  bling_nfe_id?: number
+  codigo?: string
+  descricao: string
+  unidade?: string
+  quantidade: number
+  valor_unitario: number
+  valor_total: number
+  tipo?: string
+  ncm?: string
+  cfop?: string
+  origem?: number
+  gtin?: string
+  impostos?: Record<string, unknown>
+  produto_local_id?: number
+}
+
+export interface BlingStatus {
+  connected: boolean
+  token_valid?: boolean
+  api_reachable?: boolean
+  token_expires_at?: string
+  last_sync_vendas?: string
+  last_sync_nfe?: string
+  total_vendas_sync: number
+  total_nfe_sync: number
+  api_error?: string
+}
+
+export interface BlingSyncResult {
+  vendas_synced?: number
+  nfe_synced?: number
+  errors: string[]
+}
