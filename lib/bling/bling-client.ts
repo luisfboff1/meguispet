@@ -201,6 +201,51 @@ export async function getNfe(
 }
 
 // ============================================================================
+// Situações (for mapping status IDs to names)
+// ============================================================================
+
+export interface BlingSituacao {
+  id: number;
+  nome: string;
+  idHerdado?: number;
+}
+
+let cachedSituacoesVendas: Record<number, string> | null = null;
+
+/**
+ * Fetch and cache situações for pedidos de venda module.
+ * Returns a map of situacao.id → nome.
+ */
+export async function getSituacoesVendas(): Promise<Record<number, string>> {
+  if (cachedSituacoesVendas) return cachedSituacoesVendas;
+
+  try {
+    const result = await blingGet<BlingSituacao[]>(
+      "/situacoes/modulos",
+      { idModuloSistema: 98310 }, // 98310 = Pedidos de Venda module
+    );
+    const map: Record<number, string> = {};
+    if (Array.isArray(result)) {
+      for (const sit of result) {
+        map[sit.id] = sit.nome;
+      }
+    }
+    cachedSituacoesVendas = map;
+    return map;
+  } catch (err) {
+    console.warn("[Bling Client] Failed to fetch situações:", err);
+    return {};
+  }
+}
+
+/**
+ * Clear cached situações (for testing)
+ */
+export function clearSituacoesCache(): void {
+  cachedSituacoesVendas = null;
+}
+
+// ============================================================================
 // Contatos (for connection test)
 // ============================================================================
 

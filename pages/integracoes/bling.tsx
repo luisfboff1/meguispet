@@ -35,6 +35,26 @@ import type {
   BlingSyncResult,
 } from '@/types'
 
+// ─── Marketplace colors / icons ───────────────────────────────────
+const MARKETPLACE_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  'Amazon':         { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+  'Shopee':         { bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200' },
+  'Mercado Livre':  { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
+  'Magazine Luiza': { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200' },
+  'Americanas':     { bg: 'bg-red-50',    text: 'text-red-600',    border: 'border-red-200' },
+  'AliExpress':     { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
+}
+
+function MarketplaceBadge({ name }: { name: string | null | undefined }) {
+  if (!name) return <span className="text-gray-400 text-sm">Venda direta</span>
+  const style = MARKETPLACE_STYLES[name] || { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' }
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full border ${style.bg} ${style.text} ${style.border}`}>
+      {name}
+    </span>
+  )
+}
+
 // ─── Situação helpers ─────────────────────────────────────────────
 const VENDA_SITUACAO_COLORS: Record<number, string> = {
   0:  'bg-gray-100 text-gray-700',
@@ -233,16 +253,28 @@ export default function BlingPage() {
       accessorKey: 'numero_pedido',
       header: ({ column }) => <SortableHeader column={column}>Pedido</SortableHeader>,
       cell: ({ row }) => (
-        <div className="min-w-[120px]">
+        <div className="min-w-[100px]">
           <div className="font-medium text-gray-900 dark:text-gray-100">
             #{row.original.numero_pedido}
           </div>
-          {row.original.numero_pedido_loja && (
-            <div className="text-xs text-gray-500">
-              Loja: {row.original.numero_pedido_loja}
-            </div>
-          )}
         </div>
+      ),
+    },
+    {
+      accessorKey: 'numero_pedido_loja',
+      header: ({ column }) => <SortableHeader column={column}>Nº Loja</SortableHeader>,
+      cell: ({ row }) => (
+        <div className="text-xs text-gray-600 dark:text-gray-400 font-mono max-w-[150px] truncate" title={row.original.numero_pedido_loja || ''}>
+          {row.original.numero_pedido_loja || '-'}
+        </div>
+      ),
+    },
+    {
+      id: 'origem',
+      header: ({ column }) => <SortableHeader column={column}>Origem</SortableHeader>,
+      accessorFn: (row) => row.loja_nome || row.canal_venda || '',
+      cell: ({ row }) => (
+        <MarketplaceBadge name={row.original.loja_nome || row.original.canal_venda} />
       ),
     },
     {
@@ -267,20 +299,6 @@ export default function BlingPage() {
           )}
         </div>
       ),
-    },
-    {
-      accessorKey: 'loja_nome',
-      header: ({ column }) => <SortableHeader column={column}>Canal</SortableHeader>,
-      cell: ({ row }) => {
-        const canal = row.original.loja_nome || row.original.canal_venda
-        return canal ? (
-          <Badge variant="outline" className="text-xs">
-            {canal}
-          </Badge>
-        ) : (
-          <span className="text-gray-400">-</span>
-        )
-      },
     },
     {
       accessorKey: 'situacao_nome',
@@ -737,8 +755,9 @@ export default function BlingPage() {
             enableColumnVisibility={true}
             enableColumnReordering={true}
             pageSize={50}
-            mobileVisibleColumns={['numero_pedido', 'contato_nome', 'valor_total', 'situacao_nome']}
+            mobileVisibleColumns={['numero_pedido', 'origem', 'valor_total', 'situacao_nome']}
             initialColumnVisibility={{
+              numero_pedido_loja: false,
               intermediador: false,
               taxa_comissao: false,
               custo_frete_marketplace: false,

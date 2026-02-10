@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
-import { getPedidoVenda, getNfe } from "@/lib/bling/bling-client";
+import { getPedidoVenda, getNfe, getSituacoesVendas } from "@/lib/bling/bling-client";
 import { syncPedidoVenda, syncNfe, logSync } from "@/lib/bling/bling-sync";
 
 /**
@@ -59,8 +59,9 @@ async function processWebhookEvent(
 
   try {
     if (resource === "pedido_venda" || resource === "pedidos_vendas") {
+      const situacoesMap = await getSituacoesVendas();
       const detail = await getPedidoVenda(resourceId);
-      await syncPedidoVenda(detail.data);
+      await syncPedidoVenda(detail.data, situacoesMap);
       await logSync({
         tipo: "webhook",
         recurso: "pedido_venda",

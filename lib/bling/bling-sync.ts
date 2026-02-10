@@ -4,6 +4,7 @@ import {
   getPedidoVenda,
   getNfeList,
   getNfe,
+  getSituacoesVendas,
   type BlingPedidoVendaDetail,
   type BlingNfeDetail,
 } from "./bling-client";
@@ -19,6 +20,69 @@ import {
  * - Layer 2: Incremental poll → only fetches changes since last_sync
  * - Layer 3: Historical import → one-time with date range
  */
+
+// ============================================================================
+// Marketplace Detection
+// ============================================================================
+
+/**
+ * Known marketplace CNPJ → name mapping
+ * These are the official CNPJs used by marketplaces as intermediadores
+ */
+const MARKETPLACE_BY_CNPJ: Record<string, string> = {
+  // Shopee (multiple CNPJs)
+  "35635824000112": "Shopee",
+  "05570714000159": "Shopee",
+  "57981711000101": "Shopee",
+  // Amazon
+  "03007331000181": "Amazon",
+  "15436940000103": "Amazon",
+  // Mercado Livre
+  "10573521000191": "Mercado Livre",
+  "02757556000148": "Mercado Livre",
+  "33014556000196": "Mercado Livre",
+  // Outros marketplaces
+  "09339936000116": "Magazine Luiza",
+  "22567970000130": "Americanas",
+  "00776574000156": "Casas Bahia/Via",
+  "14380200000121": "AliExpress",
+  "09346601000125": "B2W/Submarino",
+};
+
+/**
+ * Detect marketplace origin from pedido data.
+ * Uses multiple strategies:
+ * 1. Intermediador CNPJ (most reliable)
+ * 2. Loja ID prefix patterns in numero_pedido_loja
+ * 3. Known numero_pedido_loja patterns
+ */
+export function detectMarketplace(blingData: BlingPedidoVendaDetail): string | null {
+  // Strategy 1: Intermediador CNPJ
+  const cnpj = blingData.intermediador?.cnpj?.replace(/\D/g, "");
+  if (cnpj && MARKETPLACE_BY_CNPJ[cnpj]) {
+    return MARKETPLACE_BY_CNPJ[cnpj];
+  }
+
+  // Strategy 2: numero_pedido_loja patterns
+  const numLoja = blingData.numeroLoja || "";
+  if (numLoja) {
+    // Amazon: starts with "7xx-" pattern (e.g., "701-9929051-5347409")
+    if (/^\d{3}-\d{7}-\d{7}$/.test(numLoja)) return "Amazon";
+    // Shopee: long alphanumeric starting with digits (e.g., "260210B42XE0F4")
+    if (/^26\d{4}[A-Z0-9]+$/i.test(numLoja)) return "Shopee";
+    // Mercado Livre: numeric with a lot of digits
+    if (/^\d{10,}$/.test(numLoja)) return "Mercado Livre";
+  }
+
+  // Strategy 3: intermediador nomeUsuario
+  const nomeUsuario = (blingData.intermediador?.nomeUsuario || "").toLowerCase();
+  if (nomeUsuario.includes("amazon")) return "Amazon";
+  if (nomeUsuario.includes("shopee")) return "Shopee";
+  if (nomeUsuario.includes("mercado")) return "Mercado Livre";
+  if (nomeUsuario.includes("magalu") || nomeUsuario.includes("magazine")) return "Magazine Luiza";
+
+  return null;
+}
 
 // ============================================================================
 // Sync Log Helper
@@ -51,8 +115,15 @@ export async function logSync(entry: {
  */
 export async function syncPedidoVenda(
   blingData: BlingPedidoVendaDetail,
+  situacoesMap?: Record<number, string>,
 ): Promise<number> {
   const supabase = getSupabaseServiceRole();
+
+  // Resolve situação name from map or fallback
+  const sitId = blingData.situacao?.id;
+  const sitNome = (situacoesMap && sitId != null ? situacoesMap[sitId] : null) || null;
+
+  const marketplace = detectMarketplace(blingData);
 
   const vendaRow = {
     bling_id: blingData.id,
@@ -66,9 +137,10 @@ export async function syncPedidoVenda(
     contato_nome: blingData.contato?.nome || null,
     contato_documento: blingData.contato?.numeroDocumento || null,
 
-    // Canal/Loja
+    // Canal/Loja + Marketplace detection
     loja_id: blingData.loja?.id || null,
-    // canal_venda will be populated from loja name (fetched separately or from raw_data)
+    loja_nome: marketplace,
+    canal_venda: marketplace,
 
     // Valores
     total_produtos: blingData.totalProdutos || 0,
@@ -81,11 +153,8 @@ export async function syncPedidoVenda(
     forma_pagamento: blingData.parcelas?.[0]?.formaPagamento?.descricao || null,
 
     // Situação
-    situacao_id: blingData.situacao?.id || null,
-    situacao_nome:
-      blingData.situacao?.valor !== undefined
-        ? String(blingData.situacao.valor)
-        : null,
+    situacao_id: sitId || null,
+    situacao_nome: sitNome,
 
     // Vendedor
     bling_vendedor_id: blingData.vendedor?.id || null,
@@ -359,6 +428,9 @@ export async function syncVendasByDateRange(
   let synced = 0;
   const errors: string[] = [];
 
+  // Fetch situações once for all pedidos
+  const situacoesMap = await getSituacoesVendas();
+
   while (hasMore) {
     try {
       const params = useAlteracao
@@ -375,7 +447,7 @@ export async function syncVendasByDateRange(
       for (const pedido of listing.data) {
         try {
           const detail = await getPedidoVenda(pedido.id);
-          await syncPedidoVenda(detail.data);
+          await syncPedidoVenda(detail.data, situacoesMap);
           synced++;
           await logSync({
             tipo,

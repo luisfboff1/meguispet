@@ -31,7 +31,7 @@ const handler = async (
     // Build query
     let query = supabase
       .from("bling_nfe")
-      .select("*, bling_nfe_itens(*)", { count: "exact" });
+      .select("*, itens:bling_nfe_itens(*)", { count: "exact" });
 
     // Filters
     if (situacao && typeof situacao === "string") {

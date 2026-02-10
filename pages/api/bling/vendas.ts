@@ -32,7 +32,7 @@ const handler = async (
     // Build query
     let query = supabase
       .from("bling_vendas")
-      .select("*, bling_vendas_itens(*)", { count: "exact" });
+      .select("*, itens:bling_vendas_itens(*)", { count: "exact" });
 
     // Filters
     if (canal_venda && typeof canal_venda === "string") {
