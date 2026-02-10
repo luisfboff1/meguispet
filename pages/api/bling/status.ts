@@ -38,13 +38,15 @@ const handler = async (
     let tokenValid = false;
     let apiReachable = false;
 
+    let apiError: string | undefined;
+
     try {
       const token = await getValidToken();
       tokenValid = !!token;
 
-      // Quick API test - fetch situacoes (lightweight endpoint)
+      // Quick API test - fetch contatos (uses 'contact' scope)
       const testResponse = await fetch(
-        "https://api.bling.com.br/Api/v3/situacoes/modulos",
+        "https://api.bling.com.br/Api/v3/contatos?limite=1",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -53,9 +55,17 @@ const handler = async (
         },
       );
       apiReachable = testResponse.ok;
-    } catch {
+
+      if (!testResponse.ok) {
+        const errorBody = await testResponse.text();
+        apiError = `HTTP ${testResponse.status}: ${errorBody.substring(0, 500)}`;
+        console.error("[Bling Status] API test failed:", apiError);
+      }
+    } catch (e) {
       // Token refresh failed or API unreachable
       tokenValid = false;
+      apiError = e instanceof Error ? e.message : "Unknown error";
+      console.error("[Bling Status] Token/API error:", apiError);
     }
 
     // Get sync counters
@@ -81,6 +91,7 @@ const handler = async (
         last_sync_nfe: status.last_sync_nfe,
         total_vendas_sync: vendasCount.count ?? 0,
         total_nfe_sync: nfeCount.count ?? 0,
+        ...(apiError && { api_error: apiError }),
       },
     });
   } catch (err) {

@@ -54,9 +54,9 @@ export default async function handler(
       payload: { event: "oauth_connected" },
     });
 
-    // Test the connection by making a simple API call
+    // Test the connection by making a simple API call (contatos uses 'contact' scope)
     const testResponse = await fetch(
-      "https://api.bling.com.br/Api/v3/situacoes/modulos",
+      "https://api.bling.com.br/Api/v3/contatos?limite=1",
       {
         headers: {
           Authorization: `Bearer ${tokens.access_token}`,
@@ -66,9 +66,15 @@ export default async function handler(
     );
 
     const testOk = testResponse.ok;
-    console.log(
-      `[Bling Callback] OAuth success. API test: ${testOk ? "OK" : "FAILED"}`,
-    );
+    if (!testOk) {
+      const errorBody = await testResponse.text();
+      console.error(
+        `[Bling Callback] API test failed: HTTP ${testResponse.status}`,
+        errorBody.substring(0, 500),
+      );
+    } else {
+      console.log("[Bling Callback] OAuth success. API test: OK");
+    }
 
     return res.redirect(
       `/integracoes/bling?success=Bling conectado com sucesso!&apiTest=${testOk}`,
