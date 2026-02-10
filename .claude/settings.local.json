@@ -56,7 +56,16 @@
       "Bash(grep:*)",
       "Bash(pnpm clean:*)",
       "Bash(dir /b \"c:\\\\Users\\\\Luisf\\\\Documents\\\\GITHUB\\\\meguispet\\\\pages\\\\api\"\")",
-      "Bash(pnpm build:local:*)"
+      "Bash(pnpm build:local:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:developer.bling.com.br)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.floui.io)",
+      "WebFetch(domain:www.postman.com)",
+      "WebFetch(domain:docs.erathos.com)",
+      "Bash(node -e:*)",
+      "Bash(node:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []
