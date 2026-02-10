@@ -45,6 +45,7 @@ interface DataTableProps<TData, TValue> {
   tableId?: string // Unique identifier for localStorage persistence
   mobileVisibleColumns?: string[] // IDs of columns to show on mobile by default
   initialColumnVisibility?: VisibilityState // Initial visibility state for columns
+  onRowClick?: (row: TData) => void // Optional row click handler
 }
 
 // ⚠️ REMOVED React.memo - was blocking data updates after mutations
@@ -61,6 +62,7 @@ export function DataTable<TData, TValue>({
   tableId = 'default-table',
   mobileVisibleColumns = [],
   initialColumnVisibility = {},
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -323,6 +325,8 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50' : ''}
+                  onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
