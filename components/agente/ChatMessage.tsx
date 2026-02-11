@@ -6,6 +6,7 @@ import { Bot, User, Copy, Check, Download, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { SqlQueryPanel } from './SqlQueryPanel'
+import { ChartRenderer, type ChartSpec } from './ChartRenderer'
 import type { AgentMessage } from '@/types'
 
 interface ChatMessageProps {
@@ -239,7 +240,7 @@ function MarkdownTable({ children, ...props }: React.HTMLAttributes<HTMLTableEle
 }
 
 /**
- * Custom markdown components for styled table rendering.
+ * Custom markdown components for styled table and chart rendering.
  */
 const markdownComponents = {
   table: MarkdownTable,
@@ -272,6 +273,32 @@ const markdownComponents = {
       {children}
     </tr>
   ),
+  code: ({ className, children, ...props }: React.HTMLAttributes<HTMLElement>) => {
+    const match = /language-(\w+)/.exec(className || '')
+    const language = match?.[1]
+
+    // Detect chart blocks
+    if (language === 'chart') {
+      try {
+        const chartSpec: ChartSpec = JSON.parse(String(children).trim())
+        return <ChartRenderer spec={chartSpec} />
+      } catch (error) {
+        console.error('Failed to parse chart spec:', error)
+        return (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+            ❌ Erro ao renderizar gráfico: JSON inválido
+          </div>
+        )
+      }
+    }
+
+    // Regular code blocks
+    return (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    )
+  },
 }
 
 /**

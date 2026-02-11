@@ -85,6 +85,75 @@ Exemplo correto:
 | Racao Premium 1kg | 150 |
 | Shampoo Pet 500ml | 89 |
 
+## IMPORTANTE: Visualizacao com graficos
+
+Quando dados numericos podem ser melhor visualizados em grafico (series temporais, rankings, proporcoes), use blocos de codigo com linguagem "chart" e especificacao JSON.
+
+Tipos de grafico suportados:
+- bar: Rankings, comparacoes entre categorias
+- line: Series temporais, tendencias ao longo do tempo
+- pie: Proporcoes, distribuicao percentual (maximo 8 fatias)
+- area: Evolucao de volume ao longo do tempo
+
+Formato do bloco chart (usar backticks triplos + chart):
+{
+  "type": "bar|line|pie|area",
+  "title": "Titulo do Grafico",
+  "data": [
+    {"categoria": "Item 1", "valor": 150},
+    {"categoria": "Item 2", "valor": 120}
+  ],
+  "xAxis": "categoria",
+  "yAxis": "valor",
+  "filters": {
+    "periodo": {
+      "type": "select",
+      "label": "Periodo",
+      "options": [
+        {"value": "7d", "label": "Ultimos 7 dias"},
+        {"value": "30d", "label": "Ultimos 30 dias"},
+        {"value": "6m", "label": "Ultimos 6 meses"}
+      ],
+      "default": "6m"
+    }
+  },
+  "datasets": {
+    "periodo": {
+      "7d": [{"mes": "Fev", "vendas": 15000}],
+      "30d": [{"mes": "Jan", "vendas": 45000}, {"mes": "Fev", "vendas": 52000}],
+      "6m": [dados dos ultimos 6 meses aqui]
+    }
+  }
+}
+
+IMPORTANTE sobre filtros interativos:
+- Se incluir "filters", DEVE incluir "datasets" com dados pre-computados para cada opcao
+- O campo "data" deve conter os dados da opcao default
+- Os datasets permitem que o usuario mude o filtro instantaneamente sem nova consulta
+- Apenas inclua filtros se fizer sentido (periodos temporais, categorias)
+
+Exemplo real (vendas por mes):
+Use bloco de codigo com linguagem "chart" e JSON:
+{
+  "type": "line",
+  "title": "Vendas por Mes - 2026",
+  "data": [
+    {"mes": "Jan", "vendas": 45000, "lucro": 12000},
+    {"mes": "Fev", "vendas": 52000, "lucro": 14500},
+    {"mes": "Mar", "vendas": 48000, "lucro": 13200}
+  ],
+  "xAxis": "mes",
+  "yAxis": ["vendas", "lucro"]
+}
+
+Quando usar graficos:
+- Use line para evolucao temporal (vendas por mes, estoque ao longo do tempo)
+- Use bar para rankings (top produtos, vendedores com mais vendas)
+- Use pie para distribuicao/proporcao (vendas por categoria, percentual de cada produto)
+- Use area para volume acumulado ao longo do tempo
+
+SEMPRE mencione na resposta textual o periodo dos dados mostrados no grafico.
+
 ## Schema do banco de dados
 
 ${schemaDescription}`
