@@ -1073,3 +1073,145 @@ export interface BlingSyncResult {
   nfe_synced?: number
   errors: string[]
 }
+
+// ============================================================================
+// AGENTE MEGUI - AI CHAT SYSTEM
+// ============================================================================
+
+export type AgentProvider = 'openai' | 'anthropic'
+
+export type AgentMessageRole = 'user' | 'assistant' | 'system' | 'tool'
+
+export interface AgentConfig {
+  id: string
+  usuario_id: number
+  provider: AgentProvider
+  model: string
+  api_key_encrypted?: string
+  has_api_key?: boolean
+  api_key_preview?: string
+  temperature: number
+  max_tokens: number
+  top_p: number
+  frequency_penalty: number
+  presence_penalty: number
+  system_prompt: string | null
+  recursion_limit: number
+  skills: string[]
+  mcp_servers: AgentMcpServer[]
+  ativo: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AgentConfigForm {
+  provider: AgentProvider
+  model: string
+  api_key?: string
+  temperature: number
+  max_tokens: number
+  top_p: number
+  frequency_penalty: number
+  presence_penalty: number
+  system_prompt: string | null
+  recursion_limit: number
+  skills: string[]
+  mcp_servers: AgentMcpServer[]
+}
+
+export interface AgentMcpServer {
+  name: string
+  url: string
+  enabled: boolean
+  description?: string
+}
+
+export interface AgentConversation {
+  id: string
+  usuario_id: number
+  titulo: string
+  is_active: boolean
+  is_pinned: boolean
+  total_input_tokens: number
+  total_output_tokens: number
+  last_message_at: string
+  created_at: string
+  updated_at: string
+}
+
+export interface AgentMessage {
+  id: string
+  conversation_id: string
+  role: AgentMessageRole
+  content: string
+  tool_calls: AgentToolCall[] | null
+  sql_queries: AgentSqlQuery[] | null
+  input_tokens: number
+  output_tokens: number
+  model_used: string | null
+  thinking_time_ms: number | null
+  attachments: AgentAttachment[] | null
+  created_at: string
+}
+
+export interface AgentToolCall {
+  tool_name: string
+  args: Record<string, unknown>
+  result: unknown
+}
+
+export interface AgentSqlQuery {
+  sql: string
+  explanation: string
+  rows_returned: number
+  execution_time_ms: number
+}
+
+export interface AgentAttachment {
+  name: string
+  type: string
+  size: number
+  content_base64?: string
+}
+
+export interface AgentConversationForm {
+  titulo: string
+}
+
+/** SSE event types for chat streaming */
+export type AgentSSEEventType =
+  | 'thinking'
+  | 'tool_call'
+  | 'tool_result'
+  | 'token'
+  | 'usage'
+  | 'error'
+
+export interface AgentSSEEvent {
+  type: AgentSSEEventType
+  content?: string
+  tool?: string
+  args?: Record<string, unknown>
+  result?: unknown
+  sql?: string
+  execution_time_ms?: number
+  rows_returned?: number
+  input_tokens?: number
+  output_tokens?: number
+  model?: string
+  message?: string
+}
+
+/** Available LLM models per provider */
+export const AGENT_MODELS: Record<AgentProvider, { id: string; name: string; contextWindow: number }[]> = {
+  openai: [
+    { id: 'gpt-4o', name: 'GPT-4o', contextWindow: 128000 },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', contextWindow: 128000 },
+    { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', contextWindow: 128000 },
+  ],
+  anthropic: [
+    { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', contextWindow: 200000 },
+    { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', contextWindow: 200000 },
+    { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', contextWindow: 200000 },
+  ],
+}

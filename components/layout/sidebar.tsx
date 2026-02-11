@@ -19,7 +19,8 @@ import {
   Building2,
   MessageSquare,
   Map,
-  Plug
+  Plug,
+  Bot
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -47,6 +48,7 @@ const menuItems: MenuItem[] = [
   { icon: DollarSign, label: 'Financeiro', href: '/financeiro', permission: 'financeiro' },
   { icon: BarChart3, label: 'Relatórios', href: '/relatorios', permission: 'relatorios' },
   { icon: Plug, label: 'Bling ERP', href: '/integracoes/bling', permission: 'configuracoes' },
+  { icon: Bot, label: 'Agente Megui', href: '/agente' }, // Sem permissão = sempre visível
   { icon: MessageSquare, label: 'Feedback', href: '/feedback' }, // Sem permissão = sempre visível
   { icon: Settings, label: 'Usuários', href: '/usuarios', permission: 'config_usuarios' },
 ]
