@@ -42,6 +42,7 @@ import {
 import { blingService } from '@/services/blingService'
 import { formatCurrency, formatLocalDate } from '@/lib/utils'
 import Toast from '@/components/ui/Toast'
+import { BlingReferenciasTab } from '@/components/bling/BlingReferenciasTab'
 import type {
   BlingVenda,
   BlingVendaItem,
@@ -919,6 +920,10 @@ export default function BlingPage() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="referencias" className="gap-2">
+            <Package className="h-4 w-4" />
+            <span className="hidden sm:inline">Referências</span>
+          </TabsTrigger>
           <TabsTrigger value="config" className="gap-2">
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Configuração</span>
@@ -1143,6 +1148,11 @@ export default function BlingPage() {
               </div>
             </div>
           )}
+        </TabsContent>
+
+        {/* ═══ TAB: REFERÊNCIAS ═══ */}
+        <TabsContent value="referencias" className="space-y-4">
+          <BlingReferenciasTab />
         </TabsContent>
 
         {/* ═══ TAB: CONFIG ═══ */}

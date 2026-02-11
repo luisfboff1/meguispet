@@ -1,11 +1,14 @@
 import axios from "axios";
 import type {
   ApiResponse,
-  PaginatedResponse,
-  BlingVenda,
   BlingNfe,
+  BlingProdutoMapeamento,
+  BlingProdutoMapeamentoForm,
+  BlingProdutoNaoMapeado,
   BlingStatus,
   BlingSyncResult,
+  BlingVenda,
+  PaginatedResponse,
 } from "@/types";
 
 const API_BASE_URL = (
@@ -25,7 +28,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const supabaseKey = Object.keys(localStorage).find((key) =>
-      key.startsWith("sb-") && key.endsWith("-auth-token"),
+      key.startsWith("sb-") && key.endsWith("-auth-token")
     );
     if (supabaseKey) {
       try {
@@ -84,6 +87,49 @@ export const blingService = {
     dataFinal?: string;
   }): Promise<ApiResponse<BlingSyncResult>> {
     const { data } = await api.post("/bling/sync", body);
+    return data;
+  },
+
+  // Mapeamento de Produtos
+  async getMapeamentos(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    ativo?: boolean;
+  }): Promise<PaginatedResponse<BlingProdutoMapeamento>> {
+    const { data } = await api.get("/bling/mapeamento", { params });
+    return data;
+  },
+
+  async getProdutosNaoMapeados(): Promise<
+    ApiResponse<BlingProdutoNaoMapeado[]>
+  > {
+    const { data } = await api.get("/bling/produtos-nao-mapeados");
+    return data;
+  },
+
+  async createMapeamento(
+    formData: BlingProdutoMapeamentoForm,
+  ): Promise<ApiResponse<BlingProdutoMapeamento>> {
+    const { data } = await api.post("/bling/mapeamento", formData);
+    return data;
+  },
+
+  async updateMapeamento(
+    id: number,
+    formData: BlingProdutoMapeamentoForm,
+  ): Promise<ApiResponse<BlingProdutoMapeamento>> {
+    const { data } = await api.put(`/bling/mapeamento/${id}`, formData);
+    return data;
+  },
+
+  async deleteMapeamento(
+    id: number,
+    hard?: boolean,
+  ): Promise<ApiResponse<void>> {
+    const { data } = await api.delete(`/bling/mapeamento/${id}`, {
+      params: { hard },
+    });
     return data;
   },
 };

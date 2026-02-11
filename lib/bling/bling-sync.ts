@@ -1,12 +1,12 @@
 import { getSupabaseServiceRole } from "@/lib/supabase-auth";
 import {
+  type BlingNfeDetail,
+  type BlingPedidoVendaDetail,
+  getNfe,
+  getNfeList,
   getPedidosVenda,
   getPedidoVenda,
-  getNfeList,
-  getNfe,
   getSituacoesVendas,
-  type BlingPedidoVendaDetail,
-  type BlingNfeDetail,
 } from "./bling-client";
 
 /**
@@ -56,7 +56,9 @@ const MARKETPLACE_BY_CNPJ: Record<string, string> = {
  * 2. Loja ID prefix patterns in numero_pedido_loja
  * 3. Known numero_pedido_loja patterns
  */
-export function detectMarketplace(blingData: BlingPedidoVendaDetail): string | null {
+export function detectMarketplace(
+  blingData: BlingPedidoVendaDetail,
+): string | null {
   // Strategy 1: Intermediador CNPJ
   const cnpj = blingData.intermediador?.cnpj?.replace(/\D/g, "");
   if (cnpj && MARKETPLACE_BY_CNPJ[cnpj]) {
@@ -75,11 +77,14 @@ export function detectMarketplace(blingData: BlingPedidoVendaDetail): string | n
   }
 
   // Strategy 3: intermediador nomeUsuario
-  const nomeUsuario = (blingData.intermediador?.nomeUsuario || "").toLowerCase();
+  const nomeUsuario = (blingData.intermediador?.nomeUsuario || "")
+    .toLowerCase();
   if (nomeUsuario.includes("amazon")) return "Amazon";
   if (nomeUsuario.includes("shopee")) return "Shopee";
   if (nomeUsuario.includes("mercado")) return "Mercado Livre";
-  if (nomeUsuario.includes("magalu") || nomeUsuario.includes("magazine")) return "Magazine Luiza";
+  if (nomeUsuario.includes("magalu") || nomeUsuario.includes("magazine")) {
+    return "Magazine Luiza";
+  }
 
   return null;
 }
@@ -121,7 +126,8 @@ export async function syncPedidoVenda(
 
   // Resolve situação name from map or fallback
   const sitId = blingData.situacao?.id;
-  const sitNome = (situacoesMap && sitId != null ? situacoesMap[sitId] : null) || null;
+  const sitNome =
+    (situacoesMap && sitId != null ? situacoesMap[sitId] : null) || null;
 
   const marketplace = detectMarketplace(blingData);
 
@@ -200,18 +206,77 @@ export async function syncPedidoVenda(
       .delete()
       .eq("bling_venda_id", venda.id);
 
-    const itensRows = blingData.itens.map(
-      (item: Record<string, unknown>) => ({
-        bling_venda_id: venda.id,
-        bling_produto_id: (item.produto as Record<string, unknown>)?.id || null,
-        codigo_produto: item.codigo || null,
-        descricao: item.descricao || "",
-        quantidade: item.quantidade || 0,
-        valor_unitario: item.valor || 0,
-        valor_desconto: item.desconto || 0,
-        valor_total:
-          ((item.quantidade as number) || 0) * ((item.valor as number) || 0),
-      }),
+    // Prepare items with automatic mapping to local products
+    const itensRows = await Promise.all(
+      blingData.itens.map(
+        async (item: Record<string, unknown>) => {
+          const blingProdutoId =
+            (item.produto as Record<string, unknown>)?.id || null;
+          const codigoProduto = item.codigo || null;
+          let produtoLocalId: number | null = null;
+
+          // Try to find mapping for this Bling product
+          if (blingProdutoId || codigoProduto) {
+            try {
+              // Build query to find active mapping
+              let mappingQuery = supabase
+                .from("bling_produtos_mapeamento")
+                .select("id")
+                .eq("ativo", true);
+
+              if (blingProdutoId && codigoProduto) {
+                mappingQuery = mappingQuery.or(
+                  `bling_produto_id.eq.${blingProdutoId},codigo.eq.${codigoProduto}`,
+                );
+              } else if (blingProdutoId) {
+                mappingQuery = mappingQuery.eq(
+                  "bling_produto_id",
+                  blingProdutoId,
+                );
+              } else if (codigoProduto) {
+                mappingQuery = mappingQuery.eq("codigo", codigoProduto);
+              }
+
+              const { data: mapeamento } = await mappingQuery.maybeSingle();
+
+              // If mapping exists, check if it has exactly 1 local product
+              if (mapeamento) {
+                const { data: itens } = await supabase
+                  .from("bling_produtos_mapeamento_itens")
+                  .select("produto_local_id")
+                  .eq("mapeamento_id", mapeamento.id);
+
+                // Only auto-fill if there's exactly 1 local product mapped
+                // (for N:N mappings, leave null for manual handling)
+                if (itens && itens.length === 1) {
+                  produtoLocalId = itens[0].produto_local_id;
+                }
+              }
+            } catch (err) {
+              // Silently fail - mapping is optional, don't break sync
+              console.warn(
+                `[Bling Sync] Could not lookup mapping for product ${
+                  blingProdutoId || codigoProduto
+                }:`,
+                err,
+              );
+            }
+          }
+
+          return {
+            bling_venda_id: venda.id,
+            bling_produto_id: blingProdutoId,
+            codigo_produto: codigoProduto,
+            descricao: item.descricao || "",
+            quantidade: item.quantidade || 0,
+            valor_unitario: item.valor || 0,
+            valor_desconto: item.desconto || 0,
+            valor_total: ((item.quantidade as number) || 0) *
+              ((item.valor as number) || 0),
+            produto_local_id: produtoLocalId, // Auto-filled from mapping
+          };
+        },
+      ),
     );
 
     const { error: itensError } = await supabase
@@ -280,9 +345,7 @@ export async function syncNfe(blingData: BlingNfeDetail): Promise<number> {
     pdf_url: blingData.linkPDF || null,
 
     finalidade: blingData.finalidade || null,
-    bling_pedido_id: blingData.numeroPedidoLoja
-      ? null
-      : null, // Linked via separate logic if needed
+    bling_pedido_id: blingData.numeroPedidoLoja ? null : null, // Linked via separate logic if needed
 
     raw_data: blingData,
     synced_at: new Date().toISOString(),
@@ -379,8 +442,10 @@ export async function incrementalSyncVendas(): Promise<SyncResult> {
     .single();
 
   const dataAlteracaoInicial = config?.last_sync_vendas
-    ? new Date(config.last_sync_vendas).toISOString().replace("T", " ").substring(0, 19)
-    : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().replace("T", " ").substring(0, 19);
+    ? new Date(config.last_sync_vendas).toISOString().replace("T", " ")
+      .substring(0, 19)
+    : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().replace("T", " ")
+      .substring(0, 19);
 
   return syncVendasByDateRange(
     "polling",
@@ -434,7 +499,12 @@ export async function syncVendasByDateRange(
   while (hasMore) {
     try {
       const params = useAlteracao
-        ? { pagina, limite: 100, dataAlteracaoInicial: dataInicial, dataAlteracaoFinal: dataFinal }
+        ? {
+          pagina,
+          limite: 100,
+          dataAlteracaoInicial: dataInicial,
+          dataAlteracaoFinal: dataFinal,
+        }
         : { pagina, limite: 100, dataInicial, dataFinal };
 
       const listing = await getPedidosVenda(params);
@@ -457,7 +527,9 @@ export async function syncVendasByDateRange(
             status: "success",
           });
         } catch (err) {
-          const msg = `Pedido ${pedido.id}: ${err instanceof Error ? err.message : "Unknown"}`;
+          const msg = `Pedido ${pedido.id}: ${
+            err instanceof Error ? err.message : "Unknown"
+          }`;
           errors.push(msg);
           await logSync({
             tipo,
@@ -537,7 +609,9 @@ export async function syncNfeByDateRange(
             status: "success",
           });
         } catch (err) {
-          const msg = `NFe ${nfeItem.id}: ${err instanceof Error ? err.message : "Unknown"}`;
+          const msg = `NFe ${nfeItem.id}: ${
+            err instanceof Error ? err.message : "Unknown"
+          }`;
           errors.push(msg);
           await logSync({
             tipo,

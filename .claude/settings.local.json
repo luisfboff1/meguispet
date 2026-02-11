@@ -70,7 +70,8 @@
       "Bash(findstr:*)",
       "Bash(npx next lint:*)",
       "Bash(npx next build:*)",
-      "Bash(pnpm list:*)"
+      "Bash(pnpm list:*)",
+      "Bash(python -c:*)"
     ],
     "deny": [],
     "ask": []
