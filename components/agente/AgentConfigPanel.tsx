@@ -30,8 +30,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { agenteService } from '@/services/agenteService'
 import type { AgentConfig, AgentConfigForm, AgentProvider, AgentMcpServer } from '@/types'
 import { AGENT_MODELS } from '@/types'
-
-const DEFAULT_PROMPT = `Voce e a Megui, assistente de IA do sistema MeguisPet. Voce ajuda os usuarios a consultar dados sobre vendas, clientes, produtos, estoque e financeiro. Responda sempre em portugues brasileiro de forma clara e objetiva. Formate valores monetarios como R$ e datas no formato brasileiro.`
+import { DEFAULT_SYSTEM_PROMPT } from '@/lib/agent-default-prompt'
 
 const AVAILABLE_SKILLS = [
   { id: 'query_database', name: 'Consulta SQL', description: 'Consultar dados no banco de dados via SQL' },
@@ -60,7 +59,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
   const [topP, setTopP] = useState(1.0)
   const [frequencyPenalty, setFrequencyPenalty] = useState(0)
   const [presencePenalty, setPresencePenalty] = useState(0)
-  const [systemPrompt, setSystemPrompt] = useState('')
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT)
   const [recursionLimit, setRecursionLimit] = useState(25)
   const [skills, setSkills] = useState<string[]>(['query_database', 'get_schema', 'analyze_data'])
   const [mcpServers, setMcpServers] = useState<AgentMcpServer[]>([])
@@ -83,7 +82,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
       setTopP(c.top_p)
       setFrequencyPenalty(c.frequency_penalty)
       setPresencePenalty(c.presence_penalty)
-      setSystemPrompt(c.system_prompt || '')
+      setSystemPrompt(c.system_prompt || DEFAULT_SYSTEM_PROMPT)
       setRecursionLimit(c.recursion_limit || 25)
       setSkills(c.skills || ['query_database', 'get_schema', 'analyze_data'])
       setMcpServers(c.mcp_servers || [])
@@ -110,7 +109,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
       top_p: topP,
       frequency_penalty: frequencyPenalty,
       presence_penalty: presencePenalty,
-      system_prompt: systemPrompt || null,
+      system_prompt: systemPrompt.trim() === DEFAULT_SYSTEM_PROMPT.trim() ? null : (systemPrompt || null),
       recursion_limit: recursionLimit,
       skills,
       mcp_servers: mcpServers,
@@ -395,7 +394,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSystemPrompt(DEFAULT_PROMPT)}
+              onClick={() => setSystemPrompt(DEFAULT_SYSTEM_PROMPT)}
               className="gap-1 text-xs text-slate-500 hover:text-slate-700"
             >
               <RotateCcw className="h-3 w-3" />
@@ -407,13 +406,15 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
           <textarea
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
-            rows={6}
-            className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-            placeholder="Deixe vazio para usar o prompt padrao da Megui..."
+            rows={12}
+            className="w-full rounded-lg border border-slate-200 bg-white p-3 font-mono text-xs leading-relaxed text-slate-700 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            placeholder="Insira o prompt do agente..."
           />
           <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-            O prompt e combinado automaticamente com a descricao do schema do banco de dados.
-            {!systemPrompt && ' Usando prompt padrao.'}
+            Este prompt define o comportamento do agente. A data atual e o schema do banco sao adicionados automaticamente.
+            {systemPrompt.trim() === DEFAULT_SYSTEM_PROMPT.trim() && (
+              <span className="ml-1 text-amber-500">Usando prompt padrao.</span>
+            )}
           </p>
         </CardContent>
       </Card>

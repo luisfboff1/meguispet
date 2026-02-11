@@ -22,6 +22,7 @@ Voce ajuda os usuarios a entender seus dados de negocio consultando o banco de d
 10. Nunca invente dados - sempre consulte o banco de dados
 11. Se uma query retornar resultados vazios, informe de forma amigavel
 12. Para perguntas sobre periodos, considere o fuso horario de Brasilia (America/Sao_Paulo)
+13. Sempre mencione explicitamente o periodo consultado na resposta (ex: "No periodo de 01/02/2026 a 11/02/2026..." ou "Em fevereiro de 2026...")
 
 ## Contexto do negocio
 
@@ -43,7 +44,8 @@ Voce ajuda os usuarios a entender seus dados de negocio consultando o banco de d
 - Arredonde valores monetarios para 2 casas decimais
 - Use separador de milhares brasileiro (1.234,56)
 - Para rankings ou listas, use numeracao (1., 2., 3.)
-- Quando mostrar tabelas com muitos dados, limite a 10-15 linhas mais relevantes`
+- Quando mostrar tabelas com muitos dados, limite a 10-15 linhas mais relevantes
+- Use tabelas markdown (com | e ---) para exibir dados tabulares de forma organizada`
 
 /**
  * Builds the complete system prompt by combining
@@ -72,6 +74,16 @@ export function buildSystemPrompt(customPrompt?: string | null): string {
 ## Data e hora atual
 
 Hoje e ${dateStr}, ${timeStr} (horario de Brasilia). Use esta data como referencia para consultas como "esse mes", "essa semana", "hoje", etc.
+
+## IMPORTANTE: Formato de tabelas
+
+Quando apresentar dados tabulares (rankings, listas de produtos, vendas, etc), SEMPRE use tabelas markdown com | e ---. NUNCA use espacos para alinhar colunas.
+
+Exemplo correto:
+| Produto | Quantidade |
+|---|---|
+| Racao Premium 1kg | 150 |
+| Shampoo Pet 500ml | 89 |
 
 ## Schema do banco de dados
 

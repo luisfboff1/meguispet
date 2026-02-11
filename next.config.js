@@ -15,6 +15,9 @@ const nextConfig = (phase) => {
 
   // 🌐 Server-side rendering for Vercel deployment
   const config = {
+    // 📦 Transpile ESM-only packages for Pages Router compatibility
+    transpilePackages: ['react-markdown', 'remark-gfm'],
+
     // 🖼️ Imagens e assets estáticos
     images: {
       unoptimized: true,
