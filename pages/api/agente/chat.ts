@@ -383,93 +383,89 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Always explicitly append the current user message (even if DB insert failed)
     messages.push(new HumanMessage(message.trim()));
 
-    // ===================== DEBUG LOGGING =====================
-    console.log("\n" + "=".repeat(80));
-    console.log("[AGENT DEBUG] NOVA REQUISICAO");
-    console.log("=".repeat(80));
-    console.log(`[AGENT DEBUG] ConversationId: ${conversationId}`);
-    console.log(`[AGENT DEBUG] UserId: ${userId}`);
-    console.log(
-      `[AGENT DEBUG] Provider: ${agentConfig.provider} | Model: ${agentConfig.model}`,
-    );
-    console.log(
-      `[AGENT DEBUG] Temperature: ${agentConfig.temperature} | MaxTokens: ${agentConfig.max_tokens}`,
-    );
-    console.log(
-      `[AGENT DEBUG] RecursionLimit: ${agentConfig.recursion_limit || 25}`,
-    );
-    console.log(
-      `[AGENT DEBUG] System prompt customizado: ${
-        agentConfig.system_prompt
-          ? "SIM (" + agentConfig.system_prompt.length + " chars)"
-          : "NAO (usando default)"
-      }`,
-    );
-    console.log(
-      `[AGENT DEBUG] Historico do banco (bruto): ${
-        historyDesc?.length || 0
-      } msgs | Apos dedup: ${history.length} msgs`,
-    );
-    console.log(
-      `[AGENT DEBUG] Total de mensagens enviadas ao agente: ${messages.length}`,
-    );
-    console.log("[AGENT DEBUG] --- Mensagens enviadas ao LLM ---");
-    messages.forEach((m, i) => {
-      const type = m instanceof HumanMessage
-        ? "USER"
-        : m instanceof AIMessage
-        ? "ASSISTANT"
-        : "OTHER";
-      const preview = typeof m.content === "string"
-        ? m.content.substring(0, 150)
-        : JSON.stringify(m.content).substring(0, 150);
-      console.log(
-        `[AGENT DEBUG]   [${i}] ${type}: "${preview}${
-          typeof m.content === "string" && m.content.length > 150 ? "..." : ""
-        }"`,
-      );
-    });
-    console.log(
-      `[AGENT DEBUG] System prompt (primeiros 300 chars): "${
-        systemPrompt.substring(0, 300)
-      }..."`,
-    );
-    console.log(
-      `[AGENT DEBUG] Tabelas acessiveis: ${AGENT_ACCESSIBLE_TABLES.join(", ")}`,
-    );
-    console.log(
-      `[AGENT DEBUG] Insert da msg do usuario no banco: ${
-        insertError ? "FALHOU - " + insertError.message : "OK"
-      }`,
-    );
-    console.log("=".repeat(80) + "\n");
-    // ===================== FIM DEBUG =====================
 
     const recursionLimit = agentConfig.recursion_limit || 25;
-    const stream = await agent.stream(
+
+    // ===================== STREAMING WITH streamEvents =====================
+    // Using streamEvents v2 for token-by-token streaming of LLM reasoning
+    // This gives us real-time visibility into what the agent is thinking
+    const pendingToolArgs = new Map<string, Record<string, unknown>>();
+    let currentStepContent = "";
+    let stepNumber = 0;
+    let toolsExecuted = false; // Track if tools ran - next LLM step is the answer
+
+    const eventStream = agent.streamEvents(
       { messages },
-      { recursionLimit },
+      { version: "v2" as const, recursionLimit },
     );
 
-    // Track pending tool calls (args) so we can match with results
-    const pendingToolArgs = new Map<string, Record<string, unknown>>();
+    for await (const event of eventStream) {
+      switch (event.event) {
+        // LLM starts a new thinking step
+        case "on_chat_model_start": {
+          stepNumber++;
+          currentStepContent = "";
+          break;
+        }
 
-    for await (const event of stream) {
-      // Handle agent messages
-      if (event.agent) {
-        const agentMessages = event.agent.messages || [];
-        for (const msg of agentMessages) {
-          if (msg.content && typeof msg.content === "string") {
-            // Only update fullResponse if this is a real content message (not empty/tool-only)
-            // Use replace (=) since LangGraph sends complete content per step
-            if (msg.content.trim().length > 0) {
-              fullResponse = msg.content;
+        // LLM produces a token (real-time streaming)
+        case "on_chat_model_stream": {
+          const chunk = event.data?.chunk;
+          if (!chunk) break;
+
+          // Text content (final answer step)
+          const token = typeof chunk.content === "string"
+            ? chunk.content
+            : "";
+
+          if (token) {
+            currentStepContent += token;
+            if (toolsExecuted) {
+              // After tools ran, tokens are the ANSWER - send directly to chat message
+              sendSSE(res, { type: "token", content: token });
+            } else {
+              // First step - reasoning/thinking
+              sendSSE(res, {
+                type: "reasoning_token",
+                content: token,
+                step: stepNumber,
+              });
             }
-            sendSSE(res, { type: "token", content: msg.content });
           }
 
-          // Extract token usage from AIMessage metadata
-          const usageMeta = msg.usage_metadata || msg.response_metadata?.usage;
+          // Tool call chunks (intermediate steps - show SQL being typed in real-time)
+          // When OpenAI decides to call a tool, content is empty but tool_call_chunks has the args
+          const tcChunks = chunk.tool_call_chunks;
+          if (tcChunks && Array.isArray(tcChunks)) {
+            for (const tcc of tcChunks) {
+              if (tcc.name) {
+                // Tool call started - show which tool is being prepared
+                sendSSE(res, {
+                  type: "thinking",
+                  content: `Elaborando consulta SQL...`,
+                });
+              }
+              if (tcc.args) {
+                // Stream the tool arguments (SQL query text) as reasoning
+                sendSSE(res, {
+                  type: "reasoning_token",
+                  content: tcc.args,
+                  step: stepNumber,
+                });
+              }
+            }
+          }
+          break;
+        }
+
+        // LLM finishes a step - either calls tools or produces final answer
+        case "on_chat_model_end": {
+          const output = event.data?.output;
+          if (!output) break;
+
+          // Extract token usage
+          const usageMeta = output.usage_metadata ||
+            output.response_metadata?.usage;
           if (usageMeta) {
             totalInputTokens += usageMeta.input_tokens ||
               usageMeta.prompt_tokens || 0;
@@ -477,23 +473,31 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
               usageMeta.completion_tokens || 0;
           }
 
-          // Track tool calls from agent (capture args for SQL display)
-          if (msg.tool_calls && Array.isArray(msg.tool_calls)) {
-            for (const tc of msg.tool_calls) {
-              // Store args by tool call id so we can match with result
-              if (tc.id) pendingToolArgs.set(tc.id, tc.args || {});
+          const endToolCalls = output.tool_calls;
 
+          if (endToolCalls && endToolCalls.length > 0) {
+            // Intermediate step - LLM decided to call tools
+            toolsExecuted = false; // Reset - will be set again on tool_end
+            sendSSE(res, {
+              type: "reasoning_complete",
+              step: stepNumber,
+              has_tools: true,
+            });
+
+            for (const tc of endToolCalls) {
               const sqlText = tc.args?.input || tc.args?.query || "";
-              const toolCallStartTime = Date.now(); // Track start time for this tool call
+              const toolCallStartTime = Date.now();
+
+              if (tc.id) pendingToolArgs.set(tc.id, tc.args || {});
 
               toolCalls.push({
                 tool_name: tc.name,
                 args: tc.args || {},
                 result: null,
-                start_time: toolCallStartTime, // Add start time
+                start_time: toolCallStartTime,
               });
 
-              // If this is a SQL query, track it immediately with the SQL text
+              // Track SQL queries
               if (tc.name === "sql_db_query" || tc.name === "query-sql") {
                 const sqlString = typeof sqlText === "string"
                   ? sqlText
@@ -506,68 +510,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                   execution_time_ms: 0,
                 });
 
-                // Log agent decisions for debugging
-                if (process.env.NODE_ENV === "development") {
-                  console.log(
-                    `[AGENT DECISION] User message: "${
-                      message.substring(0, 100)
-                    }"`,
-                  );
-                  console.log(
-                    `[AGENT DECISION] Generated SQL: ${
-                      sqlString.substring(0, 300)
-                    }`,
-                  );
-
-                  // Try to extract WHERE filters to understand agent's decision
-                  const whereMatch = sqlString.match(
-                    /WHERE\s+([\s\S]+?)(?:GROUP|ORDER|LIMIT|$)/i,
-                  );
-                  if (whereMatch) {
-                    const whereClause = whereMatch[1].trim();
-                    console.log(
-                      `[AGENT DECISION] Filters detected: ${
-                        whereClause.substring(0, 200)
-                      }`,
-                    );
-
-                    // Warn if status filter was added
-                    if (/status\s*=\s*['"]pago['"]/i.test(whereClause)) {
-                      console.warn(
-                        `[AGENT DECISION] ⚠️ Agent added status='pago' filter - was it requested?`,
-                      );
-                    }
-
-                    // Warn if using ILIKE on clientes_fornecedores.nome with aggregation
-                    if (
-                      /clientes_fornecedores/i.test(sqlString) &&
-                      /nome\s+ILIKE\s+['"]%[^%]+%['"]/i.test(whereClause) &&
-                      /(SUM|COUNT|AVG|GROUP BY)/i.test(sqlString)
-                    ) {
-                      console.warn(
-                        `[AGENT DECISION] ⚠️ Agent used ILIKE on clientes_fornecedores.nome with aggregation - may return multiple clients and sum incorrectly! Should verify uniqueness first.`,
-                      );
-                    }
-
-                    // Warn if NOT excluding canceled sales in metrics (SUM, COUNT, AVG)
-                    if (
-                      /\bvendas\b/i.test(sqlString) &&
-                      /(SUM|COUNT|AVG)\s*\([^)]*valor_final[^)]*\)/i.test(
-                        sqlString,
-                      ) &&
-                      !/status\s*(!?=|<>)\s*['"]cancelado['"]/i.test(
-                        whereClause,
-                      ) &&
-                      !/status\s*=\s*['"]pago['"]/i.test(whereClause)
-                    ) {
-                      console.warn(
-                        `[AGENT DECISION] ⚠️ Agent is aggregating vendas without excluding status='cancelado' - this will include deleted/cancelled sales and inflate values! Add: WHERE status != 'cancelado'`,
-                      );
-                    }
-                  } else {
-                    console.log(`[AGENT DECISION] No WHERE filters detected`);
-                  }
-                }
               }
 
               sendSSE(res, {
@@ -577,22 +519,37 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 sql: sqlText || undefined,
               });
             }
+          } else {
+            // Final step - no tool calls = this is the answer
+            // Use output.content (official) for DB storage
+            const finalContent = typeof output.content === "string"
+              ? output.content
+              : currentStepContent;
+            if (finalContent.trim().length > 0) {
+              fullResponse = finalContent;
+            }
+            // Tell frontend to move reasoning tokens to the answer area
+            sendSSE(res, { type: "answer_start", step: stepNumber });
           }
-        }
-      }
 
-      // Handle tool results
-      if (event.tools) {
-        const toolMessages = event.tools.messages || [];
-        for (const msg of toolMessages) {
-          const toolName = msg.name || "unknown";
-          const toolResult = typeof msg.content === "string"
-            ? msg.content
-            : JSON.stringify(msg.content);
+          currentStepContent = "";
+          break;
+        }
+
+        // Tool finishes executing (SQL query result, table info, etc.)
+        case "on_tool_end": {
+          toolsExecuted = true; // Next LLM step will produce the answer
+          const toolName = event.name || "unknown";
+          const toolOutput = event.data?.output;
+          const toolResult = typeof toolOutput === "string"
+            ? toolOutput
+            : typeof toolOutput?.content === "string"
+            ? toolOutput.content
+            : JSON.stringify(toolOutput?.content || toolOutput);
           const now = Date.now();
           const execTime = now - startTime;
 
-          // Update the last matching tool call with the result and individual time
+          // Update the last matching tool call with the result
           for (let i = toolCalls.length - 1; i >= 0; i--) {
             if (
               toolCalls[i].tool_name === toolName &&
@@ -602,12 +559,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
               const individualTime = now - (toolCalls[i].start_time || now);
               toolCalls[i].execution_time_ms = individualTime;
 
-              // Log individual tool call time
-              if (process.env.NODE_ENV === "development") {
-                console.log(
-                  `[AGENT TIMING] Tool '${toolName}' took ${individualTime}ms`,
-                );
-              }
               break;
             }
           }
@@ -617,7 +568,10 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             for (let i = sqlQueries.length - 1; i >= 0; i--) {
               if (sqlQueries[i].execution_time_ms === 0) {
                 sqlQueries[i].execution_time_ms = execTime;
-                const lines = toolResult.split("\n").filter((l: string) =>
+                const resultStr = typeof toolResult === "string"
+                  ? toolResult
+                  : "";
+                const lines = resultStr.split("\n").filter((l: string) =>
                   l.trim()
                 );
                 sqlQueries[i].rows_returned = Math.max(0, lines.length - 1);
@@ -629,12 +583,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           sendSSE(res, {
             type: "tool_result",
             tool: toolName,
-            result: toolResult.substring(0, 1000),
+            result: (typeof toolResult === "string"
+              ? toolResult
+              : JSON.stringify(toolResult)).substring(0, 1000),
             execution_time_ms: execTime,
           });
+          break;
         }
       }
     }
+    // ===================== FIM STREAMING =====================
 
     const thinkingTime = Date.now() - startTime;
 
@@ -651,48 +609,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       tools_count: toolCalls.length,
     };
 
-    // ===================== DEBUG RESPONSE =====================
-    console.log("\n" + "-".repeat(80));
-    console.log("[AGENT DEBUG] RESPOSTA COMPLETA");
-    console.log("-".repeat(80));
-    console.log(`[AGENT DEBUG] Tempo total: ${thinkingTime}ms`);
-    console.log(
-      `[AGENT DEBUG]   - LLM thinking: ${llmThinkingTime}ms (${
-        ((llmThinkingTime / thinkingTime) * 100).toFixed(1)
-      }%)`,
-    );
-    console.log(
-      `[AGENT DEBUG]   - Tool execution: ${totalToolTime}ms (${
-        ((totalToolTime / thinkingTime) * 100).toFixed(1)
-      }%)`,
-    );
-    console.log(`[AGENT DEBUG] Tool calls feitas: ${toolCalls.length}`);
-    toolCalls.forEach((tc, i) => {
-      console.log(`[AGENT DEBUG]   Tool[${i}]: ${tc.tool_name}`);
-      if (tc.args?.input) {
-        console.log(
-          `[AGENT DEBUG]     SQL: ${String(tc.args.input).substring(0, 200)}`,
-        );
-      }
-      if (tc.result) {
-        console.log(
-          `[AGENT DEBUG]     Result (preview): ${
-            String(tc.result).substring(0, 200)
-          }`,
-        );
-      }
-    });
-    console.log(`[AGENT DEBUG] SQL queries: ${sqlQueries.length}`);
-    console.log(
-      `[AGENT DEBUG] Tokens - Input: ${totalInputTokens} | Output: ${totalOutputTokens}`,
-    );
-    console.log(
-      `[AGENT DEBUG] Resposta final (preview): "${
-        fullResponse.substring(0, 300)
-      }${fullResponse.length > 300 ? "..." : ""}"`,
-    );
-    console.log("-".repeat(80) + "\n");
-    // ===================== FIM DEBUG RESPONSE =====================
 
     // 10. Send usage info (including timing breakdown for client-side display)
     sendSSE(res, {

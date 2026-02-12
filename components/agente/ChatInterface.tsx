@@ -31,6 +31,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
   const [isStreaming, setIsStreaming] = useState(false)
   const [thinkingStatus, setThinkingStatus] = useState('')
   const [streamingMessage, setStreamingMessage] = useState('')
+  const [streamingReasoning, setStreamingReasoning] = useState('')
   const [streamingToolCalls, setStreamingToolCalls] = useState<AgentMessage['tool_calls']>(null)
   const [streamingSqlQueries, setStreamingSqlQueries] = useState<AgentMessage['sql_queries']>(null)
   const [loadingConversations, setLoadingConversations] = useState(true)
@@ -172,6 +173,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
     setIsStreaming(true)
     setThinkingStatus('Analisando sua pergunta...')
     setStreamingMessage('')
+    setStreamingReasoning('')
     setStreamingToolCalls(null)
     setStreamingSqlQueries(null)
 
@@ -194,6 +196,22 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
         switch (event.type) {
           case 'thinking':
             setThinkingStatus(event.content as string || 'Processando...')
+            break
+          case 'reasoning_token':
+            // Token-by-token from LLM thinking - show in real-time
+            setStreamingReasoning((prev) => prev + (event.content || ''))
+            break
+          case 'reasoning_complete':
+            // Intermediate step done (tools will be called), clear reasoning
+            setStreamingReasoning('')
+            break
+          case 'answer_start':
+            // Final answer - move accumulated reasoning to the message area
+            setStreamingReasoning((prev) => {
+              if (prev) setStreamingMessage(prev)
+              return ''
+            })
+            setThinkingStatus('')
             break
           case 'tool_call': {
             setThinkingStatus('Consultando banco de dados...')
@@ -221,6 +239,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
             break
           }
           case 'tool_result':
+            setThinkingStatus('Elaborando resposta...')
             // Update last SQL query with execution time
             setStreamingSqlQueries((prev) => {
               if (!prev || prev.length === 0) return prev
@@ -244,6 +263,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
             )
             break
           case 'token':
+            // Legacy fallback - keep for backward compatibility
             setThinkingStatus('')
             setStreamingMessage((prev) => prev + (event.content || ''))
             break
@@ -304,6 +324,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
         // Build final assistant message from streaming data (no refetch = no flash)
         setIsStreaming(false)
         setThinkingStatus('')
+        setStreamingReasoning('')
 
         // Capture streaming data before clearing
         setStreamingToolCalls((prevToolCalls) => {
@@ -344,6 +365,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
         setIsStreaming(false)
         setThinkingStatus('')
         setStreamingMessage('')
+        setStreamingReasoning('')
         // Show error as a message in the conversation
         const errorMessage: AgentMessage = {
           id: `error-${Date.now()}`,
@@ -466,8 +488,8 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
             ))}
 
             {/* Streaming response */}
-            {isStreaming && thinkingStatus && !streamingMessage && (
-              <ChatThinking status={thinkingStatus} />
+            {isStreaming && (thinkingStatus || streamingReasoning) && !streamingMessage && (
+              <ChatThinking status={thinkingStatus} reasoning={streamingReasoning} />
             )}
 
             {isStreaming && streamingMessage && (

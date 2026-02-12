@@ -31,12 +31,11 @@ const nextConfig = (phase) => {
       // Use timestamp to force new chunks on each deployment
       return `build-${Date.now()}`
     },
-    experimental: {
-      // Disable SWC on Windows to avoid DLL initialization errors
-      forceSwcTransforms: false,
-    },
-
     outputFileTracingRoot: path.join(__dirname),
+
+    // 🚀 Turbopack config (default bundler for builds in Next.js 16+)
+    // Webpack config below is kept for dev mode (--webpack flag)
+    turbopack: {},
 
     compiler: {
       removeConsole: process.env.NODE_ENV === 'production',
