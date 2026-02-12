@@ -76,7 +76,7 @@ A tabela `vendas` possui um campo `status` com os seguintes valores possíveis:
 
 - **'pago'**: Venda concluída e paga pelo cliente
 - **'pendente'**: Venda registrada mas ainda não paga
-- **'cancelado'**: Venda cancelada, não deve contar em análises
+- **'cancelado'**: **Venda cancelada/excluída** (soft delete) - representam vendas anuladas que NÃO devem ser contabilizadas
 
 ### REGRA CRÍTICA sobre Status
 
@@ -96,6 +96,50 @@ SELECT * FROM vendas  -- Retorna TODAS as vendas
 - "vendas pagas" → `WHERE status = 'pago'`
 - "vendas pendentes" → `WHERE status = 'pendente'`
 - "vendas" → NÃO adicione filtro de status
+
+### ⚠️ EXCEÇÃO CRÍTICA: Vendas Canceladas SEMPRE Excluídas
+
+**IMPORTANTE**: Vendas com `status='cancelado'` representam vendas **excluídas/anuladas** que foram criadas mas depois canceladas (erro, duplicata, etc). Elas **NUNCA** devem ser incluídas em métricas financeiras.
+
+**REGRA OBRIGATÓRIA**: Para QUALQUER cálculo de métrica (faturamento, lucro, ranking, contagem), SEMPRE exclua vendas canceladas:
+
+```sql
+-- ✅ CORRETO: Sempre excluir canceladas em métricas
+SELECT
+  vend.nome,
+  SUM(v.valor_final) AS faturamento
+FROM vendas v
+JOIN vendedores vend ON v.vendedor_id = vend.id
+WHERE v.status != 'cancelado'  -- ⚠️ OBRIGATÓRIO excluir canceladas
+GROUP BY vend.nome
+```
+
+```sql
+-- ❌ ERRADO: Não excluir canceladas infla os valores
+SELECT
+  vend.nome,
+  SUM(v.valor_final) AS faturamento
+FROM vendas v
+JOIN vendedores vend ON v.vendedor_id = vend.id
+-- ❌ FALTA WHERE status != 'cancelado'
+-- Resultado: vai somar vendas que foram excluídas!
+GROUP BY vend.nome
+```
+
+**Por que isso acontece?**
+
+Quando uma venda é criada e depois cancelada (por exemplo, erro de digitação), ela não é deletada fisicamente do banco (soft delete). O registro permanece com `status='cancelado'`. Se não excluirmos essas vendas das queries, os valores ficam inflados.
+
+**Exemplo real do problema**:
+- Rodrigo fez 5 vendas válidas totalizando R$ 45.000
+- Mas 4 vendas foram canceladas (erros/duplicatas) totalizando R$ 183.000
+- Se não filtrar por `status != 'cancelado'`, o resultado será R$ 228.000 ❌
+- Filtrando corretamente, o resultado será R$ 45.000 ✅
+
+**A ÚNICA exceção** é quando o usuário pede explicitamente:
+- "Quantas vendas foram canceladas?" → `WHERE status = 'cancelado'` (aqui SIM)
+- "Vendas canceladas de fevereiro" → `WHERE status = 'cancelado'` (aqui SIM)
+- "Vendas incluindo canceladas" → Não adicionar filtro de status (raro)
 
 ## Integrações com Bling ERP
 
@@ -164,6 +208,52 @@ SELECT * FROM clientes_fornecedores WHERE tipo = 'cliente'
 -- Buscar apenas fornecedores
 SELECT * FROM clientes_fornecedores WHERE tipo = 'fornecedor'
 ```
+
+### ⚠️ REGRA CRÍTICA: Busca de Clientes por Nome
+
+**PROBLEMA**: Usar `WHERE nome ILIKE '%TERMO%'` pode retornar múltiplos clientes e agregar dados incorretamente.
+
+**Exemplo do problema**:
+```sql
+-- ❌ ERRADO: Pode retornar múltiplos clientes e somar dados de todos
+SELECT SUM(v.valor_final) AS total
+FROM vendas v
+JOIN clientes_fornecedores cf ON v.cliente_id = cf.id
+WHERE cf.nome ILIKE '%IELENPET%'
+```
+
+Se houver:
+- IELENPET DISTRIBUIDORA LTDA (lucro: R$ 45.000)
+- IELENPET COMERCIO (lucro: R$ 80.000)
+- IELENPET FILIAL 2 (lucro: R$ 83.733)
+
+O resultado será: R$ 208.733 (soma de todos) ❌ em vez de R$ 45.000 ✅
+
+**SOLUÇÃO OBRIGATÓRIA**:
+
+**Passo 1**: Sempre verificar quantos clientes correspondem ao termo:
+```sql
+SELECT id, nome, cpf_cnpj
+FROM clientes_fornecedores
+WHERE tipo = 'cliente' AND nome ILIKE '%IELENPET%'
+LIMIT 10
+```
+
+**Passo 2**: Analisar resultado:
+- **0 resultados**: Informar que não encontrou
+- **1 resultado**: Usar o **ID específico** na query de cálculo
+- **2+ resultados**: Listar todos e pedir ao usuário para especificar
+
+**Passo 3**: Se encontrou apenas 1 cliente, usar o ID:
+```sql
+-- ✅ CORRETO: Usar WHERE cf.id = [ID_ENCONTRADO]
+SELECT SUM(v.valor_final) AS total
+FROM vendas v
+JOIN clientes_fornecedores cf ON v.cliente_id = cf.id
+WHERE cf.id = 42  -- ID específico do cliente único encontrado
+```
+
+**Nunca** calcule métricas (lucro, vendas, etc) sem antes verificar a unicidade do cliente!
 
 ## Formato de Valores Monetários
 

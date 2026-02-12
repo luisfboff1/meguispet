@@ -3,7 +3,11 @@ import { DataSource } from "typeorm";
 // @ts-ignore - moduleResolution: node can't resolve subpath exports, but bundler resolves correctly
 import { SqlDatabase } from "@langchain/classic/sql_db";
 // @ts-ignore - moduleResolution: node can't resolve subpath exports, but bundler resolves correctly
-import { SqlToolkit } from "@langchain/classic/agents/toolkits/sql";
+import {
+  InfoSqlTool,
+  ListTablesSqlTool,
+  QuerySqlTool,
+} from "@langchain/classic/tools/sql";
 // @ts-ignore - moduleResolution: node can't resolve subpath exports, but bundler resolves correctly
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import {
@@ -41,8 +45,9 @@ function checkRateLimit(userId: number): boolean {
   return true;
 }
 
-// Cache DataSource to reuse connections
+// Cache DataSource and SqlDatabase to reuse connections
 let cachedDataSource: DataSource | null = null;
+let cachedSqlDb: SqlDatabase | null = null;
 
 async function getDataSource(): Promise<DataSource> {
   if (cachedDataSource?.isInitialized) {
@@ -122,6 +127,12 @@ function mapErrorMessage(rawMsg: string): string {
     rawMsg.includes("fetch failed")
   ) {
     return "Falha de conexao com o servico de IA. Tente novamente em alguns segundos.";
+  }
+  if (
+    rawMsg.includes("ECONNRESET") || rawMsg.includes("terminated") ||
+    rawMsg.includes("socket hang up")
+  ) {
+    return "A conexao com o servico de IA foi interrompida. A consulta pode ter sido muito longa. Tente novamente ou simplifique a pergunta.";
   }
   if (rawMsg.includes("timeout") || rawMsg.includes("Timeout")) {
     return "A consulta demorou demais e foi cancelada. Tente simplificar sua pergunta.";
@@ -265,16 +276,22 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       streaming: true,
     });
 
-    // 5. Create SQL Database connection
+    // 5. Create SQL Database connection (cached)
     const dataSource = await getDataSource();
-    const db = await SqlDatabase.fromDataSourceParams({
-      appDataSource: dataSource,
-      includesTables: [...AGENT_ACCESSIBLE_TABLES],
-    });
+    if (!cachedSqlDb) {
+      cachedSqlDb = await SqlDatabase.fromDataSourceParams({
+        appDataSource: dataSource,
+        includesTables: [...AGENT_ACCESSIBLE_TABLES],
+      });
+    }
+    const db = cachedSqlDb;
 
-    // 6. Create SQL Agent
-    const toolkit = new SqlToolkit(db, llm);
-    const tools = toolkit.getTools();
+    // 6. Create SQL Agent tools (without query-checker to avoid extra LLM calls)
+    const tools = [
+      new QuerySqlTool(db),
+      new InfoSqlTool(db),
+      new ListTablesSqlTool(db),
+    ];
 
     const systemPrompt = buildSystemPrompt(agentConfig.system_prompt);
 
@@ -292,7 +309,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .select("role, content")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(10); // Reduzido de 20 para 10 para economizar tokens (economiza ~2.000-4.000 tokens/req)
 
     // Reverse to chronological order (oldest first) for the LLM
     const historyRaw = historyDesc ? [...historyDesc].reverse() : [];
@@ -347,6 +364,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       tool_name: string;
       args: Record<string, unknown>;
       result: unknown;
+      start_time?: number;
+      execution_time_ms?: number;
     }[] = [];
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
@@ -441,7 +460,11 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         const agentMessages = event.agent.messages || [];
         for (const msg of agentMessages) {
           if (msg.content && typeof msg.content === "string") {
-            fullResponse = msg.content;
+            // Only update fullResponse if this is a real content message (not empty/tool-only)
+            // Use replace (=) since LangGraph sends complete content per step
+            if (msg.content.trim().length > 0) {
+              fullResponse = msg.content;
+            }
             sendSSE(res, { type: "token", content: msg.content });
           }
 
@@ -461,16 +484,20 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
               if (tc.id) pendingToolArgs.set(tc.id, tc.args || {});
 
               const sqlText = tc.args?.input || tc.args?.query || "";
+              const toolCallStartTime = Date.now(); // Track start time for this tool call
 
               toolCalls.push({
                 tool_name: tc.name,
                 args: tc.args || {},
                 result: null,
+                start_time: toolCallStartTime, // Add start time
               });
 
               // If this is a SQL query, track it immediately with the SQL text
               if (tc.name === "sql_db_query" || tc.name === "query-sql") {
-                const sqlString = typeof sqlText === "string" ? sqlText : String(sqlText);
+                const sqlString = typeof sqlText === "string"
+                  ? sqlText
+                  : String(sqlText);
 
                 sqlQueries.push({
                   sql: sqlString,
@@ -480,19 +507,62 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 });
 
                 // Log agent decisions for debugging
-                if (process.env.NODE_ENV === 'development') {
-                  console.log(`[AGENT DECISION] User message: "${message.substring(0, 100)}"`);
-                  console.log(`[AGENT DECISION] Generated SQL: ${sqlString.substring(0, 300)}`);
+                if (process.env.NODE_ENV === "development") {
+                  console.log(
+                    `[AGENT DECISION] User message: "${
+                      message.substring(0, 100)
+                    }"`,
+                  );
+                  console.log(
+                    `[AGENT DECISION] Generated SQL: ${
+                      sqlString.substring(0, 300)
+                    }`,
+                  );
 
                   // Try to extract WHERE filters to understand agent's decision
-                  const whereMatch = sqlString.match(/WHERE\s+([\s\S]+?)(?:GROUP|ORDER|LIMIT|$)/i);
+                  const whereMatch = sqlString.match(
+                    /WHERE\s+([\s\S]+?)(?:GROUP|ORDER|LIMIT|$)/i,
+                  );
                   if (whereMatch) {
                     const whereClause = whereMatch[1].trim();
-                    console.log(`[AGENT DECISION] Filters detected: ${whereClause.substring(0, 200)}`);
+                    console.log(
+                      `[AGENT DECISION] Filters detected: ${
+                        whereClause.substring(0, 200)
+                      }`,
+                    );
 
                     // Warn if status filter was added
                     if (/status\s*=\s*['"]pago['"]/i.test(whereClause)) {
-                      console.warn(`[AGENT DECISION] ⚠️ Agent added status='pago' filter - was it requested?`);
+                      console.warn(
+                        `[AGENT DECISION] ⚠️ Agent added status='pago' filter - was it requested?`,
+                      );
+                    }
+
+                    // Warn if using ILIKE on clientes_fornecedores.nome with aggregation
+                    if (
+                      /clientes_fornecedores/i.test(sqlString) &&
+                      /nome\s+ILIKE\s+['"]%[^%]+%['"]/i.test(whereClause) &&
+                      /(SUM|COUNT|AVG|GROUP BY)/i.test(sqlString)
+                    ) {
+                      console.warn(
+                        `[AGENT DECISION] ⚠️ Agent used ILIKE on clientes_fornecedores.nome with aggregation - may return multiple clients and sum incorrectly! Should verify uniqueness first.`,
+                      );
+                    }
+
+                    // Warn if NOT excluding canceled sales in metrics (SUM, COUNT, AVG)
+                    if (
+                      /\bvendas\b/i.test(sqlString) &&
+                      /(SUM|COUNT|AVG)\s*\([^)]*valor_final[^)]*\)/i.test(
+                        sqlString,
+                      ) &&
+                      !/status\s*(!?=|<>)\s*['"]cancelado['"]/i.test(
+                        whereClause,
+                      ) &&
+                      !/status\s*=\s*['"]pago['"]/i.test(whereClause)
+                    ) {
+                      console.warn(
+                        `[AGENT DECISION] ⚠️ Agent is aggregating vendas without excluding status='cancelado' - this will include deleted/cancelled sales and inflate values! Add: WHERE status != 'cancelado'`,
+                      );
                     }
                   } else {
                     console.log(`[AGENT DECISION] No WHERE filters detected`);
@@ -519,15 +589,25 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           const toolResult = typeof msg.content === "string"
             ? msg.content
             : JSON.stringify(msg.content);
-          const execTime = Date.now() - startTime;
+          const now = Date.now();
+          const execTime = now - startTime;
 
-          // Update the last matching tool call with the result
+          // Update the last matching tool call with the result and individual time
           for (let i = toolCalls.length - 1; i >= 0; i--) {
             if (
               toolCalls[i].tool_name === toolName &&
               toolCalls[i].result === null
             ) {
               toolCalls[i].result = toolResult;
+              const individualTime = now - (toolCalls[i].start_time || now);
+              toolCalls[i].execution_time_ms = individualTime;
+
+              // Log individual tool call time
+              if (process.env.NODE_ENV === "development") {
+                console.log(
+                  `[AGENT TIMING] Tool '${toolName}' took ${individualTime}ms`,
+                );
+              }
               break;
             }
           }
@@ -558,11 +638,34 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     const thinkingTime = Date.now() - startTime;
 
+    // Calculate timing breakdown
+    const totalToolTime = toolCalls.reduce(
+      (sum, tc) => sum + (tc.execution_time_ms || 0),
+      0,
+    );
+    const llmThinkingTime = thinkingTime - totalToolTime;
+    const timingBreakdown = {
+      total_time_ms: thinkingTime,
+      llm_thinking_ms: llmThinkingTime,
+      tool_execution_ms: totalToolTime,
+      tools_count: toolCalls.length,
+    };
+
     // ===================== DEBUG RESPONSE =====================
     console.log("\n" + "-".repeat(80));
     console.log("[AGENT DEBUG] RESPOSTA COMPLETA");
     console.log("-".repeat(80));
     console.log(`[AGENT DEBUG] Tempo total: ${thinkingTime}ms`);
+    console.log(
+      `[AGENT DEBUG]   - LLM thinking: ${llmThinkingTime}ms (${
+        ((llmThinkingTime / thinkingTime) * 100).toFixed(1)
+      }%)`,
+    );
+    console.log(
+      `[AGENT DEBUG]   - Tool execution: ${totalToolTime}ms (${
+        ((totalToolTime / thinkingTime) * 100).toFixed(1)
+      }%)`,
+    );
     console.log(`[AGENT DEBUG] Tool calls feitas: ${toolCalls.length}`);
     toolCalls.forEach((tc, i) => {
       console.log(`[AGENT DEBUG]   Tool[${i}]: ${tc.tool_name}`);
@@ -591,12 +694,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     console.log("-".repeat(80) + "\n");
     // ===================== FIM DEBUG RESPONSE =====================
 
-    // 10. Send usage info
+    // 10. Send usage info (including timing breakdown for client-side display)
     sendSSE(res, {
       type: "usage",
       input_tokens: totalInputTokens,
       output_tokens: totalOutputTokens,
       model: agentConfig.model,
+      thinking_time_ms: thinkingTime,
+      timing_breakdown: timingBreakdown,
     });
 
     // 11. Signal done
@@ -615,6 +720,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         output_tokens: totalOutputTokens,
         model_used: agentConfig.model,
         thinking_time_ms: thinkingTime,
+        timing_breakdown: timingBreakdown,
       });
     }
 

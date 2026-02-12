@@ -124,6 +124,74 @@ WHERE (p.nome ILIKE '%PETICO%' OR p.nome ILIKE '%snack%' OR p.nome ILIKE '%petis
 
 ---
 
+## 4b. ⚠️ Busca de Cliente Específico por Nome (REGRA CRÍTICA)
+
+**PROBLEMA**: Usar `WHERE nome ILIKE '%TERMO%'` diretamente pode retornar múltiplos clientes e agregar dados incorretamente.
+
+### ❌ JEITO ERRADO (Pode somar múltiplos clientes)
+
+```sql
+-- ❌ NÃO FAÇA ISSO!
+SELECT
+  cf.nome AS cliente,
+  SUM(v.valor_final) AS total_vendas
+FROM vendas v
+JOIN clientes_fornecedores cf ON v.cliente_id = cf.id
+WHERE cf.tipo = 'cliente'
+  AND cf.nome ILIKE '%IELENPET%'  -- Pode pegar múltiplos clientes!
+GROUP BY cf.id, cf.nome
+```
+
+**Problema**: Se existir "IELENPET DISTRIBUIDORA", "IELENPET COMERCIO", "IELENPET FILIAL 2", vai somar vendas de TODOS eles.
+
+### ✅ JEITO CORRETO (Verificar unicidade primeiro)
+
+**Passo 1**: Verificar quantos clientes correspondem:
+```sql
+SELECT id, nome, cpf_cnpj
+FROM clientes_fornecedores
+WHERE tipo = 'cliente'
+  AND nome ILIKE '%IELENPET%'
+LIMIT 10
+```
+
+**Passo 2a**: Se retornar **1 único cliente**, use o **ID específico**:
+```sql
+-- ✅ CORRETO: Usar WHERE cf.id = [ID]
+SELECT
+  cf.nome AS cliente,
+  SUM(v.valor_final) AS total_vendas
+FROM vendas v
+JOIN clientes_fornecedores cf ON v.cliente_id = cf.id
+WHERE cf.id = 42  -- ID do cliente ÚNICO encontrado
+GROUP BY cf.id, cf.nome
+```
+
+**Passo 2b**: Se retornar **múltiplos clientes**, listar e pedir confirmação:
+
+"Encontrei **3 clientes** com o termo 'IELENPET':
+
+1. **IELENPET DISTRIBUIDORA LTDA** (CNPJ: 12.345.678/0001-90)
+2. **IELENPET COMERCIO** (CNPJ: 98.765.432/0001-00)
+3. **IELENPET FILIAL 2** (CNPJ: 11.222.333/0001-44)
+
+Qual cliente você gostaria de analisar?"
+
+**Passo 2c**: Se retornar **0 clientes**, informar:
+
+"Não encontrei nenhum cliente com o nome 'IELENPET'. Gostaria de tentar outro termo de busca?"
+
+### Resumo
+
+**SEMPRE**:
+1. Primeiro, execute `SELECT id, nome FROM clientes_fornecedores WHERE...`
+2. Verifique quantos resultados retornaram
+3. Se 1 resultado: use `WHERE cf.id = [ID]`
+4. Se 2+ resultados: pergunte ao usuário
+5. **NUNCA** use `WHERE cf.nome ILIKE` diretamente em queries de agregação!
+
+---
+
 ## 5. Vendas por Período com Totais
 
 ```sql
@@ -185,7 +253,8 @@ SELECT
   SUM(v.valor_final * vd.comissao_percentual / 100) AS comissao_estimada
 FROM vendedores vd
 LEFT JOIN vendas v ON vd.id = v.vendedor_id
-WHERE v.status = 'pago'  -- ⚠️ Aqui SIM, pois comissão só em vendas pagas
+WHERE v.status != 'cancelado'  -- ⚠️ OBRIGATÓRIO: excluir vendas canceladas
+  AND v.status = 'pago'  -- ⚠️ Aqui SIM, pois comissão só em vendas pagas
   AND v.data_venda >= '2026-01-01'
 GROUP BY vd.id, vd.nome, vd.comissao_percentual
 ORDER BY valor_total DESC
@@ -194,6 +263,50 @@ ORDER BY valor_total DESC
 **Quando usar**: "Qual vendedor mais vendeu" ou "Ranking de vendedores"
 
 **Nota**: Para vendedores, FAZ SENTIDO filtrar por status='pago' porque comissão só é paga em vendas concluídas.
+
+**⚠️ IMPORTANTE**: SEMPRE excluir `status='cancelado'` mesmo quando filtrar por 'pago', pois:
+1. Primeiro exclui canceladas: `status != 'cancelado'`
+2. Depois filtra pagas: `AND status = 'pago'`
+
+Ou simplificado: `WHERE status = 'pago'` (já exclui canceladas automaticamente)
+
+---
+
+## 7b. ⚠️ Faturamento de Vendedores SEM Filtro de Status 'pago' (CUIDADO)
+
+Se o usuário perguntar "faturamento do vendedor" **sem especificar 'pago'**, NÃO adicione `status='pago'`, mas SEMPRE exclua canceladas:
+
+```sql
+-- ✅ CORRETO: Incluir pendentes + pagas, excluir apenas canceladas
+SELECT
+  vd.nome AS vendedor,
+  COUNT(v.id) AS total_vendas,
+  SUM(v.valor_final) AS faturamento_total
+FROM vendas v
+JOIN vendedores vd ON v.vendedor_id = vd.id
+WHERE v.status != 'cancelado'  -- ⚠️ OBRIGATÓRIO: sempre excluir canceladas
+  AND v.data_venda BETWEEN '2026-02-01' AND '2026-02-11'
+GROUP BY vd.nome
+ORDER BY faturamento_total DESC
+```
+
+```sql
+-- ❌ ERRADO: Não excluir canceladas infla os valores
+SELECT
+  vd.nome AS vendedor,
+  SUM(v.valor_final) AS faturamento_total
+FROM vendas v
+JOIN vendedores vd ON v.vendedor_id = vd.id
+WHERE v.data_venda BETWEEN '2026-02-01' AND '2026-02-11'
+-- ❌ FALTA: AND v.status != 'cancelado'
+GROUP BY vd.nome
+```
+
+**Exemplo do problema**:
+- Rodrigo: 5 vendas válidas = R$ 45.000
+- Rodrigo: 4 vendas canceladas (erros) = R$ 183.000
+- Sem filtro de canceladas: R$ 228.000 ❌
+- Com filtro correto: R$ 45.000 ✅
 
 ---
 

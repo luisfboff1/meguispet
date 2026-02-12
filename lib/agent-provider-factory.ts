@@ -34,17 +34,22 @@ export function createLLM(config: ProviderConfig): BaseChatModel {
 
   switch (provider) {
     case 'openai':
+      // GPT-5-nano only supports default temperature (1.0), no customization
+      const isGpt5Nano = model === 'gpt-5-nano'
       return new ChatOpenAI({
         modelName: model,
         openAIApiKey: apiKey,
         configuration: {
           apiKey: apiKey,
         },
-        temperature,
+        // Don't send these params for gpt-5-nano (only supports defaults)
+        ...(isGpt5Nano ? {} : {
+          temperature,
+          topP,
+          frequencyPenalty,
+          presencePenalty,
+        }),
         maxTokens,
-        topP,
-        frequencyPenalty,
-        presencePenalty,
         streaming,
       })
 
@@ -73,6 +78,7 @@ export function createLLM(config: ProviderConfig): BaseChatModel {
 export function getContextWindowSize(provider: AgentProvider, model: string): number {
   const contextWindows: Record<string, number> = {
     // OpenAI
+    'gpt-5-nano': 400000, // Biggest context window!
     'gpt-4o': 128000,
     'gpt-4o-mini': 128000,
     'gpt-4.5-preview': 128000,

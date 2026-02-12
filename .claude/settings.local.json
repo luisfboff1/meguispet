@@ -71,7 +71,8 @@
       "Bash(npx next lint:*)",
       "Bash(npx next build:*)",
       "Bash(pnpm list:*)",
-      "Bash(python -c:*)"
+      "Bash(python -c:*)",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "ask": []

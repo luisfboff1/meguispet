@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import * as XLSX from 'xlsx'
-import { Bot, User, Copy, Check, Download, MoreHorizontal } from 'lucide-react'
+import { Bot, User, Copy, Check, Download, MoreHorizontal, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { SqlQueryPanel } from './SqlQueryPanel'
@@ -16,6 +16,7 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
   const [copied, setCopied] = React.useState(false)
+  const [showInfoTooltip, setShowInfoTooltip] = React.useState(false)
   const isUser = message.role === 'user'
   const isAssistant = message.role === 'assistant'
 
@@ -23,6 +24,12 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
     await navigator.clipboard.writeText(message.content)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Format timing breakdown
+  const formatTime = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`
+    return `${(ms / 1000).toFixed(1)}s`
   }
 
   const formattedTime = message.created_at
@@ -131,6 +138,74 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
                 {message.output_tokens} tokens
               </span>
             )}
+
+            {/* Info tooltip */}
+            {(message.timing_breakdown || message.input_tokens > 0) && (
+              <div className="relative">
+                <button
+                  onMouseEnter={() => setShowInfoTooltip(true)}
+                  onMouseLeave={() => setShowInfoTooltip(false)}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+                  title="Informações de performance"
+                >
+                  <Info className="h-3 w-3" />
+                </button>
+
+                {showInfoTooltip && (
+                  <div className="absolute bottom-full left-1/2 mb-2 -translate-x-1/2 z-50 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                    <div className="space-y-1.5 text-xs">
+                      {/* Tokens */}
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 dark:border-slate-700">
+                        <span className="font-medium text-slate-700 dark:text-slate-300">Tokens</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 dark:text-slate-400">Input:</span>
+                        <span className="font-mono text-slate-700 dark:text-slate-300">{message.input_tokens.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 dark:text-slate-400">Output:</span>
+                        <span className="font-mono text-slate-700 dark:text-slate-300">{message.output_tokens.toLocaleString()}</span>
+                      </div>
+
+                      {/* Timing breakdown */}
+                      {message.timing_breakdown && (
+                        <>
+                          <div className="flex items-center justify-between border-b border-t border-slate-200 py-1.5 dark:border-slate-700">
+                            <span className="font-medium text-slate-700 dark:text-slate-300">Tempo</span>
+                            <span className="font-mono text-slate-700 dark:text-slate-300">{formatTime(message.timing_breakdown.total_time_ms)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 dark:text-slate-400">LLM pensando:</span>
+                            <span className="font-mono text-amber-600 dark:text-amber-400">
+                              {formatTime(message.timing_breakdown.llm_thinking_ms)}
+                              <span className="ml-1 text-[10px] text-slate-400">
+                                ({((message.timing_breakdown.llm_thinking_ms / message.timing_breakdown.total_time_ms) * 100).toFixed(0)}%)
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500 dark:text-slate-400">Consultando BD:</span>
+                            <span className="font-mono text-blue-600 dark:text-blue-400">
+                              {formatTime(message.timing_breakdown.tool_execution_ms)}
+                              <span className="ml-1 text-[10px] text-slate-400">
+                                ({((message.timing_breakdown.tool_execution_ms / message.timing_breakdown.total_time_ms) * 100).toFixed(0)}%)
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-[10px]">
+                            <span className="text-slate-500 dark:text-slate-400">Queries executadas:</span>
+                            <span className="font-mono text-slate-600 dark:text-slate-400">{message.timing_breakdown.tools_count}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {/* Arrow */}
+                    <div className="absolute left-1/2 top-full -translate-x-1/2 -mt-px h-2 w-2 rotate-45 border-b border-r border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800" />
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={handleCopy}
               className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
@@ -277,18 +352,36 @@ const markdownComponents = {
     const match = /language-(\w+)/.exec(className || '')
     const language = match?.[1]
 
-    // Detect chart blocks
-    if (language === 'chart') {
+    // Detect chart blocks (language 'chart' or JSON that looks like a chart)
+    const isChartLanguage = language === 'chart'
+    const isJsonLanguage = language === 'json'
+
+    if (isChartLanguage || isJsonLanguage) {
       try {
-        const chartSpec: ChartSpec = JSON.parse(String(children).trim())
-        return <ChartRenderer spec={chartSpec} />
+        const raw = String(children).trim()
+        const parsed = JSON.parse(raw)
+        // Validate it has chart structure (type + data)
+        if (parsed && parsed.type && parsed.data && Array.isArray(parsed.data)) {
+          const chartSpec: ChartSpec = parsed
+          return <ChartRenderer spec={chartSpec} />
+        }
+        // If it's JSON but not a chart, fall through to regular code block
+        if (isJsonLanguage) {
+          return (
+            <code className={className} {...props}>
+              {children}
+            </code>
+          )
+        }
       } catch (error) {
-        console.error('Failed to parse chart spec:', error)
-        return (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-            ❌ Erro ao renderizar gráfico: JSON inválido
-          </div>
-        )
+        if (isChartLanguage) {
+          console.error('Failed to parse chart spec:', error)
+          return (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+              ❌ Erro ao renderizar gráfico: JSON inválido
+            </div>
+          )
+        }
       }
     }
 

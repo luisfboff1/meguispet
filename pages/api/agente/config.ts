@@ -124,13 +124,19 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }
 
       // Upsert: insert if not exists, update if exists
+      console.log(`[API Agente Config] Tentando upsert com ${Object.keys(updateData).length} campos:`, Object.keys(updateData).join(', '))
       const { data, error } = await supabase
         .from('agent_configs')
         .upsert(updateData, { onConflict: 'usuario_id' })
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error(`[API Agente Config] Erro no upsert:`, error)
+        console.error(`[API Agente Config] Error code: ${error.code}, message: ${error.message}`)
+        console.error(`[API Agente Config] Campos enviados:`, Object.keys(updateData))
+        throw error
+      }
 
       // Return safe data (without encrypted key)
       const { api_key_encrypted, ...safeData } = data
@@ -160,10 +166,15 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       userMessage = 'Configuracao ja existe. Tente novamente.'
     } else if (rawMsg.includes('permission denied') || rawMsg.includes('RLS')) {
       userMessage = 'Sem permissao para acessar configuracoes. Verifique as politicas RLS no Supabase.'
+    } else if (rawMsg.includes('column') && rawMsg.includes('does not exist')) {
+      userMessage = `Erro de schema: ${rawMsg}. A migration 027_agent_recursion_limit.sql precisa ser executada no Supabase.`
+    } else if (rawMsg.includes('null value in column')) {
+      userMessage = `Campo obrigatorio faltando: ${rawMsg}. Verifique os dados enviados.`
     }
     return res.status(500).json({
       success: false,
       message: userMessage,
+      error: process.env.NODE_ENV === 'development' ? rawMsg : undefined,
     })
   }
 }

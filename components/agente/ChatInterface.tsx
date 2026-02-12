@@ -6,7 +6,6 @@ import { ChatInput } from './ChatInput'
 import { ChatThinking } from './ChatThinking'
 import { ConversationTabs } from './ConversationTabs'
 import { TokenCounter } from './TokenCounter'
-import { ContextWindowIndicator } from './ContextWindowIndicator'
 import { agenteService } from '@/services/agenteService'
 import { useToast } from '@/components/ui/use-toast'
 import type {
@@ -40,7 +39,6 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
   // Token tracking
   const totalInputTokens = conversations.find((c) => c.id === activeConversationId)?.total_input_tokens || 0
   const totalOutputTokens = conversations.find((c) => c.id === activeConversationId)?.total_output_tokens || 0
-  const contextWindowSize = getContextWindow(config)
 
   // Scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -164,6 +162,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
       output_tokens: 0,
       model_used: null,
       thinking_time_ms: null,
+      timing_breakdown: null,
       attachments: null,
       created_at: new Date().toISOString(),
     }
@@ -175,6 +174,14 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
     setStreamingMessage('')
     setStreamingToolCalls(null)
     setStreamingSqlQueries(null)
+
+    // Track usage data from SSE to include in final message
+    let streamUsageData: {
+      input_tokens: number
+      output_tokens: number
+      thinking_time_ms: number | null
+      timing_breakdown: AgentMessage['timing_breakdown']
+    } = { input_tokens: 0, output_tokens: 0, thinking_time_ms: null, timing_breakdown: null }
 
     const abortController = new AbortController()
     abortControllerRef.current = abortController
@@ -241,6 +248,13 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
             setStreamingMessage((prev) => prev + (event.content || ''))
             break
           case 'usage':
+            // Store usage data for inclusion in final message
+            streamUsageData = {
+              input_tokens: (event.input_tokens as number) || 0,
+              output_tokens: (event.output_tokens as number) || 0,
+              thinking_time_ms: (event.thinking_time_ms as number) || null,
+              timing_breakdown: (event.timing_breakdown as AgentMessage['timing_breakdown']) || null,
+            }
             // Update conversation token counts locally
             setConversations((prev) =>
               prev.map((c) =>
@@ -270,6 +284,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
               output_tokens: 0,
               model_used: null,
               thinking_time_ms: null,
+              timing_breakdown: null,
               attachments: null,
               created_at: new Date().toISOString(),
             }
@@ -302,10 +317,11 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
                   content: prevContent,
                   tool_calls: prevToolCalls && prevToolCalls.length > 0 ? prevToolCalls : null,
                   sql_queries: prevSqlQueries && prevSqlQueries.length > 0 ? prevSqlQueries : null,
-                  input_tokens: 0,
-                  output_tokens: 0,
+                  input_tokens: streamUsageData.input_tokens,
+                  output_tokens: streamUsageData.output_tokens,
                   model_used: config?.model || null,
-                  thinking_time_ms: null,
+                  thinking_time_ms: streamUsageData.thinking_time_ms,
+                  timing_breakdown: streamUsageData.timing_breakdown,
                   attachments: null,
                   created_at: new Date().toISOString(),
                 }
@@ -340,6 +356,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
           output_tokens: 0,
           model_used: null,
           thinking_time_ms: null,
+          timing_breakdown: null,
           attachments: null,
           created_at: new Date().toISOString(),
         }
@@ -414,11 +431,6 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
           <TokenCounter
             inputTokens={totalInputTokens}
             outputTokens={totalOutputTokens}
-            maxTokens={contextWindowSize}
-          />
-          <ContextWindowIndicator
-            usedTokens={totalInputTokens + totalOutputTokens}
-            maxTokens={contextWindowSize}
           />
         </div>
       </div>
@@ -471,6 +483,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
                   output_tokens: 0,
                   model_used: config?.model || null,
                   thinking_time_ms: null,
+                  timing_breakdown: null,
                   attachments: null,
                   created_at: new Date().toISOString(),
                 }}
@@ -492,17 +505,4 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
       />
     </div>
   )
-}
-
-function getContextWindow(config: AgentConfig | null): number {
-  if (!config) return 128000
-  const windows: Record<string, number> = {
-    'gpt-4o': 128000,
-    'gpt-4o-mini': 128000,
-    'gpt-4.5-preview': 128000,
-    'claude-sonnet-4-5-20250929': 200000,
-    'claude-opus-4-20250514': 200000,
-    'claude-haiku-4-5-20251001': 200000,
-  }
-  return windows[config.model] || 128000
 }

@@ -95,9 +95,27 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
     setProvider(newProvider)
     const models = AGENT_MODELS[newProvider]
     if (models.length > 0) {
-      setModel(models[0].id)
+      const newModel = models[0].id
+      setModel(newModel)
+      // Auto-adjust temperature for gpt-5-nano
+      if (newModel === 'gpt-5-nano') {
+        setTemperature(1.0)
+        setTopP(1.0)
+        setFrequencyPenalty(0)
+        setPresencePenalty(0)
+      }
     }
   }
+
+  // Auto-adjust parameters when model changes to gpt-5-nano
+  useEffect(() => {
+    if (model === 'gpt-5-nano') {
+      setTemperature(1.0)
+      setTopP(1.0)
+      setFrequencyPenalty(0)
+      setPresencePenalty(0)
+    }
+  }, [model])
 
   async function handleSave() {
     setSaving(true)
@@ -166,6 +184,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
   }
 
   const availableModels = AGENT_MODELS[provider] || []
+  const isGpt5Nano = model === 'gpt-5-nano'
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
@@ -260,22 +279,28 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
+          {isGpt5Nano && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+              <strong>GPT-5 Nano</strong> usa parâmetros fixos otimizados. Temperatura e outros ajustes são gerenciados automaticamente.
+            </div>
+          )}
           {/* Temperature */}
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Temperatura
+                Temperatura {isGpt5Nano && <span className="ml-1 text-[10px] text-slate-400">(fixo em 1.0)</span>}
               </label>
-              <span className="text-xs font-mono text-slate-500">{temperature.toFixed(2)}</span>
+              <span className="text-xs font-mono text-slate-500">{isGpt5Nano ? '1.00' : temperature.toFixed(2)}</span>
             </div>
             <input
               type="range"
               min="0"
               max="2"
               step="0.05"
-              value={temperature}
+              value={isGpt5Nano ? 1.0 : temperature}
               onChange={(e) => setTemperature(parseFloat(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700"
+              disabled={isGpt5Nano}
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             />
             <div className="mt-1 flex justify-between text-[10px] text-slate-400">
               <span>Preciso (0)</span>
@@ -302,18 +327,19 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Top P
+                Top P {isGpt5Nano && <span className="ml-1 text-[10px] text-slate-400">(fixo)</span>}
               </label>
-              <span className="text-xs font-mono text-slate-500">{topP.toFixed(2)}</span>
+              <span className="text-xs font-mono text-slate-500">{isGpt5Nano ? '1.00' : topP.toFixed(2)}</span>
             </div>
             <input
               type="range"
               min="0"
               max="1"
               step="0.05"
-              value={topP}
+              value={isGpt5Nano ? 1.0 : topP}
               onChange={(e) => setTopP(parseFloat(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700"
+              disabled={isGpt5Nano}
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
@@ -321,18 +347,19 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Frequency Penalty
+                Frequency Penalty {isGpt5Nano && <span className="ml-1 text-[10px] text-slate-400">(fixo)</span>}
               </label>
-              <span className="text-xs font-mono text-slate-500">{frequencyPenalty.toFixed(2)}</span>
+              <span className="text-xs font-mono text-slate-500">{isGpt5Nano ? '0.00' : frequencyPenalty.toFixed(2)}</span>
             </div>
             <input
               type="range"
               min="0"
               max="2"
               step="0.1"
-              value={frequencyPenalty}
+              value={isGpt5Nano ? 0 : frequencyPenalty}
               onChange={(e) => setFrequencyPenalty(parseFloat(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700"
+              disabled={isGpt5Nano}
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
@@ -340,18 +367,19 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Presence Penalty
+                Presence Penalty {isGpt5Nano && <span className="ml-1 text-[10px] text-slate-400">(fixo)</span>}
               </label>
-              <span className="text-xs font-mono text-slate-500">{presencePenalty.toFixed(2)}</span>
+              <span className="text-xs font-mono text-slate-500">{isGpt5Nano ? '0.00' : presencePenalty.toFixed(2)}</span>
             </div>
             <input
               type="range"
               min="0"
               max="2"
               step="0.1"
-              value={presencePenalty}
+              value={isGpt5Nano ? 0 : presencePenalty}
               onChange={(e) => setPresencePenalty(parseFloat(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700"
+              disabled={isGpt5Nano}
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 

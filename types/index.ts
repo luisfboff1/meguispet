@@ -1199,8 +1199,16 @@ export interface AgentMessage {
   output_tokens: number;
   model_used: string | null;
   thinking_time_ms: number | null;
+  timing_breakdown: AgentTimingBreakdown | null;
   attachments: AgentAttachment[] | null;
   created_at: string;
+}
+
+export interface AgentTimingBreakdown {
+  total_time_ms: number;
+  llm_thinking_ms: number;
+  tool_execution_ms: number;
+  tools_count: number;
 }
 
 export interface AgentToolCall {
@@ -1257,6 +1265,7 @@ export const AGENT_MODELS: Record<
   { id: string; name: string; contextWindow: number }[]
 > = {
   openai: [
+    { id: "gpt-5-nano", name: "GPT-5 Nano ⚡", contextWindow: 400000 },
     { id: "gpt-4o", name: "GPT-4o", contextWindow: 128000 },
     { id: "gpt-4o-mini", name: "GPT-4o Mini", contextWindow: 128000 },
     { id: "gpt-4.5-preview", name: "GPT-4.5 Preview", contextWindow: 128000 },
