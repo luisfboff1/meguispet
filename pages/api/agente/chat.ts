@@ -286,13 +286,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
     // 7. Get conversation history BEFORE saving the new message
     //    Fetch the MOST RECENT messages (DESC), then reverse to chronological order
-    //    Limited to 6 messages (3 pairs) to avoid context contamination and reduce token cost
+    //    Limited to 20 messages (10 pairs) to provide more context for agent decisions
     const { data: historyDesc } = await supabase
       .from("agent_messages")
       .select("role, content")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(20);
 
     // Reverse to chronological order (oldest first) for the LLM
     const historyRaw = historyDesc ? [...historyDesc].reverse() : [];
@@ -470,12 +470,34 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
               // If this is a SQL query, track it immediately with the SQL text
               if (tc.name === "sql_db_query" || tc.name === "query-sql") {
+                const sqlString = typeof sqlText === "string" ? sqlText : String(sqlText);
+
                 sqlQueries.push({
-                  sql: typeof sqlText === "string" ? sqlText : String(sqlText),
+                  sql: sqlString,
                   explanation: "Consulta executada pelo agente",
                   rows_returned: 0,
                   execution_time_ms: 0,
                 });
+
+                // Log agent decisions for debugging
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`[AGENT DECISION] User message: "${message.substring(0, 100)}"`);
+                  console.log(`[AGENT DECISION] Generated SQL: ${sqlString.substring(0, 300)}`);
+
+                  // Try to extract WHERE filters to understand agent's decision
+                  const whereMatch = sqlString.match(/WHERE\s+([\s\S]+?)(?:GROUP|ORDER|LIMIT|$)/i);
+                  if (whereMatch) {
+                    const whereClause = whereMatch[1].trim();
+                    console.log(`[AGENT DECISION] Filters detected: ${whereClause.substring(0, 200)}`);
+
+                    // Warn if status filter was added
+                    if (/status\s*=\s*['"]pago['"]/i.test(whereClause)) {
+                      console.warn(`[AGENT DECISION] ⚠️ Agent added status='pago' filter - was it requested?`);
+                    }
+                  } else {
+                    console.log(`[AGENT DECISION] No WHERE filters detected`);
+                  }
+                }
               }
 
               sendSSE(res, {

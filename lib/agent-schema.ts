@@ -44,18 +44,45 @@ export const AGENT_ACCESSIBLE_TABLES = [
 ] as const
 
 /**
+ * Common terms and their synonyms for product searches.
+ * Helps the agent understand user queries with colloquial terms.
+ */
+export const COMMON_TERMS: Record<string, string[]> = {
+  petisco: ['PETICO', 'snack', 'treat', 'petisco', 'guloseima'],
+  racao: ['racao', 'ração', 'alimento', 'food', 'comida'],
+  areia: ['areia', 'granulado', 'bentonita', 'sanitario', 'sanitário'],
+  brinquedo: ['brinquedo', 'toy', 'jouet'],
+}
+
+/**
+ * Expands a search term with its synonyms for product name searches.
+ * Returns an array of terms to use in ILIKE OR conditions.
+ */
+export function expandSearchTerms(term: string): string[] {
+  const normalized = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+  for (const [key, synonyms] of Object.entries(COMMON_TERMS)) {
+    if (normalized.includes(key) || synonyms.some(syn => normalized.includes(syn.toLowerCase()))) {
+      return synonyms
+    }
+  }
+
+  return [term]
+}
+
+/**
  * Human-readable descriptions of each table for the system prompt.
  * This helps the LLM understand the business context.
  */
 export const TABLE_DESCRIPTIONS: Record<string, string> = {
   vendas:
-    'Vendas realizadas. Campos principais: id, numero_venda, cliente_id (FK clientes_fornecedores), vendedor_id (FK vendedores), estoque_id (FK estoques), data_venda, total_produtos_bruto, desconto_total, total_produtos_liquido, total_ipi, total_icms, total_st, valor_final, status, observacoes, forma_pagamento_id. O valor_final e o total real cobrado do cliente.',
+    'Vendas realizadas no sistema interno. Campos principais: id, numero_venda, cliente_id (FK clientes_fornecedores), vendedor_id (FK vendedores), estoque_id (FK estoques), data_venda, total_produtos_bruto, desconto_total, total_produtos_liquido, total_ipi, total_icms, total_st, valor_final, status, observacoes, forma_pagamento_id. O valor_final e o total real cobrado do cliente. ⚠️ IMPORTANTE: Campo status pode ser "pago", "pendente", "cancelado" - NAO filtre por status a menos que o usuario especifique! ⚠️ Os campos total_ipi, total_icms e total_st sao impostos/juros cobrados nas vendas.',
   vendas_itens:
-    'Itens de cada venda. Campos: id, venda_id (FK vendas), produto_id (FK produtos), quantidade, preco_unitario, desconto_percentual, desconto_valor, subtotal, valor_ipi, valor_icms, valor_st, total_item. Cada linha e um produto vendido.',
+    'Itens de cada venda. Campos: id, venda_id (FK vendas), produto_id (FK produtos), quantidade, preco_unitario, desconto_percentual, desconto_valor, subtotal, valor_ipi, valor_icms, valor_st, total_item. Cada linha e um produto vendido. Use produtos.preco_custo para calcular lucro: lucro = total_item - (quantidade * preco_custo).',
   clientes_fornecedores:
-    'Clientes e fornecedores unificados. Campo "tipo" diferencia: "cliente", "fornecedor" ou "ambos". Campos: id, nome, tipo, cpf_cnpj, email, telefone, celular, endereco, numero, complemento, bairro, cidade, uf, cep, inscricao_estadual, observacoes, vendedor_id (FK vendedores - vendedor responsavel), ativo.',
+    'Clientes e fornecedores unificados. Campo "tipo" diferencia: "cliente", "fornecedor" ou "ambos". Campos: id, nome, tipo, cpf_cnpj, email, telefone, celular, endereco, numero, complemento, bairro, cidade, uf, cep, inscricao_estadual, observacoes, vendedor_id (FK vendedores - vendedor responsavel), ativo. ⚠️ SEMPRE filtrar por tipo quando buscar clientes (WHERE tipo=\'cliente\') ou fornecedores (WHERE tipo=\'fornecedor\').',
   produtos:
-    'Catalogo de produtos. Campos: id, nome, sku, descricao, preco_venda, preco_custo, unidade, categoria, ncm, cfop, origem, marca, ativo. Precos em BRL.',
+    'Catalogo de produtos. Campos: id, nome, sku, descricao, preco_venda, preco_custo, unidade, categoria, ncm, cfop, origem, marca, ativo. Precos em BRL. ⚠️ NAO existe campo de categoria formal - identifique categorias pelo nome: PETICO/snack=petiscos, racao/alimento=racoes, areia/bentonita=areias. Use OR com variacoes: WHERE nome ILIKE \'%PETICO%\' OR nome ILIKE \'%snack%\' OR nome ILIKE \'%petisco%\'.',
   estoques:
     'Depositos/lojas para controle de estoque. Campos: id, nome, descricao, ativo. Ex: "Matriz", "Filial Centro".',
   produtos_estoques:
@@ -77,7 +104,7 @@ export const TABLE_DESCRIPTIONS: Record<string, string> = {
   impostos_produto:
     'Configuracao de impostos por produto. Campos: id, produto_id (FK produtos), ncm, cfop, origem, aliquota_ipi, aliquota_icms, mva, aliquota_icms_st, uf, ativo.',
   bling_vendas:
-    'Vendas sincronizadas do Bling ERP. Campos: id, bling_id, numero_pedido, data_pedido, contato_nome, total_produtos, valor_total, situacao_id, marketplace, raw_data (JSONB com dados completos do Bling), synced_at.',
+    'Vendas sincronizadas do Bling ERP (sistema externo). Campos: id, bling_id, numero_pedido, data_pedido, contato_nome, total_produtos, valor_total, situacao_id, marketplace, raw_data (JSONB com dados completos do Bling), synced_at. ⚠️ IMPORTANTE: bling_vendas.id ≠ vendas.id (IDs diferentes). Pode haver vendas duplicadas entre vendas e bling_vendas. Use bling_vendas apenas quando usuario mencionar "Bling" ou "marketplace", caso contrario use vendas.',
   bling_nfe:
     'Notas fiscais sincronizadas do Bling ERP. Campos: id, bling_id, numero_nfe, serie, data_emissao, valor_total, situacao, tipo, chave_acesso, raw_data (JSONB), synced_at.',
 }
