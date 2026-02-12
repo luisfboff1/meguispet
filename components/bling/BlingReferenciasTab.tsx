@@ -503,6 +503,7 @@ export function BlingReferenciasTab() {
                       <div className="flex-1">
                         <ProdutoSelect
                           value={item.produto_local_id || null}
+                          initialProduto={item.produto || null}
                           onChange={(id, produto) => handleUpdateItem(index, 'produto_local_id', id || 0, produto)}
                           placeholder="Selecionar produto..."
                           error={!!formErrors[`item_${index}_produto`]}

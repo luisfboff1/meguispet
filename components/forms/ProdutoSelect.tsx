@@ -3,9 +3,16 @@ import { Search, X } from "lucide-react";
 import type { Produto } from "@/types";
 import axios from "axios";
 
+type ProdutoBasic = {
+  id: number;
+  nome: string;
+  codigo_barras?: string | null;
+};
+
 interface ProdutoSelectProps {
   value: number | null;
   onChange: (produtoId: number | null, produto?: Produto) => void;
+  initialProduto?: ProdutoBasic | null;  // Pre-loaded product data to avoid API fetch
   placeholder?: string;
   disabled?: boolean;
   error?: boolean;
@@ -24,6 +31,7 @@ interface ProdutoSelectProps {
 export function ProdutoSelect({
   value,
   onChange,
+  initialProduto = null,
   placeholder = "Buscar produto...",
   disabled = false,
   error = false,
@@ -33,14 +41,16 @@ export function ProdutoSelect({
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
+  const [selectedProduto, setSelectedProduto] = useState<ProdutoBasic | null>(initialProduto);
 
-  // Load initial selected product if value is provided
+  // Load initial selected product if value is provided and no initialProduto
   useEffect(() => {
-    if (value && !selectedProduto) {
+    if (initialProduto) {
+      setSelectedProduto(initialProduto);
+    } else if (value && !selectedProduto) {
       loadProdutoById(value);
     }
-  }, [value]);
+  }, [value, initialProduto]);
 
   // Load product by ID
   const loadProdutoById = async (id: number) => {
