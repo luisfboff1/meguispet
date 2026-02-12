@@ -644,6 +644,11 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     total: number;
     pages: number;
   };
+  aggregations?: {
+    total_value: number;
+    first_date: string | null;
+    last_date: string | null;
+  };
 }
 
 // Tipos para contextos

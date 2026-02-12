@@ -65,6 +65,42 @@ const handler = async (
       throw new Error(`Query failed: ${error.message}`);
     }
 
+    // Fetch aggregations (total value, first/last dates)
+    let aggQuery = supabase
+      .from("bling_nfe")
+      .select("valor_total, data_emissao");
+
+    // Apply same filters to aggregation query
+    if (situacao && typeof situacao === "string") {
+      aggQuery = aggQuery.eq("situacao", parseInt(situacao, 10));
+    }
+    if (tipo && typeof tipo === "string") {
+      aggQuery = aggQuery.eq("tipo", parseInt(tipo, 10));
+    }
+    if (data_inicio && typeof data_inicio === "string") {
+      aggQuery = aggQuery.gte("data_emissao", data_inicio);
+    }
+    if (data_fim && typeof data_fim === "string") {
+      aggQuery = aggQuery.lte("data_emissao", `${data_fim}T23:59:59`);
+    }
+    if (search && typeof search === "string") {
+      aggQuery = aggQuery.or(
+        `contato_nome.ilike.%${search}%,chave_acesso.ilike.%${search}%,contato_documento.ilike.%${search}%`,
+      );
+    }
+
+    const { data: aggData } = await aggQuery;
+
+    const aggregations = {
+      total_value: aggData?.reduce((sum, n) => sum + (n.valor_total || 0), 0) || 0,
+      first_date: aggData && aggData.length > 0
+        ? aggData.reduce((min, n) => !min || n.data_emissao < min ? n.data_emissao : min, aggData[0].data_emissao)
+        : null,
+      last_date: aggData && aggData.length > 0
+        ? aggData.reduce((max, n) => !max || n.data_emissao > max ? n.data_emissao : max, aggData[0].data_emissao)
+        : null,
+    };
+
     res.status(200).json({
       success: true,
       data: data || [],
@@ -74,6 +110,7 @@ const handler = async (
         total: count || 0,
         pages: Math.ceil((count || 0) / limit),
       },
+      aggregations,
     });
   } catch (err) {
     console.error("[Bling NFe API] Error:", err);

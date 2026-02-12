@@ -537,6 +537,7 @@ export default function BlingPage() {
   const [vendasPage, setVendasPage] = useState(1)
   const [vendasSearch, setVendasSearch] = useState('')
   const [selectedVenda, setSelectedVenda] = useState<BlingVenda | null>(null)
+  const [vendasAgg, setVendasAgg] = useState<{ total_value: number; first_date: string | null; last_date: string | null } | null>(null)
 
   // NFe
   const [nfe, setNfe] = useState<BlingNfe[]>([])
@@ -545,6 +546,7 @@ export default function BlingPage() {
   const [nfePage, setNfePage] = useState(1)
   const [nfeSearch, setNfeSearch] = useState('')
   const [selectedNfe, setSelectedNfe] = useState<BlingNfe | null>(null)
+  const [nfeAgg, setNfeAgg] = useState<{ total_value: number; first_date: string | null; last_date: string | null } | null>(null)
 
   // Sync
   const [syncing, setSyncing] = useState(false)
@@ -578,6 +580,7 @@ export default function BlingPage() {
         setVendas(res.data || [])
         setVendasTotal(res.pagination?.total || 0)
         setVendasPage(page)
+        setVendasAgg(res.aggregations || null)
       }
     } catch {
       setToast({ message: 'Erro ao carregar vendas Bling', type: 'error' })
@@ -598,6 +601,7 @@ export default function BlingPage() {
         setNfe(res.data || [])
         setNfeTotal(res.pagination?.total || 0)
         setNfePage(page)
+        setNfeAgg(res.aggregations || null)
       }
     } catch {
       setToast({ message: 'Erro ao carregar NFe Bling', type: 'error' })
@@ -944,8 +948,13 @@ export default function BlingPage() {
               <CardContent className="p-4">
                 <div className="text-sm text-gray-500">Valor Total</div>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(vendas.reduce((sum, v) => sum + (v.valor_total || 0), 0))}
+                  {formatCurrency(vendasAgg?.total_value || 0)}
                 </div>
+                {vendasAgg?.first_date && vendasAgg?.last_date && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    {formatLocalDate(vendasAgg.first_date, { day: '2-digit', month: '2-digit', year: '2-digit' })} até {formatLocalDate(vendasAgg.last_date, { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                  </div>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -1007,16 +1016,16 @@ export default function BlingPage() {
             enableSorting={true}
             enableColumnVisibility={false}
             enableColumnReordering={false}
-            pageSize={50}
+            enablePagination={false}
             mobileVisibleColumns={['numero_pedido', 'contato_nome', 'valor_total']}
             onRowClick={(venda) => setSelectedVenda(venda)}
           />
 
-          {/* Pagination info */}
+          {/* Server-side Pagination */}
           {vendasTotal > 50 && (
-            <div className="flex items-center justify-between text-sm text-gray-500">
+            <div className="flex items-center justify-between px-2 py-3 text-sm text-gray-600 dark:text-gray-400">
               <span>
-                Mostrando {((vendasPage - 1) * 50) + 1} a {Math.min(vendasPage * 50, vendasTotal)} de {vendasTotal}
+                Mostrando {((vendasPage - 1) * 50) + 1} a {Math.min(vendasPage * 50, vendasTotal)} de {vendasTotal} resultado(s)
               </span>
               <div className="flex gap-2">
                 <Button
@@ -1054,8 +1063,13 @@ export default function BlingPage() {
               <CardContent className="p-4">
                 <div className="text-sm text-gray-500">Valor Total</div>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(nfe.reduce((sum, n) => sum + (n.valor_total || 0), 0))}
+                  {formatCurrency(nfeAgg?.total_value || 0)}
                 </div>
+                {nfeAgg?.first_date && nfeAgg?.last_date && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    {formatLocalDate(nfeAgg.first_date, { day: '2-digit', month: '2-digit', year: '2-digit' })} até {formatLocalDate(nfeAgg.last_date, { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                  </div>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -1117,16 +1131,16 @@ export default function BlingPage() {
             enableSorting={true}
             enableColumnVisibility={false}
             enableColumnReordering={false}
-            pageSize={50}
+            enablePagination={false}
             mobileVisibleColumns={['numero', 'contato_nome', 'valor_total']}
             onRowClick={(nfe) => setSelectedNfe(nfe)}
           />
 
-          {/* Pagination info */}
+          {/* Server-side Pagination */}
           {nfeTotal > 50 && (
-            <div className="flex items-center justify-between text-sm text-gray-500">
+            <div className="flex items-center justify-between px-2 py-3 text-sm text-gray-600 dark:text-gray-400">
               <span>
-                Mostrando {((nfePage - 1) * 50) + 1} a {Math.min(nfePage * 50, nfeTotal)} de {nfeTotal}
+                Mostrando {((nfePage - 1) * 50) + 1} a {Math.min(nfePage * 50, nfeTotal)} de {nfeTotal} resultado(s)
               </span>
               <div className="flex gap-2">
                 <Button

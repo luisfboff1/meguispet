@@ -42,6 +42,7 @@ interface DataTableProps<TData, TValue> {
   enableColumnReordering?: boolean
   enablePagination?: boolean
   pageSize?: number
+  totalRows?: number // Total number of rows (for server-side pagination)
   tableId?: string // Unique identifier for localStorage persistence
   mobileVisibleColumns?: string[] // IDs of columns to show on mobile by default
   initialColumnVisibility?: VisibilityState // Initial visibility state for columns
@@ -59,6 +60,7 @@ export function DataTable<TData, TValue>({
   enableColumnReordering = true,
   enablePagination = true,
   pageSize = 10,
+  totalRows,
   tableId = 'default-table',
   mobileVisibleColumns = [],
   initialColumnVisibility = {},
@@ -367,9 +369,9 @@ export function DataTable<TData, TValue>({
             Mostrando {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} a{' '}
             {Math.min(
               (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-              table.getFilteredRowModel().rows.length
+              totalRows ?? table.getFilteredRowModel().rows.length
             )}{' '}
-            de {table.getFilteredRowModel().rows.length} resultado(s)
+            de {totalRows ?? table.getFilteredRowModel().rows.length} resultado(s)
           </div>
           <div className="flex items-center space-x-2">
             <Button
