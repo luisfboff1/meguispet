@@ -310,6 +310,138 @@ GROUP BY vd.nome
 
 ---
 
+## 7c. ⚠️ FATURAMENTO/LUCRO DE PRODUTOS ESPECÍFICOS (REGRA CRÍTICA)
+
+**PROBLEMA CRÍTICO**: Quando filtrar produtos específicos (categoria, nome, fornecedor), **NUNCA use SUM(v.valor_final)** para calcular faturamento!
+
+### Por que isso é um problema?
+
+Uma venda pode ter **MÚLTIPLOS produtos diferentes**. Se você filtrar apenas alguns produtos e usar `SUM(v.valor_final)`, vai somar o valor da **VENDA INTEIRA**, não apenas dos produtos filtrados.
+
+### ❌ EXEMPLO ERRADO (Erro Real do Sistema)
+
+Usuário perguntou: "Qual o lucro do projeto Petisco de Frango por vendedor?"
+
+```sql
+-- ❌ QUERY ERRADA: Filtra petiscos mas soma valor da venda inteira
+SELECT
+  vd.nome AS vendedor,
+  SUM(v.valor_final) AS faturamento_total,  -- ❌ Pega VENDA INTEIRA
+  SUM(vi.quantidade * p.preco_custo) AS custo_total,  -- ✅ Pega apenas PETISCOS
+  SUM(v.valor_final) - SUM(vi.quantidade * p.preco_custo) AS lucro_total
+FROM vendas v
+JOIN vendas_itens vi ON v.id = vi.venda_id
+JOIN produtos p ON vi.produto_id = p.id
+JOIN vendedores vd ON v.vendedor_id = vd.id
+WHERE v.status != 'cancelado'
+  AND p.nome ILIKE '%FRANGO%'
+  AND (p.nome ILIKE '%PETICO%' OR p.nome ILIKE '%snack%' OR p.nome ILIKE '%petisco%')
+GROUP BY vd.id, vd.nome
+ORDER BY lucro_total DESC
+```
+
+**Resultado ERRADO:**
+- Rodrigo Neves: R$ 195.009,45 faturamento, R$ 16.854,80 custo = **Margem 91.36%** ❌
+- Helena: R$ 73.230,94 faturamento, R$ 6.997,70 custo = **Margem 90.44%** ❌
+
+**O que aconteceu:**
+- Se uma venda tem R$ 9.000 de petiscos + R$ 22.000 de ração = R$ 31.000 total
+- Faturamento calculado: R$ 31.000 (venda inteira, incluindo ração!) ❌
+- Custo calculado: R$ 2.900 (apenas petiscos) ✅
+- Resultado: Margem absurda de 90%+
+
+### ✅ EXEMPLO CORRETO
+
+```sql
+-- ✅ QUERY CORRETA: Soma valores apenas dos itens filtrados
+SELECT
+  vd.nome AS vendedor,
+  SUM(vi.quantidade * vi.preco_unitario) AS faturamento_total,  -- ✅ Soma apenas PETISCOS
+  SUM(vi.quantidade * p.preco_custo) AS custo_total,  -- ✅ Soma apenas PETISCOS
+  SUM((vi.quantidade * vi.preco_unitario) - (vi.quantidade * p.preco_custo)) AS lucro_total
+FROM vendas v
+JOIN vendas_itens vi ON v.id = vi.venda_id
+JOIN produtos p ON vi.produto_id = p.id
+JOIN vendedores vd ON v.vendedor_id = vd.id
+WHERE v.status != 'cancelado'
+  AND p.nome ILIKE '%FRANGO%'
+  AND (p.nome ILIKE '%PETICO%' OR p.nome ILIKE '%snack%' OR p.nome ILIKE '%petisco%')
+GROUP BY vd.id, vd.nome
+ORDER BY lucro_total DESC
+```
+
+**Resultado CORRETO:**
+- Rodrigo Neves: R$ 42.002,12 faturamento, R$ 16.854,80 custo = **Margem 59.87%** ✅
+- Helena: R$ 17.033,94 faturamento, R$ 6.997,70 custo = **Margem 58.91%** ✅
+
+**Diferença:**
+- Faturamento agora reflete APENAS os petiscos de frango
+- Margem de 60% faz sentido para produtos de pet shop
+
+### 📋 REGRA GERAL
+
+| Situação | Use SUM(v.valor_final) | Use SUM(vi.quantidade * vi.preco_unitario) |
+|----------|:----------------------:|:------------------------------------------:|
+| **Todas as vendas** (sem filtro de produto) | ✅ SIM | ❌ Não necessário |
+| **Vendas de um vendedor** (sem filtro de produto) | ✅ SIM | ❌ Não necessário |
+| **Vendas de um cliente** (sem filtro de produto) | ✅ SIM | ❌ Não necessário |
+| **Produtos específicos** (com filtro WHERE p.nome/categoria) | ❌ NUNCA | ✅ OBRIGATÓRIO |
+| **Categoria de produtos** (ex: petiscos, ração) | ❌ NUNCA | ✅ OBRIGATÓRIO |
+| **Produtos de fornecedor específico** | ❌ NUNCA | ✅ OBRIGATÓRIO |
+
+### 🎯 Outros Exemplos Onde DEVE Usar SUM(vi.quantidade * vi.preco_unitario)
+
+**Exemplo 1: Faturamento de Ração**
+```sql
+SELECT
+  SUM(vi.quantidade * vi.preco_unitario) AS faturamento_racao,  -- ✅ Correto
+  SUM(vi.quantidade * p.preco_custo) AS custo_racao
+FROM vendas v
+JOIN vendas_itens vi ON v.id = vi.venda_id
+JOIN produtos p ON vi.produto_id = p.id
+WHERE v.status != 'cancelado'
+  AND (p.nome ILIKE '%racao%' OR p.nome ILIKE '%alimento%')
+```
+
+**Exemplo 2: Lucro de Produtos de um Fornecedor**
+```sql
+SELECT
+  cf_forn.nome AS fornecedor,
+  SUM(vi.quantidade * vi.preco_unitario) AS faturamento,  -- ✅ Correto
+  SUM(vi.quantidade * p.preco_custo) AS custo,
+  SUM((vi.quantidade * vi.preco_unitario) - (vi.quantidade * p.preco_custo)) AS lucro
+FROM vendas v
+JOIN vendas_itens vi ON v.id = vi.venda_id
+JOIN produtos p ON vi.produto_id = p.id
+JOIN clientes_fornecedores cf_forn ON p.fornecedor_id = cf_forn.id
+WHERE v.status != 'cancelado'
+  AND cf_forn.tipo = 'fornecedor'
+GROUP BY cf_forn.id, cf_forn.nome
+```
+
+**Exemplo 3: Faturamento por Categoria (se houver campo categoria)**
+```sql
+SELECT
+  p.categoria,
+  SUM(vi.quantidade * vi.preco_unitario) AS faturamento,  -- ✅ Correto
+  COUNT(DISTINCT v.id) AS total_vendas
+FROM vendas v
+JOIN vendas_itens vi ON v.id = vi.venda_id
+JOIN produtos p ON vi.produto_id = p.id
+WHERE v.status != 'cancelado'
+  AND v.data_venda >= '2026-01-01'
+GROUP BY p.categoria
+ORDER BY faturamento DESC
+```
+
+### 🚨 LEMBRE-SE
+
+**Se há `WHERE` ou `JOIN` filtrando produtos específicos → Use `SUM(vi.quantidade * vi.preco_unitario)`**
+
+**Se NÃO há filtro de produtos → Use `SUM(v.valor_final)`**
+
+---
+
 ## 8. Total de Impostos/Juros das Vendas
 
 ```sql
