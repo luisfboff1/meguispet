@@ -5,6 +5,7 @@ import { ChatInterface } from '@/components/agente/ChatInterface'
 import { AgentConfigPanel } from '@/components/agente/AgentConfigPanel'
 import { agenteService } from '@/services/agenteService'
 import type { AgentConfig } from '@/types'
+import { PermissionGate } from '@/components/auth/PermissionGate'
 
 export default function AgentePage() {
   const [activeTab, setActiveTab] = useState('chat')
@@ -29,6 +30,7 @@ export default function AgentePage() {
   }
 
   return (
+    <PermissionGate permission="agente" redirect="/dashboard">
     <div className="absolute inset-0 flex flex-col overflow-hidden">
       {/* Page header */}
       <div className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
@@ -91,5 +93,6 @@ export default function AgentePage() {
         </TabsContent>
       </Tabs>
     </div>
+    </PermissionGate>
   )
 }

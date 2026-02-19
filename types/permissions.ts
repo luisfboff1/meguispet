@@ -60,6 +60,9 @@ export interface Permissoes {
   // ===== AÇÕES DE CONFIGURAÇÃO =====
   config_sistema: boolean               // Configurações do sistema
   config_usuarios: boolean              // Gerenciar usuários e permissões
+
+  // ===== AGENTE MEGUI =====
+  agente: boolean                       // Acesso ao Agente Megui (IA)
 }
 
 /**
@@ -102,6 +105,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     config_sistema: true,
     config_usuarios: true,
     usuarios: true,
+    agente: true,
   },
 
   /**
@@ -138,6 +142,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     config_sistema: false,
     config_usuarios: false,
     usuarios: false,
+    agente: false,                         // Sem acesso ao Agente Megui por padrão
   },
 
   /**
@@ -174,6 +179,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     config_sistema: false,
     config_usuarios: false,
     usuarios: false,
+    agente: false,                         // Admin pode conceder acesso ao Agente
   },
 
   /**
@@ -209,6 +215,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     config_sistema: false,
     config_usuarios: false,
     usuarios: false,
+    agente: true,                          // Gerente tem acesso ao Agente Megui
   },
 
   /**
@@ -244,6 +251,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     config_sistema: false,
     config_usuarios: false,
     usuarios: false,
+    agente: false,
   },
 
   /**
@@ -279,6 +287,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     config_sistema: false,
     config_usuarios: false,
     usuarios: false,
+    agente: false,
   },
 
   /**
@@ -314,6 +323,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     config_sistema: false,
     config_usuarios: false,
     usuarios: false,
+    agente: false,
   },
 }
 
@@ -408,6 +418,7 @@ export function mergePermissions(
     config_sistema: false,
     config_usuarios: false,
     usuarios: false,
+    agente: false,
     ...merged,
   }
 

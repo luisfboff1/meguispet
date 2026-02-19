@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServiceRole, getSupabaseServerAuth } from '@/lib/supabase-auth';
 import { hashPassword } from '@/lib/password';
 import { withAuthRateLimit, RateLimitPresets } from '@/lib/rate-limit';
+import { getUserFinalPermissions } from '@/lib/role-permissions';
+import type { UserRole } from '@/types';
 
 /**
  * User Signup endpoint using Supabase Auth
@@ -17,7 +19,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const { email, password, nome, role = 'user', permissoes = null } = req.body;
+    const { email, password, nome, tipo_usuario = 'operador' } = req.body;
+    const tipoUsuario: UserRole = tipo_usuario as UserRole;
 
     if (!email || !password || !nome) {
       return res.status(400).json({
@@ -47,6 +50,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Use service role client for admin operations
     const supabaseAdmin = getSupabaseServiceRole();
 
+    // 0. Calculate permissions for the role (from DB config or presets)
+    const permissoes = await getUserFinalPermissions(supabaseAdmin, tipoUsuario);
+
     // 1. Create user in Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -54,7 +60,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       email_confirm: true, // Auto-confirm email for internal users
       user_metadata: {
         nome,
-        role,
+        tipo_usuario: tipoUsuario,
       },
     });
 
@@ -73,7 +79,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       email,
       nome,
       password_hash,
-      role,
+      tipo_usuario: tipoUsuario,
+      role: tipoUsuario, // backward compat
       permissoes,
       ativo: true,
       supabase_user_id: authData.user.id,
@@ -84,18 +91,45 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { data: profileData, error: usuarioError } = await supabaseAdmin
       .from('usuarios')
       .insert(usuarioData)
-      .select('id, nome, email, role, permissoes, ativo')
+      .select('id, nome, email, tipo_usuario, role, permissoes, ativo')
       .single();
 
     if (usuarioError) {
       // Rollback: Delete the auth user if profile creation fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      
+
       return res.status(500).json({
         success: false,
         message: 'Erro ao criar perfil do usuário',
         error: usuarioError.message,
       });
+    }
+
+    // 3. If role is vendedor, auto-create vendedor record and link bidirectionally
+    if (tipoUsuario === 'vendedor' && profileData) {
+      try {
+        const { data: vendedorData, error: vendedorError } = await supabaseAdmin
+          .from('vendedores')
+          .insert({
+            nome,
+            email,
+            comissao: 0,
+            ativo: true,
+            usuario_id: profileData.id,
+          })
+          .select('id')
+          .single();
+
+        if (!vendedorError && vendedorData) {
+          // Link usuario → vendedor
+          await supabaseAdmin
+            .from('usuarios')
+            .update({ vendedor_id: vendedorData.id })
+            .eq('id', profileData.id);
+        }
+      } catch {
+        // Non-fatal: vendedor link failed, admin can link manually via /admin/vendedores-usuarios
+      }
     }
 
     return res.status(201).json({

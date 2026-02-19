@@ -48,8 +48,8 @@ import type {
 // Para ativar os dashboards personalizados por role, defina esta env var:
 // NEXT_PUBLIC_CUSTOM_DASHBOARDS=true
 //
-// ⚠️ IMPORTANTE: Testar em staging antes de ativar em produção!
-const ENABLE_CUSTOM_DASHBOARDS = process.env.NEXT_PUBLIC_CUSTOM_DASHBOARDS === 'true'
+// Ativo por padrão. Para desabilitar, setar NEXT_PUBLIC_CUSTOM_DASHBOARDS=false
+const ENABLE_CUSTOM_DASHBOARDS = process.env.NEXT_PUBLIC_CUSTOM_DASHBOARDS !== 'false'
 
 // Cache duration: 5 minutes
 const CACHE_DURATION = 5 * 60 * 1000

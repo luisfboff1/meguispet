@@ -270,12 +270,24 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 sem_st || false,
             );
 
+            // Auto-assign vendedor_id: if user is a vendedor and none provided, use theirs
+            let effectiveVendedorId = vendedor_id || null;
+            if (!effectiveVendedorId) {
+                const postAccessProfile = await fetchUserAccessProfile(supabase, {
+                    id: req.user?.id,
+                    email: req.user?.email,
+                });
+                if (postAccessProfile && !postAccessProfile.canViewAllSales && postAccessProfile.vendedorId) {
+                    effectiveVendedorId = postAccessProfile.vendedorId;
+                }
+            }
+
             const { data: venda, error } = await supabase
                 .from("vendas")
                 .insert({
                     numero_venda,
                     cliente_id: cliente_id || null,
-                    vendedor_id: vendedor_id || null,
+                    vendedor_id: effectiveVendedorId,
                     estoque_id: estoque_id || null,
                     forma_pagamento_id: forma_pagamento_id || null,
                     condicao_pagamento_id: condicao_pagamento_id || null,

@@ -18,6 +18,7 @@ export type UserAccessProfile = {
     canViewAllSales: boolean;
     canDeleteAllSales: boolean;
     canEditAllSales: boolean;
+    canViewAllClients: boolean;
     schemaVersion: "modern" | "legacy";
 };
 
@@ -142,6 +143,11 @@ export const fetchUserAccessProfile = async (
         : EDIT_ALL_ROLES.has(tipoUsuario) ||
             permissions.vendas_editar === true;
 
+    const canViewAllClients = usedLegacyQuery
+        ? true
+        : VIEW_ALL_ROLES.has(tipoUsuario) ||
+            permissions.clientes_visualizar_todos === true;
+
     return {
         id: record.id,
         email: record?.email ?? null,
@@ -152,6 +158,7 @@ export const fetchUserAccessProfile = async (
         canViewAllSales,
         canDeleteAllSales,
         canEditAllSales,
+        canViewAllClients,
         schemaVersion: usedLegacyQuery ? "legacy" : "modern",
     };
 };

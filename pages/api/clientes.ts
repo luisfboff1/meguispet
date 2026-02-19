@@ -4,6 +4,7 @@ import { withValidation } from '@/lib/validation-middleware';
 import { clienteCreateSchema, clienteUpdateSchema, ClienteInput, ClienteUpdateInput } from '@/lib/validations/cliente.schema';
 import { z } from 'zod';
 import { GeocodingService } from '@/services/geocoding';
+import { fetchUserAccessProfile } from '@/lib/user-access';
 
 /**
  * Helper function to translate Supabase/PostgreSQL errors into user-friendly messages
@@ -60,15 +61,32 @@ const handleGet = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const supabase = req.supabaseClient;
   const { page = '1', limit = '10', search = '', tipo = '', id, includeInactive = 'false' } = req.query;
 
+  // Fetch access profile to enforce vendedor filtering
+  const accessProfile = await fetchUserAccessProfile(supabase, {
+    id: req.user?.id,
+    email: req.user?.email,
+  });
+
   // If requesting a specific cliente by ID, return just that one
   if (id) {
-    const { data: cliente, error } = await supabase
+    let idQuery = supabase
       .from('clientes_fornecedores')
       .select('*, vendedor:vendedores(id, nome)')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
 
-    if (error) throw error;
+    // Restrict to own clients if vendedor cannot see all
+    if (accessProfile && !accessProfile.canViewAllClients && accessProfile.vendedorId) {
+      idQuery = idQuery.eq('vendedor_id', accessProfile.vendedorId);
+    }
+
+    const { data: cliente, error } = await idQuery.single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ success: false, message: 'Cliente não encontrado' });
+      }
+      throw error;
+    }
 
     return res.status(200).json({
       success: true,
@@ -80,9 +98,23 @@ const handleGet = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const limitNum = parseInt(limit as string, 10);
   const offset = (pageNum - 1) * limitNum;
 
+  // If user cannot view all clients and has no vendedor link, return empty
+  if (accessProfile && !accessProfile.canViewAllClients && !accessProfile.vendedorId) {
+    return res.status(200).json({
+      success: true,
+      data: [],
+      pagination: { page: pageNum, limit: limitNum, total: 0, pages: 0 },
+    });
+  }
+
   let query = supabase
     .from('clientes_fornecedores')
     .select('*, vendedor:vendedores(id, nome)', { count: 'exact' });
+
+  // Server-side filtering: restrict to vendedor's own clients if not allowed to see all
+  if (accessProfile && !accessProfile.canViewAllClients && accessProfile.vendedorId) {
+    query = query.eq('vendedor_id', accessProfile.vendedorId);
+  }
 
   // Por padrão, mostrar apenas clientes ativos
   if (includeInactive !== 'true') {
@@ -124,6 +156,18 @@ const handlePost = withValidation(
   async (req: AuthenticatedRequest, res: NextApiResponse, validatedData: ClienteInput) => {
     const supabase = req.supabaseClient;
 
+    // Auto-assign vendedor_id: if user is a vendedor and no vendedor_id provided, use theirs
+    let effectiveVendedorId = validatedData.vendedor_id || null;
+    if (!effectiveVendedorId) {
+      const accessProfile = await fetchUserAccessProfile(supabase, {
+        id: req.user?.id,
+        email: req.user?.email,
+      });
+      if (accessProfile && !accessProfile.canViewAllClients && accessProfile.vendedorId) {
+        effectiveVendedorId = accessProfile.vendedorId;
+      }
+    }
+
     // Convert empty strings to null for optional fields
     const clienteData = {
       nome: validatedData.nome,
@@ -137,7 +181,7 @@ const handlePost = withValidation(
       documento: validatedData.documento || null,
       inscricao_estadual: validatedData.inscricao_estadual || null,
       observacoes: validatedData.observacoes || null,
-      vendedor_id: validatedData.vendedor_id || null,
+      vendedor_id: effectiveVendedorId,
       // Geolocation fields
       latitude: validatedData.latitude ?? null,
       longitude: validatedData.longitude ?? null,
