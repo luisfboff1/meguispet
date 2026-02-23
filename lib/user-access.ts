@@ -118,7 +118,18 @@ export const fetchUserAccessProfile = async (
     }
 
     const tipoUsuario = (record?.tipo_usuario ?? record?.role ?? "operador") as UserRole;
-    const vendedorId = usedLegacyQuery ? null : record?.vendedor_id ?? null;
+    let vendedorId = usedLegacyQuery ? null : record?.vendedor_id ?? null;
+
+    // Fallback: if usuarios.vendedor_id is not set, look up from vendedores.usuario_id
+    // This handles cases where create-usuario or link-usuario didn't sync the reverse field
+    if (!vendedorId && !usedLegacyQuery && record?.id) {
+        const { data: vendedor } = await supabase
+            .from("vendedores")
+            .select("id")
+            .eq("usuario_id", record.id)
+            .maybeSingle();
+        vendedorId = vendedor?.id ?? null;
+    }
 
     // Buscar permissões DINÂMICAS de role_permissions_config + custom
     const customPermissions = parsePermissions(record?.permissoes_custom);

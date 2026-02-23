@@ -38,6 +38,7 @@ import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import EstoqueHistoricoModal from '@/components/modals/EstoqueHistoricoModal'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { formatLocalDate } from '@/lib/utils'
+import { usePermissions } from '@/hooks/usePermissions'
 
 // Helper function to format currency
 const formatCurrency = (value: number) => {
@@ -91,6 +92,8 @@ interface AuditoriaEstoque {
 
 export default function ProdutosEstoquePage() {
   const router = useRouter()
+  const { hasPermission } = usePermissions()
+  const canManageEstoque = hasPermission('estoque')
   const [activeTab, setActiveTab] = useState<'produtos' | 'estoque' | 'movimentacoes' | 'auditoria'>('produtos')
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [estoques, setEstoques] = useState<Estoque[]>([])
@@ -945,17 +948,19 @@ export default function ProdutosEstoquePage() {
             <Truck className="inline mr-2 h-4 w-4" />
             Movimentações
           </button>
-          <button
-            onClick={() => setActiveTab('auditoria')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'auditoria'
-                ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <ClipboardCheck className="inline mr-2 h-4 w-4" />
-            Auditoria
-          </button>
+          {canManageEstoque && (
+            <button
+              onClick={() => setActiveTab('auditoria')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'auditoria'
+                  ? 'border-meguispet-primary text-meguispet-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <ClipboardCheck className="inline mr-2 h-4 w-4" />
+              Auditoria
+            </button>
+          )}
         </nav>
       </div>
 
@@ -1227,7 +1232,7 @@ export default function ProdutosEstoquePage() {
         </>
       )}
 
-      {activeTab === 'auditoria' && (
+      {canManageEstoque && activeTab === 'auditoria' && (
         <>
           <Card>
             <CardHeader>

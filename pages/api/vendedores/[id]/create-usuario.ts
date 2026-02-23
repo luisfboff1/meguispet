@@ -178,8 +178,7 @@ export default async function handler(
       })
     }
 
-    // Link vendedor to usuario (trigger will sync bidirectionally and apply permissions)
-    // Use service role for this operation too
+    // Link vendedor to usuario
     const { error: linkError } = await supabaseAdmin
       .from('vendedores')
       .update({
@@ -195,6 +194,13 @@ export default async function handler(
         error: 'Usuário criado mas erro ao vincular ao vendedor'
       })
     }
+
+    // Sync the reverse relationship: usuarios.vendedor_id must point to this vendedor
+    // (DB trigger is unreliable for this path, so we set it explicitly)
+    await supabaseAdmin
+      .from('usuarios')
+      .update({ vendedor_id: parseInt(id as string), updated_at: new Date().toISOString() })
+      .eq('id', novoUsuario.id)
 
     return res.status(201).json({
       success: true,

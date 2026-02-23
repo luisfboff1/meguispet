@@ -125,7 +125,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     clientes_editar: true,
     clientes_deletar: false,
     clientes_visualizar_todos: false,      // ⚠️ Só vê seus clientes
-    produtos: true,                        // Pode ver produtos para fazer vendas
+    produtos: false,                       // ⚠️ Sem acesso à página de produtos/estoque
     produtos_criar: false,
     produtos_editar: false,
     produtos_deletar: false,
@@ -135,7 +135,7 @@ export const PERMISSIONS_PRESETS: Record<UserRole, Partial<Permissoes>> = {
     financeiro_visualizar: false,
     financeiro_criar_transacao: false,
     financeiro_editar_transacao: false,
-    relatorios: true,                      // Pode ver relatórios de suas vendas
+    relatorios: false,                     // ⚠️ Sem acesso a relatórios por padrão
     relatorios_gerar: false,
     relatorios_exportar: false,
     configuracoes: false,

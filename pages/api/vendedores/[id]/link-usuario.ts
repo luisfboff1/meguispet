@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import type { ApiResponse } from '@/types'
+import { getSupabaseServiceRole } from '@/lib/supabase-auth'
 
 /**
  * POST /api/vendedores/[id]/link-usuario
@@ -161,7 +162,9 @@ export default async function handler(
     }
 
     // Sync bidirectional relationship: update usuario.vendedor_id
-    const { error: syncError } = await supabase
+    // Must use service role to bypass RLS (admin cannot update another user's record via anon client)
+    const supabaseAdmin = getSupabaseServiceRole()
+    const { error: syncError } = await supabaseAdmin
       .from('usuarios')
       .update({
         vendedor_id: parseInt(id),
@@ -171,7 +174,10 @@ export default async function handler(
 
     if (syncError) {
       console.error('Error syncing usuario.vendedor_id:', syncError)
-      // Don't fail the request, but log the error
+      return res.status(500).json({
+        success: false,
+        error: 'Vendedor vinculado mas erro ao sincronizar usuário. Tente novamente.'
+      })
     }
 
     return res.status(200).json({

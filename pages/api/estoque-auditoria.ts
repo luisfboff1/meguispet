@@ -1,6 +1,7 @@
 import type { NextApiResponse } from 'next';
 import { getSupabase } from '@/lib/supabase';
 import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import { fetchUserAccessProfile } from '@/lib/user-access';
 
 interface AuditoriaEstoque {
   produto_id: number;
@@ -21,6 +22,19 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
   try {
     if (method === 'GET') {
+      // Verificar permissão de estoque
+      const accessProfile = await fetchUserAccessProfile(supabase, {
+        id: req.user?.id,
+        email: req.user?.email,
+      });
+
+      if (accessProfile && !accessProfile.permissions.estoque) {
+        return res.status(403).json({
+          success: false,
+          message: 'Sem permissão para acessar auditoria de estoque',
+        });
+      }
+
       // Buscar todos os produtos com seus estoques atuais
       const { data: produtos, error: produtosError } = await supabase
         .from('produtos')
