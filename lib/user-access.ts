@@ -1,5 +1,6 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { getUserFinalPermissions } from "./role-permissions";
+import { getSupabaseServiceRole } from "./supabase-auth";
 import type { UserRole, Permissoes } from "@/types";
 
 export type UserAccessQuery = {
@@ -121,14 +122,30 @@ export const fetchUserAccessProfile = async (
     let vendedorId = usedLegacyQuery ? null : record?.vendedor_id ?? null;
 
     // Fallback: if usuarios.vendedor_id is not set, look up from vendedores.usuario_id
-    // This handles cases where create-usuario or link-usuario didn't sync the reverse field
+    // Must use service role because the vendedores RLS policy blocks vendedor users from
+    // selecting their own record (only admin/gerente/estoque can SELECT from vendedores).
     if (!vendedorId && !usedLegacyQuery && record?.id) {
-        const { data: vendedor } = await supabase
-            .from("vendedores")
-            .select("id")
-            .eq("usuario_id", record.id)
-            .maybeSingle();
-        vendedorId = vendedor?.id ?? null;
+        try {
+            const serviceClient = getSupabaseServiceRole();
+            const { data: vendedor } = await serviceClient
+                .from("vendedores")
+                .select("id")
+                .eq("usuario_id", record.id)
+                .maybeSingle();
+            vendedorId = vendedor?.id ?? null;
+
+            // If still not found by usuario_id, try matching by email
+            if (!vendedorId && record?.email) {
+                const { data: vendedorByEmail } = await serviceClient
+                    .from("vendedores")
+                    .select("id")
+                    .eq("email", record.email)
+                    .maybeSingle();
+                vendedorId = vendedorByEmail?.id ?? null;
+            }
+        } catch {
+            // Service role unavailable — skip fallback
+        }
     }
 
     // Buscar permissões DINÂMICAS de role_permissions_config + custom
