@@ -39,6 +39,16 @@ export default async function handler(
     // Get user profile from custom usuarios table (with RLS context)
     const userProfile = await getUserProfile(supabaseUser.email, supabase);
 
+    console.log("[AUTH/profile] Perfil carregado do banco:", {
+      email: supabaseUser.email,
+      supabase_user_id: supabaseUser.id,
+      found: !!userProfile,
+      userId: userProfile?.id,
+      tipo_usuario: userProfile?.tipo_usuario,
+      vendedor_id: userProfile?.vendedor_id ?? "NULL",
+      ativo: userProfile?.ativo,
+    });
+
     if (!userProfile) {
       return res.status(404).json({
         success: false,
@@ -59,6 +69,13 @@ export default async function handler(
         },
       );
     }
+
+    console.log("[AUTH/profile] Retornando perfil:", {
+      id: userProfile.id,
+      nome: userProfile.nome,
+      tipo_usuario: userProfile.tipo_usuario,
+      vendedor_id: userProfile.vendedor_id ?? "NULL (vai zerar dashboard)",
+    });
 
     return res.status(200).json({
       success: true,

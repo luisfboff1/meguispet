@@ -60,6 +60,15 @@ export default async function handler(
       .eq("supabase_user_id", user.id)
       .single();
 
+    console.log("[vendas/my] Usuário encontrado no banco:", {
+      supabase_user_id: user.id,
+      usuario_id: usuario?.id,
+      tipo_usuario: usuario?.tipo_usuario,
+      vendedor_id: usuario?.vendedor_id ??
+        "NULL (sem vínculo - vendas não serão filtradas)",
+      userError: userError?.message ?? null,
+    });
+
     if (userError || !usuario) {
       return res.status(404).json({
         success: false,
@@ -85,12 +94,31 @@ export default async function handler(
     // Filtrar baseado no tipo_usuario
     if (usuario.tipo_usuario === "vendedor" && usuario.vendedor_id) {
       // Vendedor: apenas suas vendas
+      console.log(
+        `[vendas/my] Filtrando vendas por vendedor_id=${usuario.vendedor_id} (usuário ${usuario.id})`,
+      );
       query = query.eq("vendedor_id", usuario.vendedor_id);
+    } else if (usuario.tipo_usuario === "vendedor" && !usuario.vendedor_id) {
+      console.warn(
+        `[vendas/my] ⚠️ Usuário ${usuario.id} é vendedor MAS não tem vendedor_id! Nenhuma venda será retornada. Verifique vinculos na tabela usuarios e vendedores.`,
+      );
+    } else {
+      console.log(
+        `[vendas/my] Usuário ${usuario.id} (${usuario.tipo_usuario}): retornando TODAS as vendas (sem filtro de vendedor)`,
+      );
     }
     // Admin, Gerente, Financeiro: todas as vendas (sem filtro)
 
     // Executar query
     const { data: vendas, error: vendasError } = await query.limit(100);
+
+    console.log(
+      `[vendas/my] Resultado: ${
+        vendas?.length ?? 0
+      } vendas encontradas para usuário ${usuario.id} (${usuario.tipo_usuario}, vendedor_id=${
+        usuario.vendedor_id ?? "NULL"
+      })`,
+    );
 
     if (vendasError) {
       console.error("Erro ao buscar vendas:", vendasError);

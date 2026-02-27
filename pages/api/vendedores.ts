@@ -1,10 +1,14 @@
-import type { NextApiResponse } from 'next';
-import { getSupabase } from '@/lib/supabase';
-import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import type { NextApiResponse } from "next";
+import { getSupabase } from "@/lib/supabase";
+import {
+  AuthenticatedRequest,
+  withSupabaseAuth,
+} from "@/lib/supabase-middleware";
+import { getSupabaseServiceRole } from "@/lib/supabase-auth";
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   // Set UTF-8 encoding for proper character display
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
 
   const { method } = req;
 
@@ -12,24 +16,26 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Use authenticated Supabase client for RLS
     const supabase = req.supabaseClient;
 
-    if (method === 'GET') {
-      const { page = '1', limit = '10', search = '' } = req.query;
+    if (method === "GET") {
+      const { page = "1", limit = "10", search = "" } = req.query;
       const pageNum = parseInt(page as string, 10);
       const limitNum = parseInt(limit as string, 10);
       const offset = (pageNum - 1) * limitNum;
 
       let query = supabase
-        .from('vendedores')
-        .select('*', { count: 'exact' })
-        .eq('ativo', true);
+        .from("vendedores")
+        .select("*", { count: "exact" })
+        .eq("ativo", true);
 
       if (search) {
         const searchStr = `%${search}%`;
-        query = query.or(`nome.ilike.${searchStr},email.ilike.${searchStr},telefone.ilike.${searchStr}`);
+        query = query.or(
+          `nome.ilike.${searchStr},email.ilike.${searchStr},telefone.ilike.${searchStr}`,
+        );
       }
 
       const { data: vendedores, count, error } = await query
-        .order('nome', { ascending: true })
+        .order("nome", { ascending: true })
         .range(offset, offset + limitNum - 1);
 
       if (error) throw error;
@@ -38,17 +44,16 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       const vendedoresComVendas = await Promise.all(
         (vendedores || []).map(async (vendedor) => {
           const { data: vendas, error: vendasError } = await supabase
-            .from('vendas')
-            .select('id, valor_final, valor_total, status, numero_venda')
-            .eq('vendedor_id', vendedor.id)
-            .neq('status', 'cancelado');
+            .from("vendas")
+            .select("id, valor_final, valor_total, status, numero_venda")
+            .eq("vendedor_id", vendedor.id)
+            .neq("status", "cancelado");
 
           if (vendasError) {
           }
 
-          
           if (vendas && vendas.length > 0) {
-            vendas.forEach(v => {
+            vendas.forEach((v) => {
             });
           }
 
@@ -58,13 +63,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             return sum + valor;
           }, 0) || 0;
 
-
           return {
             ...vendedor,
             total_vendas: totalVendas,
             total_faturamento: totalFaturamento,
           };
-        })
+        }),
       );
 
       return res.status(200).json({
@@ -79,15 +83,18 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       });
     }
 
-    if (method === 'POST') {
+    if (method === "POST") {
       const { nome, email, telefone, comissao, usuario_id } = req.body;
 
       if (!nome) {
-        return res.status(400).json({ success: false, message: 'Nome do vendedor é obrigatório' });
+        return res.status(400).json({
+          success: false,
+          message: "Nome do vendedor é obrigatório",
+        });
       }
 
       const { data, error } = await supabase
-        .from('vendedores')
+        .from("vendedores")
         .insert({
           nome,
           email: email || null,
@@ -101,37 +108,48 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       if (error) throw error;
 
       // Sync bidirectional relationship with usuarios table
+      // Must use service role to bypass RLS (admin cannot update another user's row via anon client)
       if (usuario_id && data) {
-        await supabase
-          .from('usuarios')
+        const supabaseAdmin = getSupabaseServiceRole();
+        const { error: syncError } = await supabaseAdmin
+          .from("usuarios")
           .update({ vendedor_id: data.id })
-          .eq('id', usuario_id);
+          .eq("id", usuario_id);
+        if (syncError) {
+          console.error(
+            "[vendedores POST] Failed to sync usuarios.vendedor_id:",
+            syncError,
+          );
+        }
       }
 
       return res.status(201).json({
         success: true,
-        message: 'Vendedor criado com sucesso',
+        message: "Vendedor criado com sucesso",
         data,
       });
     }
 
-    if (method === 'PUT') {
+    if (method === "PUT") {
       const { id, nome, email, telefone, comissao, usuario_id } = req.body;
 
       if (!id) {
-        return res.status(400).json({ success: false, message: 'ID do vendedor é obrigatório' });
+        return res.status(400).json({
+          success: false,
+          message: "ID do vendedor é obrigatório",
+        });
       }
 
       // Get current vendedor to check old usuario_id
       const { data: vendedorAtual } = await supabase
-        .from('vendedores')
-        .select('usuario_id')
-        .eq('id', id)
+        .from("vendedores")
+        .select("usuario_id")
+        .eq("id", id)
         .single();
 
       // Update vendedor
       const { data, error } = await supabase
-        .from('vendedores')
+        .from("vendedores")
         .update({
           nome,
           email: email || null,
@@ -140,78 +158,113 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           usuario_id: usuario_id !== undefined ? usuario_id : null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', id)
+        .eq("id", id)
         .select();
 
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        return res.status(404).json({ success: false, message: 'Vendedor não encontrado' });
+        return res.status(404).json({
+          success: false,
+          message: "Vendedor não encontrado",
+        });
       }
 
       // Sync bidirectional relationship with usuarios table
+      // Must use service role to bypass RLS (admin cannot update another user's row via anon client)
       if (usuario_id !== undefined) {
+        const supabaseAdmin = getSupabaseServiceRole();
+
         // Remove old link if exists
-        if (vendedorAtual?.usuario_id && vendedorAtual.usuario_id !== usuario_id) {
-          await supabase
-            .from('usuarios')
+        if (
+          vendedorAtual?.usuario_id && vendedorAtual.usuario_id !== usuario_id
+        ) {
+          const { error: oldLinkError } = await supabaseAdmin
+            .from("usuarios")
             .update({ vendedor_id: null })
-            .eq('id', vendedorAtual.usuario_id);
+            .eq("id", vendedorAtual.usuario_id);
+          if (oldLinkError) {
+            console.error(
+              "[vendedores PUT] Failed to clear old usuarios.vendedor_id:",
+              oldLinkError,
+            );
+          }
         }
 
         // Set new link
         if (usuario_id) {
-          await supabase
-            .from('usuarios')
+          const { error: newLinkError } = await supabaseAdmin
+            .from("usuarios")
             .update({ vendedor_id: id })
-            .eq('id', usuario_id);
+            .eq("id", usuario_id);
+          if (newLinkError) {
+            console.error(
+              "[vendedores PUT] Failed to set new usuarios.vendedor_id:",
+              newLinkError,
+            );
+          }
         } else if (vendedorAtual?.usuario_id) {
           // Remove link if usuario_id is now null
-          await supabase
-            .from('usuarios')
+          const { error: removeLinkError } = await supabaseAdmin
+            .from("usuarios")
             .update({ vendedor_id: null })
-            .eq('id', vendedorAtual.usuario_id);
+            .eq("id", vendedorAtual.usuario_id);
+          if (removeLinkError) {
+            console.error(
+              "[vendedores PUT] Failed to remove usuarios.vendedor_id:",
+              removeLinkError,
+            );
+          }
         }
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Vendedor atualizado com sucesso',
+        message: "Vendedor atualizado com sucesso",
         data: data[0],
       });
     }
 
-    if (method === 'DELETE') {
+    if (method === "DELETE") {
       const { id } = req.query;
 
       if (!id) {
-        return res.status(400).json({ success: false, message: 'ID do vendedor é obrigatório' });
+        return res.status(400).json({
+          success: false,
+          message: "ID do vendedor é obrigatório",
+        });
       }
 
       const { data, error } = await supabase
-        .from('vendedores')
+        .from("vendedores")
         .update({ ativo: false, updated_at: new Date().toISOString() })
-        .eq('id', id)
+        .eq("id", id)
         .select();
 
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        return res.status(404).json({ success: false, message: 'Vendedor não encontrado' });
+        return res.status(404).json({
+          success: false,
+          message: "Vendedor não encontrado",
+        });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Vendedor removido com sucesso',
+        message: "Vendedor removido com sucesso",
       });
     }
 
-    return res.status(405).json({ success: false, message: 'Método não permitido' });
+    return res.status(405).json({
+      success: false,
+      message: "Método não permitido",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      message: "Erro interno do servidor",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };

@@ -1,7 +1,7 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { getUserFinalPermissions } from "./role-permissions";
 import { getSupabaseServiceRole } from "./supabase-auth";
-import type { UserRole, Permissoes } from "@/types";
+import type { Permissoes, UserRole } from "@/types";
 
 export type UserAccessQuery = {
     id?: number;
@@ -118,42 +118,78 @@ export const fetchUserAccessProfile = async (
         return null;
     }
 
-    const tipoUsuario = (record?.tipo_usuario ?? record?.role ?? "operador") as UserRole;
+    const tipoUsuario =
+        (record?.tipo_usuario ?? record?.role ?? "operador") as UserRole;
     let vendedorId = usedLegacyQuery ? null : record?.vendedor_id ?? null;
+
+    console.log("[user-access] fetchUserAccessProfile:", {
+        userId: record?.id,
+        email: record?.email,
+        tipoUsuario,
+        vendedor_id_from_db: record?.vendedor_id ?? "NULL",
+        usedLegacyQuery,
+    });
 
     // Fallback: if usuarios.vendedor_id is not set, look up from vendedores.usuario_id
     // Must use service role because the vendedores RLS policy blocks vendedor users from
     // selecting their own record (only admin/gerente/estoque can SELECT from vendedores).
     if (!vendedorId && !usedLegacyQuery && record?.id) {
+        console.log(
+            `[user-access] usuarios.vendedor_id é NULL para user ${record.id}, tentando fallback via vendedores.usuario_id...`,
+        );
         try {
             const serviceClient = getSupabaseServiceRole();
-            const { data: vendedor } = await serviceClient
-                .from("vendedores")
-                .select("id")
-                .eq("usuario_id", record.id)
-                .maybeSingle();
+            const { data: vendedor, error: vendedorLookupError } =
+                await serviceClient
+                    .from("vendedores")
+                    .select("id, nome")
+                    .eq("usuario_id", record.id)
+                    .maybeSingle();
+            console.log("[user-access] Fallback por usuario_id:", {
+                record_id: record.id,
+                vendedor_encontrado: vendedor?.id ?? null,
+                vendedor_nome: vendedor?.nome ?? null,
+                error: vendedorLookupError?.message ?? null,
+            });
             vendedorId = vendedor?.id ?? null;
 
             // If still not found by usuario_id, try matching by email
             if (!vendedorId && record?.email) {
-                const { data: vendedorByEmail } = await serviceClient
-                    .from("vendedores")
-                    .select("id")
-                    .eq("email", record.email)
-                    .maybeSingle();
+                const { data: vendedorByEmail, error: emailLookupError } =
+                    await serviceClient
+                        .from("vendedores")
+                        .select("id, nome")
+                        .eq("email", record.email)
+                        .maybeSingle();
+                console.log("[user-access] Fallback por email:", {
+                    email: record.email,
+                    vendedor_encontrado: vendedorByEmail?.id ?? null,
+                    vendedor_nome: vendedorByEmail?.nome ?? null,
+                    error: emailLookupError?.message ?? null,
+                });
                 vendedorId = vendedorByEmail?.id ?? null;
             }
-        } catch {
+        } catch (fallbackError) {
+            console.error(
+                "[user-access] Erro no fallback de vendedorId:",
+                fallbackError,
+            );
             // Service role unavailable — skip fallback
         }
     }
+
+    console.log(
+        `[user-access] vendedorId FINAL para user ${record?.id}: ${
+            vendedorId ?? "NULL"
+        }`,
+    );
 
     // Buscar permissões DINÂMICAS de role_permissions_config + custom
     const customPermissions = parsePermissions(record?.permissoes_custom);
     const permissions = await getUserFinalPermissions(
         supabase,
         tipoUsuario,
-        customPermissions
+        customPermissions,
     );
 
     const canViewAllSales = usedLegacyQuery

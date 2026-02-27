@@ -1,279 +1,318 @@
-import { useCallback, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/router'
-import { authService } from '@/services/api'
-import { useAuthStore } from '@/store/auth'
-import { getSupabaseBrowser } from '@/lib/supabase'
+import { useCallback, useEffect, useMemo } from "react";
+import { useRouter } from "next/router";
+import { authService } from "@/services/api";
+import { useAuthStore } from "@/store/auth";
+import { getSupabaseBrowser } from "@/lib/supabase";
 
-const COOKIE_BASE = 'Path=/; SameSite=Lax'
+const COOKIE_BASE = "Path=/; SameSite=Lax";
 
 const getCookieSuffix = () =>
-  typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : ''
+  typeof window !== "undefined" && window.location.protocol === "https:"
+    ? "; Secure"
+    : "";
 
 const setTokenCookie = (value: string) => {
-  if (typeof document === 'undefined') return
-  const maxAge = 60 * 60 * 24 * 7 // 7 dias
-  document.cookie = `token=${value}; Max-Age=${maxAge}; ${COOKIE_BASE}${getCookieSuffix()}`
-}
+  if (typeof document === "undefined") return;
+  const maxAge = 60 * 60 * 24 * 7; // 7 dias
+  document.cookie =
+    `token=${value}; Max-Age=${maxAge}; ${COOKIE_BASE}${getCookieSuffix()}`;
+};
 
 const clearTokenCookie = () => {
-  if (typeof document === 'undefined') return
-  document.cookie = `token=; Max-Age=0; ${COOKIE_BASE}${getCookieSuffix()}`
-}
+  if (typeof document === "undefined") return;
+  document.cookie = `token=; Max-Age=0; ${COOKIE_BASE}${getCookieSuffix()}`;
+};
 
 export function useAuth() {
-  const router = useRouter()
-  const { user, token, status, setCredentials, clear, setStatus } = useAuthStore()
+  const router = useRouter();
+  const { user, token, status, setCredentials, clear, setStatus } =
+    useAuthStore();
 
-  const loading = useMemo(() => status === 'idle' || status === 'loading', [status])
-  const isAuthenticated = status === 'authenticated'
+  const loading = useMemo(() => status === "idle" || status === "loading", [
+    status,
+  ]);
+  const isAuthenticated = status === "authenticated";
 
   const synchronizeLocalStorage = useCallback(() => {
-    if (typeof window === 'undefined') return
-    const storedToken = token ?? null
+    if (typeof window === "undefined") return;
+    const storedToken = token ?? null;
 
     // Legacy token storage for backwards compatibility
     if (storedToken) {
-      localStorage.setItem('token', storedToken)
+      localStorage.setItem("token", storedToken);
     } else {
-      localStorage.removeItem('token')
+      localStorage.removeItem("token");
     }
 
     if (user) {
-      localStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem("user", JSON.stringify(user));
     } else {
-      localStorage.removeItem('user')
+      localStorage.removeItem("user");
     }
-  }, [token, user])
+  }, [token, user]);
 
   useEffect(() => {
-    synchronizeLocalStorage()
-  }, [token, user]) // Only sync when token or user actually changes
+    synchronizeLocalStorage();
+  }, [token, user]); // Only sync when token or user actually changes
 
   const handleLogout = useCallback(async () => {
     // 1. AGGRESSIVE CLEANUP - Do this FIRST before any async operations
-    clear()
+    clear();
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         // Clear ALL localStorage items (nuclear option to prevent contamination)
-        const keysToRemove: string[] = []
+        const keysToRemove: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i)
+          const key = localStorage.key(i);
           if (key) {
-            keysToRemove.push(key)
+            keysToRemove.push(key);
           }
         }
-        keysToRemove.forEach(key => localStorage.removeItem(key))
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
 
         // Clear ALL cookies (especially Supabase cookies)
-        const cookies = document.cookie.split(';')
+        const cookies = document.cookie.split(";");
         for (const cookie of cookies) {
-          const eqPos = cookie.indexOf('=')
-          const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
+          const eqPos = cookie.indexOf("=");
+          const name = eqPos > -1
+            ? cookie.substring(0, eqPos).trim()
+            : cookie.trim();
           // Delete with all possible path/domain combinations
-          document.cookie = `${name}=; Max-Age=0; Path=/`
-          document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`
-          document.cookie = `${name}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`
+          document.cookie = `${name}=; Max-Age=0; Path=/`;
+          document.cookie =
+            `${name}=; Max-Age=0; Path=/; Domain=${window.location.hostname}`;
+          document.cookie =
+            `${name}=; Max-Age=0; Path=/; Domain=.${window.location.hostname}`;
         }
 
         // Explicitly delete login_time cookie
-        document.cookie = 'login_time=; Max-Age=0; Path=/'
+        document.cookie = "login_time=; Max-Age=0; Path=/";
       } catch (cleanupError) {
-        console.error('❌ useAuth: Error during cleanup (continuing anyway)', cleanupError)
+        console.error(
+          "❌ useAuth: Error during cleanup (continuing anyway)",
+          cleanupError,
+        );
       }
     }
 
     // 2. ASYNC CLEANUP - Try to sign out from Supabase and API (don't wait for completion)
     // We do this AFTER local cleanup so that even if it fails, user is logged out locally
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       Promise.all([
-        getSupabaseBrowser().auth.signOut().catch(err => {
-          console.error('⚠️ useAuth: Supabase signOut failed (continuing anyway)', err)
+        getSupabaseBrowser().auth.signOut().catch((err) => {
+          console.error(
+            "⚠️ useAuth: Supabase signOut failed (continuing anyway)",
+            err,
+          );
         }),
-        authService.logout().catch(err => {
-          console.error('⚠️ useAuth: API logout failed (continuing anyway)', err)
-        })
-      ])
+        authService.logout().catch((err) => {
+          console.error(
+            "⚠️ useAuth: API logout failed (continuing anyway)",
+            err,
+          );
+        }),
+      ]);
     }
 
     // 3. FORCE HARD REDIRECT - Use window.location.href to ensure browser clears everything
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       // Use hard redirect to force browser to clear state
-      window.location.href = '/login'
+      window.location.href = "/login";
     } else {
       // Fallback for SSR (shouldn't happen but just in case)
-      router.push('/login')
+      router.push("/login");
     }
-  }, [clear, router])
+  }, [clear, router]);
 
   const checkAuth = useCallback(async () => {
     try {
-      setStatus('loading')
+      setStatus("loading");
 
       // Check Supabase session and refresh if needed
-      if (typeof window !== 'undefined') {
-        const supabase = getSupabaseBrowser()
-        const { data: { session }, error } = await supabase.auth.getSession()
+      if (typeof window !== "undefined") {
+        const supabase = getSupabaseBrowser();
+        const { data: { session }, error } = await supabase.auth.getSession();
 
         // If there's a session error or no session, clear auth state
         if (error || !session) {
-          clear()
-          setStatus('unauthenticated')
-          clearTokenCookie()
-          return
+          clear();
+          setStatus("unauthenticated");
+          clearTokenCookie();
+          return;
         }
 
         // Session exists - verify with backend and get user profile
         try {
-          const response = await authService.getProfile()
+          const response = await authService.getProfile();
           if (response.success && response.data) {
             // SECURITY: Verify the profile matches the session
-            const profileUserId = response.data.supabase_user_id?.toString()
-            const sessionUserId = session.user.id
-            const profileEmail = response.data.email?.toLowerCase()
-            const sessionEmail = session.user.email?.toLowerCase()
+            const profileUserId = response.data.supabase_user_id?.toString();
+            const sessionUserId = session.user.id;
+            const profileEmail = response.data.email?.toLowerCase();
+            const sessionEmail = session.user.email?.toLowerCase();
 
             // Verify user ID match (primary check)
-            if (profileUserId && sessionUserId && profileUserId !== sessionUserId) {
-              console.error('🚨 SECURITY ALERT: User mismatch in checkAuth!', {
+            if (
+              profileUserId && sessionUserId && profileUserId !== sessionUserId
+            ) {
+              console.error("🚨 SECURITY ALERT: User mismatch in checkAuth!", {
                 profileUserId,
                 profileEmail,
                 sessionUserId,
-                sessionEmail
-              })
+                sessionEmail,
+              });
 
               // Clear all storage to prevent contamination
-              localStorage.clear()
-              await supabase.auth.signOut()
-              await handleLogout()
-              return
+              localStorage.clear();
+              await supabase.auth.signOut();
+              await handleLogout();
+              return;
             }
 
             // Verify email match (secondary check - catches edge cases where supabase_user_id might be missing)
             if (profileEmail && sessionEmail && profileEmail !== sessionEmail) {
-              console.error('🚨 SECURITY ALERT: Email mismatch in checkAuth!', {
+              console.error("🚨 SECURITY ALERT: Email mismatch in checkAuth!", {
                 profileEmail,
-                sessionEmail
-              })
+                sessionEmail,
+              });
 
               // Clear all storage to prevent contamination
-              localStorage.clear()
-              await supabase.auth.signOut()
-              await handleLogout()
-              return
+              localStorage.clear();
+              await supabase.auth.signOut();
+              await handleLogout();
+              return;
             }
 
             // Verified - update credentials
-            setCredentials(response.data, session.access_token)
-            setTokenCookie(session.access_token)
-            setStatus('authenticated')
+            setCredentials(response.data, session.access_token);
+            setTokenCookie(session.access_token);
+            setStatus("authenticated");
           } else {
             // Profile not found or invalid - logout
-            clear()
-            setStatus('unauthenticated')
-            clearTokenCookie()
+            clear();
+            setStatus("unauthenticated");
+            clearTokenCookie();
           }
         } catch (error: any) {
           // Handle 401 errors (expired/invalid token)
           if (error?.response?.status === 401) {
-            clear()
-            setStatus('unauthenticated')
-            clearTokenCookie()
+            clear();
+            setStatus("unauthenticated");
+            clearTokenCookie();
           } else {
             // Other errors - still clear auth for safety
-            clear()
-            setStatus('unauthenticated')
-            clearTokenCookie()
+            clear();
+            setStatus("unauthenticated");
+            clearTokenCookie();
           }
         }
       } else {
         // Server-side - set unauthenticated
-        clear()
-        setStatus('unauthenticated')
+        clear();
+        setStatus("unauthenticated");
       }
     } catch (error) {
-      console.error('❌ useAuth: Unexpected error in checkAuth', error)
+      console.error("❌ useAuth: Unexpected error in checkAuth", error);
       // Always ensure we end in a valid state
-      clear()
-      setStatus('unauthenticated')
-      clearTokenCookie()
+      clear();
+      setStatus("unauthenticated");
+      clearTokenCookie();
     }
-  }, [clear, handleLogout, setCredentials, setStatus])
+  }, [clear, handleLogout, setCredentials, setStatus]);
 
   // Check session validity on mount and when coming back to the app
   useEffect(() => {
     // Skip check if not in browser or if we're on a public page
-    if (typeof window === 'undefined') return
-    
+    if (typeof window === "undefined") return;
+
     // Only check once when app initializes
-    if (status !== 'idle') return
+    if (status !== "idle") return;
 
     const checkSessionValidity = async () => {
       // Add timeout to prevent hanging (5 seconds is reasonable for network requests)
       const timeoutId = setTimeout(() => {
-        console.error('⚠️ useAuth: Session check timed out (5s), clearing auth')
-        clear()
-        setStatus('unauthenticated')
-        clearTokenCookie()
-      }, 5000) // 5 second timeout
+        console.error(
+          "⚠️ useAuth: Session check timed out (5s), clearing auth",
+        );
+        clear();
+        setStatus("unauthenticated");
+        clearTokenCookie();
+      }, 5000); // 5 second timeout
 
       try {
-        const supabase = getSupabaseBrowser()
-        const { data: { session }, error } = await supabase.auth.getSession()
+        const supabase = getSupabaseBrowser();
+        const { data: { session }, error } = await supabase.auth.getSession();
 
         // Clear timeout if we got a response
-        clearTimeout(timeoutId)
+        clearTimeout(timeoutId);
 
         // If there's an error or no session, clear everything immediately
         if (error || !session) {
-          clear()
-          setStatus('unauthenticated')
-          clearTokenCookie()
+          clear();
+          setStatus("unauthenticated");
+          clearTokenCookie();
 
           // Clear all localStorage to prevent stale data
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
-            localStorage.removeItem('meguispet-auth-store')
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            localStorage.removeItem("meguispet-auth-store");
           }
-          return
+          return;
         }
 
-        // We have a session - verify it's still valid
-        if (user && token) {
-          setStatus('authenticated')
-        } else if (!user && session) {
-          // Session exists but no user in state - re-fetch profile
-          try {
-            const response = await authService.getProfile()
-            if (response.success && response.data) {
-              setCredentials(response.data, session.access_token)
-              setTokenCookie(session.access_token)
-              setStatus('authenticated')
+        // We have a session - always re-fetch the profile to get the latest server data.
+        // This is critical: if an admin links a vendedor AFTER the user's profile was cached
+        // in localStorage, the stale vendedor_id:null would persist indefinitely without
+        // a fresh profile fetch on every startup.
+        try {
+          const response = await authService.getProfile();
+          console.log(
+            "[useAuth] checkSessionValidity - perfil recebido do servidor:",
+            {
+              success: response.success,
+              userId: response.data?.id,
+              nome: response.data?.nome,
+              tipo_usuario: response.data?.tipo_usuario,
+              vendedor_id: response.data?.vendedor_id ?? "NULL",
+              cached_vendedor_id: user?.vendedor_id ?? "NULL (não havia cache)",
+            },
+          );
+          if (response.success && response.data) {
+            setCredentials(response.data, session.access_token);
+            setTokenCookie(session.access_token);
+            setStatus("authenticated");
+          } else {
+            // Profile fetch failed - fall back to cached credentials if available
+            if (user && token) {
+              setStatus("authenticated");
             } else {
-              // Profile fetch failed - session might be invalid
-              clear()
-              setStatus('unauthenticated')
-              clearTokenCookie()
+              clear();
+              setStatus("unauthenticated");
+              clearTokenCookie();
             }
-          } catch (error) {
-            clear()
-            setStatus('unauthenticated')
-            clearTokenCookie()
           }
-        } else {
-          setStatus('unauthenticated')
+        } catch (error) {
+          // Network error or server down - fall back to cached credentials
+          if (user && token) {
+            setStatus("authenticated");
+          } else {
+            clear();
+            setStatus("unauthenticated");
+            clearTokenCookie();
+          }
         }
       } catch (error) {
-        clearTimeout(timeoutId)
-        clear()
-        setStatus('unauthenticated')
-        clearTokenCookie()
+        clearTimeout(timeoutId);
+        clear();
+        setStatus("unauthenticated");
+        clearTokenCookie();
       }
-    }
+    };
 
-    checkSessionValidity()
-  }, [status, user, token, setStatus, setCredentials, clear])
+    checkSessionValidity();
+  }, [status, user, token, setStatus, setCredentials, clear]);
 
   // Periodic security check removed to prevent rate limiting
   // The middleware already protects routes on every request
@@ -281,200 +320,204 @@ export function useAuth() {
 
   // Set up Supabase auth state listener for automatic token refresh
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === "undefined") return;
 
-    const supabase = getSupabaseBrowser()
+    const supabase = getSupabaseBrowser();
 
     // Listen for auth state changes (including token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'TOKEN_REFRESHED' && session) {
-        // SECURITY: Verify the session belongs to the current user before updating
-        if (user && session.user) {
-          // Compare Supabase user IDs and emails
-          const sessionUserId = session.user.id
-          const currentUserId = user.supabase_user_id?.toString()
-          const sessionEmail = session.user.email?.toLowerCase()
-          const currentEmail = user.email?.toLowerCase()
-
-          // Check user ID mismatch (if we have both IDs)
-          if (currentUserId && sessionUserId !== currentUserId) {
-            console.error('🚨 SECURITY ALERT: Session user ID mismatch!', {
-              sessionUserId,
-              currentUserId,
-              sessionEmail,
-              currentEmail
-            })
-            // Force logout immediately - this is a serious security issue
-            await handleLogout()
-            return
-          }
-
-          // Check email mismatch (fallback if supabase_user_id is missing)
-          if (sessionEmail && currentEmail && sessionEmail !== currentEmail) {
-            console.error('🚨 SECURITY ALERT: Session email mismatch!', {
-              sessionEmail,
-              currentEmail
-            })
-            // Force logout immediately - this is a serious security issue
-            await handleLogout()
-            return
-          }
-
-          // Session verified - safe to update token
-          setCredentials(user, session.access_token)
-          setTokenCookie(session.access_token)
-        } else if (!user && session) {
-          // No user in state but we have a session - re-fetch profile
-          try {
-            const response = await authService.getProfile()
-            if (response.success && response.data) {
-              setCredentials(response.data, session.access_token)
-              setTokenCookie(session.access_token)
-              setStatus('authenticated')
-            } else {
-              await handleLogout()
-            }
-          } catch (error) {
-            await handleLogout()
-          }
-        }
-      } else if (event === 'SIGNED_OUT') {
-        // User signed out - clear state
-        clear()
-        setStatus('unauthenticated')
-        clearTokenCookie()
-      } else if (event === 'SIGNED_IN' && session) {
-        // User signed in - fetch profile
-        try {
-          const response = await authService.getProfile()
-          if (response.success && response.data) {
-            // SECURITY: Verify the profile matches the session
-            const profileUserId = response.data.supabase_user_id?.toString()
-            const sessionUserId = session.user.id
-            const profileEmail = response.data.email?.toLowerCase()
-            const sessionEmail = session.user.email?.toLowerCase()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "TOKEN_REFRESHED" && session) {
+          // SECURITY: Verify the session belongs to the current user before updating
+          if (user && session.user) {
+            // Compare Supabase user IDs and emails
+            const sessionUserId = session.user.id;
+            const currentUserId = user.supabase_user_id?.toString();
+            const sessionEmail = session.user.email?.toLowerCase();
+            const currentEmail = user.email?.toLowerCase();
 
             // Check user ID mismatch (if we have both IDs)
-            if (profileUserId && profileUserId !== sessionUserId) {
-              console.error('🚨 SECURITY ALERT: Profile user ID mismatch!', {
-                profileUserId,
+            if (currentUserId && sessionUserId !== currentUserId) {
+              console.error("🚨 SECURITY ALERT: Session user ID mismatch!", {
                 sessionUserId,
-                profileEmail,
-                sessionEmail
-              })
-              await handleLogout()
-              return
+                currentUserId,
+                sessionEmail,
+                currentEmail,
+              });
+              // Force logout immediately - this is a serious security issue
+              await handleLogout();
+              return;
             }
 
             // Check email mismatch (fallback if supabase_user_id is missing)
-            if (profileEmail && sessionEmail && profileEmail !== sessionEmail) {
-              console.error('🚨 SECURITY ALERT: Profile email mismatch!', {
-                profileEmail,
-                sessionEmail
-              })
-              await handleLogout()
-              return
+            if (sessionEmail && currentEmail && sessionEmail !== currentEmail) {
+              console.error("🚨 SECURITY ALERT: Session email mismatch!", {
+                sessionEmail,
+                currentEmail,
+              });
+              // Force logout immediately - this is a serious security issue
+              await handleLogout();
+              return;
             }
 
-            setCredentials(response.data, session.access_token)
-            setTokenCookie(session.access_token)
-            setStatus('authenticated')
-          } else {
-            await handleLogout()
+            // Session verified - safe to update token
+            setCredentials(user, session.access_token);
+            setTokenCookie(session.access_token);
+          } else if (!user && session) {
+            // No user in state but we have a session - re-fetch profile
+            try {
+              const response = await authService.getProfile();
+              if (response.success && response.data) {
+                setCredentials(response.data, session.access_token);
+                setTokenCookie(session.access_token);
+                setStatus("authenticated");
+              } else {
+                await handleLogout();
+              }
+            } catch (error) {
+              await handleLogout();
+            }
           }
-        } catch (error) {
-          await handleLogout()
+        } else if (event === "SIGNED_OUT") {
+          // User signed out - clear state
+          clear();
+          setStatus("unauthenticated");
+          clearTokenCookie();
+        } else if (event === "SIGNED_IN" && session) {
+          // User signed in - fetch profile
+          try {
+            const response = await authService.getProfile();
+            if (response.success && response.data) {
+              // SECURITY: Verify the profile matches the session
+              const profileUserId = response.data.supabase_user_id?.toString();
+              const sessionUserId = session.user.id;
+              const profileEmail = response.data.email?.toLowerCase();
+              const sessionEmail = session.user.email?.toLowerCase();
+
+              // Check user ID mismatch (if we have both IDs)
+              if (profileUserId && profileUserId !== sessionUserId) {
+                console.error("🚨 SECURITY ALERT: Profile user ID mismatch!", {
+                  profileUserId,
+                  sessionUserId,
+                  profileEmail,
+                  sessionEmail,
+                });
+                await handleLogout();
+                return;
+              }
+
+              // Check email mismatch (fallback if supabase_user_id is missing)
+              if (
+                profileEmail && sessionEmail && profileEmail !== sessionEmail
+              ) {
+                console.error("🚨 SECURITY ALERT: Profile email mismatch!", {
+                  profileEmail,
+                  sessionEmail,
+                });
+                await handleLogout();
+                return;
+              }
+
+              setCredentials(response.data, session.access_token);
+              setTokenCookie(session.access_token);
+              setStatus("authenticated");
+            } else {
+              await handleLogout();
+            }
+          } catch (error) {
+            await handleLogout();
+          }
         }
-      }
-    })
+      },
+    );
 
     return () => {
-      subscription.unsubscribe()
-    }
-  }, [user, setCredentials, setStatus, clear, handleLogout])
+      subscription.unsubscribe();
+    };
+  }, [user, setCredentials, setStatus, clear, handleLogout]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<boolean> => {
       try {
-        setStatus('loading')
-        const response = await authService.login(email, password)
+        setStatus("loading");
+        const response = await authService.login(email, password);
         if (response.success && response.data) {
-          const { token: newToken, user: newUser } = response.data
-          
-          if (typeof window !== 'undefined') {
+          const { token: newToken, user: newUser } = response.data;
+
+          if (typeof window !== "undefined") {
             // Store token for backwards compatibility
-            localStorage.setItem('token', newToken)
-            localStorage.setItem('user', JSON.stringify(newUser))
-            
+            localStorage.setItem("token", newToken);
+            localStorage.setItem("user", JSON.stringify(newUser));
+
             // Store Supabase session structure
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
             if (supabaseUrl) {
-              const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
+              const projectRef = supabaseUrl.split("//")[1]?.split(".")[0];
               if (projectRef) {
                 const supabaseSession = {
                   access_token: newToken,
                   refresh_token: response.data.refresh_token,
                   expires_at: response.data.expires_at,
-                  user: newUser
-                }
+                  user: newUser,
+                };
                 localStorage.setItem(
                   `sb-${projectRef}-auth-token`,
-                  JSON.stringify(supabaseSession)
-                )
+                  JSON.stringify(supabaseSession),
+                );
               }
             }
           }
-          
-          setTokenCookie(newToken)
-          setCredentials(newUser, newToken)
-          setStatus('authenticated')
-          return true
+
+          setTokenCookie(newToken);
+          setCredentials(newUser, newToken);
+          setStatus("authenticated");
+          return true;
         }
-        setStatus('unauthenticated')
-        clearTokenCookie()
-        return false
+        setStatus("unauthenticated");
+        clearTokenCookie();
+        return false;
       } catch (error) {
-        setStatus('unauthenticated')
-        clearTokenCookie()
-        return false
+        setStatus("unauthenticated");
+        clearTokenCookie();
+        return false;
       }
     },
-    [setCredentials, setStatus]
-  )
+    [setCredentials, setStatus],
+  );
 
   /**
    * Recarrega dados do usuário (útil após admin alterar permissões)
    */
   const refreshUser = useCallback(async (): Promise<boolean> => {
     try {
-      if (!token) return false
+      if (!token) return false;
 
-      const supabase = getSupabaseBrowser()
-      const { data: session } = await supabase.auth.getSession()
+      const supabase = getSupabaseBrowser();
+      const { data: session } = await supabase.auth.getSession();
 
-      if (!session?.session) return false
+      if (!session?.session) return false;
 
       // Buscar perfil atualizado do usuário
-      const response = await authService.getProfile()
+      const response = await authService.getProfile();
 
       if (response.success && response.data) {
         // Atualizar store com novas permissões
-        setCredentials(response.data, session.session.access_token)
+        setCredentials(response.data, session.session.access_token);
 
         // Atualizar localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user', JSON.stringify(response.data))
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(response.data));
         }
 
-        return true
+        return true;
       }
 
-      return false
+      return false;
     } catch (error) {
-      console.error('❌ useAuth: Error refreshing user', error)
-      return false
+      console.error("❌ useAuth: Error refreshing user", error);
+      return false;
     }
-  }, [token, setCredentials])
+  }, [token, setCredentials]);
 
   return {
     user,
@@ -485,5 +528,5 @@ export function useAuth() {
     login,
     logout: handleLogout,
     refreshUser, // 🆕 Nova função para recarregar permissões
-  }
+  };
 }
