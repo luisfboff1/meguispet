@@ -48,6 +48,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showApiKey, setShowApiKey] = useState(false)
+  const [isGlobalConfig, setIsGlobalConfig] = useState(false)
 
   // Form state
   const [provider, setProvider] = useState<AgentProvider>('openai')
@@ -77,6 +78,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
       setProvider(c.provider)
       setModel(c.model)
       setApiKeyPreview(c.api_key_preview || '')
+      setIsGlobalConfig(!!(c as unknown as Record<string, unknown>).is_global_config)
       setTemperature(c.temperature)
       setMaxTokens(c.max_tokens)
       setTopP(c.top_p)
@@ -242,7 +244,13 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {apiKeyPreview && !apiKey && (
+          {isGlobalConfig && !apiKey && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+              <div className="font-medium">API key global configurada pelo administrador</div>
+              <p className="mt-0.5 text-xs">Voce pode usar o Agente Megui sem precisar de sua propria chave. Opcionalmente, insira abaixo para usar a sua.</p>
+            </div>
+          )}
+          {apiKeyPreview && !apiKey && !isGlobalConfig && (
             <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
               <span>Chave configurada:</span>
               <code className="font-mono text-xs">{apiKeyPreview}</code>
@@ -265,7 +273,9 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
             </button>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Sua chave e encriptada (AES-256-GCM) e nunca e exposta. Cada usuario tem sua propria chave.
+            {isGlobalConfig
+              ? 'Deixe em branco para continuar usando a chave global. Preencha apenas se quiser usar sua propria chave.'
+              : 'Sua chave e encriptada (AES-256-GCM) e nunca e exposta.'}
           </p>
         </CardContent>
       </Card>

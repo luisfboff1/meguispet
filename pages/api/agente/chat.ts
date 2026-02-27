@@ -24,6 +24,7 @@ import { createLLM } from "@/lib/agent-provider-factory";
 import { buildSystemPrompt } from "@/lib/agent-default-prompt";
 import { AGENT_ACCESSIBLE_TABLES } from "@/lib/agent-schema";
 import type { AgentProvider } from "@/types";
+import { getSupabaseServiceRole } from "@/lib/supabase-auth";
 
 // Rate limiter (in-memory)
 const rateLimiter = new Map<number, { count: number; resetAt: number }>();
@@ -236,20 +237,33 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .eq("usuario_id", userId)
       .single();
 
-    if (configError || !agentConfig) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Configure sua API key na aba Configuracao antes de usar o chat.",
-      });
-    }
+    // Se usuário não tem config própria ou não tem API key, usa config global
+    if (configError || !agentConfig || !agentConfig.api_key_encrypted) {
+      const serviceRole = getSupabaseServiceRole();
+      const { data: globalConfig } = await serviceRole
+        .from("agent_configs")
+        .select("*")
+        .not("api_key_encrypted", "is", null)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .single();
 
-    if (!agentConfig.api_key_encrypted) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "API key nao configurada. Va na aba Configuracao para adicionar.",
-      });
+      if (!globalConfig) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Nenhuma API key configurada. Peca ao administrador para configurar o Agente Megui.",
+        });
+      }
+
+      // Mescla: preferências do usuário (se houver) + api_key da config global
+      agentConfig = agentConfig
+        ? {
+          ...globalConfig,
+          ...agentConfig,
+          api_key_encrypted: globalConfig.api_key_encrypted,
+        }
+        : globalConfig;
     }
 
     // 3. Decrypt API key
@@ -383,7 +397,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Always explicitly append the current user message (even if DB insert failed)
     messages.push(new HumanMessage(message.trim()));
 
-
     const recursionLimit = agentConfig.recursion_limit || 25;
 
     // ===================== STREAMING WITH streamEvents =====================
@@ -414,9 +427,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           if (!chunk) break;
 
           // Text content (final answer step)
-          const token = typeof chunk.content === "string"
-            ? chunk.content
-            : "";
+          const token = typeof chunk.content === "string" ? chunk.content : "";
 
           if (token) {
             currentStepContent += token;
@@ -509,7 +520,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                   rows_returned: 0,
                   execution_time_ms: 0,
                 });
-
               }
 
               sendSSE(res, {
@@ -608,7 +618,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       tool_execution_ms: totalToolTime,
       tools_count: toolCalls.length,
     };
-
 
     // 10. Send usage info (including timing breakdown for client-side display)
     sendSSE(res, {
