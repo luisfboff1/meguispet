@@ -231,7 +231,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     }
 
     // 2. Get user's agent config
-    const { data: agentConfig, error: configError } = await supabase
+    let { data: agentConfig, error: configError } = await supabase
       .from("agent_configs")
       .select("*")
       .eq("usuario_id", userId)
@@ -257,13 +257,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       }
 
       // Mescla: preferências do usuário (se houver) + api_key da config global
-      agentConfig = agentConfig
+      const mergedAgentConfig = agentConfig
         ? {
           ...globalConfig,
           ...agentConfig,
           api_key_encrypted: globalConfig.api_key_encrypted,
         }
         : globalConfig;
+      agentConfig = mergedAgentConfig;
     }
 
     // 3. Decrypt API key
