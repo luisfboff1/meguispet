@@ -124,7 +124,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
   const [condicoesPagamento, setCondicoesPagamento] = useState<CondicaoPagamento[]>([])
   const [estoques, setEstoques] = useState<Estoque[]>([])
   const [loadingData, setLoadingData] = useState(false)
-  const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
+  const [alert, setAlert] = useState<{ title: string; message: string; type: 'success' | 'error' | 'warning' | 'info'; confirmText?: string; onCancel?: () => void } | null>(null)
   const [mostrarConfiguracaoColunas, setMostrarConfiguracaoColunas] = useState(false)
   const [colunasVisiveis, setColunasVisiveis] = useState<VendaTabelaColunasVisiveis>({
     produto: true,
@@ -421,10 +421,20 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         if (formData.estoque_id && produto.estoques) {
           const estoqueItem = produto.estoques.find(e => Number(e.estoque_id) === Number(formData.estoque_id))
           if (estoqueItem && estoqueItem.quantidade < newItens[index].quantidade) {
+            const estoqueDisponivel = estoqueItem.quantidade
             setAlert({
               title: '⚠️ Atenção: Estoque Baixo',
-              message: `O produto "${produto.nome}" tem apenas ${estoqueItem.quantidade} unidades disponíveis no estoque selecionado.`,
+              message: `O produto "${produto.nome}" tem apenas ${estoqueItem.quantidade} unidades disponíveis no estoque selecionado.\n\nDeseja continuar mesmo assim?`,
               type: 'warning',
+              confirmText: 'Continuar',
+              onCancel: () => {
+                setItens(prev => {
+                  const updated = [...prev]
+                  updated[index] = { ...updated[index], quantidade: estoqueDisponivel }
+                  return updated
+                })
+                setAlert(null)
+              },
             })
           }
         }
@@ -437,10 +447,20 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
           const qtd = Number(value) || 0
           const estoqueItem = produto.estoques.find(e => Number(e.estoque_id) === Number(formData.estoque_id))
           if (estoqueItem && estoqueItem.quantidade < qtd) {
+            const estoqueDisponivel = estoqueItem.quantidade
             setAlert({
               title: '⚠️ Atenção: Estoque Insuficiente',
-              message: `O produto "${produto.nome}" tem apenas ${estoqueItem.quantidade} unidades disponíveis no estoque selecionado. Você está tentando vender ${qtd} unidades.`,
+              message: `O produto "${produto.nome}" tem apenas ${estoqueItem.quantidade} unidades disponíveis no estoque selecionado. Você está tentando vender ${qtd} unidades.\n\nDeseja continuar mesmo assim?`,
               type: 'warning',
+              confirmText: 'Continuar',
+              onCancel: () => {
+                setItens(prev => {
+                  const updated = [...prev]
+                  updated[index] = { ...updated[index], quantidade: estoqueDisponivel }
+                  return updated
+                })
+                setAlert(null)
+              },
             })
           }
         }
@@ -697,6 +717,8 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
           message={alert.message}
           type={alert.type}
           onClose={() => setAlert(null)}
+          confirmText={alert.confirmText}
+          onCancel={alert.onCancel}
         />
       )}
 

@@ -8,6 +8,8 @@ interface AlertDialogProps {
   type?: 'success' | 'error' | 'warning' | 'info';
   onClose: () => void;
   confirmText?: string;
+  onCancel?: () => void;
+  cancelText?: string;
 }
 
 const icons = {
@@ -50,6 +52,8 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
   type = 'info',
   onClose,
   confirmText = 'OK',
+  onCancel,
+  cancelText = 'Cancelar',
 }) => {
   const Icon = icons[type];
   const colorScheme = colors[type];
@@ -69,6 +73,14 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
         </div>
 
         <div className="p-6 flex justify-end space-x-3">
+          {onCancel && (
+            <Button
+              variant="outline"
+              onClick={onCancel}
+            >
+              {cancelText}
+            </Button>
+          )}
           <Button
             onClick={onClose}
             className={`${colorScheme.button} text-white`}
