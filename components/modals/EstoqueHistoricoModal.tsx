@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { X, TrendingUp, TrendingDown, ShoppingCart, Package, AlertCircle, FileText } from 'lucide-react'
+import { X, TrendingUp, TrendingDown, ShoppingCart, Package, AlertCircle, FileText, Settings2, MapPin } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { estoqueHistoricoService } from '@/services/api'
+import stockService, { type StockLocation } from '@/services/stockService'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import EstoqueAjusteDiretoModal from './EstoqueAjusteDiretoModal'
 
 interface EstoqueHistoricoItem {
   id: number
@@ -30,13 +31,17 @@ interface EstoqueHistoricoModalProps {
   produtoId: number
   produtoNome: string
   onClose: () => void
+  onAjusteSuccess?: () => void
 }
 
-export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose }: EstoqueHistoricoModalProps) {
+export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose, onAjusteSuccess }: EstoqueHistoricoModalProps) {
   const [activeTab, setActiveTab] = useState<'timeline' | 'grafico'>('timeline')
   const [loading, setLoading] = useState(true)
   const [historico, setHistorico] = useState<EstoqueHistoricoItem[]>([])
   const [produto, setProduto] = useState<Produto | null>(null)
+  const [estoqueAtual, setEstoqueAtual] = useState<StockLocation[]>([])
+  const [filtroLocal, setFiltroLocal] = useState<string>('todos')
+  const [showAjusteModal, setShowAjusteModal] = useState(false)
 
   useEffect(() => {
     loadHistorico()
@@ -45,11 +50,12 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
   const loadHistorico = async () => {
     setLoading(true)
     try {
-      const response = await estoqueHistoricoService.getByProdutoId(produtoId)
+      const estoqueIdNum = filtroLocal !== 'todos' ? Number(filtroLocal) : undefined
+      const response = await stockService.getHistorico(produtoId, estoqueIdNum)
       if (response.success && response.data) {
-        // Não agrupar duplicatas - mostrar tudo para manter a sequência anterior→nova correta
         setHistorico(response.data.historico || [])
         setProduto(response.data.produto || null)
+        setEstoqueAtual(response.data.estoques || [])
       }
     } catch (error) {
       console.error('Erro ao carregar histórico:', error)
@@ -57,6 +63,76 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
       setLoading(false)
     }
   }
+
+  // Extract unique locations for filter
+  const locais = useMemo(() => {
+    const map = new Map<number, string>()
+    historico.forEach((item) => {
+      if (item.estoque_id && item.estoque?.nome) {
+        map.set(item.estoque_id, item.estoque.nome)
+      }
+    })
+    return Array.from(map.entries()).map(([id, nome]) => ({ id, nome }))
+  }, [historico])
+
+  // Filter by location
+  const filteredHistorico = useMemo(() => {
+    if (filtroLocal === 'todos') return historico
+    return historico.filter((item) => String(item.estoque_id) === filtroLocal)
+  }, [historico, filtroLocal])
+
+  // Timeline: newest first
+  const timelineData = useMemo(() => {
+    return [...filteredHistorico].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+  }, [filteredHistorico])
+
+  // Chart data: when multiple locations, create separate series per location
+  const isMultiLine = filtroLocal === 'todos' && locais.length > 1
+
+  const chartData = useMemo(() => {
+    const sorted = [...filteredHistorico].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    )
+
+    if (!isMultiLine) {
+      // Single line mode
+      return sorted.map((item) => ({
+        name: formatDateShort(item.created_at),
+        estoque: item.quantidade_nova,
+        tipo: item.tipo_operacao,
+        mudanca: item.quantidade_mudanca,
+        fullDate: formatDate(item.created_at),
+        operacao_id: item.operacao_id,
+        motivo: item.motivo,
+        local: item.estoque?.nome || ''
+      }))
+    }
+
+    // Multi-line mode: track last known value per location
+    const lastKnown: Record<string, number> = {}
+    return sorted.map((item) => {
+      const localName = item.estoque?.nome || `Local ${item.estoque_id}`
+      lastKnown[localName] = item.quantidade_nova
+
+      const point: Record<string, any> = {
+        name: formatDateShort(item.created_at),
+        tipo: item.tipo_operacao,
+        mudanca: item.quantidade_mudanca,
+        fullDate: formatDate(item.created_at),
+        operacao_id: item.operacao_id,
+        motivo: item.motivo,
+        local: localName,
+        _activeLocal: localName,
+      }
+      // Set each location's value (carry forward last known)
+      for (const l of locais) {
+        point[l.nome] = lastKnown[l.nome] ?? null
+      }
+      return point
+    })
+  }, [filteredHistorico, isMultiLine, locais])
 
   const getTipoIcon = (tipo: string) => {
     switch (tipo.toUpperCase()) {
@@ -66,6 +142,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
       case 'ENTRADA':
         return <TrendingUp className="h-4 w-4 text-green-600" />
       case 'AJUSTE':
+      case 'AJUSTE_MANUAL':
         return <FileText className="h-4 w-4 text-yellow-600" />
       case 'ESTORNO':
       case 'DEVOLUCAO':
@@ -83,6 +160,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
       case 'ENTRADA':
         return 'bg-green-100 text-green-800'
       case 'AJUSTE':
+      case 'AJUSTE_MANUAL':
         return 'bg-yellow-100 text-yellow-800'
       case 'ESTORNO':
       case 'DEVOLUCAO':
@@ -92,77 +170,182 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const getTipoLabel = (tipo: string) => {
+    switch (tipo.toUpperCase()) {
+      case 'AJUSTE_MANUAL':
+        return 'AJUSTE MANUAL'
+      default:
+        return tipo.toUpperCase()
+    }
   }
 
-  const formatDateShort = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const handleAjusteSuccess = () => {
+    loadHistorico()
+    onAjusteSuccess?.()
   }
 
-  // Preparar dados para o gráfico
-  const chartData = useMemo(() => {
-    return historico.map((item, index) => ({
-      name: formatDateShort(item.created_at),
-      estoque: item.quantidade_nova,
-      tipo: item.tipo_operacao,
-      mudanca: item.quantidade_mudanca,
-      fullDate: formatDate(item.created_at),
-      operacao_id: item.operacao_id,
-      motivo: item.motivo
-    }))
-  }, [historico])
+  const LINE_COLORS: Record<string, string> = {}
+  const PALETTE = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+  locais.forEach((l, i) => {
+    LINE_COLORS[l.nome] = PALETTE[i % PALETTE.length]
+  })
+
+  // Custom tooltip for chart with solid background
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || !payload[0]) return null
+    const data = payload[0].payload
+
+    if (isMultiLine) {
+      // Multi-line: show all locations values + which one changed
+      return (
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #d1d5db',
+            borderRadius: '8px',
+            padding: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 9999,
+            minWidth: '200px',
+          }}
+        >
+          {locais.map((l) => {
+            const val = data[l.nome]
+            const isActive = data._activeLocal === l.nome
+            return (
+              <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: LINE_COLORS[l.nome], display: 'inline-block', flexShrink: 0 }} />
+                <span style={{ fontSize: '13px', fontWeight: isActive ? 'bold' : 'normal', color: '#111827' }}>
+                  {l.nome}: {val != null ? val : '—'}
+                </span>
+              </div>
+            )
+          })}
+          <div style={{ fontSize: '12px', color: data.mudanca > 0 ? '#16a34a' : '#dc2626', marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #e5e7eb' }}>
+            {data.mudanca > 0 ? '+' : ''}{data.mudanca} ({getTipoLabel(data.tipo)}) — {data._activeLocal}
+          </div>
+          {data.motivo && (
+            <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic', marginTop: '4px' }}>
+              💬 {data.motivo}
+            </div>
+          )}
+          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+            {data.fullDate}
+          </div>
+        </div>
+      )
+    }
+
+    // Single line
+    return (
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid #d1d5db',
+          borderRadius: '8px',
+          padding: '12px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 9999,
+          minWidth: '180px',
+        }}
+      >
+        <div style={{ fontWeight: 'bold', color: '#2563eb', fontSize: '14px' }}>{data.estoque} unidades</div>
+        <div style={{ fontSize: '13px', color: data.mudanca > 0 ? '#16a34a' : '#dc2626', marginTop: '4px' }}>
+          {data.mudanca > 0 ? '+' : ''}{data.mudanca} ({getTipoLabel(data.tipo)})
+        </div>
+        {data.local && (
+          <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>
+            📍 {data.local}
+          </div>
+        )}
+        {data.operacao_id && (
+          <div style={{ fontSize: '11px', color: '#2563eb', fontWeight: 500, marginTop: '4px' }}>
+            🔗 {data.tipo === 'VENDA' ? 'Venda' : data.tipo === 'ESTORNO' ? 'Estorno de venda' : 'Operação'} #{data.operacao_id}
+          </div>
+        )}
+        {data.motivo && (
+          <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic', marginTop: '4px' }}>
+            💬 {data.motivo}
+          </div>
+        )}
+        <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #e5e7eb' }}>
+          {data.fullDate}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/30">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-xl">
-        <CardHeader className="flex-shrink-0 border-b">
+        <CardHeader className="flex-shrink-0 border-b pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Histórico de Estoque</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">{produtoNome}</p>
+              <CardTitle className="text-lg">Histórico de Estoque</CardTitle>
+              <p className="text-sm text-gray-500 mt-0.5">{produtoNome}</p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAjusteModal(true)}
+                className="text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+              >
+                <Settings2 className="h-4 w-4 mr-1.5" />
+                Ajustar Estoque
+              </Button>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-4 mt-4">
-            <button
-              onClick={() => setActiveTab('timeline')}
-              className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'timeline'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Timeline
-            </button>
-            <button
-              onClick={() => setActiveTab('grafico')}
-              className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'grafico'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Gráfico
-            </button>
+          {/* Tabs + Location Filter */}
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setActiveTab('timeline')}
+                className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'timeline'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Timeline
+              </button>
+              <button
+                onClick={() => setActiveTab('grafico')}
+                className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'grafico'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Gráfico
+              </button>
+            </div>
+
+            {/* Location Filter */}
+            {locais.length > 1 && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                <select
+                  value={filtroLocal}
+                  onChange={(e) => setFiltroLocal(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="todos">Todos os locais</option>
+                  {locais.map((l) => (
+                    <option key={l.id} value={String(l.id)}>
+                      {l.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </CardHeader>
 
@@ -174,13 +357,13 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
             </div>
           ) : activeTab === 'timeline' ? (
             <div className="space-y-3">
-              {historico.length === 0 ? (
+              {timelineData.length === 0 ? (
                 <div className="text-center py-12">
                   <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-600">Nenhum histórico encontrado para este produto</p>
                 </div>
               ) : (
-                historico.map((item, index) => (
+                timelineData.map((item) => (
                   <div
                     key={item.id}
                     className={`flex items-start gap-4 p-4 rounded-lg border ${
@@ -194,10 +377,16 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTipoBadgeColor(item.tipo_operacao)}`}>
-                          {item.tipo_operacao}
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getTipoBadgeColor(item.tipo_operacao)}`}>
+                          {getTipoLabel(item.tipo_operacao)}
                         </span>
+                        {item.estoque?.nome && (
+                          <span className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+                            <MapPin className="h-3 w-3 mr-0.5" />
+                            {item.estoque.nome}
+                          </span>
+                        )}
                         <span className="text-xs text-gray-500">{formatDate(item.created_at)}</span>
                       </div>
 
@@ -221,11 +410,6 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
                         </p>
                       )}
                     </div>
-
-                    {/* Timeline indicator */}
-                    {index < historico.length - 1 && (
-                      <div className="absolute left-[38px] top-[60px] w-0.5 h-[calc(100%-24px)] bg-gray-300"></div>
-                    )}
                   </div>
                 ))
               )}
@@ -234,36 +418,36 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
             // Gráfico Tab
             <div className="space-y-6">
               {/* Summary Cards */}
-              {historico.length > 0 && (
+              {filteredHistorico.length > 0 && !isMultiLine && (
                 <div className="grid grid-cols-3 gap-4">
                   <Card>
-                    <CardContent className="pt-6">
+                    <CardContent className="pt-4 pb-4">
                       <div className="text-center">
-                        <p className="text-sm text-gray-600">Estoque Inicial</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-2">
-                          {historico[0]?.quantidade_anterior || 0}
+                        <p className="text-xs text-gray-500">Estoque Inicial</p>
+                        <p className="text-xl font-bold text-gray-900 mt-1">
+                          {chartData[0]?.estoque ?? 0}
                         </p>
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card>
-                    <CardContent className="pt-6">
+                    <CardContent className="pt-4 pb-4">
                       <div className="text-center">
-                        <p className="text-sm text-gray-600">Estoque Atual</p>
-                        <p className="text-2xl font-bold text-blue-600 mt-2">
-                          {historico[historico.length - 1]?.quantidade_nova || 0}
+                        <p className="text-xs text-gray-500">Estoque Atual</p>
+                        <p className="text-xl font-bold text-blue-600 mt-1">
+                          {estoqueAtual.reduce((sum, e) => sum + e.quantidade, 0)}
                         </p>
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card>
-                    <CardContent className="pt-6">
+                    <CardContent className="pt-4 pb-4">
                       <div className="text-center">
-                        <p className="text-sm text-gray-600">Total de Mudanças</p>
-                        <p className="text-2xl font-bold text-purple-600 mt-2">
-                          {historico.length}
+                        <p className="text-xs text-gray-500">Total de Mudanças</p>
+                        <p className="text-xl font-bold text-purple-600 mt-1">
+                          {filteredHistorico.length}
                         </p>
                       </div>
                     </CardContent>
@@ -271,79 +455,86 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
                 </div>
               )}
 
+              {filteredHistorico.length > 0 && isMultiLine && (
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${locais.length}, 1fr)` }}>
+                  {locais.map((l) => {
+                    const currentStock = estoqueAtual.find((e) => e.estoque_id === l.id)
+                    return (
+                      <Card key={l.id}>
+                        <CardContent className="pt-4 pb-4">
+                          <div className="text-center">
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
+                              <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: LINE_COLORS[l.nome], display: 'inline-block' }} />
+                              <p className="text-xs text-gray-500">{l.nome}</p>
+                            </div>
+                            <p className="text-xl font-bold mt-1" style={{ color: LINE_COLORS[l.nome] }}>
+                              {currentStock?.quantidade ?? 0}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              )}
+
               {/* Gráfico de Evolução */}
-              {historico.length > 0 ? (
+              {chartData.length > 0 ? (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Evolução do Estoque</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Evolução do Estoque</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
+                    <ResponsiveContainer width="100%" height={350}>
                       <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                         <XAxis
                           dataKey="name"
                           stroke="#6b7280"
-                          style={{ fontSize: '12px' }}
+                          style={{ fontSize: '11px' }}
                           angle={-45}
                           textAnchor="end"
-                          height={80}
+                          height={70}
                         />
                         <YAxis
                           stroke="#6b7280"
-                          style={{ fontSize: '12px' }}
-                          label={{ value: 'Quantidade', angle: -90, position: 'insideLeft' }}
+                          style={{ fontSize: '11px' }}
+                          label={{ value: 'Qtd', angle: -90, position: 'insideLeft', style: { fontSize: '12px' } }}
                         />
                         <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            padding: '12px'
-                          }}
-                          formatter={(value: any, name: string, props: any) => {
-                            if (name === 'estoque') {
-                              const mudanca = props.payload.mudanca
-                              const tipo = props.payload.tipo
-                              const operacao_id = props.payload.operacao_id
-                              const motivo = props.payload.motivo
-                              return [
-                                <div key="tooltip" className="space-y-1">
-                                  <div className="font-bold text-blue-600">{value} unidades</div>
-                                  <div className={`text-sm ${mudanca > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {mudanca > 0 ? '+' : ''}{mudanca} ({tipo})
-                                  </div>
-                                  {operacao_id && (
-                                    <div className="text-xs text-blue-600 font-medium">
-                                      🔗 {tipo === 'VENDA' ? 'Venda' : tipo === 'ESTORNO' ? 'Estorno de venda' : 'Operação'} #{operacao_id}
-                                    </div>
-                                  )}
-                                  {motivo && (
-                                    <div className="text-xs text-gray-600 italic">
-                                      💬 {motivo}
-                                    </div>
-                                  )}
-                                  <div className="text-xs text-gray-500 pt-1 border-t">{props.payload.fullDate}</div>
-                                </div>,
-                                ''
-                              ]
-                            }
-                            return [value, name]
-                          }}
-                          labelFormatter={(label) => ''}
+                          content={<CustomTooltip />}
+                          wrapperStyle={{ zIndex: 9999, opacity: 1, visibility: 'visible', pointerEvents: 'none' }}
+                          cursor={{ stroke: '#6b7280', strokeDasharray: '4 4' }}
+                          allowEscapeViewBox={{ x: false, y: false }}
                         />
                         <Legend
-                          wrapperStyle={{ paddingTop: '20px' }}
-                          formatter={() => 'Quantidade em Estoque'}
+                          wrapperStyle={{ paddingTop: '12px' }}
+                          formatter={(value: string) => isMultiLine ? value : 'Quantidade em Estoque'}
                         />
-                        <Line
-                          type="monotone"
-                          dataKey="estoque"
-                          stroke="#3b82f6"
-                          strokeWidth={2}
-                          dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                          activeDot={{ r: 6 }}
-                        />
+                        {isMultiLine ? (
+                          locais.map((l) => (
+                            <Line
+                              key={l.id}
+                              type="monotone"
+                              dataKey={l.nome}
+                              name={l.nome}
+                              stroke={LINE_COLORS[l.nome]}
+                              strokeWidth={2}
+                              dot={{ fill: LINE_COLORS[l.nome], strokeWidth: 2, r: 3 }}
+                              activeDot={{ r: 6 }}
+                              connectNulls
+                            />
+                          ))
+                        ) : (
+                          <Line
+                            type="monotone"
+                            dataKey="estoque"
+                            stroke="#3b82f6"
+                            strokeWidth={2}
+                            dot={{ fill: '#3b82f6', strokeWidth: 2, r: 3 }}
+                            activeDot={{ r: 6 }}
+                          />
+                        )}
                       </LineChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -358,14 +549,43 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose 
           )}
         </CardContent>
 
-        <div className="flex-shrink-0 border-t p-4 bg-gray-50">
+        <div className="flex-shrink-0 border-t p-3 bg-gray-50">
           <div className="flex justify-end">
-            <Button onClick={onClose} variant="outline">
+            <Button onClick={onClose} variant="outline" size="sm">
               Fechar
             </Button>
           </div>
         </div>
       </Card>
+
+      {/* Ajuste Direto Modal */}
+      {showAjusteModal && (
+        <EstoqueAjusteDiretoModal
+          produtoId={produtoId}
+          produtoNome={produtoNome}
+          onClose={() => setShowAjusteModal(false)}
+          onSuccess={handleAjusteSuccess}
+        />
+      )}
     </div>
   )
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+function formatDateShort(dateString: string) {
+  return new Date(dateString).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }

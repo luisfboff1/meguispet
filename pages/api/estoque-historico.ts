@@ -1,25 +1,28 @@
-import type { NextApiResponse } from 'next';
-import { getSupabase } from '@/lib/supabase';
-import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import type { NextApiResponse } from "next";
+import { getSupabase } from "@/lib/supabase";
+import {
+  AuthenticatedRequest,
+  withSupabaseAuth,
+} from "@/lib/supabase-middleware";
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const { method } = req;
   const supabase = req.supabaseClient;
 
   try {
-    if (method === 'GET') {
-      const { produto_id, limit = '100' } = req.query;
+    if (method === "GET") {
+      const { produto_id, estoque_id, limit = "500" } = req.query;
 
       if (!produto_id) {
         return res.status(400).json({
           success: false,
-          message: 'produto_id é obrigatório'
+          message: "produto_id é obrigatório",
         });
       }
 
-      // Buscar histórico completo do produto
-      const { data: historico, error } = await supabase
-        .from('estoques_historico')
+      // Buscar histórico completo do produto (com filtro opcional de local)
+      let query = supabase
+        .from("estoques_historico")
         .select(`
           id,
           produto_id,
@@ -33,36 +36,62 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
           created_at,
           estoque:estoques(nome)
         `)
-        .eq('produto_id', produto_id)
-        .order('created_at', { ascending: true })
+        .eq("produto_id", produto_id);
+
+      if (estoque_id) {
+        query = query.eq("estoque_id", estoque_id);
+      }
+
+      const { data: historico, error } = await query
+        .order("created_at", { ascending: true })
         .limit(parseInt(limit as string, 10));
 
       if (error) throw error;
 
       // Buscar o nome do produto
       const { data: produto } = await supabase
-        .from('produtos')
-        .select('id, nome, preco_custo, preco_venda')
-        .eq('id', produto_id)
+        .from("produtos")
+        .select("id, nome, preco_custo, preco_venda")
+        .eq("id", produto_id)
         .single();
+
+      // Buscar estoque ATUAL real de produtos_estoques (fonte de verdade)
+      let estoqueQuery = supabase
+        .from("produtos_estoques")
+        .select("estoque_id, quantidade, estoque:estoques(id, nome)")
+        .eq("produto_id", produto_id);
+
+      if (estoque_id) {
+        estoqueQuery = estoqueQuery.eq("estoque_id", estoque_id);
+      }
+
+      const { data: estoqueAtual } = await estoqueQuery;
 
       return res.status(200).json({
         success: true,
         data: {
           produto,
           historico: historico || [],
-          total_mudancas: historico?.length || 0
-        }
+          total_mudancas: historico?.length || 0,
+          estoque_atual: (estoqueAtual || []).map((e: any) => ({
+            estoque_id: e.estoque_id,
+            nome: e.estoque?.nome || `Local ${e.estoque_id}`,
+            quantidade: e.quantidade,
+          })),
+        },
       });
     }
 
-    return res.status(405).json({ success: false, message: 'Método não permitido' });
+    return res.status(405).json({
+      success: false,
+      message: "Método não permitido",
+    });
   } catch (error) {
-    console.error('[ESTOQUE_HISTORICO ERROR]', error);
+    console.error("[ESTOQUE_HISTORICO ERROR]", error);
     return res.status(500).json({
       success: false,
-      message: 'Erro ao buscar histórico de estoque',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      message: "Erro ao buscar histórico de estoque",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };

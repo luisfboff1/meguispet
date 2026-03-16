@@ -36,6 +36,7 @@ import type {
 import ProdutoForm from '@/components/forms/ProdutoForm'
 import MovimentacaoForm from '@/components/forms/MovimentacaoForm'
 import EstoqueHistoricoModal from '@/components/modals/EstoqueHistoricoModal'
+import EstoqueAjusteDiretoModal from '@/components/modals/EstoqueAjusteDiretoModal'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { formatLocalDate } from '@/lib/utils'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -120,6 +121,10 @@ export default function ProdutosEstoquePage() {
   const [showHistoricoModal, setShowHistoricoModal] = useState(false)
   const [selectedProdutoHistorico, setSelectedProdutoHistorico] = useState<{ id: number; nome: string } | null>(null)
 
+  // Estado para modal de ajuste direto de estoque
+  const [showAjusteDiretoModal, setShowAjusteDiretoModal] = useState(false)
+  const [selectedProdutoAjuste, setSelectedProdutoAjuste] = useState<{ id: number; nome: string } | null>(null)
+
   // Handlers para produtos
   const handleNovoProduto = () => {
     setEditingProduto(null)
@@ -134,6 +139,16 @@ export default function ProdutosEstoquePage() {
   const handleVerHistoricoProduto = (produtoId: number, produtoNome: string) => {
     setSelectedProdutoHistorico({ id: produtoId, nome: produtoNome })
     setShowHistoricoModal(true)
+  }
+
+  const handleAjustarEstoqueDireto = (produtoId: number, produtoNome: string) => {
+    setSelectedProdutoAjuste({ id: produtoId, nome: produtoNome })
+    setShowAjusteDiretoModal(true)
+  }
+
+  const handleAjusteDiretoSuccess = () => {
+    loadAuditoria()
+    loadData()
   }
 
   // Column definitions for products table
@@ -1278,6 +1293,9 @@ export default function ProdutosEstoquePage() {
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Ações
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1327,6 +1345,17 @@ export default function ProdutosEstoquePage() {
                                 Divergente
                               </span>
                             )}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAjustarEstoqueDireto(item.produto_id, item.produto_nome)}
+                              className="text-xs"
+                            >
+                              <Settings className="h-3.5 w-3.5 mr-1" />
+                              Ajustar
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -1581,6 +1610,19 @@ export default function ProdutosEstoquePage() {
             setShowHistoricoModal(false)
             setSelectedProdutoHistorico(null)
           }}
+          onAjusteSuccess={handleAjusteDiretoSuccess}
+        />
+      )}
+
+      {showAjusteDiretoModal && selectedProdutoAjuste && (
+        <EstoqueAjusteDiretoModal
+          produtoId={selectedProdutoAjuste.id}
+          produtoNome={selectedProdutoAjuste.nome}
+          onClose={() => {
+            setShowAjusteDiretoModal(false)
+            setSelectedProdutoAjuste(null)
+          }}
+          onSuccess={handleAjusteDiretoSuccess}
         />
       )}
     </div>

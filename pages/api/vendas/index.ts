@@ -242,24 +242,18 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 });
             }
 
+            // Validate stock availability (warning-only, does not block sale)
             const validation = await validateStockAvailability(
                 itens as VendaItemInput[],
                 estoque_id,
             );
 
-            if (!validation.valid) {
-                const insufficientMessages = validation.insufficientStock.map(
+            const stockWarnings = !validation.valid
+                ? validation.insufficientStock.map(
                     (item) =>
                         `${item.produto_nome} (disponível: ${item.disponivel}, solicitado: ${item.solicitado})`,
-                );
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "❌ Estoque insuficiente para os seguintes produtos:\n" +
-                        insufficientMessages.join("\n"),
-                    insufficient_stock: validation.insufficientStock,
-                });
-            }
+                )
+                : [];
 
             const descontoValor = desconto || 0;
             const vendaProcessada = await processarVendaComImpostos(
@@ -273,11 +267,17 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             // Auto-assign vendedor_id: if user is a vendedor and none provided, use theirs
             let effectiveVendedorId = vendedor_id || null;
             if (!effectiveVendedorId) {
-                const postAccessProfile = await fetchUserAccessProfile(supabase, {
-                    id: req.user?.id,
-                    email: req.user?.email,
-                });
-                if (postAccessProfile && !postAccessProfile.canViewAllSales && postAccessProfile.vendedorId) {
+                const postAccessProfile = await fetchUserAccessProfile(
+                    supabase,
+                    {
+                        id: req.user?.id,
+                        email: req.user?.email,
+                    },
+                );
+                if (
+                    postAccessProfile && !postAccessProfile.canViewAllSales &&
+                    postAccessProfile.vendedorId
+                ) {
                     effectiveVendedorId = postAccessProfile.vendedorId;
                 }
             }
@@ -488,11 +488,17 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
             return res.status(201).json({
                 success: true,
-                message: algumErroEstoque
+                message: stockWarnings.length > 0
+                    ? "⚠️ Venda criada com sucesso! Atenção: estoque insuficiente para: " +
+                        stockWarnings.join(", ")
+                    : algumErroEstoque
                     ? "⚠️ Venda criada com sucesso, mas houve problemas ao atualizar o estoque de alguns produtos"
                     : "✅ Venda realizada com sucesso! Estoque atualizado.",
                 data: venda,
                 estoque_info: stockResult.adjustments,
+                stock_warnings: stockWarnings.length > 0
+                    ? stockWarnings
+                    : undefined,
             });
         }
 
@@ -513,7 +519,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             if (!accessProfile.canEditAllSales) {
                 return res.status(403).json({
                     success: false,
-                    message: "Você não tem permissão para editar vendas. Apenas administradores e gerentes podem editar vendas.",
+                    message:
+                        "Você não tem permissão para editar vendas. Apenas administradores e gerentes podem editar vendas.",
                 });
             }
 
@@ -790,8 +797,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             if (deleteTransacoesError) {
                 return res.status(500).json({
                     success: false,
-                    message:
-                        "❌ Erro ao deletar transações existentes: " +
+                    message: "❌ Erro ao deletar transações existentes: " +
                         deleteTransacoesError.message,
                     data: data[0],
                 });
@@ -805,8 +811,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             if (deleteParcelasError) {
                 return res.status(500).json({
                     success: false,
-                    message:
-                        "❌ Erro ao deletar parcelas existentes: " +
+                    message: "❌ Erro ao deletar parcelas existentes: " +
                         deleteParcelasError.message,
                     data: data[0],
                 });
@@ -840,8 +845,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 } catch (error) {
                     return res.status(500).json({
                         success: false,
-                        message:
-                            "❌ " +
+                        message: "❌ " +
                             (error instanceof Error
                                 ? error.message
                                 : "Erro ao buscar categoria financeira"),
@@ -874,8 +878,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 if (parcelasError) {
                     return res.status(500).json({
                         success: false,
-                        message:
-                            "❌ Erro ao criar parcelas: " +
+                        message: "❌ Erro ao criar parcelas: " +
                             parcelasError.message,
                         data: data[0],
                     });
@@ -891,25 +894,25 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 }
 
                 const transacoesToInsert = parcelasCreated.map((
-                        parcela: {
-                            id: number;
-                            numero_parcela: number;
-                            valor_parcela: number;
-                            data_vencimento: string;
-                            observacoes?: string | null;
-                        },
-                    ) => ({
-                        tipo: "receita",
-                        valor: parcela.valor_parcela,
-                        descricao:
-                            `Receita Venda ${numero_venda} - Parcela ${parcela.numero_parcela}/${parcelas.length}`,
-                        categoria: "Vendas",
-                        categoria_id,
-                        venda_id: vendaId,
-                        venda_parcela_id: parcela.id,
-                        data_transacao: parcela.data_vencimento,
-                        observacoes: parcela.observacoes || null,
-                    }));
+                    parcela: {
+                        id: number;
+                        numero_parcela: number;
+                        valor_parcela: number;
+                        data_vencimento: string;
+                        observacoes?: string | null;
+                    },
+                ) => ({
+                    tipo: "receita",
+                    valor: parcela.valor_parcela,
+                    descricao:
+                        `Receita Venda ${numero_venda} - Parcela ${parcela.numero_parcela}/${parcelas.length}`,
+                    categoria: "Vendas",
+                    categoria_id,
+                    venda_id: vendaId,
+                    venda_parcela_id: parcela.id,
+                    data_transacao: parcela.data_vencimento,
+                    observacoes: parcela.observacoes || null,
+                }));
 
                 const { error: transacoesError } = await supabase
                     .from("transacoes")
@@ -918,8 +921,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 if (transacoesError) {
                     return res.status(500).json({
                         success: false,
-                        message:
-                            "❌ Erro ao criar transações: " +
+                        message: "❌ Erro ao criar transações: " +
                             transacoesError.message,
                         data: data[0],
                     });
@@ -933,8 +935,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 } catch (error) {
                     return res.status(500).json({
                         success: false,
-                        message:
-                            "❌ " +
+                        message: "❌ " +
                             (error instanceof Error
                                 ? error.message
                                 : "Erro ao buscar categoria financeira"),
@@ -962,8 +963,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
                 if (transacaoError) {
                     return res.status(500).json({
                         success: false,
-                        message:
-                            "❌ Erro ao criar transação: " +
+                        message: "❌ Erro ao criar transação: " +
                             transacaoError.message,
                         data: data[0],
                     });
@@ -996,7 +996,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
             if (!accessProfile.canDeleteAllSales) {
                 return res.status(403).json({
                     success: false,
-                    message: "Você não tem permissão para excluir vendas. Apenas administradores e gerentes podem excluir vendas.",
+                    message:
+                        "Você não tem permissão para excluir vendas. Apenas administradores e gerentes podem excluir vendas.",
                 });
             }
 
