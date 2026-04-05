@@ -56,6 +56,35 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
 
       // Never return the encrypted API key to the frontend
       const { api_key_encrypted, ...safeData } = data;
+
+      // User has a config row but no API key — fall back to global config
+      if (!api_key_encrypted) {
+        const serviceRole = getSupabaseServiceRole();
+        const { data: globalConfig } = await serviceRole
+          .from("agent_configs")
+          .select(
+            "provider, model, temperature, max_tokens, top_p, frequency_penalty, presence_penalty, system_prompt, recursion_limit, skills, mcp_servers, api_key_encrypted",
+          )
+          .not("api_key_encrypted", "is", null)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .single();
+
+        if (globalConfig) {
+          const { api_key_encrypted: _enc, ...globalSafe } = globalConfig;
+          return res.status(200).json({
+            success: true,
+            data: {
+              ...globalSafe,
+              ...safeData,
+              has_api_key: true,
+              api_key_preview: "sk-...configurada (global)",
+              is_global_config: true,
+            },
+          });
+        }
+      }
+
       return res.status(200).json({
         success: true,
         data: {
