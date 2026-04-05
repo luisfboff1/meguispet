@@ -9,7 +9,6 @@ import {
   TrendingDown,
   Eye,
   CreditCard,
-  AlertCircle,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -106,11 +105,6 @@ export function FinanceiroDashboard() {
   const receitaMedia =
     vendasDoMes.length > 0 ? receitaDoMes / vendasDoMes.length : 0
 
-  // Vendas pendentes (status não finalizado)
-  const vendasPendentes = vendas.filter(
-    (v) => v.status && v.status.toLowerCase() !== 'concluida' && v.status.toLowerCase() !== 'finalizada'
-  )
-
   // Calcular trend (comparar com mês anterior)
   const mesAnterior = new Date()
   mesAnterior.setMonth(mesAnterior.getMonth() - 1)
@@ -191,7 +185,7 @@ export function FinanceiroDashboard() {
       </Card>
 
       {/* Métricas Financeiras */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <MetricCard
           title="Receita do Mês"
           value={formatCurrency(receitaDoMes)}
@@ -216,13 +210,6 @@ export function FinanceiroDashboard() {
           icon={TrendingUp}
           color="orange"
           subtitle="Por venda"
-        />
-        <MetricCard
-          title="Vendas Pendentes"
-          value={vendasPendentes.length}
-          icon={AlertCircle}
-          color="red"
-          subtitle="Requer atenção"
         />
       </div>
 
@@ -296,39 +283,7 @@ export function FinanceiroDashboard() {
       </Card>
 
       {/* Vendas Pendentes (se houver) */}
-      {vendasPendentes.length > 0 && (
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="text-red-800 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Vendas Pendentes - Requer Atenção
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {vendasPendentes.slice(0, 5).map((venda) => (
-                <div
-                  key={venda.id}
-                  className="flex items-center justify-between p-3 bg-white border border-red-200 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">Venda #{venda.id}</p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(venda.data_venda).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold">{formatCurrency(venda.valor_final)}</p>
-                    <span className="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                      {venda.status || 'Pendente'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
     </div>
   )
 }

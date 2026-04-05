@@ -203,6 +203,20 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
 
     const metricsArray = Array.from(selectedMetrics)
 
+    const gradientDefs = (
+      <defs>
+        {metricsArray.map((metric) => {
+          const color = metricConfig[metric].color
+          return (
+            <linearGradient key={metric} id={`gradient-${metric}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.85} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.15} />
+            </linearGradient>
+          )
+        })}
+      </defs>
+    )
+
     const renderMetrics = () => {
       return metricsArray.map((metric) => {
         const color = metricConfig[metric].color
@@ -215,9 +229,9 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
               type="monotone"
               dataKey={metric}
               stroke={color}
-              strokeWidth={2}
-              dot={{ fill: color, r: 4 }}
-              activeDot={{ r: 6 }}
+              strokeWidth={2.5}
+              dot={{ fill: color, r: 4, strokeWidth: 2, stroke: 'var(--background)' }}
+              activeDot={{ r: 6, strokeWidth: 2, stroke: 'var(--background)' }}
               yAxisId={yAxisId}
             />
           )
@@ -228,8 +242,10 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
             <Bar
               key={metric}
               dataKey={metric}
-              fill={color}
-              radius={[4, 4, 0, 0]}
+              fill={`url(#gradient-${metric})`}
+              stroke={color}
+              strokeWidth={0}
+              radius={[6, 6, 0, 0]}
               yAxisId={yAxisId}
             />
           )
@@ -241,9 +257,8 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
             type="monotone"
             dataKey={metric}
             stroke={color}
-            fill={color}
-            fillOpacity={0.2}
-            strokeWidth={2}
+            fill={`url(#gradient-${metric})`}
+            strokeWidth={2.5}
             yAxisId={yAxisId}
           />
         )
@@ -252,7 +267,8 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
 
     const commonChildren = (
       <>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+        {gradientDefs}
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
         <XAxis
           dataKey="formattedDate"
           tickLine={false}
