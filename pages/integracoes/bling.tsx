@@ -1186,6 +1186,7 @@ export default function BlingPage() {
                   Carregando...
                 </div>
               ) : status ? (
+                <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                     {status.connected ? (
@@ -1204,13 +1205,15 @@ export default function BlingPage() {
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                     {status.token_valid ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : status.needs_reauth ? (
+                      <XCircle className="h-5 w-5 text-red-500" />
                     ) : (
                       <AlertTriangle className="h-5 w-5 text-yellow-500" />
                     )}
                     <div>
                       <div className="text-sm font-medium">Token</div>
                       <div className="text-xs text-gray-500">
-                        {status.token_valid ? 'Válido' : 'Expirado ou inválido'}
+                        {status.token_valid ? 'Válido' : status.needs_reauth ? 'Re-autorização necessária' : 'Expirado ou inválido'}
                         {status.token_expires_at && (
                           <span className="block">
                             Expira: {formatLocalDate(status.token_expires_at, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
@@ -1234,6 +1237,28 @@ export default function BlingPage() {
                     </div>
                   </div>
                 </div>
+
+                {status.needs_reauth && (
+                  <div className="mt-4 flex flex-col sm:flex-row items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
+                    <XCircle className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="font-medium text-red-700 dark:text-red-400">Re-autorização necessária</div>
+                      <div className="mt-1 text-sm text-red-600 dark:text-red-500">
+                        O token de atualização do Bling expirou (renovação necessária a cada 30 dias). Clique em &quot;Re-autorizar&quot; para reconectar a integração.
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => { window.location.href = '/api/bling/authorize' }}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Re-autorizar
+                    </Button>
+                  </div>
+                )}
+                </>
               ) : (
                 <div className="text-gray-500">Não foi possível obter o status</div>
               )}

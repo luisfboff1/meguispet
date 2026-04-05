@@ -13,6 +13,20 @@ import { getSupabaseServiceRole } from "@/lib/supabase-auth";
 
 const BLING_TOKEN_URL = "https://www.bling.com.br/Api/v3/oauth/token";
 
+/**
+ * Thrown when the refresh token has expired (invalid_grant).
+ * The user must re-authorize via OAuth.
+ */
+export class BlingReauthRequiredError extends Error {
+  constructor(
+    message =
+      "Refresh token expirado. É necessário re-autorizar a integração com o Bling.",
+  ) {
+    super(message);
+    this.name = "BlingReauthRequiredError";
+  }
+}
+
 interface BlingTokenResponse {
   access_token: string;
   token_type: string;
@@ -63,7 +77,9 @@ export async function exchangeCodeForTokens(
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Bling token exchange failed (${response.status}): ${error}`);
+    throw new Error(
+      `Bling token exchange failed (${response.status}): ${error}`,
+    );
   }
 
   return response.json();
@@ -89,7 +105,13 @@ export async function refreshAccessToken(
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Bling token refresh failed (${response.status}): ${error}`);
+    // Detect expired refresh token — user must re-authorize
+    if (response.status === 400 && error.includes("invalid_grant")) {
+      throw new BlingReauthRequiredError();
+    }
+    throw new Error(
+      `Bling token refresh failed (${response.status}): ${error}`,
+    );
   }
 
   return response.json();
@@ -101,7 +123,8 @@ export async function refreshAccessToken(
  */
 export async function saveTokens(tokens: BlingTokenResponse): Promise<void> {
   const supabase = getSupabaseServiceRole();
-  const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + tokens.expires_in * 1000)
+    .toISOString();
 
   // Check if config already exists
   const { data: existing } = await supabase
@@ -122,7 +145,9 @@ export async function saveTokens(tokens: BlingTokenResponse): Promise<void> {
       })
       .eq("id", existing.id);
 
-    if (error) throw new Error(`Failed to update bling_config: ${error.message}`);
+    if (error) {
+      throw new Error(`Failed to update bling_config: ${error.message}`);
+    }
   } else {
     const { error } = await supabase.from("bling_config").insert({
       access_token: tokens.access_token,
@@ -131,7 +156,9 @@ export async function saveTokens(tokens: BlingTokenResponse): Promise<void> {
       is_active: true,
     });
 
-    if (error) throw new Error(`Failed to insert bling_config: ${error.message}`);
+    if (error) {
+      throw new Error(`Failed to insert bling_config: ${error.message}`);
+    }
   }
 }
 
@@ -150,7 +177,9 @@ export async function getValidToken(): Promise<string> {
     .single<BlingConfig>();
 
   if (error || !config) {
-    throw new Error("Bling integration not configured. Please authorize first.");
+    throw new Error(
+      "Bling integration not configured. Please authorize first.",
+    );
   }
 
   // Check if token is still valid (with 5 min buffer)
@@ -178,6 +207,7 @@ export async function getBlingStatus(): Promise<{
   last_sync_vendas?: string;
   last_sync_nfe?: string;
   is_active?: boolean;
+  needs_reauth?: boolean;
 }> {
   const supabase = getSupabaseServiceRole();
 

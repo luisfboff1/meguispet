@@ -1,9 +1,13 @@
 import type { NextApiResponse } from "next";
 import {
-  withSupabaseAuth,
   AuthenticatedRequest,
+  withSupabaseAuth,
 } from "@/lib/supabase-middleware";
-import { getBlingStatus, getValidToken } from "@/lib/bling/bling-auth";
+import {
+  BlingReauthRequiredError,
+  getBlingStatus,
+  getValidToken,
+} from "@/lib/bling/bling-auth";
 
 /**
  * GET /api/bling/status
@@ -37,6 +41,7 @@ const handler = async (
     // Check if we can actually use the token (optionally test API)
     let tokenValid = false;
     let apiReachable = false;
+    let needsReauth = false;
 
     let apiError: string | undefined;
 
@@ -58,13 +63,21 @@ const handler = async (
 
       if (!testResponse.ok) {
         const errorBody = await testResponse.text();
-        apiError = `HTTP ${testResponse.status}: ${errorBody.substring(0, 500)}`;
+        apiError = `HTTP ${testResponse.status}: ${
+          errorBody.substring(0, 500)
+        }`;
         console.error("[Bling Status] API test failed:", apiError);
       }
     } catch (e) {
       // Token refresh failed or API unreachable
       tokenValid = false;
-      apiError = e instanceof Error ? e.message : "Unknown error";
+      if (e instanceof BlingReauthRequiredError) {
+        needsReauth = true;
+        apiError =
+          'Refresh token expirado. Clique em "Re-autorizar" para reconectar ao Bling.';
+      } else {
+        apiError = e instanceof Error ? e.message : "Unknown error";
+      }
       console.error("[Bling Status] Token/API error:", apiError);
     }
 
@@ -86,6 +99,7 @@ const handler = async (
         connected: true,
         token_valid: tokenValid,
         api_reachable: apiReachable,
+        needs_reauth: needsReauth,
         token_expires_at: status.token_expires_at,
         last_sync_vendas: status.last_sync_vendas,
         last_sync_nfe: status.last_sync_nfe,

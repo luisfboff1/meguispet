@@ -1109,6 +1109,7 @@ export interface BlingStatus {
   connected: boolean;
   token_valid?: boolean;
   api_reachable?: boolean;
+  needs_reauth?: boolean;
   token_expires_at?: string;
   last_sync_vendas?: string;
   last_sync_nfe?: string;
