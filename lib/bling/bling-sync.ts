@@ -441,17 +441,15 @@ export async function incrementalSyncVendas(): Promise<SyncResult> {
     .limit(1)
     .single();
 
-  const dataAlteracaoInicial = config?.last_sync_vendas
-    ? new Date(config.last_sync_vendas).toISOString().replace("T", " ")
-      .substring(0, 19)
-    : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().replace("T", " ")
-      .substring(0, 19);
+  const dataInicial = config?.last_sync_vendas
+    ? new Date(config.last_sync_vendas).toISOString().substring(0, 10)
+    : new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
 
   return syncVendasByDateRange(
     "polling",
-    dataAlteracaoInicial,
+    dataInicial,
     undefined,
-    true,
+    false,
   );
 }
 
@@ -553,14 +551,18 @@ export async function syncVendasByDateRange(
     }
   }
 
-  // Update last sync timestamp
-  await supabase
-    .from("bling_config")
-    .update({
-      last_sync_vendas: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("is_active", true);
+  // Only advance watermark for polling syncs that actually synced records.
+  // Advancing on empty results would silently lose all data between the last
+  // successful sync and the current timestamp.
+  if (tipo === "polling" && synced > 0) {
+    await supabase
+      .from("bling_config")
+      .update({
+        last_sync_vendas: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("is_active", true);
+  }
 
   console.log(
     `[Bling Sync] Vendas sync complete: ${synced} synced, ${errors.length} errors`,
@@ -634,14 +636,16 @@ export async function syncNfeByDateRange(
     }
   }
 
-  // Update last sync timestamp
-  await supabase
-    .from("bling_config")
-    .update({
-      last_sync_nfe: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("is_active", true);
+  // Only advance watermark for polling syncs that actually synced records.
+  if (tipo === "polling" && synced > 0) {
+    await supabase
+      .from("bling_config")
+      .update({
+        last_sync_nfe: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("is_active", true);
+  }
 
   console.log(
     `[Bling Sync] NFe sync complete: ${synced} synced, ${errors.length} errors`,

@@ -48,19 +48,20 @@ export function WelcomeCard({
         className
       )}
     >
-      <CardContent className="pt-6 pb-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">
-            Olá, {name}! 👋
-          </h1>
-          <p className="text-white/90 text-sm">
-            {displayMessage}
-          </p>
-          <div className="mt-2">
-            <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
-              {role}
-            </span>
+      <CardContent className="py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xl">👋</span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold leading-tight truncate">
+                Olá, {name}!
+              </p>
+              <p className="text-white/75 text-xs truncate">{displayMessage}</p>
+            </div>
           </div>
+          <span className="flex-shrink-0 px-2.5 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
+            {role}
+          </span>
         </div>
       </CardContent>
     </Card>

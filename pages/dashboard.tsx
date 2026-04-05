@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import { dashboardService, produtosService, clientesService, movimentacoesService, vendasService } from '@/services/api'
 import TopProductsTable from '@/components/tables/TopProductsTable'
-import { cn } from '@/lib/utils'
 import { usePermissions } from '@/hooks/usePermissions'
 
 // 🆕 DASHBOARDS PERSONALIZADOS POR ROLE
@@ -312,86 +311,26 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Visão geral do seu negócio</p>
+          <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-500">Visão geral do seu negócio</p>
         </div>
       </div>
 
-      {/* Quick Actions - Botões de Acesso Rápido */}
-      <AnimatedCard>
-        <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Button
-              className="bg-meguispet-primary hover:bg-meguispet-primary/90 h-20 flex-col"
-              onClick={handleNovaVenda}
-            >
-              <ShoppingCart className="h-6 w-6 mb-2" />
-              <span className="text-sm">Nova Venda</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleNovoProduto}
-              className="h-20 flex-col"
-            >
-              <Package className="h-6 w-6 mb-2" />
-              <span className="text-sm">Cadastrar Produto</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleNovoCliente}
-              className="h-20 flex-col"
-            >
-              <Users className="h-6 w-6 mb-2" />
-              <span className="text-sm">Novo Cliente</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleNovaMovimentacao}
-              className="h-20 flex-col"
-            >
-              <Package2 className="h-6 w-6 mb-2" />
-              <span className="text-sm">Nova Movimentação</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleVerRelatorios}
-              className="h-20 flex-col"
-            >
-              <Eye className="h-6 w-6 mb-2" />
-              <span className="text-sm">Ver Relatórios</span>
-            </Button>
-          </div>
-        </CardContent>
-      </AnimatedCard>
-
-      {/* Customizable Chart - Full Width */}
-      <DashboardChart 
-        data={vendasPeriodo} 
-        loading={loading || chartLoading}
-        selectedPeriod={selectedPeriod}
-        onPeriodChange={handlePeriodChange}
-      />
-
-      {/* Top Products Table - Full Width */}
-      <TopProductsTable data={topProducts} loading={loading} />
-
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      {/* Metrics Grid - BIG NUMBERS first */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
           // Loading skeleton
           Array.from({ length: 4 }).map((_, index) => (
             <Card key={index} className="animate-pulse">
-              <CardHeader className="space-y-0 pb-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="pt-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 bg-gray-200 rounded-xl"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
                 <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/3"></div>
               </CardContent>
@@ -400,33 +339,38 @@ export default function DashboardPage() {
         ) : metrics.length > 0 ? (
           metrics.map((metric, index) => {
             const Icon = metric.icon
+            const iconColors = [
+              'bg-blue-100 text-blue-600',
+              'bg-green-100 text-green-600',
+              'bg-purple-100 text-purple-600',
+              'bg-orange-100 text-orange-600',
+            ]
+            const colorClass = iconColors[index % iconColors.length]
             return (
               <AnimatedCard key={index}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 truncate pr-2">
-                    {metric.title}
-                  </CardTitle>
-                  <Icon className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 break-words">
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`flex items-center justify-center h-10 w-10 rounded-xl flex-shrink-0 ${colorClass}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500 truncate">{metric.title}</p>
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1 break-words">
                     {metric.value}
                   </div>
-                  <div className="flex items-center text-xs">
+                  <div className="flex items-center text-xs gap-1">
                     {metric.changeType === 'positive' ? (
-                      <TrendingUp className="mr-1 h-3 w-3 text-green-600 flex-shrink-0" />
+                      <>
+                        <TrendingUp className="h-3 w-3 text-green-600 flex-shrink-0" />
+                        <span className="text-green-600 font-medium">{metric.change}</span>
+                      </>
                     ) : (
-                      <TrendingDown className="mr-1 h-3 w-3 text-red-600 flex-shrink-0" />
+                      <>
+                        <TrendingDown className="h-3 w-3 text-red-600 flex-shrink-0" />
+                        <span className="text-red-600 font-medium">{metric.change}</span>
+                      </>
                     )}
-                    <span className={cn(
-                      'whitespace-nowrap',
-                      metric.changeType === 'positive'
-                        ? 'text-green-600'
-                        : 'text-red-600'
-                    )}>
-                      {metric.change}
-                    </span>
-                    <span className="text-gray-500 ml-1 truncate">vs. ontem</span>
+                    <span className="text-gray-400">vs. ontem</span>
                   </div>
                 </CardContent>
               </AnimatedCard>
@@ -447,6 +391,67 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Chart - Bar by default */}
+      <DashboardChart 
+        data={vendasPeriodo} 
+        loading={loading || chartLoading}
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={handlePeriodChange}
+      />
+
+      {/* Quick Actions */}
+      <AnimatedCard>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Ações Rápidas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+            <Button
+              className="bg-meguispet-primary hover:bg-meguispet-primary/90 h-16 flex-col gap-1"
+              onClick={handleNovaVenda}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              <span className="text-xs">Nova Venda</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleNovoProduto}
+              className="h-16 flex-col gap-1"
+            >
+              <Package className="h-5 w-5" />
+              <span className="text-xs">Cadastrar Produto</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleNovoCliente}
+              className="h-16 flex-col gap-1"
+            >
+              <Users className="h-5 w-5" />
+              <span className="text-xs">Novo Cliente</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleNovaMovimentacao}
+              className="h-16 flex-col gap-1"
+            >
+              <Package2 className="h-5 w-5" />
+              <span className="text-xs">Nova Movimentação</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleVerRelatorios}
+              className="h-16 flex-col gap-1"
+            >
+              <Eye className="h-5 w-5" />
+              <span className="text-xs">Ver Relatórios</span>
+            </Button>
+          </div>
+        </CardContent>
+      </AnimatedCard>
+
+      {/* Top Products Table - Full Width */}
+      <TopProductsTable data={topProducts} loading={loading} />
     </div>
   )
 }

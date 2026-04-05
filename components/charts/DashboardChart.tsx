@@ -57,7 +57,7 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
   const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
     new Set<MetricKey>(['receita', 'vendas'])
   )
-  const [chartType, setChartType] = useState<ChartType>('area')
+  const [chartType, setChartType] = useState<ChartType>('bar')
   const [displayMode, setDisplayMode] = useState<DisplayMode>('total')
   const [showControls, setShowControls] = useState(false)
   const [isMobile, setIsMobile] = useState(false)

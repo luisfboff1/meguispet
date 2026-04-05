@@ -250,92 +250,24 @@ export function AdminDashboard() {
   }, [close, loadDashboardData, open, updateModalLoading])
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Card */}
+    <div className="space-y-5">
+      {/* Welcome Card - compact */}
       <WelcomeCard
         name={userName || 'Administrador'}
         role="Administrador"
         message="Bem-vindo ao painel administrativo completo"
       />
 
-      {/* Quick Actions */}
-      <AnimatedCard>
-        <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            <Button
-              className="bg-meguispet-primary hover:bg-meguispet-primary/90 h-20 flex-col"
-              onClick={showVendaModal}
-            >
-              <ShoppingCart className="h-6 w-6 mb-2" />
-              <span className="text-sm">Nova Venda</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={showProdutoModal}
-              className="h-20 flex-col"
-            >
-              <Package className="h-6 w-6 mb-2" />
-              <span className="text-sm">Novo Produto</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={showClienteModal}
-              className="h-20 flex-col"
-            >
-              <Users className="h-6 w-6 mb-2" />
-              <span className="text-sm">Novo Cliente</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={showMovimentacaoModal}
-              className="h-20 flex-col"
-            >
-              <Package2 className="h-6 w-6 mb-2" />
-              <span className="text-sm">Movimentação</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push('/vendedores')}
-              className="h-20 flex-col"
-            >
-              <UserCheck className="h-6 w-6 mb-2" />
-              <span className="text-sm">Vendedores</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push('/usuarios')}
-              className="h-20 flex-col"
-            >
-              <Settings className="h-6 w-6 mb-2" />
-              <span className="text-sm">Usuários</span>
-            </Button>
-          </div>
-        </CardContent>
-      </AnimatedCard>
-
-      {/* Chart */}
-      <DashboardChart
-        data={vendasPeriodo}
-        loading={loading || chartLoading}
-        selectedPeriod={selectedPeriod}
-        onPeriodChange={handlePeriodChange}
-      />
-
-      {/* Top Products */}
-      <TopProductsTable data={topProducts} loading={loading} />
-
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      {/* Metrics Grid - BIG NUMBERS first */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, index) => (
             <Card key={index} className="animate-pulse">
-              <CardHeader className="space-y-0 pb-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="pt-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 bg-gray-200 rounded-xl"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
                 <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/3"></div>
               </CardContent>
@@ -344,27 +276,108 @@ export function AdminDashboard() {
         ) : (
           metrics.map((metric, index) => {
             const Icon = metric.icon
+            const iconColors = [
+              'bg-blue-100 text-blue-600',
+              'bg-green-100 text-green-600',
+              'bg-purple-100 text-purple-600',
+              'bg-orange-100 text-orange-600',
+            ]
+            const colorClass = iconColors[index % iconColors.length]
             return (
               <AnimatedCard key={index}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 truncate pr-2">
-                    {metric.title}
-                  </CardTitle>
-                  <Icon className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 break-words">
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`flex items-center justify-center h-10 w-10 rounded-xl flex-shrink-0 ${colorClass}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500 truncate">{metric.title}</p>
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1 break-words">
                     {metric.value}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {metric.change} vs. ontem
-                  </p>
+                  <div className="flex items-center text-xs gap-1">
+                    {metric.changeType === 'positive' ? (
+                      <span className="text-green-600 font-medium">{metric.change}</span>
+                    ) : (
+                      <span className="text-red-600 font-medium">{metric.change}</span>
+                    )}
+                    <span className="text-gray-400">vs. ontem</span>
+                  </div>
                 </CardContent>
               </AnimatedCard>
             )
           })
         )}
       </div>
+
+      {/* Chart - Bar by default */}
+      <DashboardChart
+        data={vendasPeriodo}
+        loading={loading || chartLoading}
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={handlePeriodChange}
+      />
+
+      {/* Quick Actions */}
+      <AnimatedCard>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Ações Rápidas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            <Button
+              className="bg-meguispet-primary hover:bg-meguispet-primary/90 h-16 flex-col gap-1"
+              onClick={showVendaModal}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              <span className="text-xs">Nova Venda</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={showProdutoModal}
+              className="h-16 flex-col gap-1"
+            >
+              <Package className="h-5 w-5" />
+              <span className="text-xs">Novo Produto</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={showClienteModal}
+              className="h-16 flex-col gap-1"
+            >
+              <Users className="h-5 w-5" />
+              <span className="text-xs">Novo Cliente</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={showMovimentacaoModal}
+              className="h-16 flex-col gap-1"
+            >
+              <Package2 className="h-5 w-5" />
+              <span className="text-xs">Movimentação</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/vendedores')}
+              className="h-16 flex-col gap-1"
+            >
+              <UserCheck className="h-5 w-5" />
+              <span className="text-xs">Vendedores</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/usuarios')}
+              className="h-16 flex-col gap-1"
+            >
+              <Settings className="h-5 w-5" />
+              <span className="text-xs">Usuários</span>
+            </Button>
+          </div>
+        </CardContent>
+      </AnimatedCard>
+
+      {/* Top Products */}
+      <TopProductsTable data={topProducts} loading={loading} />
     </div>
   )
 }
