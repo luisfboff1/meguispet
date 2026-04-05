@@ -1,6 +1,9 @@
-import type { NextApiResponse } from 'next';
-import { getSupabase } from '@/lib/supabase';
-import { withSupabaseAuth, AuthenticatedRequest } from '@/lib/supabase-middleware';
+import type { NextApiResponse } from "next";
+import { getSupabase } from "@/lib/supabase";
+import {
+  AuthenticatedRequest,
+  withSupabaseAuth,
+} from "@/lib/supabase-middleware";
 
 // Simple in-memory cache (5 minutes TTL)
 let metricsCache: { data: unknown; timestamp: number } | null = null;
@@ -14,7 +17,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   }
 
   // Use authenticated Supabase client for RLS
-    const supabase = req.supabaseClient;
+  const supabase = req.supabaseClient;
 
   try {
     const firstDayOfMonth = new Date(new Date().setDate(1)).toISOString();
@@ -28,64 +31,86 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       { count: totalClientes },
       { count: totalProdutos },
       { count: produtosBaixoEstoque },
-      { count: vendasPendentes }
     ] = await Promise.all([
-      supabase.from('vendas').select('*', { count: 'exact', head: true }).neq('status', 'cancelado'),
-      supabase.from('vendas').select('*', { count: 'exact', head: true }).gte('data_venda', firstDayOfMonth).neq('status', 'cancelado'),
-      supabase.from('vendas').select('valor_final, total_ipi, total_st, total_produtos_liquido').eq('status', 'pago'),
-      supabase.from('vendas').select('valor_final, total_ipi, total_st, total_produtos_liquido').eq('status', 'pago').gte('data_venda', firstDayOfMonth),
-      supabase.from('clientes_fornecedores').select('*', { count: 'exact', head: true }).eq('ativo', true),
-      supabase.from('produtos').select('*', { count: 'exact', head: true }).eq('ativo', true),
-      supabase.from('produtos').select('*', { count: 'exact', head: true }).filter('estoque', 'lte', 'estoque_minimo').eq('ativo', true),
-      supabase.from('vendas').select('*', { count: 'exact', head: true }).eq('status', 'pendente')
+      supabase.from("vendas").select("*", { count: "exact", head: true }).neq(
+        "status",
+        "cancelado",
+      ),
+      supabase.from("vendas").select("*", { count: "exact", head: true }).gte(
+        "data_venda",
+        firstDayOfMonth,
+      ).neq("status", "cancelado"),
+      supabase.from("vendas").select(
+        "valor_final, total_ipi, total_st, total_produtos_liquido",
+      ).eq("status", "pago"),
+      supabase.from("vendas").select(
+        "valor_final, total_ipi, total_st, total_produtos_liquido",
+      ).eq("status", "pago").gte("data_venda", firstDayOfMonth),
+      supabase.from("clientes_fornecedores").select("*", {
+        count: "exact",
+        head: true,
+      }).eq("ativo", true),
+      supabase.from("produtos").select("*", { count: "exact", head: true }).eq(
+        "ativo",
+        true,
+      ),
+      supabase.from("produtos").select("*", { count: "exact", head: true })
+        .filter("estoque", "lte", "estoque_minimo").eq("ativo", true),
     ]);
 
     // Receita Total = Faturamento SEM impostos (consistente com relatórios)
     const receitaTotalValue = receitaTotal?.reduce((sum, v) => {
-      const receita = v.total_produtos_liquido || (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0));
+      const receita = v.total_produtos_liquido ||
+        (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0));
       return sum + (parseFloat(String(receita)) || 0);
     }, 0) || 0;
 
     const receitaMesValue = receitaMes?.reduce((sum, v) => {
-      const receita = v.total_produtos_liquido || (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0));
+      const receita = v.total_produtos_liquido ||
+        (v.valor_final - (v.total_ipi || 0) - (v.total_st || 0));
       return sum + (parseFloat(String(receita)) || 0);
     }, 0) || 0;
 
     const metrics = [
       {
-        title: 'Vendas Total',
+        title: "Vendas Total",
         value: totalVendas || 0,
         change: `${vendasMes || 0} este mês`,
-        changeType: 'positive' as const,
-        icon: 'TrendingUp',
+        changeType: "positive" as const,
+        icon: "TrendingUp",
       },
       {
-        title: 'Receita Total',
-        value: `R$ ${receitaTotalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        change: `R$ ${receitaMesValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} este mês`,
-        changeType: 'positive' as const,
-        icon: 'DollarSign',
+        title: "Receita Total",
+        value: `R$ ${
+          receitaTotalValue.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+        }`,
+        change: `R$ ${
+          receitaMesValue.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+        } este mês`,
+        changeType: "positive" as const,
+        icon: "DollarSign",
       },
       {
-        title: 'Total de Clientes',
+        title: "Total de Clientes",
         value: totalClientes || 0,
-        change: 'Ativos',
-        changeType: 'positive' as const,
-        icon: 'Users',
+        change: "Ativos",
+        changeType: "positive" as const,
+        icon: "Users",
       },
       {
-        title: 'Total de Produtos',
+        title: "Total de Produtos",
         value: totalProdutos || 0,
         change: `${produtosBaixoEstoque || 0} com estoque baixo`,
-        changeType: produtosBaixoEstoque && produtosBaixoEstoque > 0 ? 'negative' as const : 'positive' as const,
-        icon: 'Package',
-      },
-      {
-        title: 'Vendas Pendentes',
-        value: vendasPendentes || 0,
-        change: 'Aguardando',
-        changeType: vendasPendentes && vendasPendentes > 0 ? 'negative' as const : 'positive' as const,
-        icon: 'AlertCircle',
+        changeType: produtosBaixoEstoque && produtosBaixoEstoque > 0
+          ? "negative" as const
+          : "positive" as const,
+        icon: "Package",
       },
     ];
 
@@ -101,8 +126,8 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      message: "Erro interno do servidor",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };

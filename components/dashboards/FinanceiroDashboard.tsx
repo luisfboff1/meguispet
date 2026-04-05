@@ -282,8 +282,6 @@ export function FinanceiroDashboard() {
         </CardContent>
       </Card>
 
-      {/* Vendas Pendentes (se houver) */}
-
     </div>
   )
 }
