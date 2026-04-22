@@ -42,6 +42,71 @@ if (process.env.NODE_ENV === 'development') {
 
 // 📊 GERAÇÃO DE RELATÓRIOS
 
+type RawSavedReport = {
+  id: number
+  usuario_id?: number
+  tipo: ReportType
+  nome: string
+  configuracao: ReportConfiguration
+  periodo_inicio: string
+  periodo_fim: string
+  dados?: unknown
+  formato?: ReportFormat
+  arquivo_url?: string
+  status: SavedReport['status']
+  created_at: string
+  updated_at: string
+}
+
+type RawSavedReportsListResponse = {
+  success: boolean
+  data?: RawSavedReport[]
+  pagination?: {
+    page: number
+    limit: number
+    total: number
+    totalPages?: number
+    pages?: number
+  }
+}
+
+const isPreviewEnvelope = (value: unknown): value is ReportPreviewData => {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    'dados' in value &&
+    'totalRegistros' in value
+  )
+}
+
+const normalizePreviewData = (value: unknown): ReportPreviewData => {
+  if (isPreviewEnvelope(value)) {
+    return value
+  }
+
+  return {
+    resumo: {},
+    dados: value,
+    totalRegistros: Array.isArray(value) ? value.length : 0,
+  }
+}
+
+const normalizeSavedReport = (report: RawSavedReport): SavedReport => ({
+  id: report.id,
+  usuarioId: report.usuario_id || 0,
+  tipo: report.tipo,
+  nome: report.nome,
+  configuracao: report.configuracao,
+  periodoInicio: report.periodo_inicio,
+  periodoFim: report.periodo_fim,
+  dados: report.dados,
+  formato: report.formato,
+  arquivoUrl: report.arquivo_url,
+  status: report.status,
+  createdAt: report.created_at,
+  updatedAt: report.updated_at,
+})
+
 export const reportsService = {
   // Preview de dados antes de gerar relatório completo
   preview: async (
@@ -57,7 +122,7 @@ export const reportsService = {
       throw new Error(response.data.message || 'Erro ao gerar preview do relatório')
     }
 
-    return response.data.data
+    return normalizePreviewData(response.data.data)
   },
 
   // Gerar relatório completo
@@ -65,7 +130,8 @@ export const reportsService = {
     tipo: ReportType,
     config: ReportConfiguration,
     formato: ReportFormat = 'web',
-    salvarRelatorio = false
+    salvarRelatorio = false,
+    nome?: string
   ): Promise<ReportGenerateResponse> => {
     const response = await api.post<ReportGenerateResponse>(
       `/${tipo}/generate`,
@@ -73,6 +139,7 @@ export const reportsService = {
         ...config,
         formato,
         salvar: salvarRelatorio,
+        nome,
       }
     )
 
@@ -123,11 +190,22 @@ export const reportsService = {
         params.append('tipo', tipo)
       }
 
-      const response = await api.get<PaginatedResponse<SavedReport>>(
+      const response = await api.get<RawSavedReportsListResponse>(
         `/saved?${params.toString()}`
       )
 
-      return response.data
+      const raw = response.data
+
+      return {
+        success: raw.success,
+        data: (raw.data || []).map(normalizeSavedReport),
+        pagination: {
+          page: raw.pagination?.page || page,
+          limit: raw.pagination?.limit || limit,
+          total: raw.pagination?.total || 0,
+          pages: raw.pagination?.pages || raw.pagination?.totalPages || 0,
+        },
+      }
     },
 
     // Buscar relatório salvo por ID
@@ -138,7 +216,7 @@ export const reportsService = {
         throw new Error(response.data.message || 'Relatório não encontrado')
       }
 
-      return response.data.data
+      return normalizeSavedReport(response.data.data as unknown as RawSavedReport)
     },
 
     // Deletar relatório salvo
@@ -221,7 +299,7 @@ export const reportsService = {
   produtos: {
     getData: async (config: ReportConfiguration): Promise<ProdutosReportData> => {
       const preview = await reportsService.preview('produtos', config)
-      return preview.dados as unknown as ProdutosReportData
+      return preview.dados as ProdutosReportData
     },
   },
 
@@ -235,7 +313,7 @@ export const reportsService = {
   financeiro: {
     getData: async (config: ReportConfiguration): Promise<FinanceiroReportData> => {
       const preview = await reportsService.preview('financeiro', config)
-      return preview.dados as unknown as FinanceiroReportData
+      return preview.dados as FinanceiroReportData
     },
   },
 }

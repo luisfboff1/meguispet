@@ -25,21 +25,24 @@ export default function ProdutosReportPage() {
       setCurrentConfig(config)
 
       if (formato === 'web') {
-        // Gerar para visualização web
-        const response = await reportsService.produtos.getData(config)
-        setReportData(response)
+        const response = await reportsService.generate(
+          'produtos',
+          config,
+          'web',
+          true,
+          `Relatório de Produtos - ${new Date().toLocaleDateString('pt-BR')}`
+        )
+
+        setReportData(response.preview?.dados as unknown as ProdutosReportData)
         setStep('viewing')
 
         toast({
           title: 'Relatório gerado',
-          description: 'Relatório de produtos gerado com sucesso',
+          description: 'Relatório de produtos gerado e salvo no histórico',
           variant: 'default'
         })
       } else {
-        // Exportar diretamente (PDF, Excel, CSV)
         const blob = await reportsService.export('produtos', config, formato)
-
-        // Download do arquivo
         const filename = getExportFilename(
           'produtos',
           formato,
@@ -68,14 +71,12 @@ export default function ProdutosReportPage() {
 
   const handleExport = async (formato: ReportFormat) => {
     if (!currentConfig) return
-    if (formato === 'web') return // Web format is handled by handleGenerate
+    if (formato === 'web') return
 
     try {
       setIsLoading(true)
 
       const blob = await reportsService.export('produtos', currentConfig, formato)
-
-      // Download do arquivo
       const filename = getExportFilename(
         'produtos',
         formato,
@@ -112,7 +113,6 @@ export default function ProdutosReportPage() {
 
   return (
     <div className="container mx-auto py-6 px-4">
-      {/* Header */}
       <div className="mb-6">
         <Button
           variant="ghost"
@@ -134,7 +134,6 @@ export default function ProdutosReportPage() {
         </p>
       </div>
 
-      {/* Content */}
       {step === 'config' && (
         <ReportConfigWizard
           tipo="produtos"
@@ -151,7 +150,6 @@ export default function ProdutosReportPage() {
         />
       )}
 
-      {/* Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">

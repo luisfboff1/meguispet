@@ -19,19 +19,24 @@ export default function FinanceiroReportPage() {
   const handleGenerate = async (config: ReportConfiguration, formato: ReportFormat) => {
     try {
       if (formato === 'web') {
-        // Visualizar no navegador
-        const data = await reportsService.financeiro.getData(config)
-        setReportData(data)
+        const response = await reportsService.generate(
+          'financeiro',
+          config,
+          'web',
+          true,
+          `Relatório Financeiro - ${new Date().toLocaleDateString('pt-BR')}`
+        )
+
+        setReportData(response.preview?.dados as unknown as FinanceiroReportData)
         setReportConfig(config)
         setStep('viewing')
 
         toast({
           title: 'Relatório gerado!',
-          description: 'Relatório financeiro gerado com sucesso',
+          description: 'Relatório financeiro gerado e salvo no histórico',
           variant: 'default',
         })
       } else {
-        // Exportar arquivo
         const blob = await reportsService.export('financeiro', config, formato)
         const filename = getExportFilename(
           'financeiro',
@@ -98,7 +103,6 @@ export default function FinanceiroReportPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -116,7 +120,6 @@ export default function FinanceiroReportPage() {
         </div>
       </div>
 
-      {/* Content */}
       {step === 'config' ? (
         <Card className="p-6">
           <ReportConfigWizard

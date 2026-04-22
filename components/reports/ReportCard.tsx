@@ -106,7 +106,10 @@ export const ReportCard = ({
           size="sm"
           className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
           disabled={disabled}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (!disabled) onClick()
+          }}
         >
           Configurar Relatório
         </Button>

@@ -11,34 +11,42 @@ import { useToast } from '@/components/ui/use-toast'
 export default function VendasReportPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const foco = router.query.foco === 'vendedores' ? 'vendedores' : 'vendas'
+  const pageTitle = foco === 'vendedores' ? 'Relatório de Vendedores' : 'Relatório de Vendas'
+  const filePrefix = foco === 'vendedores' ? 'vendedores' : 'vendas'
+  const savedName = foco === 'vendedores'
+    ? `Relatório de Vendedores - ${new Date().toLocaleDateString('pt-BR')}`
+    : `Relatório de Vendas - ${new Date().toLocaleDateString('pt-BR')}`
 
   const [step, setStep] = useState<'config' | 'viewing'>('config')
   const [reportData, setReportData] = useState<VendasReportData | null>(null)
   const [reportConfig, setReportConfig] = useState<ReportConfiguration | null>(null)
 
+  const getFilename = (formato: ReportFormat, config: ReportConfiguration) => {
+    return getExportFilename(
+      'vendas',
+      formato,
+      config.filtros.periodo.startDate,
+      config.filtros.periodo.endDate
+    ).replace('relatorio_vendas_', `relatorio_${filePrefix}_`)
+  }
+
   const handleGenerate = async (config: ReportConfiguration, formato: ReportFormat) => {
     try {
       if (formato === 'web') {
-        // Visualizar no navegador
-        const data = await reportsService.vendas.getData(config)
-        setReportData(data)
+        const response = await reportsService.generate('vendas', config, 'web', true, savedName)
+        setReportData(response.preview?.dados as unknown as VendasReportData)
         setReportConfig(config)
         setStep('viewing')
 
         toast({
           title: 'Relatório gerado!',
-          description: 'Relatório gerado com sucesso',
+          description: 'Relatório gerado e salvo no histórico',
           variant: 'default',
         })
       } else {
-        // Exportar arquivo
         const blob = await reportsService.export('vendas', config, formato)
-        const filename = getExportFilename(
-          'vendas',
-          formato,
-          config.filtros.periodo.startDate,
-          config.filtros.periodo.endDate
-        )
+        const filename = getFilename(formato, config)
         downloadReport(blob, filename)
 
         toast({
@@ -64,12 +72,7 @@ export default function VendasReportPage() {
 
     try {
       const blob = await reportsService.export('vendas', reportConfig, formato as 'pdf' | 'excel' | 'csv', chartImages)
-      const filename = getExportFilename(
-        'vendas',
-        formato,
-        reportConfig.filtros.periodo.startDate,
-        reportConfig.filtros.periodo.endDate
-      )
+      const filename = getFilename(formato, reportConfig)
       downloadReport(blob, filename)
 
       toast({
@@ -97,7 +100,6 @@ export default function VendasReportPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -108,14 +110,17 @@ export default function VendasReportPage() {
           Voltar
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Relatório de Vendas</h1>
+          <h1 className="text-2xl font-bold">{pageTitle}</h1>
           <p className="text-muted-foreground">
-            {step === 'config' ? 'Configure os parâmetros do relatório' : 'Visualização do relatório'}
+            {step === 'config'
+              ? foco === 'vendedores'
+                ? 'Configure o período e os filtros para analisar a equipe de vendas'
+                : 'Configure os parâmetros do relatório'
+              : 'Visualização do relatório'}
           </p>
         </div>
       </div>
 
-      {/* Content */}
       {step === 'config' ? (
         <Card className="p-6">
           <ReportConfigWizard

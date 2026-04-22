@@ -125,7 +125,7 @@ export interface ReportPreviewData {
   resumo: {
     [key: string]: number | string
   }
-  dados: unknown[]
+  dados: unknown
   totalRegistros: number
 }
 

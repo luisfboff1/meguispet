@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,60 +12,162 @@ import {
   Package,
   Users,
   DollarSign,
+  Trash2,
 } from 'lucide-react'
 import { DataTable, SortableHeader } from '@/components/ui/data-table'
 import { ReportCard } from '@/components/reports/ReportCard'
-import type { ReportType } from '@/types/reports'
+import { reportsService, downloadReport, getExportFilename } from '@/services/reportsService'
+import type { ReportFormat, ReportType, SavedReport } from '@/types/reports'
 import { formatLocalDate } from '@/lib/utils'
+import { useToast } from '@/components/ui/use-toast'
 
-interface ReportData {
-  id: string
-  tipo: string
+interface ReportCardEntry {
+  key: string
+  tipo: ReportType
+  title: string
+  description: string
+  href: string
+  icon: React.ReactNode
+}
+
+interface ReportHistoryRow {
+  id: number
+  tipo: ReportType
   nome: string
   periodo: string
   dataGeracao: string
-  status: 'disponivel' | 'processando' | 'erro'
+  status: SavedReport['status']
+  configuracao: SavedReport['configuracao']
 }
 
 export default function RelatoriosPage() {
   const router = useRouter()
+  const { toast } = useToast()
+  const [recentReports, setRecentReports] = useState<ReportHistoryRow[]>([])
+  const [loadingReports, setLoadingReports] = useState(true)
+  const [busyId, setBusyId] = useState<number | null>(null)
 
-  const handleReportConfig = (tipo: ReportType) => {
-    // Redirecionar para página específica do relatório
-    router.push(`/relatorios/${tipo}`)
-  }
-
-  const reportTypes = [
+  const reportTypes: ReportCardEntry[] = [
     {
-      id: 'vendas' as ReportType,
+      key: 'vendas',
+      tipo: 'vendas',
       title: 'Relatório de Vendas',
       description: 'Análise completa de vendas, faturamento, impostos e margem de lucro',
+      href: '/relatorios/vendas',
       icon: <ShoppingCart className="h-6 w-6" />,
     },
     {
-      id: 'produtos' as ReportType,
-      title: 'Relatório de Produtos',
-      description: 'Produtos mais vendidos, rotatividade de estoque e análise ABC',
-      icon: <Package className="h-6 w-6" />,
-    },
-    {
-      id: 'clientes' as ReportType,
-      title: 'Relatório de Clientes',
-      description: 'Análise de clientes, novos cadastros e análise RFM',
+      key: 'vendedores',
+      tipo: 'vendas',
+      title: 'Relatório de Vendedores',
+      description: 'Visão da equipe comercial com ranking, gráfico e detalhamento por vendedor',
+      href: '/relatorios/vendas?foco=vendedores',
       icon: <Users className="h-6 w-6" />,
     },
     {
-      id: 'financeiro' as ReportType,
+      key: 'produtos',
+      tipo: 'produtos',
+      title: 'Relatório de Produtos',
+      description: 'Produtos mais vendidos, rotatividade de estoque e análise por categoria',
+      href: '/relatorios/produtos',
+      icon: <Package className="h-6 w-6" />,
+    },
+    {
+      key: 'financeiro',
+      tipo: 'financeiro',
       title: 'Relatório Financeiro',
       description: 'DRE completo com receitas, despesas, lucros e margens',
+      href: '/relatorios/financeiro',
       icon: <DollarSign className="h-6 w-6" />,
     }
   ]
 
-  // Relatórios recentes virão de uma API futuramente
-  const recentReports: ReportData[] = []
+  const loadReports = useCallback(async () => {
+    try {
+      setLoadingReports(true)
+      const response = await reportsService.savedReports.list(1, 20)
 
-  const getStatusColor = (status: ReportData['status']) => {
+      const mapped = (response.data || []).map((report) => ({
+        id: report.id,
+        tipo: report.tipo,
+        nome: report.nome,
+        periodo: `${formatLocalDate(report.periodoInicio)} até ${formatLocalDate(report.periodoFim)}`,
+        dataGeracao: report.createdAt,
+        status: report.status,
+        configuracao: report.configuracao,
+      }))
+
+      setRecentReports(mapped)
+    } catch (error) {
+      toast({
+        title: 'Erro ao carregar histórico',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar os relatórios salvos',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoadingReports(false)
+    }
+  }, [toast])
+
+  useEffect(() => {
+    loadReports()
+  }, [loadReports])
+
+  const handleReportConfig = (href: string) => {
+    router.push(href)
+  }
+
+  const handleViewReport = (id: number) => {
+    router.push(`/relatorios/historico/${id}`)
+  }
+
+  const handleDeleteReport = async (id: number) => {
+    try {
+      setBusyId(id)
+      await reportsService.savedReports.delete(id)
+      setRecentReports((current) => current.filter((report) => report.id !== id))
+      toast({
+        title: 'Relatório removido',
+        description: 'O relatório foi removido do histórico',
+        variant: 'default',
+      })
+    } catch (error) {
+      toast({
+        title: 'Erro ao remover relatório',
+        description: error instanceof Error ? error.message : 'Não foi possível remover o relatório',
+        variant: 'destructive',
+      })
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const handleDownloadReport = async (row: ReportHistoryRow) => {
+    try {
+      setBusyId(row.id)
+      const formato: ReportFormat = row.tipo === 'vendas' || row.tipo === 'produtos' || row.tipo === 'financeiro'
+        ? 'pdf'
+        : 'pdf'
+      const blob = await reportsService.export(row.tipo, row.configuracao, formato)
+      const filename = getExportFilename(
+        row.tipo,
+        formato,
+        row.configuracao.filtros.periodo.startDate,
+        row.configuracao.filtros.periodo.endDate
+      )
+      downloadReport(blob, filename)
+    } catch (error) {
+      toast({
+        title: 'Erro ao baixar relatório',
+        description: error instanceof Error ? error.message : 'Não foi possível exportar o relatório',
+        variant: 'destructive',
+      })
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const getStatusColor = (status: ReportHistoryRow['status']) => {
     switch (status) {
       case 'disponivel': return 'text-green-600'
       case 'processando': return 'text-yellow-600'
@@ -74,7 +176,7 @@ export default function RelatoriosPage() {
     }
   }
 
-  const getStatusLabel = (status: ReportData['status']) => {
+  const getStatusLabel = (status: ReportHistoryRow['status']) => {
     switch (status) {
       case 'disponivel': return 'Disponível'
       case 'processando': return 'Processando'
@@ -83,119 +185,134 @@ export default function RelatoriosPage() {
     }
   }
 
-  // Column definitions for reports table
-  const reportsColumns = useMemo<ColumnDef<ReportData>[]>(() => {
+  const reportsColumns = useMemo<ColumnDef<ReportHistoryRow>[]>(() => {
     return [
-    {
-      accessorKey: "nome",
-      header: ({ column }) => <SortableHeader column={column}>Relatório</SortableHeader>,
-      cell: ({ row }) => (
-        <div className="min-w-[250px]">
-          <div className="font-medium text-gray-900">{row.original.nome}</div>
-          <div className="text-sm text-gray-500">{row.original.tipo}</div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "periodo",
-      header: ({ column }) => <SortableHeader column={column}>Período</SortableHeader>,
-      cell: ({ row }) => (
-        <div className="flex items-center space-x-2">
-          <Calendar className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-600">{row.original.periodo}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "dataGeracao",
-      header: ({ column }) => <SortableHeader column={column}>Data de Geração</SortableHeader>,
-      cell: ({ row }) => (
-        <span className="text-sm text-gray-600">
-          {formatLocalDate(row.original.dataGeracao)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
-      cell: ({ row }) => (
-        <span className={`text-sm font-medium ${getStatusColor(row.original.status)}`}>
-          {getStatusLabel(row.original.status)}
-        </span>
-      ),
-    },
-    {
-      id: "acoes",
-      header: "Ações",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" title="Visualizar">
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            title="Download PDF"
-            disabled={row.original.status !== 'disponivel'}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ]
-  }, [])
+      {
+        accessorKey: 'nome',
+        header: ({ column }) => <SortableHeader column={column}>Relatório</SortableHeader>,
+        cell: ({ row }) => (
+          <div className="min-w-[250px]">
+            <div className="font-medium text-gray-900">{row.original.nome}</div>
+            <div className="text-sm text-gray-500 capitalize">{row.original.tipo}</div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'periodo',
+        header: ({ column }) => <SortableHeader column={column}>Período</SortableHeader>,
+        cell: ({ row }) => (
+          <div className="flex items-center space-x-2">
+            <Calendar className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">{row.original.periodo}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'dataGeracao',
+        header: ({ column }) => <SortableHeader column={column}>Data de Geração</SortableHeader>,
+        cell: ({ row }) => (
+          <span className="text-sm text-gray-600">
+            {formatLocalDate(row.original.dataGeracao)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
+        cell: ({ row }) => (
+          <span className={`text-sm font-medium ${getStatusColor(row.original.status)}`}>
+            {getStatusLabel(row.original.status)}
+          </span>
+        ),
+      },
+      {
+        id: 'acoes',
+        header: 'Ações',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              title="Visualizar"
+              onClick={() => handleViewReport(row.original.id)}
+              disabled={busyId === row.original.id}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              title="Download PDF"
+              onClick={() => handleDownloadReport(row.original)}
+              disabled={row.original.status !== 'disponivel' || busyId === row.original.id}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              title="Excluir"
+              onClick={() => handleDeleteReport(row.original.id)}
+              disabled={busyId === row.original.id}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ]
+  }, [busyId])
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Relatórios</h1>
           <p className="text-gray-600">Gere relatórios detalhados do seu negócio</p>
         </div>
-        
       </div>
 
-      {/* Report Types - Cards de relatórios disponíveis */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Tipos de Relatórios</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
           {reportTypes.map((report, index) => (
             <ReportCard
-              key={report.id}
-              tipo={report.id}
+              key={report.key}
+              tipo={report.tipo}
               titulo={report.title}
               descricao={report.description}
               icon={report.icon}
-              onClick={() => handleReportConfig(report.id)}
+              onClick={() => handleReportConfig(report.href)}
               animationDelay={index * 0.1}
             />
           ))}
         </div>
       </div>
 
-      {/* Recent Reports */}
       <Card>
         <CardHeader>
-          <CardTitle>Relatórios Recentes</CardTitle>
-          <CardDescription>Últimos relatórios gerados</CardDescription>
+          <CardTitle>Histórico de Relatórios</CardTitle>
+          <CardDescription>Últimos relatórios gerados e salvos</CardDescription>
         </CardHeader>
         <CardContent>
-          {recentReports.length > 0 ? (
-            <DataTable 
-              columns={reportsColumns} 
+          {loadingReports ? (
+            <div className="text-center py-8 text-gray-600">
+              Carregando histórico...
+            </div>
+          ) : recentReports.length > 0 ? (
+            <DataTable
+              columns={reportsColumns}
               data={recentReports}
               enableColumnResizing={true}
               enableSorting={true}
               enableColumnVisibility={true}
-              mobileVisibleColumns={['nome', 'tipo', 'periodo', 'acoes']}
+              mobileVisibleColumns={['nome', 'periodo', 'acoes']}
             />
           ) : (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum relatório gerado</h3>
-              <p className="text-gray-600">Os relatórios aparecerão aqui quando forem gerados</p>
+              <p className="text-gray-600">Ao gerar um relatório web, ele ficará disponível aqui no histórico.</p>
             </div>
           )}
         </CardContent>
