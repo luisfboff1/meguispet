@@ -5,6 +5,13 @@ import * as XLSX from 'xlsx'
 import type { ClientesReportData, ReportConfiguration, ReportFormat } from '@/types/reports'
 import { formatLocalDate } from '@/lib/utils'
 
+const formatCurrencyBRL = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value)
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -84,8 +91,8 @@ function exportPDF(res: NextApiResponse, data: ClientesReportData, periodo: stri
       ['Total de Clientes', data.resumo.totalClientes.toString()],
       ['Clientes Ativos', data.resumo.clientesAtivos.toString()],
       ['Novos Clientes', data.resumo.novosClientes.toString()],
-      ['Ticket Médio', data.resumo.ticketMedio.toFixed(2)],
-      ['Faturamento Total', data.resumo.faturamentoTotal.toFixed(2)],
+      ['Ticket Médio', formatCurrencyBRL(data.resumo.ticketMedio)],
+      ['Faturamento Total', formatCurrencyBRL(data.resumo.faturamentoTotal)],
     ],
   })
 
@@ -94,8 +101,8 @@ function exportPDF(res: NextApiResponse, data: ClientesReportData, periodo: stri
     head: [['Cliente', 'Total Compras', 'Ticket Médio', 'Última Compra']],
     body: data.topClientes.map((cliente) => [
       cliente.clienteNome,
-      cliente.totalCompras.toFixed(2),
-      cliente.ticketMedio.toFixed(2),
+      formatCurrencyBRL(cliente.totalCompras),
+      formatCurrencyBRL(cliente.ticketMedio),
       cliente.ultimaCompra ? formatLocalDate(cliente.ultimaCompra) : '-',
     ]),
   })
@@ -116,16 +123,16 @@ function exportExcel(res: NextApiResponse, data: ClientesReportData, periodo: st
     ['Total de Clientes', data.resumo.totalClientes],
     ['Clientes Ativos', data.resumo.clientesAtivos],
     ['Novos Clientes', data.resumo.novosClientes],
-    ['Ticket Médio', data.resumo.ticketMedio],
-    ['Faturamento Total', data.resumo.faturamentoTotal],
+    ['Ticket Médio', formatCurrencyBRL(data.resumo.ticketMedio)],
+    ['Faturamento Total', formatCurrencyBRL(data.resumo.faturamentoTotal)],
   ]), 'Resumo')
 
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
     ['Cliente', 'Total Compras', 'Ticket Médio', 'Última Compra'],
     ...data.topClientes.map((cliente) => [
       cliente.clienteNome,
-      cliente.totalCompras,
-      cliente.ticketMedio,
+      formatCurrencyBRL(cliente.totalCompras),
+      formatCurrencyBRL(cliente.ticketMedio),
       cliente.ultimaCompra ? formatLocalDate(cliente.ultimaCompra) : '-',
     ])
   ]), 'Top Clientes')
@@ -141,8 +148,8 @@ function exportExcel(res: NextApiResponse, data: ClientesReportData, periodo: st
       cliente.cep,
       cliente.tipo,
       cliente.quantidadeCompras,
-      cliente.totalCompras,
-      cliente.ticketMedio,
+      formatCurrencyBRL(cliente.totalCompras),
+      formatCurrencyBRL(cliente.ticketMedio),
       cliente.ultimaCompra ? formatLocalDate(cliente.ultimaCompra) : '-',
       cliente.status,
     ])
@@ -163,16 +170,16 @@ function exportCSV(res: NextApiResponse, data: ClientesReportData, periodo: stri
     `Total de Clientes,${data.resumo.totalClientes}`,
     `Clientes Ativos,${data.resumo.clientesAtivos}`,
     `Novos Clientes,${data.resumo.novosClientes}`,
-    `Ticket Médio,${data.resumo.ticketMedio.toFixed(2)}`,
-    `Faturamento Total,${data.resumo.faturamentoTotal.toFixed(2)}`,
+    `Ticket Médio,"${formatCurrencyBRL(data.resumo.ticketMedio)}"`,
+    `Faturamento Total,"${formatCurrencyBRL(data.resumo.faturamentoTotal)}"`,
     '',
     'TOP CLIENTES',
     'Cliente,Total Compras,Ticket Médio,Última Compra',
-    ...data.topClientes.map((cliente) => `"${cliente.clienteNome}",${cliente.totalCompras.toFixed(2)},${cliente.ticketMedio.toFixed(2)},${cliente.ultimaCompra ? formatLocalDate(cliente.ultimaCompra) : '-'}`),
+    ...data.topClientes.map((cliente) => `"${cliente.clienteNome}","${formatCurrencyBRL(cliente.totalCompras)}","${formatCurrencyBRL(cliente.ticketMedio)}",${cliente.ultimaCompra ? formatLocalDate(cliente.ultimaCompra) : '-'}`),
     '',
     'CLIENTES DETALHADOS',
     'Nome,CPF/CNPJ,Endereço,Cidade,UF,CEP,Tipo,Vendas,Total Compras,Ticket Médio,Última Compra,Status',
-    ...data.clientesDetalhados.map((cliente) => `"${cliente.nome}","${cliente.documento}","${cliente.endereco}","${cliente.cidade}","${cliente.estado}","${cliente.cep}",${cliente.tipo},${cliente.quantidadeCompras},${cliente.totalCompras.toFixed(2)},${cliente.ticketMedio.toFixed(2)},${cliente.ultimaCompra ? formatLocalDate(cliente.ultimaCompra) : '-'},${cliente.status}`),
+    ...data.clientesDetalhados.map((cliente) => `"${cliente.nome}","${cliente.documento}","${cliente.endereco}","${cliente.cidade}","${cliente.estado}","${cliente.cep}",${cliente.tipo},${cliente.quantidadeCompras},"${formatCurrencyBRL(cliente.totalCompras)}","${formatCurrencyBRL(cliente.ticketMedio)}",${cliente.ultimaCompra ? formatLocalDate(cliente.ultimaCompra) : '-'},${cliente.status}`),
   ]
 
   const buffer = Buffer.from(lines.join('\n'), 'utf-8')
