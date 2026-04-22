@@ -265,7 +265,13 @@ export interface ClientesReportData {
     id: number
     nome: string
     tipo: string
+    documento: string
+    endereco: string
+    cidade: string
+    estado: string
+    cep: string
     totalCompras: number
+    quantidadeCompras: number
     ticketMedio: number
     ultimaCompra: string
     status: string

@@ -29,5 +29,5 @@ export type { ProdutosReportViewerProps } from './ProdutosReportViewer'
 export { FinanceiroReportViewer } from './FinanceiroReportViewer'
 export type { FinanceiroReportViewerProps } from './FinanceiroReportViewer'
 
-// Futuras exportações:
-// export { ClientesReportViewer } from './ClientesReportViewer'
+export { ClientesReportViewer } from './ClientesReportViewer'
+export type { ClientesReportViewerProps } from './ClientesReportViewer'

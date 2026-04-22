@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { reportsService } from '@/services/reportsService'
 import type {
+  ClientesReportData,
   FinanceiroReportData,
   ProdutosReportData,
   SavedReport,
   VendasReportData,
 } from '@/types/reports'
 import {
+  ClientesReportViewer,
   FinanceiroReportViewer,
   ProdutosReportViewer,
   VendasReportViewer,
@@ -133,9 +135,11 @@ export default function HistoricoReportPage() {
       ) : null}
 
       {report.tipo === 'clientes' && (
-        <Card className="p-6 text-muted-foreground">
-          Este relatório salvo é do tipo clientes, mas a visualização dedicada ainda não existe neste projeto.
-        </Card>
+        <ClientesReportViewer
+          data={((report.dados as { dados?: ClientesReportData }).dados || report.dados) as ClientesReportData}
+          configuracao={report.configuracao}
+          onExport={handleViewerExport}
+        />
       )}
     </div>
   )

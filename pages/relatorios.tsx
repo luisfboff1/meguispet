@@ -79,7 +79,15 @@ export default function RelatoriosPage() {
       description: 'DRE completo com receitas, despesas, lucros e margens',
       href: '/relatorios/financeiro',
       icon: <DollarSign className="h-6 w-6" />,
-    }
+    },
+    {
+      key: 'clientes',
+      tipo: 'clientes',
+      title: 'Relatório de Clientes',
+      description: 'Ranking de clientes, ticket médio, novos clientes e distribuição por estado',
+      href: '/relatorios/clientes',
+      icon: <Users className="h-6 w-6" />,
+    },
   ]
 
   const loadReports = useCallback(async () => {
