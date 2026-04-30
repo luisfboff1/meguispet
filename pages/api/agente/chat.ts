@@ -745,6 +745,7 @@ const CHART_REQUEST_REMINDER =
     "A resposta final DEVE conter um bloco ```chart``` valido.",
     "Contrato MeguisPet: { type, title, data, xAxis, yAxis }.",
     "Use xAxis/yAxis, nao xKey/yKey.",
+    "Nunca use labels/datasets/backgroundColor; isso e formato Chart.js e nao e o contrato do MeguisPet.",
     "Exemplo: ```chart\n{\"type\":\"bar\",\"title\":\"Vendas por dia\",\"data\":[{\"dia\":\"01/04\",\"vendas\":1,\"faturamento\":1000}],\"xAxis\":\"dia\",\"yAxis\":[\"vendas\",\"faturamento\"]}\n```",
     "Nao produza linhas como '01/04 █ (1) R$ 1.000,00'. Isso e proibido.",
     "Nao repita todos os dados em tabela depois do grafico.",

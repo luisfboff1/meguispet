@@ -317,6 +317,91 @@ function MarkdownTable({ children, ...props }: React.HTMLAttributes<HTMLTableEle
 /**
  * Custom markdown components for styled table and chart rendering.
  */
+function safeParseJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function normalizeChartSpec(value: unknown): ChartSpec | null {
+  if (!value || typeof value !== 'object') return null
+
+  const obj = value as Record<string, unknown>
+  const type = obj.type
+  if (type !== 'bar' && type !== 'line' && type !== 'pie' && type !== 'area') {
+    return null
+  }
+
+  if (Array.isArray(obj.data)) {
+    const xAxis = typeof obj.xAxis === 'string'
+      ? obj.xAxis
+      : typeof obj.xKey === 'string'
+        ? obj.xKey
+        : 'name'
+    const yAxis = typeof obj.yAxis === 'string' || Array.isArray(obj.yAxis)
+      ? obj.yAxis
+      : typeof obj.yKey === 'string'
+        ? obj.yKey
+        : 'value'
+
+    return {
+      ...(obj as unknown as ChartSpec),
+      type,
+      title: typeof obj.title === 'string' ? obj.title : 'Grafico',
+      data: obj.data as ChartSpec['data'],
+      xAxis,
+      yAxis,
+    }
+  }
+
+  const labels = obj.labels
+  const datasets = obj.datasets
+  if (Array.isArray(labels) && Array.isArray(datasets) && datasets.length > 0) {
+    const normalizedDatasets = datasets.filter(
+      (dataset): dataset is Record<string, unknown> =>
+        !!dataset &&
+        typeof dataset === 'object' &&
+        Array.isArray((dataset as Record<string, unknown>).data)
+    )
+
+    if (normalizedDatasets.length === 0) return null
+
+    const metricKeys = normalizedDatasets.map((dataset, index) => {
+      const label = typeof dataset.label === 'string' && dataset.label.trim()
+        ? dataset.label.trim()
+        : `valor${index + 1}`
+      return label
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '') || `valor${index + 1}`
+    })
+
+    const data = labels.map((label, labelIndex) => {
+      const row: Record<string, string | number> = { name: String(label) }
+      normalizedDatasets.forEach((dataset, datasetIndex) => {
+        const values = dataset.data as unknown[]
+        const numericValue = Number(values[labelIndex] ?? 0)
+        row[metricKeys[datasetIndex]] = Number.isFinite(numericValue) ? numericValue : 0
+      })
+      return row
+    })
+
+    return {
+      type,
+      title: typeof obj.title === 'string' ? obj.title : 'Grafico',
+      data,
+      xAxis: 'name',
+      yAxis: metricKeys.length === 1 ? metricKeys[0] : metricKeys,
+    }
+  }
+
+  return null
+}
+
 const markdownComponents = {
   table: MarkdownTable,
   thead: ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => (
@@ -359,7 +444,11 @@ const markdownComponents = {
     if (isChartLanguage || isJsonLanguage) {
       try {
         const raw = String(children).trim()
-        const parsed = JSON.parse(raw)
+        const parsed = safeParseJson(raw) as any
+        const normalizedChartSpec = normalizeChartSpec(parsed)
+        if (normalizedChartSpec) {
+          return <ChartRenderer spec={normalizedChartSpec} />
+        }
         // Validate it has chart structure (type + data)
         if (parsed && parsed.type && parsed.data && Array.isArray(parsed.data)) {
           const chartSpec: ChartSpec = parsed
