@@ -402,10 +402,10 @@ export default function ProdutosEstoquePage() {
       header: ({ column }) => <SortableHeader column={column}>ID</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex items-center space-x-3 min-w-[120px]">
-          <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center flex-shrink-0">
-            <Truck className="h-4 w-4 text-green-600" />
+          <div className="w-8 h-8 bg-success-muted rounded flex items-center justify-center flex-shrink-0">
+            <Truck className="h-4 w-4 text-success" />
           </div>
-          <div className="font-medium text-gray-900">#{row.original.id}</div>
+          <div className="font-medium text-foreground">#{row.original.id}</div>
         </div>
       ),
     },
@@ -430,7 +430,7 @@ export default function ProdutosEstoquePage() {
       header: "Fornecedor",
       accessorFn: (row) => row.fornecedor?.nome || 'N/A',
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {row.original.fornecedor?.nome || 'N/A'}
         </div>
       ),
@@ -439,7 +439,7 @@ export default function ProdutosEstoquePage() {
       accessorKey: "data_movimentacao",
       header: ({ column }) => <SortableHeader column={column}>Data</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {formatLocalDate(row.original.data_movimentacao)}
         </div>
       ),
@@ -450,10 +450,10 @@ export default function ProdutosEstoquePage() {
       cell: ({ row }) => (
         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
           row.original.status === 'confirmado' 
-            ? 'bg-green-100 text-green-800' 
+            ? 'bg-success-muted text-success' 
             : row.original.status === 'pendente'
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-gray-100 text-gray-800'
+            ? 'bg-warning-muted text-warning'
+            : 'bg-muted text-foreground'
         }`}>
           {row.original.status === 'confirmado' ? 'Confirmada' : 
            row.original.status === 'pendente' ? 'Pendente' : 'Cancelada'}
@@ -464,7 +464,7 @@ export default function ProdutosEstoquePage() {
       accessorKey: "valor_total",
       header: ({ column }) => <SortableHeader column={column}>Total</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm font-medium text-gray-900">
+        <div className="text-sm font-medium text-foreground">
           {formatCurrency(row.original.valor_total || 0)}
         </div>
       ),
@@ -923,14 +923,14 @@ export default function ProdutosEstoquePage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('produtos')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'produtos'
                 ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             <Package className="inline mr-2 h-4 w-4" />
@@ -941,7 +941,7 @@ export default function ProdutosEstoquePage() {
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'estoque'
                 ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             <Settings className="inline mr-2 h-4 w-4" />
@@ -952,7 +952,7 @@ export default function ProdutosEstoquePage() {
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'movimentacoes'
                 ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             <Truck className="inline mr-2 h-4 w-4" />
@@ -964,7 +964,7 @@ export default function ProdutosEstoquePage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'auditoria'
                   ? 'border-meguispet-primary text-meguispet-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               <ClipboardCheck className="inline mr-2 h-4 w-4" />
@@ -1056,7 +1056,7 @@ export default function ProdutosEstoquePage() {
                   </div>
                 </div>
                 <div className="w-full sm:w-64">
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Filtrar por estoque</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">Filtrar por estoque</label>
                   <select
                     value={estoqueFilter === 'all' ? '' : String(estoqueFilter)}
                     onChange={(e) => {
@@ -1120,7 +1120,7 @@ export default function ProdutosEstoquePage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
                       placeholder="Buscar por nome ou categoria..."
                       value={searchTerm}
@@ -1130,7 +1130,7 @@ export default function ProdutosEstoquePage() {
                   </div>
                 </div>
                 <div className="w-full sm:w-64">
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Estoque</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">Estoque</label>
                   <select
                     value={estoqueFilter === 'all' ? '' : String(estoqueFilter)}
                     onChange={(e) => {
@@ -1193,9 +1193,9 @@ export default function ProdutosEstoquePage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
-                <Package className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum produto encontrado</h3>
-                <p className="text-gray-600 text-center">
+                <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Nenhum produto encontrado</h3>
+                <p className="text-muted-foreground text-center">
                   {searchTerm ? 'Tente ajustar os filtros de busca' : 'Nenhum produto cadastrado ainda'}
                 </p>
               </CardContent>
@@ -1209,7 +1209,7 @@ export default function ProdutosEstoquePage() {
           {loading ? (
             <Card>
               <CardContent className="flex items-center justify-center py-8">
-                <div className="text-gray-500">Carregando movimentações...</div>
+                <div className="text-muted-foreground">Carregando movimentações...</div>
               </CardContent>
             </Card>
           ) : movimentacoes.length > 0 ? (
@@ -1224,9 +1224,9 @@ export default function ProdutosEstoquePage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
-                <Truck className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma movimentação encontrada</h3>
-                <p className="text-gray-600 text-center mb-4">
+                <Truck className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Nenhuma movimentação encontrada</h3>
+                <p className="text-muted-foreground text-center mb-4">
                   Crie sua primeira movimentação para começar
                 </p>
                 <Button
@@ -1254,12 +1254,12 @@ export default function ProdutosEstoquePage() {
             <CardContent>
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="text-gray-500">Carregando auditoria...</div>
+                  <div className="text-muted-foreground">Carregando auditoria...</div>
                 </div>
               ) : auditoriaData && auditoriaData.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-muted">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Produto
@@ -1293,20 +1293,20 @@ export default function ProdutosEstoquePage() {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-border">
                       {auditoriaData.map((item) => (
                         <tr
                           key={item.produto_id}
                           className={item.status === 'divergente' ? 'bg-red-50' : ''}
                         >
                           <td
-                            className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer hover:underline"
+                            className="px-4 py-3 whitespace-nowrap text-sm font-medium text-info hover:text-info/80 cursor-pointer hover:underline"
                             onClick={() => handleVerHistoricoProduto(item.produto_id, item.produto_nome)}
                             title="Clique para ver histórico de estoque"
                           >
                             {item.produto_nome}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-700">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-foreground">
                             {item.estoque_inicial.toFixed(2)}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-green-600">
@@ -1325,18 +1325,18 @@ export default function ProdutosEstoquePage() {
                             {item.estoque_atual.toFixed(2)}
                           </td>
                           <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-bold ${
-                            item.diferenca === 0 ? 'text-green-600' :
-                            item.diferenca > 0 ? 'text-blue-600' : 'text-red-600'
+                            item.diferenca === 0 ? 'text-success' :
+                            item.diferenca > 0 ? 'text-info' : 'text-destructive'
                           }`}>
                             {item.diferenca > 0 ? '+' : ''}{item.diferenca.toFixed(2)}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-center">
                             {item.status === 'ok' ? (
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success-muted text-success">
                                 OK
                               </span>
                             ) : (
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-destructive/15 text-destructive">
                                 Divergente
                               </span>
                             )}
@@ -1359,9 +1359,9 @@ export default function ProdutosEstoquePage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8">
-                  <ClipboardCheck className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum dado de auditoria disponível</h3>
-                  <p className="text-gray-600 text-center">
+                  <ClipboardCheck className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Nenhum dado de auditoria disponível</h3>
+                  <p className="text-muted-foreground text-center">
                     Não há produtos ou movimentações para auditar
                   </p>
                 </div>
@@ -1413,7 +1413,7 @@ export default function ProdutosEstoquePage() {
 
       {showMovimentacaoForm && (
         <div className="modal-overlay fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-lg">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <MovimentacaoForm
               onSubmit={handleSalvarMovimentacao}
               onCancel={handleCancelarForm}
@@ -1427,15 +1427,15 @@ export default function ProdutosEstoquePage() {
       {/* Modal de Detalhes da Movimentação */}
       {showMovimentacaoDetails && selectedMovimentacao && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-foreground">
                   Detalhes da Movimentação #{selectedMovimentacao.id}
                 </h2>
                 <button
                   onClick={() => setShowMovimentacaoDetails(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -1443,8 +1443,8 @@ export default function ProdutosEstoquePage() {
 
               {/* Informações Gerais */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-700 mb-2">Tipo</h3>
+                <div className="bg-muted p-4 rounded-lg">
+                  <h3 className="font-semibold text-foreground mb-2">Tipo</h3>
                   <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${
                     selectedMovimentacao.tipo === 'entrada' 
                       ? 'bg-green-100 text-green-800' 
@@ -1457,23 +1457,23 @@ export default function ProdutosEstoquePage() {
                   </span>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-700 mb-2">Status</h3>
+                <div className="bg-muted p-4 rounded-lg">
+                  <h3 className="font-semibold text-foreground mb-2">Status</h3>
                   <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${
                     selectedMovimentacao.status === 'confirmado' 
-                      ? 'bg-green-100 text-green-800' 
+                      ? 'bg-success-muted text-success' 
                       : selectedMovimentacao.status === 'pendente'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? 'bg-warning-muted text-warning'
+                      : 'bg-muted text-foreground'
                   }`}>
                     {selectedMovimentacao.status === 'confirmado' ? 'Confirmada' : 
                      selectedMovimentacao.status === 'pendente' ? 'Pendente' : 'Cancelada'}
                   </span>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-700 mb-2">Data</h3>
-                  <p className="text-gray-900">
+                <div className="bg-muted p-4 rounded-lg">
+                  <h3 className="font-semibold text-foreground mb-2">Data</h3>
+                  <p className="text-foreground">
                     {selectedMovimentacao.data_movimentacao ?
                       formatLocalDate(selectedMovimentacao.data_movimentacao) :
                       'Data não informada'
@@ -1484,16 +1484,16 @@ export default function ProdutosEstoquePage() {
 
               {/* Fornecedor e Condições */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-700 mb-2">Fornecedor</h3>
-                  <p className="text-gray-900">
+                <div className="bg-muted p-4 rounded-lg">
+                  <h3 className="font-semibold text-foreground mb-2">Fornecedor</h3>
+                  <p className="text-foreground">
                     {selectedMovimentacao.fornecedor?.nome || 'N/A'}
                   </p>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-700 mb-2">Condição de Pagamento</h3>
-                  <p className="text-gray-900">
+                <div className="bg-muted p-4 rounded-lg">
+                  <h3 className="font-semibold text-foreground mb-2">Condição de Pagamento</h3>
+                  <p className="text-foreground">
                     {selectedMovimentacao.condicao_pagamento}
                   </p>
                 </div>
@@ -1501,11 +1501,11 @@ export default function ProdutosEstoquePage() {
 
               {/* Produtos */}
               <div className="mb-6">
-                <h3 className="font-semibold text-gray-700 mb-4">Produtos</h3>
+                <h3 className="font-semibold text-foreground mb-4">Produtos</h3>
                 {selectedMovimentacao.itens && selectedMovimentacao.itens.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-border">
+                      <thead className="bg-muted">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Produto
@@ -1521,29 +1521,29 @@ export default function ProdutosEstoquePage() {
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-card divide-y divide-border">
                         {selectedMovimentacao.itens.map((item) => (
                           <tr key={item.id}>
                             <td className="px-4 py-4 whitespace-nowrap">
                               <div>
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm font-medium text-foreground">
                                   {item.produto?.nome || 'Produto não encontrado'}
                                 </div>
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-muted-foreground">
                                   Código: {item.produto?.codigo_barras || 'N/A'}
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">
                               {item.quantidade}
                             </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">
                               {new Intl.NumberFormat('pt-BR', {
                                 style: 'currency',
                                 currency: 'BRL'
                               }).format(item.preco_unitario)}
                             </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                               {new Intl.NumberFormat('pt-BR', {
                                 style: 'currency',
                                 currency: 'BRL'
@@ -1555,14 +1555,14 @@ export default function ProdutosEstoquePage() {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-gray-500">Nenhum produto encontrado</p>
+                  <p className="text-muted-foreground">Nenhum produto encontrado</p>
                 )}
               </div>
 
               {/* Valor Total */}
-              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+              <div className="bg-info-muted p-4 rounded-lg mb-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-semibold text-gray-700">Valor Total:</h3>
+                  <h3 className="font-semibold text-foreground">Valor Total:</h3>
                   <span className="text-2xl font-bold text-blue-900">
                     {new Intl.NumberFormat('pt-BR', {
                       style: 'currency',
@@ -1575,8 +1575,8 @@ export default function ProdutosEstoquePage() {
               {/* Observações */}
               {selectedMovimentacao.observacoes && (
                 <div className="mb-4">
-                  <h3 className="font-semibold text-gray-700 mb-2">Observações</h3>
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">
+                  <h3 className="font-semibold text-foreground mb-2">Observações</h3>
+                  <p className="text-foreground bg-muted p-3 rounded-lg">
                     {selectedMovimentacao.observacoes}
                   </p>
                 </div>

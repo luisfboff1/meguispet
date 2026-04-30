@@ -343,7 +343,7 @@ export default function EstoqueOperacaoForm({
                   id="status"
                   value={status}
                   onChange={(event) => setStatus(event.target.value as typeof status)}
-                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
                 >
                   {STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -371,7 +371,7 @@ export default function EstoqueOperacaoForm({
                     id="origem_estoque"
                     value={origemEstoqueId ?? ''}
                     onChange={(event) => setOrigemEstoqueId(event.target.value ? Number(event.target.value) : undefined)}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
                   >
                     <option value="">Não definido</option>
                     {estoques.map((estoque) => (
@@ -387,7 +387,7 @@ export default function EstoqueOperacaoForm({
                     id="destino_estoque"
                     value={destinoEstoqueId ?? ''}
                     onChange={(event) => setDestinoEstoqueId(event.target.value ? Number(event.target.value) : undefined)}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
                   >
                     <option value="">Não definido</option>
                     {estoques.map((estoque) => (
@@ -424,7 +424,7 @@ export default function EstoqueOperacaoForm({
                           fornecedor_id: event.target.value ? Number(event.target.value) : null
                         }))
                       }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-input px-3 py-2 text-sm"
                     >
                       <option value="">Selecione um fornecedor</option>
                       {fornecedores.map((fornecedor) => (
@@ -451,7 +451,7 @@ export default function EstoqueOperacaoForm({
                           cliente_id: event.target.value ? Number(event.target.value) : null
                         }))
                       }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-input px-3 py-2 text-sm"
                     >
                       <option value="">Selecione um cliente</option>
                       {clientes.map((cliente) => (
@@ -478,7 +478,7 @@ export default function EstoqueOperacaoForm({
                           vendedor_id: event.target.value ? Number(event.target.value) : null
                         }))
                       }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-input px-3 py-2 text-sm"
                     >
                       <option value="">Selecione um vendedor</option>
                       {vendedores.map((vendedor) => (
@@ -512,7 +512,7 @@ export default function EstoqueOperacaoForm({
                     onChange={(event) =>
                       setProdutoAtual((prev) => ({ ...prev, produto_id: event.target.value }))
                     }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
                   >
                     <option value="">Selecione um produto</option>
                     {produtos.map((produto) => (

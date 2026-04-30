@@ -817,14 +817,14 @@ export default function BlingPage() {
       header: 'Itens',
       cell: ({ row }) => {
         const itens = getNfeItens(row.original)
-        if (itens.length === 0) return <span className="text-gray-400 text-sm">-</span>
+        if (itens.length === 0) return <span className="text-muted-foreground text-sm">-</span>
         return (
           <div className="min-w-[120px] max-w-[200px]">
-            <div className="text-sm text-gray-900 dark:text-gray-100 truncate">
+            <div className="text-sm text-foreground truncate">
               {itens[0].descricao}
             </div>
             {itens.length > 1 && (
-              <div className="text-xs text-gray-500">+{itens.length - 1} {itens.length === 2 ? 'item' : 'itens'}</div>
+              <div className="text-xs text-muted-foreground">+{itens.length - 1} {itens.length === 2 ? 'item' : 'itens'}</div>
             )}
           </div>
         )
@@ -932,7 +932,7 @@ export default function BlingPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-4">
-                <div className="text-sm text-gray-500">Total Vendas</div>
+                <div className="text-sm text-muted-foreground">Total Vendas</div>
                 <div className="text-2xl font-bold">{vendasTotal}</div>
               </CardContent>
             </Card>
@@ -961,7 +961,7 @@ export default function BlingPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className="text-sm text-gray-500">Canais</div>
+                <div className="text-sm text-muted-foreground">Canais</div>
                 <div className="text-sm font-medium">
                   {Array.from(new Set(vendas.map(v => detectMarketplaceFrontend(v)).filter(Boolean))).length || 0} canais
                 </div>
@@ -972,7 +972,7 @@ export default function BlingPage() {
           {/* Search */}
           <form onSubmit={handleVendasSearch} className="flex gap-2">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por cliente, nº pedido, documento..."
                 value={vendasSearch}
@@ -995,7 +995,7 @@ export default function BlingPage() {
           </form>
 
           {/* Hint */}
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-muted-foreground">
             Clique em uma linha para ver todos os detalhes do pedido
           </div>
 
@@ -1015,7 +1015,7 @@ export default function BlingPage() {
 
           {/* Server-side Pagination */}
           {vendasTotal > 50 && (
-            <div className="flex items-center justify-between px-2 py-3 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center justify-between px-2 py-3 text-sm text-muted-foreground">
               <span>
                 Mostrando {((vendasPage - 1) * 50) + 1} a {Math.min(vendasPage * 50, vendasTotal)} de {vendasTotal} resultado(s)
               </span>
@@ -1047,7 +1047,7 @@ export default function BlingPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-4">
-                <div className="text-sm text-gray-500">Total NFe</div>
+                <div className="text-sm text-muted-foreground">Total NFe</div>
                 <div className="text-2xl font-bold">{nfeTotal}</div>
               </CardContent>
             </Card>
@@ -1076,8 +1076,8 @@ export default function BlingPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className="text-sm text-gray-500">Emitidas</div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-sm text-muted-foreground">Emitidas</div>
+                <div className="text-2xl font-bold text-success">
                   {nfe.filter(n => n.situacao === 2).length}
                 </div>
               </CardContent>
@@ -1087,7 +1087,7 @@ export default function BlingPage() {
           {/* Search */}
           <form onSubmit={handleNfeSearch} className="flex gap-2">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por cliente, chave de acesso, documento..."
                 value={nfeSearch}
@@ -1173,14 +1173,14 @@ export default function BlingPage() {
             </CardHeader>
             <CardContent>
               {statusLoading ? (
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Carregando...
                 </div>
               ) : status ? (
                 <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
                     {status.connected ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
                     ) : (
@@ -1188,13 +1188,13 @@ export default function BlingPage() {
                     )}
                     <div>
                       <div className="text-sm font-medium">Conexão</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {status.connected ? 'Conectado ao Bling' : 'Desconectado'}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
                     {status.token_valid ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
                     ) : status.needs_reauth ? (
@@ -1307,10 +1307,10 @@ export default function BlingPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Incremental sync */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-lg bg-muted">
                 <div>
                   <div className="font-medium">Sincronização Incremental</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     Busca apenas alterações desde a última sincronização
                   </div>
                 </div>

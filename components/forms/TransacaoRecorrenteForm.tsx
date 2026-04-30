@@ -159,7 +159,7 @@ export function TransacaoRecorrenteForm({
                 id="categoria_id"
                 value={formData.categoria_id || ''}
                 onChange={(e) => handleChange('categoria_id', e.target.value ? parseInt(e.target.value) : undefined)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
                 disabled={loadingCategorias}
               >
                 <option value="">Selecione uma categoria (opcional)</option>
@@ -221,7 +221,7 @@ export function TransacaoRecorrenteForm({
                 id="frequencia"
                 value={formData.frequencia}
                 onChange={(e) => handleChange('frequencia', e.target.value as TransacaoRecorrenteFormType['frequencia'])}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
                 required
               >
                 {frequenciaOptions.map((freq) => (
@@ -243,7 +243,7 @@ export function TransacaoRecorrenteForm({
                 value={formData.dia_vencimento || ''}
                 onChange={(e) => handleChange('dia_vencimento', parseInt(e.target.value) || 1)}
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {formData.frequencia === 'semanal' ? 'Dia da semana (1=Domingo, 7=Sábado)' : 'Dia do mês (1-31)'}
               </p>
             </div>
@@ -254,7 +254,7 @@ export function TransacaoRecorrenteForm({
             <div className="space-y-2">
               <Label htmlFor="data_inicio">Data de Início *</Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="data_inicio"
                   type="date"
@@ -272,7 +272,7 @@ export function TransacaoRecorrenteForm({
             <div className="space-y-2">
               <Label htmlFor="data_fim">Data de Término</Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="data_fim"
                   type="date"
@@ -281,7 +281,7 @@ export function TransacaoRecorrenteForm({
                   className="pl-10"
                 />
               </div>
-              <p className="text-xs text-gray-500">Deixe vazio para recorrência indefinida</p>
+              <p className="text-xs text-muted-foreground">Deixe vazio para recorrência indefinida</p>
               {errors.data_fim && (
                 <p className="text-sm text-destructive">{errors.data_fim}</p>
               )}
@@ -298,7 +298,7 @@ export function TransacaoRecorrenteForm({
                 placeholder="Informações adicionais (opcional)"
                 value={formData.observacoes}
                 onChange={(e) => handleChange('observacoes', e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
                 rows={3}
               />
             </div>
@@ -311,7 +311,7 @@ export function TransacaoRecorrenteForm({
               id="ativo"
               checked={formData.ativo}
               onChange={(e) => handleChange('ativo', e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-input text-blue-600 focus:ring-blue-500"
             />
             <Label htmlFor="ativo" className="cursor-pointer">
               Transação Recorrente Ativa

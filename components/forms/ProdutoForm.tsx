@@ -233,7 +233,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                 onChange={(e) => setFormData(prev => ({ ...prev, preco_custo: e.target.value ? Number(e.target.value) : undefined }))}
                 placeholder="0,00"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Deixe vazio para calcular automaticamente (70% do preço de venda)
               </p>
             </div>
@@ -252,7 +252,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
 
           {/* Informações Fiscais */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700">Informações Fiscais</h3>
+            <h3 className="text-sm font-semibold text-foreground">Informações Fiscais</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="ncm">NCM *</Label>
@@ -264,7 +264,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                   placeholder="Ex: 2309"
                   maxLength={8}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Código NCM do produto (8 dígitos)
                 </p>
               </div>
@@ -312,7 +312,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                   onChange={(e) => setFormData(prev => ({ ...prev, ipi: Math.min(100, Math.max(0, Number(e.target.value))) }))}
                   placeholder="0,00"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Alíquota de IPI do produto
                 </p>
               </div>
@@ -329,7 +329,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                   onChange={(e) => setFormData(prev => ({ ...prev, icms: Math.min(100, Math.max(0, Number(e.target.value))) }))}
                   placeholder="0,00"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Não entra no total (informativo)
                 </p>
               </div>
@@ -428,14 +428,14 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
           {loadingHistorico ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-meguispet-primary" />
-              <span className="ml-2 text-gray-500">Carregando histórico...</span>
+              <span className="ml-2 text-muted-foreground">Carregando histórico...</span>
             </div>
           ) : historicoPrecos.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="bg-muted">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Data
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -461,7 +461,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-border">
                   {historicoPrecos.map((hist) => {
                     const custoAnterior = hist.preco_custo_anterior || 0
                     const custoNovo = hist.preco_custo_novo || 0
@@ -469,7 +469,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
 
                     return (
                       <tr key={hist.id}>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-foreground">
                           {new Date(hist.created_at).toLocaleString('pt-BR')}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">
@@ -482,12 +482,12 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                              hist.tipo_alteracao === 'automatico' ? 'Automático' : 'Manual'}
                           </span>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-700">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-foreground">
                           {hist.preco_custo_anterior !== null ?
                             new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(hist.preco_custo_anterior)
                             : '-'}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-foreground">
                           {hist.preco_custo_novo !== null ?
                             new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(hist.preco_custo_novo)
                             : '-'}

@@ -907,7 +907,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   UF preenchido automaticamente a partir do cadastro do cliente
                 </p>
               ) : (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Selecione um cliente para preencher automaticamente
                 </p>
               )}
@@ -935,7 +935,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             </div>
 
             {mostrarConfiguracaoColunas && (
-              <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
+              <div className="p-4 bg-muted rounded-md border border-border">
                 <VendaTabelaColunas
                   visibleColumns={colunasVisiveis}
                   onChange={setColunasVisiveis}
@@ -946,29 +946,29 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
             <div className="border rounded-md overflow-hidden">
               <ScrollableContainer className="max-h-[400px] overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b sticky top-0 z-10">
+                  <thead className="bg-muted border-b sticky top-0 z-10">
                     <tr>
-                      {colunasVisiveis.produto && <th className="text-left py-2 px-2 text-xs font-medium text-gray-700 min-w-[180px]">Produto</th>}
-                      {colunasVisiveis.quantidade && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-16">Qtd</th>}
-                      {colunasVisiveis.precoUnitario && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-24">Preço</th>}
-                      {colunasVisiveis.subtotalBruto && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-24">Subtotal</th>}
-                      {colunasVisiveis.descontoProporcional && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-24">Desc.</th>}
-                      {colunasVisiveis.subtotalLiquido && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-24">Líquido</th>}
-                      {colunasVisiveis.ipiAliquota && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-16">IPI%</th>}
-                      {colunasVisiveis.ipiValor && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-20">IPI</th>}
+                      {colunasVisiveis.produto && <th className="text-left py-2 px-2 text-xs font-medium text-foreground min-w-[180px]">Produto</th>}
+                      {colunasVisiveis.quantidade && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-16">Qtd</th>}
+                      {colunasVisiveis.precoUnitario && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-24">Preço</th>}
+                      {colunasVisiveis.subtotalBruto && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-24">Subtotal</th>}
+                      {colunasVisiveis.descontoProporcional && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-24">Desc.</th>}
+                      {colunasVisiveis.subtotalLiquido && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-24">Líquido</th>}
+                      {colunasVisiveis.ipiAliquota && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-16">IPI%</th>}
+                      {colunasVisiveis.ipiValor && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-20">IPI</th>}
                       {colunasVisiveis.icmsAliquota && <th className="text-right py-2 px-2 text-xs font-medium text-blue-700 w-16">ICMS%</th>}
                       {colunasVisiveis.icmsValor && <th className="text-right py-2 px-2 text-xs font-medium text-blue-700 w-20">ICMS</th>}
-                      {colunasVisiveis.stAliquota && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-16">ST%</th>}
-                      {colunasVisiveis.stValor && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-20">ST</th>}
-                      {colunasVisiveis.totalItem && <th className="text-right py-2 px-2 text-xs font-medium text-gray-700 w-28">Total</th>}
-                      {colunasVisiveis.acoes && <th className="text-center py-2 px-2 text-xs font-medium text-gray-700 w-12"></th>}
+                      {colunasVisiveis.stAliquota && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-16">ST%</th>}
+                      {colunasVisiveis.stValor && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-20">ST</th>}
+                      {colunasVisiveis.totalItem && <th className="text-right py-2 px-2 text-xs font-medium text-foreground w-28">Total</th>}
+                      {colunasVisiveis.acoes && <th className="text-center py-2 px-2 text-xs font-medium text-foreground w-12"></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {itens.map((item, index) => {
                       const itemCalc = itensCalculados[index]
                       return (
-                        <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                        <tr key={index} className="border-b last:border-b-0 hover:bg-accent">
                           {colunasVisiveis.produto && (
                             <td className="py-1.5 px-2">
                               <select
@@ -1089,7 +1089,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   </tbody>
                 </table>
                 {itens.length === 0 && (
-                  <div className="text-center py-8 text-gray-500 text-sm">
+                  <div className="text-center py-8 text-muted-foreground text-sm">
                     Nenhum item adicionado. Clique em &quot;Adicionar Item&quot; para começar.
                   </div>
                 )}
@@ -1112,7 +1112,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   onChange={(e) => setFormData(prev => ({ ...prev, desconto: Number(e.target.value) }))}
                   placeholder="0,00"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Será distribuído proporcionalmente entre os produtos
                 </p>
               </div>
@@ -1130,7 +1130,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   className="w-full"
                   required={!usarParcelas && !formData.condicao_pagamento_id}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {formData.condicao_pagamento_id 
                     ? 'Data base para calcular os vencimentos das parcelas' 
                     : 'Data em que o pagamento será recebido'}
@@ -1164,7 +1164,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Sem condição = à vista. Com condição = parcelas calculadas a partir da data de pagamento
                 </p>
               </div>
@@ -1178,14 +1178,14 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                     checked={usarParcelas}
                     onChange={(e) => setUsarParcelas(e.target.checked)}
                     disabled={!!formData.condicao_pagamento_id}
-                    className="w-4 h-4 rounded border-gray-300"
+                    className="w-4 h-4 rounded border-input"
                   />
-                  <Label htmlFor="usar-parcelas" className={`cursor-pointer ${formData.condicao_pagamento_id ? 'text-gray-400' : ''}`}>
+                  <Label htmlFor="usar-parcelas" className={`cursor-pointer ${formData.condicao_pagamento_id ? 'text-muted-foreground' : ''}`}>
                     Parcelar pagamento (manual)
                   </Label>
                 </div>
                 {formData.condicao_pagamento_id && (
-                  <p className="text-xs text-gray-500 ml-6 -mt-2 mb-3">
+                  <p className="text-xs text-muted-foreground ml-6 -mt-2 mb-3">
                     Desabilitado quando uma condição de pagamento está selecionada
                   </p>
                 )}
@@ -1212,7 +1212,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                         value={primeiraParcela}
                         onChange={(e) => setPrimeiraParcela(e.target.value)}
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Demais parcelas serão mensais após esta data
                       </p>
                     </div>
@@ -1227,7 +1227,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               {totais ? (
                 <div className="space-y-3">
                   {/* Totais Principais */}
-                  <div className="p-4 bg-gray-50 rounded-md space-y-2 text-sm">
+                  <div className="p-4 bg-muted rounded-md space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Total Bruto:</span>
                       <span className="font-medium">{formatCurrency(totais.total_produtos_bruto)}</span>
@@ -1288,17 +1288,17 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               <div className="border rounded-md overflow-hidden">
                 <ScrollableContainer className="max-h-[300px] overflow-y-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b sticky top-0">
+                    <thead className="bg-muted border-b sticky top-0">
                       <tr>
-                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-700">Parcela</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-700">Valor</th>
-                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-700">Vencimento</th>
-                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-700">Observações</th>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-foreground">Parcela</th>
+                        <th className="text-right py-2 px-3 text-xs font-medium text-foreground">Valor</th>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-foreground">Vencimento</th>
+                        <th className="text-left py-2 px-3 text-xs font-medium text-foreground">Observações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {parcelas.map((parcela, index) => (
-                        <tr key={index} className="border-b last:border-b-0 hover:bg-gray-50">
+                        <tr key={index} className="border-b last:border-b-0 hover:bg-accent">
                           <td className="py-2 px-3 text-sm font-medium">
                             {parcela.numero_parcela}/{parcelas.length}
                           </td>
@@ -1332,7 +1332,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="bg-gray-50 border-t">
+                    <tfoot className="bg-muted border-t">
                       <tr>
                         <td className="py-2 px-3 text-xs font-bold">Total:</td>
                         <td className="py-2 px-3 text-xs font-bold text-right">
@@ -1401,7 +1401,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                 </Label>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               Selecione os impostos que deseja remover do cálculo. IPI e ST podem ser removidos individualmente ou em conjunto.
             </p>
             {(formData.sem_ipi || formData.sem_st) && (

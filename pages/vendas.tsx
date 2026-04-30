@@ -795,21 +795,21 @@ export default function VendasPage() {
         accessorKey: "descricao",
         header: ({ column }) => <SortableHeader column={column}>Descrição</SortableHeader>,
         cell: ({ row }) => (
-          <span className="text-sm text-gray-600">{row.original.descricao || '-'}</span>
+          <span className="text-sm text-muted-foreground">{row.original.descricao || '-'}</span>
         ),
       },
       {
         accessorKey: "dias_parcelas",
         header: "Prazos",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-900">{formatDiasParcelas(row.original.dias_parcelas)}</span>
+          <span className="text-sm text-foreground">{formatDiasParcelas(row.original.dias_parcelas)}</span>
         ),
       },
       {
         id: "numero_parcelas",
         header: "Parcelas",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-foreground">
             {row.original.dias_parcelas.length === 1 ? '1 parcela' : `${row.original.dias_parcelas.length} parcelas`}
           </span>
         ),
@@ -854,7 +854,7 @@ export default function VendasPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 Você deseja imprimir o pedido agora?
               </p>
               <div className="flex items-center justify-end gap-3">
@@ -921,14 +921,14 @@ export default function VendasPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('vendas')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'vendas'
                 ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             <ShoppingCart className="inline mr-2 h-4 w-4" />
@@ -939,7 +939,7 @@ export default function VendasPage() {
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'condicoes'
                 ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             <CreditCard className="inline mr-2 h-4 w-4" />
@@ -979,31 +979,31 @@ export default function VendasPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <p className="text-sm text-muted-foreground">Cliente</p>
-                <p className="text-base text-gray-900">{selectedVenda.cliente?.nome ?? 'N/A'}</p>
+                <p className="text-base text-foreground">{selectedVenda.cliente?.nome ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Vendedor</p>
-                <p className="text-base text-gray-900">{selectedVenda.vendedor?.nome ?? 'N/A'}</p>
+                <p className="text-base text-foreground">{selectedVenda.vendedor?.nome ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Valor final</p>
-                <p className="text-base text-gray-900">{formatCurrency(Number(selectedVenda.valor_final || 0))}</p>
+                <p className="text-base text-foreground">{formatCurrency(Number(selectedVenda.valor_final || 0))}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Forma de pagamento</p>
-                <p className="text-base text-gray-900">{selectedVenda.forma_pagamento_detalhe?.nome ?? (typeof selectedVenda.forma_pagamento === 'string' ? selectedVenda.forma_pagamento : 'N/A')}</p>
+                <p className="text-base text-foreground">{selectedVenda.forma_pagamento_detalhe?.nome ?? (typeof selectedVenda.forma_pagamento === 'string' ? selectedVenda.forma_pagamento : 'N/A')}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Estoque</p>
-                <p className="text-base text-gray-900">{typeof selectedVenda.estoque === 'object' && selectedVenda.estoque?.nome ? selectedVenda.estoque.nome : 'N/A'}</p>
+                <p className="text-base text-foreground">{typeof selectedVenda.estoque === 'object' && selectedVenda.estoque?.nome ? selectedVenda.estoque.nome : 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
-                <p className="text-base capitalize text-gray-900">{selectedVenda.status}</p>
+                <p className="text-base capitalize text-foreground">{selectedVenda.status}</p>
               </div>
               <div className="md:col-span-2">
                 <p className="text-sm text-muted-foreground">Observações</p>
-                <p className="text-base text-gray-900">{selectedVenda.observacoes || 'Sem observações'}</p>
+                <p className="text-base text-foreground">{selectedVenda.observacoes || 'Sem observações'}</p>
               </div>
             </div>
 
@@ -1011,7 +1011,7 @@ export default function VendasPage() {
             {selectedVenda.itens && selectedVenda.itens.length > 0 && selectedVenda.itens.some(item => item.icms_st_recolher && item.icms_st_recolher > 0) ? (
               <div className="mt-6 pt-6 border-t">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     Impostos ICMS-ST
                     {selectedVenda.uf_destino && (
@@ -1033,23 +1033,23 @@ export default function VendasPage() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-muted">
                       <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produto</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Qtd</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">MVA</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Alíq.</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Base ST</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">ICMS Próprio</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">ICMS-ST Total</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase bg-green-50">A Recolher</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Produto</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Qtd</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">MVA</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Alíq.</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Base ST</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">ICMS Próprio</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">ICMS-ST Total</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase bg-success-muted">A Recolher</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-card divide-y divide-border">
                       {selectedVenda.itens.filter(item => item.icms_st_recolher && item.icms_st_recolher > 0).map((item, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                          <td className="px-3 py-2 text-sm text-gray-900">
+                        <tr key={idx} className="hover:bg-muted/50">
+                          <td className="px-3 py-2 text-sm text-foreground">
                             {item.produto?.nome || `Produto #${item.produto_id}`}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-600 text-right">{item.quantidade}</td>
@@ -1146,7 +1146,7 @@ export default function VendasPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   placeholder="Buscar por número, cliente ou vendedor..."
                   value={searchTerm}
@@ -1190,9 +1190,9 @@ export default function VendasPage() {
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <ShoppingCart className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma venda encontrada</h3>
-            <p className="text-gray-600 text-center">
+            <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhuma venda encontrada</h3>
+            <p className="text-muted-foreground text-center">
               {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando sua primeira venda'}
             </p>
           </CardContent>
@@ -1238,9 +1238,9 @@ export default function VendasPage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <CreditCard className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma condição cadastrada</h3>
-                <p className="text-gray-600 text-center mb-4">
+                <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Nenhuma condição cadastrada</h3>
+                <p className="text-muted-foreground text-center mb-4">
                   Comece adicionando sua primeira condição de pagamento
                 </p>
                 <Button onClick={handleNovaCondicao}>
@@ -1288,7 +1288,7 @@ export default function VendasPage() {
                         placeholder="Ex: 15/30/45 dias"
                         required
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Nome descritivo para identificar a condição
                       </p>
                     </div>
@@ -1316,7 +1316,7 @@ export default function VendasPage() {
                         placeholder="Ex: 15, 30, 45 ou 30, 60, 90"
                         required
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Informe os dias separados por vírgula. Use 0 (zero) para pagamento à vista.
                       </p>
                       {condicaoFormData.dias_input && (
@@ -1343,7 +1343,7 @@ export default function VendasPage() {
                           onChange={(e) => setCondicaoFormData(prev => ({ ...prev, ordem: Number(e.target.value) }))}
                           placeholder="0"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           Menor número aparece primeiro
                         </p>
                       </div>
@@ -1354,7 +1354,7 @@ export default function VendasPage() {
                           id="ativo"
                           checked={condicaoFormData.ativo}
                           onChange={(e) => setCondicaoFormData(prev => ({ ...prev, ativo: e.target.checked }))}
-                          className="w-4 h-4 rounded border-gray-300"
+                          className="w-4 h-4 rounded border-input"
                         />
                         <Label htmlFor="ativo" className="cursor-pointer">
                           Condição ativa

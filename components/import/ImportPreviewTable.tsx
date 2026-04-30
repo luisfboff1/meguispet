@@ -132,7 +132,7 @@ export default function ImportPreviewTable({
               type="checkbox"
               checked={stats.selecionados === stats.total && stats.total > 0}
               onChange={onToggleSelectAll}
-              className="w-4 h-4 rounded border-gray-300 text-meguispet-primary focus:ring-meguispet-primary"
+              className="w-4 h-4 rounded border-input text-meguispet-primary focus:ring-meguispet-primary"
             />
             <span className="text-foreground">Selecionar todos</span>
           </label>
@@ -193,7 +193,7 @@ export default function ImportPreviewTable({
                           checked={registro.selecionado}
                           onChange={() => onToggleSelect(registro.linha)}
                           disabled={registro.status === 'erro'}
-                          className="w-4 h-4 rounded border-gray-300 text-meguispet-primary focus:ring-meguispet-primary disabled:opacity-50"
+                          className="w-4 h-4 rounded border-input text-meguispet-primary focus:ring-meguispet-primary disabled:opacity-50"
                         />
                       </td>
                       <td className="px-3 py-3">
@@ -299,24 +299,24 @@ export default function ImportPreviewTable({
       </div>
 
       {/* Legenda */}
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-xs font-medium text-gray-700 mb-2">Legenda:</p>
+      <div className="p-4 bg-muted rounded-lg border border-border">
+        <p className="text-xs font-medium text-foreground mb-2">Legenda:</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-green-600" />
-            <span className="text-gray-700">Válido e pronto para importar</span>
+            <span className="text-foreground">Válido e pronto para importar</span>
           </div>
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-amber-600" />
-            <span className="text-gray-700">Aviso - revisar após importação</span>
+            <span className="text-foreground">Aviso - revisar após importação</span>
           </div>
           <div className="flex items-center gap-2">
             <XCircle className="w-4 h-4 text-red-600" />
-            <span className="text-gray-700">Erro - não será importado</span>
+            <span className="text-foreground">Erro - não será importado</span>
           </div>
           <div className="flex items-center gap-2">
             <RefreshCw className="w-4 h-4 text-blue-600" />
-            <span className="text-gray-700">Duplicata - CNPJ já existe</span>
+            <span className="text-foreground">Duplicata - CNPJ já existe</span>
           </div>
         </div>
       </div>
