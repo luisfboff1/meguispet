@@ -282,7 +282,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">Histórico de Estoque</CardTitle>
-              <p className="text-sm text-gray-500 mt-0.5">{produtoNome}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{produtoNome}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -296,7 +296,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
               </Button>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -311,7 +311,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                 className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'timeline'
                     ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Timeline
@@ -321,7 +321,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                 className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'grafico'
                     ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Gráfico
@@ -331,11 +331,11 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
             {/* Location Filter */}
             {locais.length > 1 && (
               <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                 <select
                   value={filtroLocal}
                   onChange={(e) => setFiltroLocal(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="text-sm border border-border rounded-md px-2 py-1 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="todos">Todos os locais</option>
                   {locais.map((l) => (
@@ -353,14 +353,14 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Carregando histórico...</span>
+              <span className="ml-3 text-muted-foreground">Carregando histórico...</span>
             </div>
           ) : activeTab === 'timeline' ? (
             <div className="space-y-3">
               {timelineData.length === 0 ? (
                 <div className="text-center py-12">
-                  <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Nenhum histórico encontrado para este produto</p>
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">Nenhum histórico encontrado para este produto</p>
                 </div>
               ) : (
                 timelineData.map((item) => (
@@ -382,18 +382,18 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                           {getTipoLabel(item.tipo_operacao)}
                         </span>
                         {item.estoque?.nome && (
-                          <span className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+                          <span className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">
                             <MapPin className="h-3 w-3 mr-0.5" />
                             {item.estoque.nome}
                           </span>
                         )}
-                        <span className="text-xs text-gray-500">{formatDate(item.created_at)}</span>
+                        <span className="text-xs text-muted-foreground">{formatDate(item.created_at)}</span>
                       </div>
 
                       <div className="flex items-baseline gap-2 text-sm">
-                        <span className="text-gray-600">Estoque:</span>
+                        <span className="text-muted-foreground">Estoque:</span>
                         <span className="font-medium">{item.quantidade_anterior}</span>
-                        <span className="text-gray-400">→</span>
+                        <span className="text-muted-foreground">→</span>
                         <span className="font-bold">{item.quantidade_nova}</span>
                         <span className={`font-bold ${item.quantidade_mudanca > 0 ? 'text-green-600' : 'text-red-600'}`}>
                           ({item.quantidade_mudanca > 0 ? '+' : ''}{item.quantidade_mudanca})
@@ -401,7 +401,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                       </div>
 
                       {item.motivo && (
-                        <p className="text-xs text-gray-600 mt-1">💬 {item.motivo}</p>
+                        <p className="text-xs text-muted-foreground mt-1">💬 {item.motivo}</p>
                       )}
 
                       {item.operacao_id && (
@@ -423,8 +423,8 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                   <Card>
                     <CardContent className="pt-4 pb-4">
                       <div className="text-center">
-                        <p className="text-xs text-gray-500">Estoque Inicial</p>
-                        <p className="text-xl font-bold text-gray-900 mt-1">
+                        <p className="text-xs text-muted-foreground">Estoque Inicial</p>
+                        <p className="text-xl font-bold text-foreground mt-1">
                           {chartData[0]?.estoque ?? 0}
                         </p>
                       </div>
@@ -434,7 +434,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                   <Card>
                     <CardContent className="pt-4 pb-4">
                       <div className="text-center">
-                        <p className="text-xs text-gray-500">Estoque Atual</p>
+                        <p className="text-xs text-muted-foreground">Estoque Atual</p>
                         <p className="text-xl font-bold text-blue-600 mt-1">
                           {estoqueAtual.reduce((sum, e) => sum + e.quantidade, 0)}
                         </p>
@@ -445,7 +445,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                   <Card>
                     <CardContent className="pt-4 pb-4">
                       <div className="text-center">
-                        <p className="text-xs text-gray-500">Total de Mudanças</p>
+                        <p className="text-xs text-muted-foreground">Total de Mudanças</p>
                         <p className="text-xl font-bold text-purple-600 mt-1">
                           {filteredHistorico.length}
                         </p>
@@ -465,7 +465,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                           <div className="text-center">
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
                               <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: LINE_COLORS[l.nome], display: 'inline-block' }} />
-                              <p className="text-xs text-gray-500">{l.nome}</p>
+                              <p className="text-xs text-muted-foreground">{l.nome}</p>
                             </div>
                             <p className="text-xl font-bold mt-1" style={{ color: LINE_COLORS[l.nome] }}>
                               {currentStock?.quantidade ?? 0}
@@ -541,15 +541,15 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                 </Card>
               ) : (
                 <div className="text-center py-12">
-                  <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">Nenhum dado disponível para gerar o gráfico</p>
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">Nenhum dado disponível para gerar o gráfico</p>
                 </div>
               )}
             </div>
           )}
         </CardContent>
 
-        <div className="flex-shrink-0 border-t p-3 bg-gray-50">
+        <div className="flex-shrink-0 border-t p-3 bg-muted">
           <div className="flex justify-end">
             <Button onClick={onClose} variant="outline" size="sm">
               Fechar

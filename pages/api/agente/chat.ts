@@ -731,7 +731,29 @@ async function runAgentLoop(
 }
 
 const FORMAT_REMINDER =
-  "Lembrete de formato: responda em Markdown GFM; use tabelas GFM para dados tabulares; para graficos use apenas bloco ```chart``` com JSON valido; nunca use graficos ASCII.";
+  [
+    "Lembrete de formato:",
+    "1. Responda em Markdown GFM.",
+    "2. Use tabelas GFM para dados tabulares.",
+    "3. Para graficos, use somente bloco ```chart``` com JSON valido para o frontend.",
+    "4. Nunca use graficos ASCII, barras com caracteres, nem tabela com coluna de barras visuais.",
+  ].join("\n");
+
+const CHART_REQUEST_REMINDER =
+  [
+    "O usuario pediu ou provavelmente espera um grafico.",
+    "A resposta final DEVE conter um bloco ```chart``` valido.",
+    "Contrato MeguisPet: { type, title, data, xAxis, yAxis }.",
+    "Use xAxis/yAxis, nao xKey/yKey.",
+    "Exemplo: ```chart\n{\"type\":\"bar\",\"title\":\"Vendas por dia\",\"data\":[{\"dia\":\"01/04\",\"vendas\":1,\"faturamento\":1000}],\"xAxis\":\"dia\",\"yAxis\":[\"vendas\",\"faturamento\"]}\n```",
+    "Nao produza linhas como '01/04 █ (1) R$ 1.000,00'. Isso e proibido.",
+    "Nao repita todos os dados em tabela depois do grafico.",
+  ].join("\n");
+
+function isChartRequest(text: string): boolean {
+  return /\b(gr[aá]fico|chart|visual|evolu[cç][aã]o|distribui[cç][aã]o|compar(a|ar|e|ativo)|top\s*\d*|ranking|por dia|por m[eê]s|por semana|por vendedor|por produto)\b/i
+    .test(text);
+}
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   if (req.method !== "POST") {
@@ -876,11 +898,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         content: msg.content,
       }));
 
-    const userMessageCount = input.filter((item) =>
-      "role" in item && item.role === "user"
-    ).length;
-    if (userMessageCount >= 4) {
-      input.push({ role: "system", content: FORMAT_REMINDER });
+    input.push({ role: "system", content: FORMAT_REMINDER });
+    if (isChartRequest(message.trim())) {
+      input.push({ role: "system", content: CHART_REQUEST_REMINDER });
     }
 
     res.setHeader("Content-Type", "text/event-stream");

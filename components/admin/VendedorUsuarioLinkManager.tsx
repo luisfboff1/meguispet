@@ -117,17 +117,17 @@ export function VendedorUsuarioLinkManager({
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total de Vendedores</p>
+              <p className="text-sm text-muted-foreground">Total de Vendedores</p>
               <p className="text-2xl font-bold">{stats.total}</p>
             </div>
-            <Users className="h-8 w-8 text-gray-400" />
+            <Users className="h-8 w-8 text-muted-foreground" />
           </div>
         </Card>
 
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Com Usuário</p>
+              <p className="text-sm text-muted-foreground">Com Usuário</p>
               <p className="text-2xl font-bold text-green-600">{stats.linked}</p>
             </div>
             <CheckCircle className="h-8 w-8 text-green-600" />
@@ -137,7 +137,7 @@ export function VendedorUsuarioLinkManager({
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Sem Usuário</p>
+              <p className="text-sm text-muted-foreground">Sem Usuário</p>
               <p className="text-2xl font-bold text-orange-600">{stats.unlinked}</p>
             </div>
             <XCircle className="h-8 w-8 text-orange-600" />
@@ -148,7 +148,7 @@ export function VendedorUsuarioLinkManager({
       {/* Filtros */}
       <div className="flex gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar vendedor por nome ou email..."
             value={searchTerm}
@@ -172,41 +172,41 @@ export function VendedorUsuarioLinkManager({
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800 border-b">
+            <thead className="bg-muted border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Vendedor
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Status do Vínculo
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Usuário Vinculado
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-border">
               {filteredVendedores.map((vendedor) => (
-                <tr key={vendedor.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                <tr key={vendedor.id} className="hover:bg-muted/60">
                   <td className="px-4 py-3">
                     <div className="flex items-center">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                        <p className="font-medium text-foreground">
                           {vendedor.nome}
                         </p>
-                        <p className="text-sm text-gray-500">ID: {vendedor.id}</p>
+                        <p className="text-sm text-muted-foreground">ID: {vendedor.id}</p>
                       </div>
                     </div>
                   </td>
 
                   <td className="px-4 py-3">
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
+                    <p className="text-sm text-foreground">
                       {vendedor.email || '-'}
                     </p>
                   </td>
@@ -228,10 +228,10 @@ export function VendedorUsuarioLinkManager({
                   <td className="px-4 py-3">
                     {vendedor.usuario ? (
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <p className="text-sm font-medium text-foreground">
                           {vendedor.usuario.nome}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {vendedor.usuario.email}
                         </p>
                         {!vendedor.usuario.ativo && (
@@ -241,7 +241,7 @@ export function VendedorUsuarioLinkManager({
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">-</p>
+                      <p className="text-sm text-muted-foreground">-</p>
                     )}
                   </td>
 
@@ -286,7 +286,7 @@ export function VendedorUsuarioLinkManager({
 
               {filteredVendedores.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                     Nenhum vendedor encontrado
                   </td>
                 </tr>
@@ -338,7 +338,7 @@ export function VendedorUsuarioLinkManager({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Apenas usuários sem vendedor vinculado aparecem na lista
               </p>
             </div>

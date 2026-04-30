@@ -97,23 +97,23 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
         'border-r border-white/40 shadow-xl shadow-slate-900/5 dark:border-slate-800/70'
       )}
     >
-      <div className="relative border-b border-white/40 px-4 py-5 dark:border-slate-800/70">
-        <div className={cn('flex items-center gap-3', isCollapsed && 'flex-col gap-2 text-center')}>
-          <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-500/30">
+      <div className="relative border-b border-white/40 px-3 py-3 dark:border-slate-800/70">
+        <div className={cn('flex items-center gap-2', isCollapsed && 'flex-col gap-2 text-center')}>
+          <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-500/30">
             <Image
               src="/Meguis-pet-1280x1147.png"
               alt="MeguisPet Logo"
-              width={isCollapsed ? 40 : 44}
-              height={isCollapsed ? 40 : 44}
+              width={isCollapsed ? 32 : 36}
+              height={isCollapsed ? 32 : 36}
               className="h-full w-full object-cover"
             />
           </div>
           {!isCollapsed && (
             <div className="flex flex-1 flex-col text-left">
-              <span className="text-xs uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
                 Painel
               </span>
-              <span className="text-lg font-semibold text-slate-900 dark:text-white">
+              <span className="text-base font-semibold text-slate-900 dark:text-white">
                 MeguisPet
               </span>
               <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
@@ -124,27 +124,27 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
           {!hideToggle && !isTemporary && (
             <button
               onClick={onToggle}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent bg-white/80 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent bg-white/80 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
               aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             >
-              <Package2 size={18} />
+              <Package2 size={16} />
             </button>
           )}
           {isTemporary && (
             <button
               onClick={close}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent bg-white/80 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent bg-white/80 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
               aria-label="Fechar menu lateral"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 py-5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200/80 dark:scrollbar-thumb-slate-700/60">
-        <div className="space-y-5">
-          <div className={cn('space-y-2 rounded-3xl px-2 py-1', isCollapsed ? 'px-1' : 'px-2')}>
+      <div className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200/80 dark:scrollbar-thumb-slate-700/60">
+        <div className="space-y-3">
+          <div className={cn('space-y-1 rounded-3xl px-2 py-1', isCollapsed ? 'px-1' : 'px-2')}>
             <p className={cn('px-3 text-xs font-semibold uppercase tracking-widest text-slate-400/80 dark:text-slate-500/80', isCollapsed && 'hidden')}>
               Navegação principal
             </p>
@@ -158,7 +158,7 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
                   href={item.href}
                   onClick={handleItemSelect}
                   className={cn(
-                    'group relative flex items-center gap-3 overflow-hidden rounded-2xl px-3 py-2 text-sm transition-all duration-200',
+                    'group relative flex items-center gap-2 overflow-hidden rounded-2xl px-2.5 py-1.5 text-sm transition-all duration-200',
                     active
                       ? 'bg-amber-500/90 text-white shadow-lg shadow-amber-500/30'
                       : 'text-slate-600 hover:bg-white/90 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900/80 dark:hover:text-white'
@@ -167,11 +167,11 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
                 >
                   <span
                     className={cn(
-                      'flex h-10 w-10 transform items-center justify-center rounded-2xl bg-white/80 text-amber-500 shadow-sm shadow-amber-500/20 transition-all duration-200 dark:bg-slate-900/60 dark:text-amber-300',
+                      'flex h-8 w-8 transform items-center justify-center rounded-2xl bg-white/80 text-amber-500 shadow-sm shadow-amber-500/20 transition-all duration-200 dark:bg-slate-900/60 dark:text-amber-300',
                       active && 'scale-95 bg-white text-amber-500'
                     )}
                   >
-                    <Icon size={20} />
+                    <Icon size={18} />
                   </span>
                   {!isCollapsed && (
                     <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -190,17 +190,17 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
         </div>
       </div>
 
-      <div className="border-t border-white/40 px-4 py-4 dark:border-slate-800/70">
+      <div className="border-t border-white/40 px-3 py-2.5 dark:border-slate-800/70">
         <button
           onClick={() => logout()}
           className={cn(
-            'group flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-rose-500 transition-all duration-200 hover:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/15',
+            'group flex w-full items-center gap-2 rounded-2xl px-2.5 py-1.5 text-sm font-medium text-rose-500 transition-all duration-200 hover:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/15',
             isCollapsed && 'justify-center'
           )}
           title={isCollapsed ? 'Encerrar sessão' : undefined}
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100/60 text-rose-500 shadow-sm dark:bg-rose-500/20 dark:text-rose-300">
-            <LogOut size={20} />
+          <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-rose-100/60 text-rose-500 shadow-sm dark:bg-rose-500/20 dark:text-rose-300">
+            <LogOut size={18} />
           </span>
           {!isCollapsed && (
             <span className="flex-1 text-left font-semibold tracking-tight">Encerrar sessão</span>

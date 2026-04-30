@@ -250,24 +250,24 @@ export function FinanceiroDashboard() {
               {vendas.slice(0, 8).map((venda) => (
                 <div
                   key={venda.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted transition"
                 >
                   <div>
                     <p className="font-medium">Venda #{venda.id}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {new Date(venda.data_venda).toLocaleDateString('pt-BR')}
                     </p>
                     {venda.vendedor_id && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Vendedor ID: {venda.vendedor_id}
                       </p>
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600">
+                    <p className="font-bold text-meguispet-success">
                       {formatCurrency(venda.valor_final)}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {venda.status || 'Concluída'}
                     </p>
                   </div>
@@ -275,7 +275,7 @@ export function FinanceiroDashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-muted-foreground py-8">
               Nenhuma venda registrada
             </p>
           )}

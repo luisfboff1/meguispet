@@ -248,8 +248,8 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
     return (
       <Card>
         <CardHeader>
-          <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mt-2 animate-pulse"></div>
+          <div className="h-6 bg-muted rounded w-1/3 animate-pulse"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mt-2 animate-pulse"></div>
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
@@ -268,9 +268,9 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
           <CardDescription>Acompanhe o fluxo de caixa e desempenho financeiro</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-80 flex items-center justify-center text-gray-500">
+          <div className="h-80 flex items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+              <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
               <p>Nenhum dado disponível para o período selecionado</p>
               {!showEmptyDays && (
                 <p className="text-sm mt-2">Tente ativar &quot;Mostrar dias sem movimentação&quot;</p>
@@ -527,7 +527,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               </Button>
             </div>
 
-            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+            <div className="h-6 w-px bg-border"></div>
 
             {/* Chart Type Toggle */}
             <div className="flex gap-1">
@@ -557,7 +557,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               </Button>
             </div>
 
-            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+            <div className="h-6 w-px bg-border"></div>
 
             {/* Show Empty Days Toggle */}
             <Button
@@ -570,7 +570,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               Dias Vazios
             </Button>
 
-            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+            <div className="h-6 w-px bg-border"></div>
 
             {/* Metrics Selector */}
             <DropdownMenu>
@@ -606,7 +606,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
 
           {/* Custom Date Range Inputs */}
           {showCustomDatePopover && (
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-meguispet-primary">
+            <div className="p-4 bg-muted rounded-lg border-2 border-meguispet-primary">
               <div className="space-y-2">
                 <h4 className="font-medium text-sm">Período Customizado</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -647,9 +647,9 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
           )}
 
           {/* Period Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 bg-muted rounded-lg">
             <div className="text-center">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <div className="text-xs text-muted-foreground mb-1">
                 Receitas do Período
               </div>
               <div className="text-sm sm:text-lg font-bold text-green-600 break-words">
@@ -657,7 +657,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               </div>
             </div>
             <div className="text-center">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <div className="text-xs text-muted-foreground mb-1">
                 Despesas do Período
               </div>
               <div className="text-sm sm:text-lg font-bold text-red-600 break-words">
@@ -665,7 +665,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               </div>
             </div>
             <div className="text-center">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <div className="text-xs text-muted-foreground mb-1">
                 Fluxo do Período
               </div>
               <div className={`text-sm sm:text-lg font-bold break-words ${periodTotals.fluxo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
@@ -675,7 +675,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
           </div>
 
           {/* Legenda de Projeção */}
-          <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="h-3 w-8 border-2 border-blue-500"></div>
               <span>Dados Históricos</span>

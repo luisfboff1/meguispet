@@ -274,7 +274,7 @@ export function BlingReferenciasTab() {
         <div className="max-w-md">
           <div className="font-medium">{row.original.descricao}</div>
           {row.original.observacoes && (
-            <div className="text-sm text-gray-500 truncate">{row.original.observacoes}</div>
+            <div className="text-sm text-muted-foreground truncate">{row.original.observacoes}</div>
           )}
         </div>
       ),
@@ -334,19 +334,19 @@ export function BlingReferenciasTab() {
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-500">Total Mapeados</div>
+            <div className="text-sm text-muted-foreground">Total Mapeados</div>
             <div className="text-2xl font-bold">{totalMapeamentos}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-500">Não Mapeados</div>
+            <div className="text-sm text-muted-foreground">Não Mapeados</div>
             <div className="text-2xl font-bold text-orange-600">{totalNaoMapeados}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-sm text-gray-500">Última Atualização</div>
+            <div className="text-sm text-muted-foreground">Última Atualização</div>
             <div className="text-sm font-medium">
               {mapeamentos[0]?.updated_at 
                 ? new Date(mapeamentos[0].updated_at).toLocaleDateString('pt-BR')
@@ -393,17 +393,17 @@ export function BlingReferenciasTab() {
           </CardHeader>
           <CardContent>
             {produtosNaoMapeados.length === 0 ? (
-              <p className="text-gray-500">Todos os produtos estão mapeados! 🎉</p>
+              <p className="text-muted-foreground">Todos os produtos estão mapeados! 🎉</p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {produtosNaoMapeados.map((produto, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted"
                   >
                     <div className="flex-1">
                       <div className="font-medium">{produto.descricao}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         {produto.codigo_produto && `Código: ${produto.codigo_produto}`}
                         {!produto.codigo_produto && produto.bling_produto_id && `ID Bling: ${produto.bling_produto_id}`}
                         {produto.ocorrencias && ` • ${produto.ocorrencias} ocorrência(s)`}
@@ -429,7 +429,7 @@ export function BlingReferenciasTab() {
         <CardContent className="p-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <DataTable columns={columns} data={mapeamentos} />
@@ -448,24 +448,24 @@ export function BlingReferenciasTab() {
 
           <div className="space-y-4 py-4">
             {/* Produto no Bling */}
-            <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-              <h3 className="font-medium text-sm text-gray-700">Produto no Bling</h3>
+            <div className="p-4 bg-muted rounded-lg space-y-3">
+              <h3 className="font-medium text-sm text-foreground">Produto no Bling</h3>
               
               <div>
-                <label className="text-sm text-gray-600 mb-1 block">Código / ID Bling</label>
+                <label className="text-sm text-muted-foreground mb-1 block">Código / ID Bling</label>
                 <Input
                   value={formData.codigo || ''}
                   onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
                   placeholder="Código ou ID do produto no Bling"
                   className="font-mono"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Código do produto ou ID Bling para identificação
                 </p>
               </div>
 
               <div>
-                <label className="text-sm text-gray-600 mb-1 block">Descrição *</label>
+                <label className="text-sm text-muted-foreground mb-1 block">Descrição *</label>
                 <Input
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
@@ -481,7 +481,7 @@ export function BlingReferenciasTab() {
             {/* Produtos Locais */}
 <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-sm text-gray-700">Produtos Locais *</h3>
+                <h3 className="font-medium text-sm text-foreground">Produtos Locais *</h3>
                 <Button size="sm" variant="outline" onClick={handleAddItem}>
                   <Plus className="h-3 w-3 mr-1" />
                   Adicionar Produto
@@ -493,7 +493,7 @@ export function BlingReferenciasTab() {
               )}
 
               {formData.itens.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">
+                <p className="text-muted-foreground text-sm text-center py-4">
                   Nenhum produto local adicionado
                 </p>
               ) : (
@@ -544,12 +544,12 @@ export function BlingReferenciasTab() {
 
             {/* Observações */}
             <div>
-              <label className="text-sm text-gray-600 mb-1 block">Observações</label>
+              <label className="text-sm text-muted-foreground mb-1 block">Observações</label>
               <textarea
                 value={formData.observacoes || ''}
                 onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                 placeholder="Notas sobre este mapeamento..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={3}
               />
             </div>

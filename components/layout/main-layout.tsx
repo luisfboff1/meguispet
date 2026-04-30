@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
-import { cn } from '@/lib/utils'
 import { useSidebar } from '@/hooks/useSidebar'
 import { useAuth } from '@/hooks/useAuth'
 import { ModalHost } from '@/components/modals/modal-host'
@@ -39,7 +38,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   const noLayoutPages = ['/login', '/register', '/forgot-password', '/emergency-logout']
   const isNoLayoutPage = noLayoutPages.includes(router.pathname)
 
-  const sidebarWidth = useMemo(() => (isCollapsed && !isTemporary ? 88 : 268), [isCollapsed, isTemporary])
+  const sidebarWidth = useMemo(() => (isCollapsed && !isTemporary ? 72 : 232), [isCollapsed, isTemporary])
 
   // Sidebar content - removed useMemo to allow re-renders on route change
   // This fixes mobile navigation issue where URL changes but content doesn't update
@@ -251,13 +250,8 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
           isMobile={isTemporary}
         />
 
-        <main className="relative flex-1 overflow-auto p-6">
-          <div
-            className={cn(
-              'mx-auto min-h-full w-full max-w-7xl space-y-6 transition-all duration-300',
-              !isTemporary && (isCollapsed ? 'px-6' : 'px-2')
-            )}
-          >
+        <main className="relative flex-1 overflow-auto p-3 md:p-4">
+          <div className="mx-auto min-h-full w-full space-y-4 transition-all duration-300">
             {children}
           </div>
         </main>
