@@ -81,41 +81,109 @@ const loadStoredNotifications = (): NotificationItem[] => {
 
 // Títulos das páginas
 const pageTitles: Record<string, { title: string; description: string }> = {
-  '/dashboard': { 
-    title: 'Dashboard', 
-    description: 'Visão geral do seu negócio' 
+  '/dashboard': {
+    title: 'Dashboard',
+    description: 'Visão geral do seu negócio'
   },
-  '/vendas': { 
-    title: 'Vendas', 
-    description: 'Gerencie suas vendas e pedidos' 
+  '/vendas': {
+    title: 'Vendas',
+    description: 'Gerencie suas vendas e pedidos'
   },
-  '/produtos': { 
-    title: 'Produtos', 
-    description: 'Cadastre e gerencie seus produtos' 
+  '/produtos': {
+    title: 'Produtos',
+    description: 'Cadastre e gerencie seus produtos'
   },
-  '/estoque': { 
-    title: 'Estoque', 
-    description: 'Controle seu estoque em tempo real' 
+  '/produtos-estoque': {
+    title: 'Produtos',
+    description: 'Catálogo, estoque e movimentações'
   },
-  '/clientes': { 
-    title: 'Clientes', 
-    description: 'Gerencie sua base de clientes' 
+  '/produto-detalhes': {
+    title: 'Detalhes do Produto',
+    description: 'Informações completas do produto'
   },
-  '/vendedores': { 
-    title: 'Vendedores', 
-    description: 'Cadastre e gerencie vendedores' 
+  '/estoque': {
+    title: 'Estoque',
+    description: 'Controle seu estoque em tempo real'
   },
-  '/financeiro': { 
-    title: 'Financeiro', 
-    description: 'Controle financeiro e relatórios' 
+  '/clientes': {
+    title: 'Clientes',
+    description: 'Gerencie sua base de clientes'
   },
-  '/relatorios': { 
-    title: 'Relatórios', 
-    description: 'Relatórios e análises do negócio' 
+  '/mapa-clientes': {
+    title: 'Mapa de Clientes',
+    description: 'Distribuição geográfica dos clientes'
   },
-  '/usuarios': { 
-    title: 'Usuários', 
-    description: 'Gerencie usuários do sistema' 
+  '/fornecedores': {
+    title: 'Fornecedores',
+    description: 'Cadastro e gestão de fornecedores'
+  },
+  '/vendedores': {
+    title: 'Vendedores',
+    description: 'Cadastre e gerencie vendedores'
+  },
+  '/financeiro': {
+    title: 'Financeiro',
+    description: 'Controle financeiro e relatórios'
+  },
+  '/relatorios': {
+    title: 'Relatórios',
+    description: 'Relatórios e análises do negócio'
+  },
+  '/relatorios/vendas': {
+    title: 'Relatório de Vendas',
+    description: 'Análise de vendas, faturamento e margem'
+  },
+  '/relatorios/produtos': {
+    title: 'Relatório de Produtos',
+    description: 'Desempenho e análise de produtos'
+  },
+  '/relatorios/clientes': {
+    title: 'Relatório de Clientes',
+    description: 'Análise da base de clientes'
+  },
+  '/relatorios/financeiro': {
+    title: 'Relatório Financeiro',
+    description: 'Receitas, despesas e fluxo de caixa'
+  },
+  '/relatorios/historico/[id]': {
+    title: 'Relatório Salvo',
+    description: 'Visualização do relatório gerado'
+  },
+  '/usuarios': {
+    title: 'Usuários',
+    description: 'Gerencie usuários do sistema'
+  },
+  '/admin/vendedores-usuarios': {
+    title: 'Vendedores & Usuários',
+    description: 'Vincule vendedores a usuários do sistema'
+  },
+  '/configuracoes': {
+    title: 'Configurações',
+    description: 'Preferências do sistema'
+  },
+  '/perfil': {
+    title: 'Meu Perfil',
+    description: 'Dados pessoais e preferências'
+  },
+  '/notificacoes': {
+    title: 'Notificações',
+    description: 'Avisos e alertas do sistema'
+  },
+  '/feedback': {
+    title: 'Feedback & Suporte',
+    description: 'Bugs, melhorias e novas funcionalidades'
+  },
+  '/agente': {
+    title: 'Agente Megui',
+    description: 'Assistente de IA para consultas de dados'
+  },
+  '/integracoes/bling': {
+    title: 'Bling ERP',
+    description: 'Integração com vendas e notas fiscais'
+  },
+  '/busca': {
+    title: 'Busca',
+    description: 'Pesquise vendas, clientes e produtos'
   },
 }
 

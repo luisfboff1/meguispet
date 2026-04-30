@@ -887,12 +887,7 @@ export default function ProdutosEstoquePage() {
         />
       )}
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Produtos & Estoque</h1>
-          <p className="text-gray-600">Gerencie produtos, estoque e movimentações</p>
-        </div>
-        
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
         <div className="flex flex-col sm:flex-row gap-2">
           {activeTab === 'produtos' && (
             <>

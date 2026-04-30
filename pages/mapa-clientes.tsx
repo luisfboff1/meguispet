@@ -266,17 +266,7 @@ export default function MapaClientesPage() {
       )}
       
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Map className="h-8 w-8 text-meguispet-primary" />
-            Mapa de Clientes
-          </h1>
-          <p className="text-muted-foreground">
-            Visualização geográfica da distribuição de clientes
-          </p>
-        </div>
-
+      <div className="flex items-center justify-end">
         <div className="flex gap-2">
           {geocodeErrors.length > 0 && (
             <Button

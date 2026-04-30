@@ -251,8 +251,8 @@ export default function ProdutoDetalhes() {
             Voltar
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{produto.nome}</h1>
-            <p className="text-gray-600">{produto.categoria || 'Sem categoria'}</p>
+            <h1 className="text-xl font-bold text-gray-900">{produto.nome}</h1>
+            <p className="text-sm text-gray-500">{produto.categoria || 'Sem categoria'}</p>
           </div>
         </div>
         

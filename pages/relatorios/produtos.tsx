@@ -123,15 +123,6 @@ export default function ProdutosReportPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-
-        <h1 className="text-3xl font-bold">
-          {step === 'config' ? 'Configurar Relatório de Produtos' : 'Relatório de Produtos'}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {step === 'config'
-            ? 'Configure os parâmetros do relatório de produtos'
-            : 'Visualização do relatório gerado'}
-        </p>
       </div>
 
       {step === 'config' && (

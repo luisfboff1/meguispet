@@ -13,14 +13,15 @@ import {
   UserCheck,
   Settings,
   LogOut,
-  Package2,
   Truck,
   X,
   Building2,
   MessageSquare,
   Map,
   Plug,
-  Bot
+  Bot,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -40,7 +41,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { icon: Home, label: 'Dashboard', href: '/dashboard', permission: 'dashboard' },
   { icon: ShoppingCart, label: 'Vendas', href: '/vendas', permission: 'vendas' },
-  { icon: Package, label: 'Produtos & Estoque', href: '/produtos-estoque', permission: 'produtos' },
+  { icon: Package, label: 'Produtos', href: '/produtos-estoque', permission: 'produtos' },
   { icon: Building2, label: 'Fornecedores', href: '/fornecedores', permission: 'produtos' }, // Usar mesma permissão de produtos
   { icon: Users, label: 'Clientes', href: '/clientes', permission: 'clientes' },
   { icon: Map, label: 'Mapa de Clientes', href: '/mapa-clientes', permission: 'clientes' }, // Requer permissão de clientes
@@ -97,9 +98,9 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
         'border-r border-white/40 shadow-xl shadow-slate-900/5 dark:border-slate-800/70'
       )}
     >
-      <div className="relative border-b border-white/40 px-3 py-3 dark:border-slate-800/70">
+      <div className="relative border-b border-white/40 px-2 py-2 dark:border-slate-800/70">
         <div className={cn('flex items-center gap-2', isCollapsed && 'flex-col gap-2 text-center')}>
-          <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-500/30">
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-500/30">
             <Image
               src="/Meguis-pet-1280x1147.png"
               alt="MeguisPet Logo"
@@ -108,26 +109,14 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
               className="h-full w-full object-cover"
             />
           </div>
-          {!isCollapsed && (
-            <div className="flex flex-1 flex-col text-left">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
-                Painel
-              </span>
-              <span className="text-base font-semibold text-slate-900 dark:text-white">
-                MeguisPet
-              </span>
-              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
-                Gestão integrada de pet shop
-              </span>
-            </div>
-          )}
+          {!isCollapsed && <div className="flex-1" />}
           {!hideToggle && !isTemporary && (
             <button
               onClick={onToggle}
               className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent bg-white/80 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
               aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             >
-              <Package2 size={16} />
+              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </button>
           )}
           {isTemporary && (
@@ -144,10 +133,7 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
 
       <div className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200/80 dark:scrollbar-thumb-slate-700/60">
         <div className="space-y-3">
-          <div className={cn('space-y-1 rounded-3xl px-2 py-1', isCollapsed ? 'px-1' : 'px-2')}>
-            <p className={cn('px-3 text-xs font-semibold uppercase tracking-widest text-slate-400/80 dark:text-slate-500/80', isCollapsed && 'hidden')}>
-              Navegação principal
-            </p>
+          <div className={cn('space-y-1 rounded-3xl px-1 py-1', isCollapsed && 'px-1')}>
             {navigation.map((item) => {
               const Icon = item.icon
               const active = item.active

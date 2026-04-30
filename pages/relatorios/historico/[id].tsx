@@ -104,10 +104,6 @@ export default function HistoricoReportPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{report.nome}</h1>
-          <p className="text-muted-foreground capitalize">{report.tipo}</p>
-        </div>
       </div>
 
       {report.tipo === 'vendas' && report.dados ? (

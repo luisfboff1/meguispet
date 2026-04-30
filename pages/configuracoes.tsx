@@ -189,14 +189,6 @@ export default function ConfiguracoesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Configurações</h1>
-          <p className="text-gray-600">Personalize seu sistema</p>
-        </div>
-      </div>
-
       <div className="grid gap-6">
         {/* Notificações */}
         <Card>

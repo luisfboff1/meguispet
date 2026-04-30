@@ -38,7 +38,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   const noLayoutPages = ['/login', '/register', '/forgot-password', '/emergency-logout']
   const isNoLayoutPage = noLayoutPages.includes(router.pathname)
 
-  const sidebarWidth = useMemo(() => (isCollapsed && !isTemporary ? 72 : 232), [isCollapsed, isTemporary])
+  const sidebarWidth = useMemo(() => (isCollapsed && !isTemporary ? 64 : 196), [isCollapsed, isTemporary])
 
   // Sidebar content - removed useMemo to allow re-renders on route change
   // This fixes mobile navigation issue where URL changes but content doesn't update

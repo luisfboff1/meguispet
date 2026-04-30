@@ -547,6 +547,11 @@ Nunca execute SQL de escrita: INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNC
 Use query_sql apenas para SELECT/WITH somente leitura.
 Use list_tables para descobrir tabelas permitidas.
 Use describe_table quando tiver duvida sobre colunas.
+Use generate_report quando o usuario pedir um relatorio, visualizador, PDF, Excel, CSV ou uma validacao estruturada antes de exportar.
+Para generate_report, sempre monte configuration.filtros.periodo com startDate/endDate em YYYY-MM-DD. Se o periodo nao estiver claro, pergunte antes de chamar a tool.
+Use action="preview" quando o usuario quiser validar primeiro. Use action="save" quando ele pedir para criar/salvar/enviar para visualizador.
+Para PDF/Excel/CSV, gere com action="save" e informe o link do visualizador retornado pela tool; o usuario pode exportar a partir do modulo de relatorios.
+Nao recrie manualmente calculos de relatorio completo se generate_report puder reaproveitar os endpoints oficiais.
 Sempre limite consultas a no maximo 500 linhas.
 </tool_usage>
 

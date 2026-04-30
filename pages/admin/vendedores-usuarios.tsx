@@ -204,17 +204,6 @@ export default function VendedoresUsuariosPage() {
   return (
     <PermissionGate permission="config_usuarios" redirect="/dashboard">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Users className="h-7 w-7" />
-            Gerenciar Vendedores e Usuários
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Vincule vendedores existentes a usuários do sistema para rastreamento individual de vendas
-          </p>
-        </div>
-
         {/* Proteção Admin */}
         <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
           <CardContent className="pt-6">

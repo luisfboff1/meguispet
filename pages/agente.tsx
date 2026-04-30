@@ -32,23 +32,6 @@ export default function AgentePage() {
   return (
     <PermissionGate permission="agente" redirect="/dashboard">
     <div className="absolute inset-0 flex flex-col overflow-hidden">
-      {/* Page header */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
-            <Bot className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              Agente Megui
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Assistente de IA para consultas de dados
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-1 flex-col overflow-hidden">
         <div className="border-b border-slate-200 bg-white px-6 dark:border-slate-700 dark:bg-slate-900">

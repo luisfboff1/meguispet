@@ -370,12 +370,7 @@ export default function ClientesPage() {
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-          <p className="text-gray-600">Gerencie sua base de clientes</p>
-        </div>
-        
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
             className="bg-meguispet-primary hover:bg-meguispet-primary/90"

@@ -889,12 +889,7 @@ export default function VendasPage() {
       />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vendas</h1>
-          <p className="text-gray-600">Gerencie suas vendas e condições de pagamento</p>
-        </div>
-        
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
         <div className="flex flex-col sm:flex-row gap-2">
           {activeTab === 'vendas' ? (
             <>

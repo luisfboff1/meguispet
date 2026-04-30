@@ -590,10 +590,8 @@ export default function FinanceiroPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Financeiro</h1>
-          <p className="text-gray-600 dark:text-gray-400">Controle financeiro e relatórios</p>
           {error && (
-            <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-md">
+            <div className="p-2 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-md">
               <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
             </div>
           )}

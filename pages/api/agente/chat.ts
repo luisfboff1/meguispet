@@ -11,6 +11,11 @@ import {
   TABLE_DESCRIPTIONS,
 } from "@/lib/agent-schema";
 import type { AgentProvider } from "@/types";
+import type {
+  ReportConfiguration,
+  ReportFormat,
+  ReportType,
+} from "@/types/reports";
 import { getSupabaseServiceRole } from "@/lib/supabase-auth";
 
 // Rate limiter (in-memory)
@@ -173,6 +178,18 @@ interface SqlQueryRecord {
   execution_time_ms: number;
 }
 
+interface ReportToolResult {
+  success: boolean;
+  action: "preview" | "save";
+  reportType: ReportType;
+  format: ReportFormat;
+  reportId?: number;
+  viewerUrl?: string;
+  downloadHint?: string;
+  preview?: unknown;
+  message?: string;
+}
+
 interface StreamRunResult {
   finalText: string;
   reasoningText: string;
@@ -259,7 +276,166 @@ const LIST_TABLES_TOOL = {
   strict: true,
 } as const;
 
-const TOOLS = [QUERY_SQL_TOOL, DESCRIBE_TABLE_TOOL, LIST_TABLES_TOOL];
+const REPORT_CONFIGURATION_SCHEMA = {
+  type: "object",
+  properties: {
+    tipo: {
+      type: "string",
+      enum: ["vendas", "produtos", "clientes", "financeiro"],
+      description:
+        "Tipo do relatorio. Se omitido, o servidor usa report_type.",
+    },
+    filtros: {
+      type: "object",
+      properties: {
+        periodo: {
+          type: "object",
+          properties: {
+            startDate: {
+              type: "string",
+              description: "Data inicial no formato YYYY-MM-DD.",
+            },
+            endDate: {
+              type: "string",
+              description: "Data final no formato YYYY-MM-DD.",
+            },
+          },
+          required: ["startDate", "endDate"],
+          additionalProperties: false,
+        },
+        vendedorIds: { type: "array", items: { type: "number" } },
+        produtoIds: { type: "array", items: { type: "number" } },
+        clienteIds: { type: "array", items: { type: "number" } },
+        formaPagamentoIds: { type: "array", items: { type: "number" } },
+        status: {
+          type: "array",
+          items: { type: "string", enum: ["pendente", "pago", "cancelado"] },
+        },
+        origem: { type: "array", items: { type: "string" } },
+        ufDestino: { type: "array", items: { type: "string" } },
+        categorias: { type: "array", items: { type: "string" } },
+        estoqueStatus: {
+          type: "string",
+          enum: ["todos", "baixo", "zerado"],
+        },
+        produtoStatus: {
+          type: "string",
+          enum: ["ativo", "inativo", "todos"],
+        },
+        tipoCliente: { type: "string", enum: ["pf", "pj", "todos"] },
+        clienteStatus: {
+          type: "string",
+          enum: ["ativo", "inativo", "todos"],
+        },
+        cidade: { type: "array", items: { type: "string" } },
+        estado: { type: "array", items: { type: "string" } },
+        tipoTransacao: {
+          type: "string",
+          enum: ["receita", "despesa", "todas"],
+        },
+        categoriaIds: { type: "array", items: { type: "number" } },
+        ocultarComprasMercadorias: { type: "boolean" },
+      },
+      required: ["periodo"],
+      additionalProperties: false,
+    },
+    metricas: {
+      type: "object",
+      properties: {
+        incluirTotalVendas: { type: "boolean" },
+        incluirFaturamento: { type: "boolean" },
+        incluirTicketMedio: { type: "boolean" },
+        incluirImpostos: { type: "boolean" },
+        incluirMargemLucro: { type: "boolean" },
+        incluirCustos: { type: "boolean" },
+        incluirProdutosMaisVendidos: { type: "boolean" },
+        incluirProdutosMenosVendidos: { type: "boolean" },
+        incluirRotatividade: { type: "boolean" },
+        incluirEstoqueBaixo: { type: "boolean" },
+        incluirNovosClientes: { type: "boolean" },
+        incluirClientesAtivos: { type: "boolean" },
+        incluirTopClientes: { type: "boolean" },
+        incluirAnaliseRFM: { type: "boolean" },
+        incluirReceitas: { type: "boolean" },
+        incluirDespesas: { type: "boolean" },
+        incluirLucro: { type: "boolean" },
+        incluirDRE: { type: "boolean" },
+      },
+      additionalProperties: false,
+    },
+    graficos: {
+      type: "object",
+      properties: {
+        incluirGraficoTemporal: { type: "boolean" },
+        incluirGraficoVendedor: { type: "boolean" },
+        incluirGraficoProduto: { type: "boolean" },
+        incluirGraficoCategoria: { type: "boolean" },
+        incluirGraficoComparativo: { type: "boolean" },
+      },
+      additionalProperties: false,
+    },
+    ordenacao: {
+      type: "object",
+      properties: {
+        campo: { type: "string" },
+        direcao: { type: "string", enum: ["asc", "desc"] },
+      },
+      required: ["campo", "direcao"],
+      additionalProperties: false,
+    },
+    limite: { type: "number" },
+    produtosExibir: {
+      anyOf: [
+        { type: "string", enum: ["todos"] },
+        { type: "array", items: { type: "number" } },
+      ],
+    },
+  },
+  required: ["filtros", "metricas", "graficos"],
+  additionalProperties: false,
+} as const;
+
+const GENERATE_REPORT_TOOL = {
+  type: "function",
+  name: "generate_report",
+  description:
+    "Valida e gera relatorio do MeguisPet usando os endpoints oficiais de relatorios. Use para pedidos de relatorio em preview/visualizador ou para salvar o relatorio.",
+  parameters: {
+    type: "object",
+    properties: {
+      report_type: {
+        type: "string",
+        enum: ["vendas", "produtos", "clientes", "financeiro"],
+      },
+      action: {
+        type: "string",
+        enum: ["preview", "save"],
+        description:
+          "preview retorna dados para validacao; save salva em relatorios_salvos e devolve link do visualizador.",
+      },
+      format: {
+        type: "string",
+        enum: ["web", "pdf", "excel", "csv"],
+        description:
+          "Formato desejado. PDF/Excel/CSV ficam preparados no relatorio salvo; o link do visualizador permite exportar.",
+      },
+      name: {
+        type: "string",
+        description: "Nome opcional para relatorio salvo.",
+      },
+      configuration: REPORT_CONFIGURATION_SCHEMA,
+    },
+    required: ["report_type", "action", "format", "configuration"],
+    additionalProperties: false,
+  },
+} as const;
+
+const TOOLS = [
+  QUERY_SQL_TOOL,
+  DESCRIBE_TABLE_TOOL,
+  LIST_TABLES_TOOL,
+  GENERATE_REPORT_TOOL,
+];
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_MODEL = "gpt-5-mini";
 const READ_ONLY_TIMEOUT_MS = 20_000;
@@ -380,8 +556,177 @@ async function describeTable(tableName: string): Promise<Record<string, unknown>
   };
 }
 
+const REPORT_TYPES: ReportType[] = [
+  "vendas",
+  "produtos",
+  "clientes",
+  "financeiro",
+];
+
+const REPORT_FORMATS: ReportFormat[] = ["web", "pdf", "excel", "csv"];
+
+function isReportType(value: unknown): value is ReportType {
+  return typeof value === "string" &&
+    REPORT_TYPES.includes(value as ReportType);
+}
+
+function isReportFormat(value: unknown): value is ReportFormat {
+  return typeof value === "string" &&
+    REPORT_FORMATS.includes(value as ReportFormat);
+}
+
+function compactForToolOutput(value: unknown, depth = 0): unknown {
+  if (depth > 4) return "[compactado]";
+
+  if (Array.isArray(value)) {
+    const items = value.slice(0, 20).map((item) =>
+      compactForToolOutput(item, depth + 1)
+    );
+    if (value.length > 20) {
+      items.push(`[+${value.length - 20} itens]`);
+    }
+    return items;
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  const obj = value as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(obj)) {
+    result[key] = compactForToolOutput(item, depth + 1);
+  }
+  return result;
+}
+
+function headerValue(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+function normalizeReportConfiguration(
+  args: Record<string, unknown>,
+): {
+  reportType: ReportType;
+  action: "preview" | "save";
+  format: ReportFormat;
+  name?: string;
+  configuration: ReportConfiguration;
+} {
+  if (!isReportType(args.report_type)) {
+    throw new Error("Tipo de relatorio invalido.");
+  }
+
+  const action = args.action === "save" ? "save" : "preview";
+  const format = isReportFormat(args.format) ? args.format : "web";
+  const rawConfig = args.configuration;
+  if (!rawConfig || typeof rawConfig !== "object" || Array.isArray(rawConfig)) {
+    throw new Error("Configuracao do relatorio e obrigatoria.");
+  }
+
+  const configObj = rawConfig as Partial<ReportConfiguration>;
+  const periodo = configObj.filtros?.periodo;
+  if (!periodo?.startDate || !periodo?.endDate) {
+    throw new Error(
+      "Periodo e obrigatorio para gerar relatorio. Informe startDate e endDate em YYYY-MM-DD.",
+    );
+  }
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(periodo.startDate) || !dateRegex.test(periodo.endDate)) {
+    throw new Error("Datas do relatorio devem estar no formato YYYY-MM-DD.");
+  }
+
+  if (periodo.startDate > periodo.endDate) {
+    throw new Error("Data inicial do relatorio nao pode ser maior que a final.");
+  }
+
+  return {
+    reportType: args.report_type,
+    action,
+    format,
+    name: typeof args.name === "string" && args.name.trim()
+      ? args.name.trim()
+      : undefined,
+    configuration: {
+      ...configObj,
+      tipo: args.report_type,
+      filtros: configObj.filtros,
+      metricas: configObj.metricas || {},
+      graficos: configObj.graficos || {},
+    } as ReportConfiguration,
+  };
+}
+
+async function generateReportForAgent(
+  args: Record<string, unknown>,
+  req: AuthenticatedRequest,
+): Promise<ReportToolResult> {
+  const { reportType, action, format, name, configuration } =
+    normalizeReportConfiguration(args);
+
+  const protocol = headerValue(req.headers["x-forwarded-proto"]) || "http";
+  const host = headerValue(req.headers.host) || "localhost:3000";
+  const baseUrl = `${protocol}://${host}`;
+  const endpoint = action === "save" ? "generate" : "preview";
+  const url = `${baseUrl}/api/relatorios/${reportType}/${endpoint}`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const cookie = headerValue(req.headers.cookie);
+  const authorization = headerValue(req.headers.authorization);
+  if (cookie) headers.Cookie = cookie;
+  if (authorization) headers.Authorization = authorization;
+
+  const body = action === "save"
+    ? { ...configuration, formato: format, salvar: true, nome: name }
+    : configuration;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  const text = await response.text();
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = text ? JSON.parse(text) as Record<string, unknown> : {};
+  } catch {
+    parsed = { message: text };
+  }
+
+  if (!response.ok || parsed.success === false) {
+    throw new Error(
+      String(parsed.message || `Erro ao gerar relatorio (${response.status})`),
+    );
+  }
+
+  const reportId = typeof parsed.reportId === "number"
+    ? parsed.reportId
+    : undefined;
+  const preview = parsed.preview ?? parsed.data;
+
+  return {
+    success: true,
+    action,
+    reportType,
+    format,
+    reportId,
+    viewerUrl: reportId ? `/relatorios/historico/${reportId}` : undefined,
+    downloadHint: format !== "web"
+      ? "Para PDF/Excel/CSV, abra o visualizador do relatorio salvo e use a exportacao do modulo de relatorios."
+      : undefined,
+    preview: compactForToolOutput(preview),
+    message: String(parsed.message || "Relatorio gerado com sucesso"),
+  };
+}
+
 async function executeTool(
   call: FunctionCall,
+  req: AuthenticatedRequest,
   send: (data: Record<string, unknown>) => void,
   toolCalls: ToolCallRecord[],
   sqlQueries: SqlQueryRecord[],
@@ -445,6 +790,44 @@ async function executeTool(
         tool: call.name,
         result: output,
         sql,
+        execution_time_ms: ms,
+      });
+      return {
+        type: "function_call_output",
+        call_id: call.call_id,
+        output: JSON.stringify(output),
+      };
+    }
+  }
+
+  if (call.name === "generate_report") {
+    send({ type: "tool_call", tool: call.name, args });
+
+    try {
+      const result = await generateReportForAgent(args, req);
+      const ms = Date.now() - startedAt;
+      record.result = result;
+      record.execution_time_ms = ms;
+      send({
+        type: "tool_result",
+        tool: call.name,
+        result,
+        execution_time_ms: ms,
+      });
+      return {
+        type: "function_call_output",
+        call_id: call.call_id,
+        output: JSON.stringify(result),
+      };
+    } catch (err) {
+      const ms = Date.now() - startedAt;
+      const output = { error: err instanceof Error ? err.message : String(err) };
+      record.result = output;
+      record.execution_time_ms = ms;
+      send({
+        type: "tool_result",
+        tool: call.name,
+        result: output,
         execution_time_ms: ms,
       });
       return {
@@ -674,6 +1057,7 @@ async function runAgentLoop(
   apiKey: string,
   model: string,
   initialPayload: Record<string, unknown>,
+  req: AuthenticatedRequest,
   send: (data: Record<string, unknown>) => void,
 ): Promise<StreamRunResult & {
   toolCalls: ToolCallRecord[];
@@ -712,7 +1096,7 @@ async function runAgentLoop(
 
     const outputs: InputItem[] = [];
     for (const call of result.pendingFunctionCalls) {
-      outputs.push(await executeTool(call, send, toolCalls, sqlQueries));
+      outputs.push(await executeTool(call, req, send, toolCalls, sqlQueries));
     }
 
     payload = {
@@ -923,7 +1307,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       max_output_tokens: agentConfig.max_tokens || 4096,
     };
 
-    const result = await runAgentLoop(apiKey, model, initialPayload, (data) =>
+    const result = await runAgentLoop(apiKey, model, initialPayload, req, (data) =>
       sendSSE(res, data)
     );
 

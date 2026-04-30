@@ -444,16 +444,20 @@ const markdownComponents = {
     if (isChartLanguage || isJsonLanguage) {
       try {
         const raw = String(children).trim()
-        const parsed = safeParseJson(raw) as any
+        const parsed = safeParseJson(raw)
         const normalizedChartSpec = normalizeChartSpec(parsed)
         if (normalizedChartSpec) {
           return <ChartRenderer spec={normalizedChartSpec} />
         }
-        // Validate it has chart structure (type + data)
-        if (parsed && parsed.type && parsed.data && Array.isArray(parsed.data)) {
-          const chartSpec: ChartSpec = parsed
-          return <ChartRenderer spec={chartSpec} />
+
+        if (isChartLanguage) {
+          return (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+              Erro ao renderizar grafico: JSON invalido ou contrato de grafico incorreto
+            </div>
+          )
         }
+
         // If it's JSON but not a chart, fall through to regular code block
         if (isJsonLanguage) {
           return (

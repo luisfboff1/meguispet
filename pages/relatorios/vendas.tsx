@@ -109,16 +109,6 @@ export default function VendasReportPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{pageTitle}</h1>
-          <p className="text-muted-foreground">
-            {step === 'config'
-              ? foco === 'vendedores'
-                ? 'Configure o período e os filtros para analisar a equipe de vendas'
-                : 'Configure os parâmetros do relatório'
-              : 'Visualização do relatório'}
-          </p>
-        </div>
       </div>
 
       {step === 'config' ? (

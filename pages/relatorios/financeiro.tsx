@@ -112,12 +112,6 @@ export default function FinanceiroReportPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Relatório Financeiro</h1>
-          <p className="text-muted-foreground">
-            {step === 'config' ? 'Configure os parâmetros do relatório' : 'Visualização do relatório'}
-          </p>
-        </div>
       </div>
 
       {step === 'config' ? (

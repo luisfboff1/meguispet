@@ -865,15 +865,7 @@ export default function BlingPage() {
       />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Bling ERP
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Integração com dados do Bling - vendas, notas fiscais e configuração
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
         <div className="flex items-center gap-2">
           {status && (
             <Badge
