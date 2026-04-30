@@ -185,6 +185,7 @@ interface ReportToolResult {
   format: ReportFormat;
   reportId?: number;
   viewerUrl?: string;
+  exportUrl?: string;
   downloadHint?: string;
   preview?: unknown;
   message?: string;
@@ -417,11 +418,16 @@ const GENERATE_REPORT_TOOL = {
         type: "string",
         enum: ["web", "pdf", "excel", "csv"],
         description:
-          "Formato desejado. PDF/Excel/CSV ficam preparados no relatorio salvo; o link do visualizador permite exportar.",
+          "Formato desejado. Com action save, PDF/Excel/CSV retornam exportUrl autenticado para download.",
       },
       name: {
         type: "string",
         description: "Nome opcional para relatorio salvo.",
+      },
+      report_id: {
+        type: "number",
+        description:
+          "ID de um relatorio salvo existente para atualizar quando o usuario pedir ajuste no mesmo relatorio.",
       },
       configuration: REPORT_CONFIGURATION_SCHEMA,
     },
@@ -612,6 +618,7 @@ function normalizeReportConfiguration(
   action: "preview" | "save";
   format: ReportFormat;
   name?: string;
+  reportId?: number;
   configuration: ReportConfiguration;
 } {
   if (!isReportType(args.report_type)) {
@@ -642,10 +649,13 @@ function normalizeReportConfiguration(
     throw new Error("Data inicial do relatorio nao pode ser maior que a final.");
   }
 
+  const reportId = Number(args.report_id);
+
   return {
     reportType: args.report_type,
     action,
     format,
+    reportId: Number.isInteger(reportId) && reportId > 0 ? reportId : undefined,
     name: typeof args.name === "string" && args.name.trim()
       ? args.name.trim()
       : undefined,
@@ -663,13 +673,16 @@ async function generateReportForAgent(
   args: Record<string, unknown>,
   req: AuthenticatedRequest,
 ): Promise<ReportToolResult> {
-  const { reportType, action, format, name, configuration } =
+  const { reportType, action, format, name, reportId, configuration } =
     normalizeReportConfiguration(args);
 
   const protocol = headerValue(req.headers["x-forwarded-proto"]) || "http";
   const host = headerValue(req.headers.host) || "localhost:3000";
   const baseUrl = `${protocol}://${host}`;
-  const endpoint = action === "save" ? "generate" : "preview";
+  const shouldUpdateSavedReport = action === "save" && reportId;
+  const endpoint = action === "save" && !shouldUpdateSavedReport
+    ? "generate"
+    : "preview";
   const url = `${baseUrl}/api/relatorios/${reportType}/${endpoint}`;
 
   const headers: Record<string, string> = {
@@ -704,20 +717,51 @@ async function generateReportForAgent(
     );
   }
 
-  const reportId = typeof parsed.reportId === "number"
+  let savedReportId = typeof parsed.reportId === "number"
     ? parsed.reportId
     : undefined;
   const preview = parsed.preview ?? parsed.data;
+
+  if (shouldUpdateSavedReport) {
+    const updatePayload: Record<string, unknown> = {
+      tipo: reportType,
+      configuracao: { ...configuration, formato: format, salvar: true, nome: name },
+      periodo_inicio: configuration.filtros.periodo.startDate,
+      periodo_fim: configuration.filtros.periodo.endDate,
+      dados: preview,
+      formato: format,
+      status: "disponivel",
+      updated_at: new Date().toISOString(),
+    };
+    if (name) updatePayload.nome = name;
+
+    const { data: updatedReport, error } = await req.supabaseClient
+      .from("relatorios_salvos")
+      .update(updatePayload)
+      .eq("id", reportId)
+      .eq("usuario_id", req.user.id)
+      .select("id")
+      .single();
+
+    if (error || !updatedReport) {
+      throw new Error("Nao encontrei o relatorio salvo para atualizar.");
+    }
+
+    savedReportId = reportId;
+  }
 
   return {
     success: true,
     action,
     reportType,
     format,
-    reportId,
-    viewerUrl: reportId ? `/relatorios/historico/${reportId}` : undefined,
+    reportId: savedReportId,
+    viewerUrl: savedReportId ? `/relatorios/historico/${savedReportId}` : undefined,
+    exportUrl: savedReportId && format !== "web"
+      ? `/api/relatorios/saved/${savedReportId}/export?format=${format}`
+      : undefined,
     downloadHint: format !== "web"
-      ? "Para PDF/Excel/CSV, abra o visualizador do relatorio salvo e use a exportacao do modulo de relatorios."
+      ? "Use exportUrl para baixar o arquivo ou viewerUrl para validar no visualizador."
       : undefined,
     preview: compactForToolOutput(preview),
     message: String(parsed.message || "Relatorio gerado com sucesso"),

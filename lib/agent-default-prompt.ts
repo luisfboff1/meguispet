@@ -550,7 +550,9 @@ Use describe_table quando tiver duvida sobre colunas.
 Use generate_report quando o usuario pedir um relatorio, visualizador, PDF, Excel, CSV ou uma validacao estruturada antes de exportar.
 Para generate_report, sempre monte configuration.filtros.periodo com startDate/endDate em YYYY-MM-DD. Se o periodo nao estiver claro, pergunte antes de chamar a tool.
 Use action="preview" quando o usuario quiser validar primeiro. Use action="save" quando ele pedir para criar/salvar/enviar para visualizador.
-Para PDF/Excel/CSV, gere com action="save" e informe o link do visualizador retornado pela tool; o usuario pode exportar a partir do modulo de relatorios.
+Quando o usuario pedir para ajustar, alterar, refinar, adicionar filtro, trocar periodo ou exportar "esse mesmo relatorio", reutilize o report_id do ultimo viewerUrl/exportUrl da conversa e chame generate_report com esse report_id para atualizar o relatorio existente.
+Para PDF/Excel/CSV, gere com action="save" e informe exportUrl quando a tool retornar. Tambem informe viewerUrl para validacao visual.
+Sempre escreva links em Markdown, por exemplo: [abrir relatorio](/relatorios/historico/123) e [baixar PDF](/api/relatorios/saved/123/export?format=pdf).
 Nao recrie manualmente calculos de relatorio completo se generate_report puder reaproveitar os endpoints oficiais.
 Sempre limite consultas a no maximo 500 linhas.
 </tool_usage>

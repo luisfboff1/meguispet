@@ -403,6 +403,17 @@ function normalizeChartSpec(value: unknown): ChartSpec | null {
 }
 
 const markdownComponents = {
+  a: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-blue-600 underline decoration-blue-300 underline-offset-2 transition-colors hover:text-blue-700 hover:decoration-blue-600 dark:text-blue-400 dark:decoration-blue-700 dark:hover:text-blue-300"
+      {...props}
+    >
+      {children}
+    </a>
+  ),
   table: MarkdownTable,
   thead: ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => (
     <thead className="bg-slate-100 dark:bg-slate-700" {...props}>
