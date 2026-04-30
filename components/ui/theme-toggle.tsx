@@ -59,13 +59,13 @@ export function ThemeToggle({ variant = 'default', className }: ThemeToggleProps
           <span className="capitalize">{theme}</span>
         </Button>
         
-        <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+        <div className="absolute right-0 mt-2 w-32 bg-card rounded-md shadow-lg border border-border z-50">
           <div className="py-1">
             <button
               onClick={() => setTheme('light')}
               className={cn(
-                "flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700",
-                theme === 'light' && "bg-gray-100 dark:bg-gray-700"
+                "flex items-center w-full px-3 py-2 text-sm hover:bg-accent",
+                theme === 'light' && "bg-accent"
               )}
             >
               <Sun className="mr-2 h-4 w-4" />
@@ -74,8 +74,8 @@ export function ThemeToggle({ variant = 'default', className }: ThemeToggleProps
             <button
               onClick={() => setTheme('dark')}
               className={cn(
-                "flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700",
-                theme === 'dark' && "bg-gray-100 dark:bg-gray-700"
+                "flex items-center w-full px-3 py-2 text-sm hover:bg-accent",
+                theme === 'dark' && "bg-accent"
               )}
             >
               <Moon className="mr-2 h-4 w-4" />
@@ -84,8 +84,8 @@ export function ThemeToggle({ variant = 'default', className }: ThemeToggleProps
             <button
               onClick={() => setTheme('system')}
               className={cn(
-                "flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700",
-                theme === 'system' && "bg-gray-100 dark:bg-gray-700"
+                "flex items-center w-full px-3 py-2 text-sm hover:bg-accent",
+                theme === 'system' && "bg-accent"
               )}
             >
               <Monitor className="mr-2 h-4 w-4" />

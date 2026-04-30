@@ -1,6 +1,15 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
+// Chart color tokens
+const chartColors = {
+  chart1: 'hsl(var(--chart-1))',
+  chart2: 'hsl(var(--chart-2))',
+  chart3: 'hsl(var(--chart-3))',
+  chart4: 'hsl(var(--chart-4))',
+  chart5: 'hsl(var(--chart-5))',
+}
+
 interface FinanceiroChartProps {
   data: {
     mes: string
@@ -44,12 +53,12 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
           {/* Legend */}
           <div className="flex items-center justify-center space-x-6">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Receitas</span>
+              <div className="w-3 h-3 bg-success rounded"></div>
+              <span className="text-sm text-muted-foreground">Receitas</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-red-500 rounded"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Despesas</span>
+              <div className="w-3 h-3 bg-destructive rounded"></div>
+              <span className="text-sm text-muted-foreground">Despesas</span>
             </div>
           </div>
 
@@ -85,16 +94,16 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
                 </div>
 
                 {/* Month Label */}
-                <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                <div className="text-xs text-muted-foreground text-center">
                   {formatMes(item.mes)}
                 </div>
 
                 {/* Values */}
                 <div className="text-xs text-center space-y-1">
-                  <div className="text-green-600 font-medium">
+                  <div className="text-success font-medium">
                     {formatCurrency(parseFloat(item.receitas.toString()) || 0)}
                   </div>
-                  <div className="text-red-600 font-medium">
+                  <div className="text-destructive font-medium">
                     {formatCurrency(parseFloat(item.despesas.toString()) || 0)}
                   </div>
                 </div>
@@ -106,26 +115,26 @@ export function FinanceiroChart({ data, title, description }: FinanceiroChartPro
           <div className="border-t pt-4">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-success">
                   {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.receitas.toString()) || 0), 0))}
                 </div>
-                <div className="text-xs text-gray-500">Total Receitas</div>
+                <div className="text-xs text-muted-foreground">Total Receitas</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-2xl font-bold text-destructive">
                   {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.despesas.toString()) || 0), 0))}
                 </div>
-                <div className="text-xs text-gray-500">Total Despesas</div>
+                <div className="text-xs text-muted-foreground">Total Despesas</div>
               </div>
               <div>
                 <div className={`text-2xl font-bold ${
                   data.reduce((acc, item) => acc + (parseFloat(item.receitas.toString()) || 0) - (parseFloat(item.despesas.toString()) || 0), 0) >= 0 
-                    ? 'text-green-600' 
-                    : 'text-red-600'
+                    ? 'text-success' 
+                    : 'text-destructive'
                 }`}>
                   {formatCurrency(data.reduce((acc, item) => acc + (parseFloat(item.receitas.toString()) || 0) - (parseFloat(item.despesas.toString()) || 0), 0))}
                 </div>
-                <div className="text-xs text-gray-500">Saldo</div>
+                <div className="text-xs text-muted-foreground">Saldo</div>
               </div>
             </div>
           </div>
@@ -198,10 +207,10 @@ export function PizzaChart({ data, title, description }: PizzaChartProps) {
               
               {/* Center Text */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-lg font-bold text-gray-900 dark:text-white">
+                <div className="text-lg font-bold text-foreground">
                   {formatCurrency(total)}
                 </div>
-                <div className="text-xs text-gray-500">Total</div>
+                <div className="text-xs text-muted-foreground">Total</div>
               </div>
             </div>
           </div>
@@ -210,23 +219,23 @@ export function PizzaChart({ data, title, description }: PizzaChartProps) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-green-500 rounded"></div>
+                <div className="w-4 h-4 bg-success rounded"></div>
                 <span className="text-sm">Receitas</span>
               </div>
               <div className="text-right">
                 <div className="font-medium">{formatCurrency(receita)}</div>
-                <div className="text-xs text-gray-500">{receitaPercent.toFixed(1)}%</div>
+                <div className="text-xs text-muted-foreground">{receitaPercent.toFixed(1)}%</div>
               </div>
             </div>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-red-500 rounded"></div>
+                <div className="w-4 h-4 bg-destructive rounded"></div>
                 <span className="text-sm">Despesas</span>
               </div>
               <div className="text-right">
                 <div className="font-medium">{formatCurrency(despesas)}</div>
-                <div className="text-xs text-gray-500">{despesaPercent.toFixed(1)}%</div>
+                <div className="text-xs text-muted-foreground">{despesaPercent.toFixed(1)}%</div>
               </div>
             </div>
           </div>

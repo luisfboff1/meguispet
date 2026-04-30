@@ -94,11 +94,11 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
     <div
       className={cn(
         'relative flex h-full w-full flex-col overflow-hidden',
-        'bg-gradient-to-br from-white/95 via-white/90 to-white/80 backdrop-blur-xl dark:from-slate-950/95 dark:via-slate-950/85 dark:to-slate-900/80',
-        'border-r border-white/40 shadow-xl shadow-slate-900/5 dark:border-slate-800/70'
+        'bg-gradient-to-br from-card via-card to-muted backdrop-blur-xl',
+        'border-r border-border shadow-xl shadow-slate-900/5'
       )}
     >
-      <div className="relative border-b border-white/40 px-2 py-2 dark:border-slate-800/70">
+      <div className="relative border-b border-border px-2 py-2">
         <div className={cn('flex items-center gap-2', isCollapsed && 'flex-col gap-2 text-center')}>
           <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-500/30">
             <Image
@@ -113,7 +113,7 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
           {!hideToggle && !isTemporary && (
             <button
               onClick={onToggle}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent bg-white/80 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent bg-card text-muted-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             >
               {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -122,7 +122,7 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
           {isTemporary && (
             <button
               onClick={close}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent bg-white/80 text-slate-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:bg-slate-900/80 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent bg-card text-muted-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               aria-label="Fechar menu lateral"
             >
               <X size={16} />
@@ -147,13 +147,13 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
                     'group relative flex items-center gap-2 overflow-hidden rounded-2xl px-2.5 py-1.5 text-sm transition-all duration-200',
                     active
                       ? 'bg-amber-500/90 text-white shadow-lg shadow-amber-500/30'
-                      : 'text-slate-600 hover:bg-white/90 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900/80 dark:hover:text-white'
+                      : 'text-foreground hover:bg-accent'
                   )}
                   title={isCollapsed ? item.label : undefined}
                 >
                   <span
                     className={cn(
-                      'flex h-8 w-8 transform items-center justify-center rounded-2xl bg-white/80 text-amber-500 shadow-sm shadow-amber-500/20 transition-all duration-200 dark:bg-slate-900/60 dark:text-amber-300',
+                      'flex h-8 w-8 transform items-center justify-center rounded-2xl bg-card text-amber-500 shadow-sm shadow-amber-500/20 transition-all duration-200',
                       active && 'scale-95 bg-white text-amber-500'
                     )}
                   >
@@ -163,7 +163,7 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                       {renderLabel(item.label)}
                       {item.badge !== undefined && (
-                        <span className="ml-auto inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-500 shadow-sm dark:bg-slate-900/70 dark:text-slate-300">
+                        <span className="ml-auto inline-flex items-center rounded-full bg-card px-2 py-0.5 text-xs font-semibold text-muted-foreground shadow-sm">
                           {item.badge}
                         </span>
                       )}
@@ -176,16 +176,16 @@ export function Sidebar({ isCollapsed, onToggle, hideToggle = false }: SidebarPr
         </div>
       </div>
 
-      <div className="border-t border-white/40 px-3 py-2.5 dark:border-slate-800/70">
+      <div className="border-t border-border px-3 py-2.5">
         <button
           onClick={() => logout()}
           className={cn(
-            'group flex w-full items-center gap-2 rounded-2xl px-2.5 py-1.5 text-sm font-medium text-rose-500 transition-all duration-200 hover:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/15',
+            'group flex w-full items-center gap-2 rounded-2xl px-2.5 py-1.5 text-sm font-medium text-destructive transition-all duration-200 hover:bg-destructive/10',
             isCollapsed && 'justify-center'
           )}
           title={isCollapsed ? 'Encerrar sessão' : undefined}
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-rose-100/60 text-rose-500 shadow-sm dark:bg-rose-500/20 dark:text-rose-300">
+          <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-destructive/10 text-destructive shadow-sm">
             <LogOut size={18} />
           </span>
           {!isCollapsed && (

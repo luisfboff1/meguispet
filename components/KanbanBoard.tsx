@@ -25,32 +25,32 @@ const statusConfig: Record<
 > = {
   backlog: {
     label: 'Backlog',
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-100 dark:bg-slate-800',
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted',
     icon: Clock
   },
   em_andamento: {
     label: 'Em Andamento',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'text-info',
+    bgColor: 'bg-info-muted',
     icon: AlertCircle
   },
   em_teste: {
     label: 'Em Teste',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+    color: 'text-warning',
+    bgColor: 'bg-warning-muted',
     icon: AlertCircle
   },
   concluido: {
     label: 'Concluído',
-    color: 'text-green-600',
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    color: 'text-success',
+    bgColor: 'bg-success-muted',
     icon: CheckCircle2
   },
   cancelado: {
     label: 'Cancelado',
-    color: 'text-red-600',
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/15',
     icon: CheckCircle2
   }
 }
@@ -59,17 +59,17 @@ const tipoConfig: Record<
   FeedbackTipo,
   { label: string; icon: React.ComponentType<{ size?: number; className?: string }>; color: string }
 > = {
-  bug: { label: 'Bug', icon: Bug, color: 'text-red-600' },
-  melhoria: { label: 'Melhoria', icon: Lightbulb, color: 'text-amber-600' },
-  funcionalidade: { label: 'Funcionalidade', icon: Sparkles, color: 'text-blue-600' },
-  outro: { label: 'Outro', icon: HelpCircle, color: 'text-slate-600' }
+  bug: { label: 'Bug', icon: Bug, color: 'text-destructive' },
+  melhoria: { label: 'Melhoria', icon: Lightbulb, color: 'text-warning' },
+  funcionalidade: { label: 'Funcionalidade', icon: Sparkles, color: 'text-info' },
+  outro: { label: 'Outro', icon: HelpCircle, color: 'text-muted-foreground' }
 }
 
 const prioridadeColors = {
-  baixa: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
-  media: 'bg-blue-200 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
-  alta: 'bg-orange-200 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
-  critica: 'bg-red-200 text-red-700 dark:bg-red-900/50 dark:text-red-300'
+  baixa: 'bg-muted text-muted-foreground',
+  media: 'bg-info-muted text-info',
+  alta: 'bg-warning-muted text-warning',
+  critica: 'bg-destructive/15 text-destructive'
 }
 
 export default function KanbanBoard({
@@ -126,8 +126,8 @@ export default function KanbanBoard({
         onDragStart={(e) => handleDragStart(e, ticket)}
         onClick={() => onTicketClick?.(ticket)}
         className={cn(
-          'group cursor-pointer rounded-xl border bg-white p-3 sm:p-4 shadow-sm transition-all hover:shadow-md dark:bg-slate-900',
-          'border-slate-200 dark:border-slate-700',
+          'group cursor-pointer rounded-xl border bg-card p-3 sm:p-4 shadow-sm transition-all hover:shadow-md',
+          'border-border',
           isAdmin && 'hover:scale-[1.02]'
         )}
       >
@@ -135,7 +135,7 @@ export default function KanbanBoard({
         <div className="mb-2 sm:mb-3 flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <TipoIcon size={14} className={tipoConfig[ticket.tipo].color} />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
+            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
               {tipoConfig[ticket.tipo].label}
             </span>
           </div>
@@ -150,29 +150,29 @@ export default function KanbanBoard({
         </div>
 
         {/* Title */}
-        <h4 className="mb-2 line-clamp-2 text-sm font-semibold text-slate-900 dark:text-white break-words">
+        <h4 className="mb-2 line-clamp-2 text-sm font-semibold text-foreground break-words">
           {ticket.titulo}
         </h4>
 
         {/* Description Preview */}
-        <p className="mb-2 sm:mb-3 line-clamp-2 text-xs text-slate-600 dark:text-slate-400 break-words">
+        <p className="mb-2 sm:mb-3 line-clamp-2 text-xs text-muted-foreground break-words">
           {ticket.descricao}
         </p>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-100 pt-2 sm:pt-3 dark:border-slate-800">
-          <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-slate-500 dark:text-slate-400 min-w-0 flex-1">
+        <div className="flex items-center justify-between border-t border-border pt-2 sm:pt-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground min-w-0 flex-1">
             <User size={12} className="flex-shrink-0" />
             <span className="truncate">{ticket.usuario?.nome || 'Usuário'}</span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {hasAttachments && (
-              <span className="rounded-full bg-slate-100 px-1.5 sm:px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400 whitespace-nowrap">
+              <span className="rounded-full bg-muted px-1.5 sm:px-2 py-0.5 text-xs text-muted-foreground whitespace-nowrap">
                 📎 {ticket.anexos?.length}
               </span>
             )}
             {hasComments && (
-              <span className="rounded-full bg-slate-100 px-1.5 sm:px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400 whitespace-nowrap">
+              <span className="rounded-full bg-muted px-1.5 sm:px-2 py-0.5 text-xs text-muted-foreground whitespace-nowrap">
                 💬 {ticket.comentarios?.length}
               </span>
             )}
@@ -180,7 +180,7 @@ export default function KanbanBoard({
         </div>
 
         {/* Date */}
-        <div className="mt-2 text-xs text-slate-400">
+        <div className="mt-2 text-xs text-muted-foreground">
           {formatDate(ticket.created_at)}
         </div>
       </div>
@@ -195,7 +195,7 @@ export default function KanbanBoard({
     return (
       <div
         key={status}
-        className="flex w-full min-w-[280px] sm:min-w-[320px] flex-col rounded-2xl border border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-900/50"
+        className="flex w-full min-w-[280px] sm:min-w-[320px] flex-col rounded-2xl border border-border bg-muted"
         onDragOver={handleDragOver}
         onDrop={(e) => handleDrop(e, status)}
       >
@@ -221,7 +221,7 @@ export default function KanbanBoard({
         {/* Column Content */}
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
           {columnTickets.length === 0 ? (
-            <div className="flex h-32 items-center justify-center text-sm text-slate-400">
+            <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
               Nenhum ticket
             </div>
           ) : (

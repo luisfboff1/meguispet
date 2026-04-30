@@ -77,17 +77,17 @@ function detectMarketplaceFrontend(venda: BlingVenda): string | null {
 }
 
 const MARKETPLACE_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  'Amazon':         { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-  'Shopee':         { bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200' },
-  'Mercado Livre':  { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
-  'Magazine Luiza': { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200' },
-  'Americanas':     { bg: 'bg-red-50',    text: 'text-red-600',    border: 'border-red-200' },
-  'AliExpress':     { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
+  'Amazon':         { bg: 'bg-warning-muted', text: 'text-warning', border: 'border-warning/30' },
+  'Shopee':         { bg: 'bg-destructive/10',    text: 'text-destructive',    border: 'border-destructive/30' },
+  'Mercado Livre':  { bg: 'bg-warning-muted', text: 'text-warning', border: 'border-warning/30' },
+  'Magazine Luiza': { bg: 'bg-info-muted',   text: 'text-info',   border: 'border-info/30' },
+  'Americanas':     { bg: 'bg-destructive/10',    text: 'text-destructive',    border: 'border-destructive/30' },
+  'AliExpress':     { bg: 'bg-warning-muted', text: 'text-warning', border: 'border-warning/30' },
 }
 
 function MarketplaceBadge({ name }: { name: string | null | undefined }) {
-  if (!name) return <span className="text-gray-400 text-sm">Venda direta</span>
-  const style = MARKETPLACE_STYLES[name] || { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' }
+  if (!name) return <span className="text-muted-foreground text-sm">Venda direta</span>
+  const style = MARKETPLACE_STYLES[name] || { bg: 'bg-muted', text: 'text-foreground', border: 'border-border' }
   return (
     <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full border ${style.bg} ${style.text} ${style.border}`}>
       {name}
@@ -97,13 +97,13 @@ function MarketplaceBadge({ name }: { name: string | null | undefined }) {
 
 // ─── Situação helpers ─────────────────────────────────────────────
 const VENDA_SITUACAO_MAP: Record<number, { nome: string; color: string }> = {
-  6:  { nome: 'Em aberto',      color: 'bg-blue-100 text-blue-700' },
-  9:  { nome: 'Atendido',       color: 'bg-green-100 text-green-700' },
-  12: { nome: 'Cancelado',      color: 'bg-red-100 text-red-700' },
-  15: { nome: 'Em andamento',   color: 'bg-yellow-100 text-yellow-700' },
-  18: { nome: 'Verificado',     color: 'bg-purple-100 text-purple-700' },
-  21: { nome: 'Venda agenciada', color: 'bg-orange-100 text-orange-700' },
-  24: { nome: 'Em digitação',   color: 'bg-emerald-100 text-emerald-700' },
+  6:  { nome: 'Em aberto',      color: 'bg-info-muted text-info-muted-foreground' },
+  9:  { nome: 'Atendido',       color: 'bg-success-muted text-success-muted-foreground' },
+  12: { nome: 'Cancelado',      color: 'bg-destructive/15 text-destructive' },
+  15: { nome: 'Em andamento',   color: 'bg-warning-muted text-warning-muted-foreground' },
+  18: { nome: 'Verificado',     color: 'bg-accent text-accent-foreground' },
+  21: { nome: 'Venda agenciada', color: 'bg-warning-muted text-warning-muted-foreground' },
+  24: { nome: 'Em digitação',   color: 'bg-success-muted text-success-muted-foreground' },
 }
 
 function getVendaSituacao(venda: BlingVenda): { nome: string; color: string } {
@@ -111,12 +111,12 @@ function getVendaSituacao(venda: BlingVenda): { nome: string; color: string } {
     const sitId = venda.situacao_id || 0
     return {
       nome: venda.situacao_nome,
-      color: VENDA_SITUACAO_MAP[sitId]?.color || 'bg-gray-100 text-gray-700',
+      color: VENDA_SITUACAO_MAP[sitId]?.color || 'bg-muted text-muted-foreground',
     }
   }
   const sitId = venda.situacao_id || 0
   if (VENDA_SITUACAO_MAP[sitId]) return VENDA_SITUACAO_MAP[sitId]
-  return { nome: `ID ${sitId}`, color: 'bg-gray-100 text-gray-700' }
+  return { nome: `ID ${sitId}`, color: 'bg-muted text-muted-foreground' }
 }
 
 // ─── Item helpers ─────────────────────────────────────────────────
@@ -137,17 +137,17 @@ function getNfeItens(nfe: BlingNfe): BlingNfeItem[] {
 }
 
 const NFE_SITUACAO_MAP: Record<number, { label: string; color: string }> = {
-  1:  { label: 'Pendente',   color: 'bg-yellow-100 text-yellow-700' },
-  2:  { label: 'Emitida',    color: 'bg-green-100 text-green-700' },
-  3:  { label: 'Cancelada',  color: 'bg-red-100 text-red-700' },
-  4:  { label: 'Inutilizada', color: 'bg-gray-100 text-gray-700' },
-  5:  { label: 'Denegada',   color: 'bg-orange-100 text-orange-700' },
-  6:  { label: 'Rejeitada',  color: 'bg-red-100 text-red-700' },
-  7:  { label: 'Importada',  color: 'bg-blue-100 text-blue-700' },
-  8:  { label: 'Aguardando', color: 'bg-yellow-100 text-yellow-700' },
-  9:  { label: 'Enviada',    color: 'bg-teal-100 text-teal-700' },
-  10: { label: 'Em digitação', color: 'bg-indigo-100 text-indigo-700' },
-  11: { label: 'Encerrada',  color: 'bg-gray-100 text-gray-700' },
+  1:  { label: 'Pendente',   color: 'bg-warning-muted text-warning-muted-foreground' },
+  2:  { label: 'Emitida',    color: 'bg-success-muted text-success-muted-foreground' },
+  3:  { label: 'Cancelada',  color: 'bg-destructive/15 text-destructive' },
+  4:  { label: 'Inutilizada', color: 'bg-muted text-muted-foreground' },
+  5:  { label: 'Denegada',   color: 'bg-warning-muted text-warning-muted-foreground' },
+  6:  { label: 'Rejeitada',  color: 'bg-destructive/15 text-destructive' },
+  7:  { label: 'Importada',  color: 'bg-info-muted text-info-muted-foreground' },
+  8:  { label: 'Aguardando', color: 'bg-warning-muted text-warning-muted-foreground' },
+  9:  { label: 'Enviada',    color: 'bg-info-muted text-info-muted-foreground' },
+  10: { label: 'Em digitação', color: 'bg-info-muted text-info-muted-foreground' },
+  11: { label: 'Encerrada',  color: 'bg-muted text-muted-foreground' },
 }
 
 const NFE_TIPO_MAP: Record<number, string> = { 0: 'Entrada', 1: 'Saída' }
@@ -157,9 +157,9 @@ const NFE_FINALIDADE_MAP: Record<number, string> = { 1: 'Normal', 2: 'Complement
 function DetailField({ label, value, mono }: { label: string; value?: string | number | null; mono?: boolean }) {
   return (
     <div className="space-y-1">
-      <div className="text-xs text-gray-500 font-medium">{label}</div>
-      <div className={`text-sm bg-gray-50 dark:bg-gray-800 rounded px-3 py-2 min-h-[36px] flex items-center ${mono ? 'font-mono text-xs' : ''}`}>
-        {value != null && value !== '' ? String(value) : <span className="text-gray-400">-</span>}
+      <div className="text-xs text-muted-foreground font-medium">{label}</div>
+      <div className={`text-sm bg-muted rounded px-3 py-2 min-h-[36px] flex items-center ${mono ? 'font-mono text-xs' : ''}`}>
+        {value != null && value !== '' ? String(value) : <span className="text-muted-foreground">-</span>}
       </div>
     </div>
   )
@@ -168,8 +168,8 @@ function DetailField({ label, value, mono }: { label: string; value?: string | n
 function DetailSection({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2 border-b pb-2">
-        <Icon className="h-4 w-4 text-gray-500" />
+      <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2 border-b pb-2">
+        <Icon className="h-4 w-4 text-muted-foreground" />
         {title}
       </h3>
       {children}
@@ -228,27 +228,27 @@ function VendaDetailDialog({
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 dark:bg-gray-800 text-left">
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400">#</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400">Descrição</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400">Código</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400 text-right">Qtd</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400 text-right">Preço un.</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400 text-right">Desc.</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400 text-right">Total</th>
+                    <tr className="bg-muted text-left">
+                      <th className="px-3 py-2 font-medium text-muted-foreground">#</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Descrição</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Código</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground text-right">Qtd</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground text-right">Preço un.</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground text-right">Desc.</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground text-right">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {itens.map((item, i) => (
-                      <tr key={item.id || i} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-3 py-2 text-gray-500">{i + 1}</td>
-                        <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100 max-w-[300px]">
+                      <tr key={item.id || i} className="hover:bg-muted">
+                        <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                        <td className="px-3 py-2 font-medium text-foreground max-w-[300px]">
                           {item.descricao}
                         </td>
-                        <td className="px-3 py-2 text-gray-500 font-mono text-xs">{item.codigo_produto || '-'}</td>
+                        <td className="px-3 py-2 text-muted-foreground font-mono text-xs">{item.codigo_produto || '-'}</td>
                         <td className="px-3 py-2 text-right">{item.quantidade}</td>
                         <td className="px-3 py-2 text-right">{formatCurrency(item.valor_unitario)}</td>
-                        <td className="px-3 py-2 text-right text-red-600">{item.valor_desconto ? formatCurrency(item.valor_desconto) : '-'}</td>
+                        <td className="px-3 py-2 text-right text-destructive">{item.valor_desconto ? formatCurrency(item.valor_desconto) : '-'}</td>
                         <td className="px-3 py-2 text-right font-medium">{formatCurrency(item.valor_total)}</td>
                       </tr>
                     ))}
@@ -273,8 +273,8 @@ function VendaDetailDialog({
               <DetailField label="Outras despesas" value={venda.total_outras_despesas ? formatCurrency(venda.total_outras_despesas) : '0,00'} />
               <DetailField label="Taxa comissão" value={venda.taxa_comissao != null ? `${venda.taxa_comissao}%` : '-'} />
               <div className="space-y-1">
-                <div className="text-xs text-gray-500 font-medium">Total da venda</div>
-                <div className="text-sm bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded px-3 py-2 font-bold text-green-700 dark:text-green-400">
+                <div className="text-xs text-muted-foreground font-medium">Total da venda</div>
+                <div className="text-sm bg-success-muted border border-success/30 rounded px-3 py-2 font-bold text-success-muted-foreground">
                   {formatCurrency(venda.valor_total)}
                 </div>
               </div>
@@ -333,16 +333,16 @@ function VendaDetailDialog({
               <div className="space-y-3">
                 {venda.observacoes && (
                   <div>
-                    <div className="text-xs text-gray-500 font-medium mb-1">Observações</div>
-                    <div className="text-sm bg-gray-50 dark:bg-gray-800 rounded px-3 py-2 whitespace-pre-wrap">
+                    <div className="text-xs text-muted-foreground font-medium mb-1">Observações</div>
+                    <div className="text-sm bg-muted rounded px-3 py-2 whitespace-pre-wrap">
                       {venda.observacoes}
                     </div>
                   </div>
                 )}
                 {venda.observacoes_internas && (
                   <div>
-                    <div className="text-xs text-gray-500 font-medium mb-1">Observações internas</div>
-                    <div className="text-sm bg-gray-50 dark:bg-gray-800 rounded px-3 py-2 whitespace-pre-wrap">
+                    <div className="text-xs text-muted-foreground font-medium mb-1">Observações internas</div>
+                    <div className="text-sm bg-muted rounded px-3 py-2 whitespace-pre-wrap">
                       {venda.observacoes_internas}
                     </div>
                   </div>
@@ -363,7 +363,7 @@ function VendaDetailDialog({
           )}
 
           {/* ── Sync info ── */}
-          <div className="text-xs text-gray-400 border-t pt-3 flex justify-between">
+          <div className="text-xs text-muted-foreground border-t pt-3 flex justify-between">
             <span>Sincronizado em: {venda.synced_at ? formatLocalDate(venda.synced_at, { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
             <span>Bling ID: {venda.bling_id}</span>
           </div>
@@ -434,25 +434,25 @@ function NfeDetailDialog({
               <div className="border rounded-lg overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 dark:bg-gray-800 text-left">
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400">#</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400">Descrição</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400">Código</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400">NCM</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400">CFOP</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400 text-right">Qtd</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400 text-right">Vl. Unit.</th>
-                      <th className="px-3 py-2 font-medium text-gray-600 dark:text-gray-400 text-right">Total</th>
+                    <tr className="bg-muted text-left">
+                      <th className="px-3 py-2 font-medium text-muted-foreground">#</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Descrição</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">Código</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">NCM</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground">CFOP</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground text-right">Qtd</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground text-right">Vl. Unit.</th>
+                      <th className="px-3 py-2 font-medium text-muted-foreground text-right">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {itens.map((item, i) => (
-                      <tr key={item.id || i} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                        <td className="px-3 py-2 text-gray-500">{i + 1}</td>
-                        <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100 max-w-[250px]">{item.descricao}</td>
-                        <td className="px-3 py-2 text-gray-500 font-mono text-xs">{item.codigo || '-'}</td>
-                        <td className="px-3 py-2 text-gray-500 text-xs">{item.ncm || '-'}</td>
-                        <td className="px-3 py-2 text-gray-500 text-xs">{item.cfop || '-'}</td>
+                      <tr key={item.id || i} className="hover:bg-muted">
+                        <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                        <td className="px-3 py-2 font-medium text-foreground max-w-[250px]">{item.descricao}</td>
+                        <td className="px-3 py-2 text-muted-foreground font-mono text-xs">{item.codigo || '-'}</td>
+                        <td className="px-3 py-2 text-muted-foreground text-xs">{item.ncm || '-'}</td>
+                        <td className="px-3 py-2 text-muted-foreground text-xs">{item.cfop || '-'}</td>
                         <td className="px-3 py-2 text-right">{item.quantidade}</td>
                         <td className="px-3 py-2 text-right">{formatCurrency(item.valor_unitario)}</td>
                         <td className="px-3 py-2 text-right font-medium">{formatCurrency(item.valor_total)}</td>
@@ -476,8 +476,8 @@ function NfeDetailDialog({
               <DetailField label="ICMS" value={nfe.valor_icms ? formatCurrency(nfe.valor_icms) : '0,00'} />
               <DetailField label="IPI" value={nfe.valor_ipi ? formatCurrency(nfe.valor_ipi) : '0,00'} />
               <div className="space-y-1">
-                <div className="text-xs text-gray-500 font-medium">Valor total</div>
-                <div className="text-sm bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded px-3 py-2 font-bold text-green-700 dark:text-green-400">
+                <div className="text-xs text-muted-foreground font-medium">Valor total</div>
+                <div className="text-sm bg-success-muted border border-success/30 rounded px-3 py-2 font-bold text-success-muted-foreground">
                   {formatCurrency(nfe.valor_total)}
                 </div>
               </div>
@@ -511,7 +511,7 @@ function NfeDetailDialog({
           )}
 
           {/* ── Sync info ── */}
-          <div className="text-xs text-gray-400 border-t pt-3 flex justify-between">
+          <div className="text-xs text-muted-foreground border-t pt-3 flex justify-between">
             <span>Sincronizado em: {nfe.synced_at ? formatLocalDate(nfe.synced_at, { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
             <span>Bling ID: {nfe.bling_id}</span>
           </div>
@@ -687,7 +687,7 @@ export default function BlingPage() {
       accessorKey: 'numero_pedido',
       header: ({ column }) => <SortableHeader column={column}>Pedido</SortableHeader>,
       cell: ({ row }) => (
-        <span className="font-medium text-gray-900 dark:text-gray-100">
+        <span className="font-medium text-foreground">
           #{row.original.numero_pedido}
         </span>
       ),
@@ -702,7 +702,7 @@ export default function BlingPage() {
       accessorKey: 'data_pedido',
       header: ({ column }) => <SortableHeader column={column}>Data</SortableHeader>,
       cell: ({ row }) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">
+        <span className="text-sm text-foreground">
           {row.original.data_pedido ? formatLocalDate(row.original.data_pedido) : '-'}
         </span>
       ),
@@ -735,15 +735,15 @@ export default function BlingPage() {
       header: 'Produtos',
       cell: ({ row }) => {
         const itens = getVendaItens(row.original)
-        if (itens.length === 0) return <span className="text-gray-400 text-sm">-</span>
+        if (itens.length === 0) return <span className="text-muted-foreground text-sm">-</span>
         const first = itens[0]
         return (
           <div className="min-w-[150px] max-w-[250px]">
-            <div className="text-sm text-gray-900 dark:text-gray-100 truncate">
+            <div className="text-sm text-foreground truncate">
               {first.descricao}
             </div>
             {itens.length > 1 && (
-              <div className="text-xs text-gray-500">+{itens.length - 1} {itens.length === 2 ? 'item' : 'itens'}</div>
+              <div className="text-xs text-muted-foreground">+{itens.length - 1} {itens.length === 2 ? 'item' : 'itens'}</div>
             )}
           </div>
         )

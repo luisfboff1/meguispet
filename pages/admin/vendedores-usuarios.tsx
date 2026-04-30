@@ -205,15 +205,15 @@ export default function VendedoresUsuariosPage() {
     <PermissionGate permission="config_usuarios" redirect="/dashboard">
       <div className="space-y-6">
         {/* Proteção Admin */}
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <Card className="bg-info-muted border-info/30">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <Shield className="h-5 w-5 text-info mt-0.5" />
               <div className="flex-1 text-sm">
-                <p className="font-medium text-blue-900 dark:text-blue-100">
+                <p className="font-medium text-info-muted-foreground">
                   Área Administrativa
                 </p>
-                <p className="text-blue-700 dark:text-blue-300 mt-1">
+                <p className="text-info-muted-foreground mt-1">
                   Esta página permite gerenciar a vinculação entre vendedores e usuários do sistema.
                   Apenas administradores têm acesso a esta funcionalidade.
                 </p>

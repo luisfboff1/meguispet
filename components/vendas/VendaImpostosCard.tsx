@@ -226,8 +226,8 @@ export default function VendaImpostosCard({
             </p>
           </div>
         ) : itens.length === 0 ? (
-          <div className="text-center py-6 text-gray-500">
-            <AlertCircle className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+          <div className="text-center py-6 text-muted-foreground">
+            <AlertCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
             <p className="font-medium">Adicione itens à venda</p>
             <p className="text-sm mt-1">
               Os impostos serão calculados automaticamente
@@ -235,25 +235,25 @@ export default function VendaImpostosCard({
           </div>
         ) : loading ? (
           <div className="flex items-center justify-center py-6">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-            <span className="ml-2 text-gray-600">Calculando impostos...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-info" />
+            <span className="ml-2 text-muted-foreground">Calculando impostos...</span>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Avisos de produtos sem configuração */}
             {produtosSemConfig.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <div className="bg-warning-muted border border-warning/30 rounded-lg p-3">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-yellow-800">
+                    <p className="text-sm font-medium text-warning-muted-foreground">
                       Produtos sem configuração fiscal
                     </p>
-                    <p className="text-xs text-yellow-700 mt-1">
+                    <p className="text-xs text-warning-muted-foreground mt-1">
                       Os seguintes produtos não possuem configuração fiscal cadastrada.
                       Será usado MVA = 0% e Alíquota ICMS = 18%:
                     </p>
-                    <ul className="list-disc list-inside text-xs text-yellow-700 mt-2">
+                    <ul className="list-disc list-inside text-xs text-warning-muted-foreground mt-2">
                       {produtosSemConfig.map((nome, idx) => (
                         <li key={idx}>{nome}</li>
                       ))}
@@ -267,41 +267,41 @@ export default function VendaImpostosCard({
             {result && (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-blue-600 uppercase">Base de Cálculo ST</p>
-                    <p className="text-lg font-bold text-blue-700 mt-1">
+                  <div className="bg-info-muted rounded-lg p-3">
+                    <p className="text-xs font-medium text-info uppercase">Base de Cálculo ST</p>
+                    <p className="text-lg font-bold text-info mt-1">
                       {formatCurrency(result.total_base_calculo_st)}
                     </p>
                   </div>
 
-                  <div className="bg-purple-50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-purple-600 uppercase">ICMS Próprio</p>
-                    <p className="text-lg font-bold text-purple-700 mt-1">
+                  <div className="bg-accent rounded-lg p-3">
+                    <p className="text-xs font-medium text-accent-foreground uppercase">ICMS Próprio</p>
+                    <p className="text-lg font-bold text-accent-foreground mt-1">
                       {formatCurrency(result.total_icms_proprio)}
                     </p>
                   </div>
 
-                  <div className="bg-orange-50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-orange-600 uppercase">ICMS-ST Total</p>
-                    <p className="text-lg font-bold text-orange-700 mt-1">
+                  <div className="bg-warning-muted rounded-lg p-3">
+                    <p className="text-xs font-medium text-warning uppercase">ICMS-ST Total</p>
+                    <p className="text-lg font-bold text-warning mt-1">
                       {formatCurrency(result.total_icms_st_total)}
                     </p>
                   </div>
 
-                  <div className="bg-green-50 rounded-lg p-3 border-2 border-green-200">
-                    <p className="text-xs font-medium text-green-600 uppercase">ICMS-ST a Recolher</p>
-                    <p className="text-xl font-bold text-green-700 mt-1">
+                  <div className="bg-success-muted rounded-lg p-3 border-2 border-success/30">
+                    <p className="text-xs font-medium text-success uppercase">ICMS-ST a Recolher</p>
+                    <p className="text-xl font-bold text-success mt-1">
                       {formatCurrency(result.total_icms_st_recolher)}
                     </p>
                   </div>
                 </div>
 
                 {/* Info box */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="bg-info-muted border border-info/30 rounded-lg p-3">
                   <div className="flex items-start gap-2">
-                    <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <Info className="h-4 w-4 text-info flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-xs text-blue-900">
+                      <p className="text-xs text-info-muted-foreground">
                         <strong>Estes valores serão salvos separadamente.</strong> O total da venda
                         não inclui os impostos - eles são apenas para controle fiscal.
                       </p>

@@ -130,11 +130,11 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   // Removed 'loading' check to prevent blocking page transitions
   // Middleware handles auth, so we can render immediately after hydration
   if (!hydrated) {
-    return <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
+    return <div className="flex h-screen bg-muted" suppressHydrationWarning>
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <div className="text-gray-500">Carregando...</div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-info mb-4"></div>
+          <div className="text-muted-foreground">Carregando...</div>
         </div>
       </div>
     </div>
@@ -142,11 +142,11 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
 
   // Show a better loading state when verifying session
   if (!isNoLayoutPage && status === 'loading') {
-    return <div className="flex h-screen bg-gray-50" suppressHydrationWarning>
+    return <div className="flex h-screen bg-muted" suppressHydrationWarning>
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <div className="text-gray-500">Verificando sessão...</div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-info mb-4"></div>
+          <div className="text-muted-foreground">Verificando sessão...</div>
         </div>
       </div>
     </div>
@@ -155,15 +155,15 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   // Show circuit breaker error if triggered
   if (showCircuitBreakerError) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        <div className="max-w-md rounded-lg border border-red-200 bg-white p-8 text-center shadow-lg">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-            <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-muted via-background to-muted">
+        <div className="max-w-md rounded-lg border border-destructive/30 bg-card p-8 text-center shadow-lg">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+            <svg className="h-8 w-8 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="mb-2 text-xl font-bold text-gray-900">Erro de Autenticação</h2>
-          <p className="mb-6 text-sm text-gray-600">
+          <h2 className="mb-2 text-xl font-bold text-foreground">Erro de Autenticação</h2>
+          <p className="mb-6 text-sm text-muted-foreground">
             Ocorreu um problema ao verificar sua sessão. Por favor, tente uma das opções abaixo:
           </p>
           <div className="space-y-3">
@@ -177,13 +177,13 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
                 // This ensures all React state is cleared and prevents race conditions
                 window.location.href = '/emergency-logout'
               }}
-              className="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              className="w-full rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
             >
               Limpar Sessão e Fazer Login
             </button>
             <button
               onClick={() => window.location.reload()}
-              className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
             >
               Recarregar Página
             </button>
@@ -197,7 +197,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
   // This prevents flash of loading screen during navigation
 
   return (
-  <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900" suppressHydrationWarning>
+  <div className="flex h-screen bg-gradient-to-br from-muted via-background to-muted" suppressHydrationWarning>
       <AnimatePresence initial={false}>
         {isTemporary ? (
           isOpen && (

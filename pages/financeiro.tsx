@@ -357,7 +357,7 @@ export default function FinanceiroPage() {
             className="w-4 h-4 rounded-full flex-shrink-0"
             style={{ backgroundColor: row.original.cor }}
           />
-          <span className="font-medium text-gray-900 dark:text-white truncate">
+          <span className="font-medium text-foreground truncate">
             {row.original.nome}
           </span>
         </div>
@@ -369,10 +369,10 @@ export default function FinanceiroPage() {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <div className={`w-3 h-3 rounded-full ${
-            row.original.tipo === 'receita' ? 'bg-green-500' : 'bg-red-500'
+            row.original.tipo === 'receita' ? 'bg-success' : 'bg-destructive'
           }`}></div>
           <span className={`text-sm font-medium capitalize ${
-            row.original.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
+            row.original.tipo === 'receita' ? 'text-success' : 'text-destructive'
           }`}>
             {row.original.tipo}
           </span>
@@ -386,13 +386,13 @@ export default function FinanceiroPage() {
         <div className="min-w-[200px] max-w-[300px]">
           {row.original.descricao ? (
             <span
-              className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 break-words"
+              className="text-sm text-muted-foreground line-clamp-2 break-words"
               title={row.original.descricao}
             >
               {row.original.descricao}
             </span>
           ) : (
-            <span className="text-sm text-gray-400">-</span>
+            <span className="text-sm text-muted-foreground">-</span>
           )}
         </div>
       ),

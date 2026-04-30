@@ -55,12 +55,12 @@ export default function ImpostoProdutoCard({
         {showProduct && imposto.produto && (
           <div className="pb-4 border-b">
             <div className="flex items-center gap-2 mb-1">
-              <Package className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Produto</span>
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Produto</span>
             </div>
             <p className="text-base font-semibold">{imposto.produto.nome}</p>
             {imposto.produto.codigo_barras && (
-              <p className="text-sm text-gray-500">Cód: {imposto.produto.codigo_barras}</p>
+              <p className="text-sm text-muted-foreground">Cód: {imposto.produto.codigo_barras}</p>
             )}
           </div>
         )}
@@ -68,28 +68,28 @@ export default function ImpostoProdutoCard({
         {/* Tax Codes */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase">NCM</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase">NCM</label>
             <p className="text-sm font-mono font-semibold">{imposto.ncm || '-'}</p>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase">CEST</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase">CEST</label>
             <p className="text-sm font-mono font-semibold">{imposto.cest || '-'}</p>
           </div>
         </div>
 
         {/* Origin */}
         <div>
-          <label className="text-xs font-medium text-gray-500 uppercase">Origem da Mercadoria</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase">Origem da Mercadoria</label>
           <p className="text-sm">
             {imposto.origem_mercadoria === 0 ? 'Nacional' : 'Estrangeira'}
           </p>
         </div>
 
         {/* Tax Rates */}
-        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+        <div className="bg-muted rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Calculator className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium text-gray-700">Alíquotas e MVA</span>
+            <Calculator className="h-4 w-4 text-info" />
+            <span className="text-sm font-medium text-foreground">Alíquotas e MVA</span>
             {isManual && (
               <Badge variant="outline" className="text-xs">
                 Manual
@@ -99,26 +99,26 @@ export default function ImpostoProdutoCard({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500 uppercase">MVA</label>
-              <p className="text-lg font-bold text-blue-600">
+              <label className="text-xs font-medium text-muted-foreground uppercase">MVA</label>
+              <p className="text-lg font-bold text-info">
                 {mvaValue !== null && mvaValue !== undefined
                   ? formatPercentage(mvaValue)
                   : '-'}
               </p>
               {imposto.mva_manual !== null && (
-                <span className="text-xs text-gray-500">Valor manual</span>
+                <span className="text-xs text-muted-foreground">Valor manual</span>
               )}
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-500 uppercase">Alíquota ICMS</label>
-              <p className="text-lg font-bold text-blue-600">
+              <label className="text-xs font-medium text-muted-foreground uppercase">Alíquota ICMS</label>
+              <p className="text-lg font-bold text-info">
                 {aliquotaValue !== null && aliquotaValue !== undefined
                   ? formatPercentage(aliquotaValue)
                   : '-'}
               </p>
               {imposto.aliquota_icms_manual !== null && (
-                <span className="text-xs text-gray-500">Valor manual</span>
+                <span className="text-xs text-muted-foreground">Valor manual</span>
               )}
             </div>
           </div>
@@ -128,13 +128,13 @@ export default function ImpostoProdutoCard({
         {(imposto.frete_padrao > 0 || imposto.outras_despesas > 0) && (
           <div className="grid grid-cols-2 gap-4 pt-2 border-t">
             <div>
-              <label className="text-xs font-medium text-gray-500 uppercase">Frete Padrão</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase">Frete Padrão</label>
               <p className="text-sm font-semibold">
                 {formatCurrency(imposto.frete_padrao)}
               </p>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 uppercase">Outras Despesas</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase">Outras Despesas</label>
               <p className="text-sm font-semibold">
                 {formatCurrency(imposto.outras_despesas)}
               </p>
@@ -143,7 +143,7 @@ export default function ImpostoProdutoCard({
         )}
 
         {/* Status */}
-        <div className="flex items-center justify-between pt-2 border-t text-xs text-gray-500">
+        <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
           <span>Status:</span>
           <Badge variant={imposto.ativo ? 'default' : 'secondary'}>
             {imposto.ativo ? 'Ativo' : 'Inativo'}

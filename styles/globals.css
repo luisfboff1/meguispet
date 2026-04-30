@@ -43,6 +43,34 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
+  /* Status semantic tokens */
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-muted: hsl(var(--success-muted));
+  --color-success-muted-foreground: hsl(var(--success-muted-foreground));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-muted: hsl(var(--warning-muted));
+  --color-warning-muted-foreground: hsl(var(--warning-muted-foreground));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-info-muted: hsl(var(--info-muted));
+  --color-info-muted-foreground: hsl(var(--info-muted-foreground));
+
+  /* Surface tokens (cards, panels, subtle backgrounds) */
+  --color-surface: hsl(var(--surface));
+  --color-surface-muted: hsl(var(--surface-muted));
+  --color-surface-elevated: hsl(var(--surface-elevated));
+
+  /* Chart tokens */
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
   --color-meguispet-primary: #2563eb;
   --color-meguispet-secondary: #64748b;
   --color-meguispet-accent: #f59e0b;
@@ -157,6 +185,34 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
+    /* Status — light */
+    --success: 142.1 70.6% 35.3%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 138 76% 96%;
+    --success-muted-foreground: 142 72% 24%;
+
+    --warning: 32.5 94.6% 43.7%;
+    --warning-foreground: 0 0% 100%;
+    --warning-muted: 48 100% 96%;
+    --warning-muted-foreground: 26 83% 24%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    --info-muted: 214 100% 97%;
+    --info-muted-foreground: 224 76% 32%;
+
+    /* Surface tokens — light */
+    --surface: 0 0% 100%;
+    --surface-muted: 210 40% 98%;
+    --surface-elevated: 0 0% 100%;
+
+    /* Chart palette — light */
+    --chart-1: 221 83% 53%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 32 95% 44%;
+    --chart-4: 271 81% 56%;
+    --chart-5: 0 84% 60%;
+
     --radius: 0.5rem;
   }
 
@@ -191,6 +247,34 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* Status — dark (softer, accessible) */
+    --success: 142 64% 48%;
+    --success-foreground: 144 80% 10%;
+    --success-muted: 142 40% 18%;
+    --success-muted-foreground: 142 70% 80%;
+
+    --warning: 38 92% 60%;
+    --warning-foreground: 26 83% 14%;
+    --warning-muted: 32 50% 18%;
+    --warning-muted-foreground: 38 92% 80%;
+
+    --info: 213 94% 68%;
+    --info-foreground: 222 47% 11%;
+    --info-muted: 217 50% 20%;
+    --info-muted-foreground: 213 94% 85%;
+
+    /* Surface tokens — dark */
+    --surface: 224 71% 4%;
+    --surface-muted: 217.2 32.6% 13%;
+    --surface-elevated: 217.2 32.6% 17.5%;
+
+    /* Chart palette — dark */
+    --chart-1: 213 94% 68%;
+    --chart-2: 142 64% 55%;
+    --chart-3: 38 92% 60%;
+    --chart-4: 271 91% 70%;
+    --chart-5: 0 84% 65%;
   }
 }
 

@@ -201,7 +201,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                 Provedor
               </label>
               <Select value={provider} onValueChange={(v) => handleProviderChange(v as AgentProvider)}>
@@ -214,7 +214,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               </Select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
                 Modelo
               </label>
               <Select value={model} onValueChange={setModel}>
@@ -244,13 +244,13 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
         </CardHeader>
         <CardContent className="space-y-3">
           {isGlobalConfig && !apiKey && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+            <div className="rounded-lg border border-info/30 bg-info-muted px-3 py-2 text-sm text-info-muted-foreground">
               <div className="font-medium">API key global configurada pelo administrador</div>
               <p className="mt-0.5 text-xs">Voce pode usar o Agente Megui sem precisar de sua propria chave. Opcionalmente, insira abaixo para usar a sua.</p>
             </div>
           )}
           {apiKeyPreview && !apiKey && !isGlobalConfig && (
-            <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+            <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success-muted px-3 py-2 text-sm text-success-muted-foreground">
               <span>Chave configurada:</span>
               <code className="font-mono text-xs">{apiKeyPreview}</code>
             </div>
@@ -266,12 +266,12 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
             <button
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-muted-foreground">
             {isGlobalConfig
               ? 'Deixe em branco para continuar usando a chave global. Preencha apenas se quiser usar sua propria chave.'
               : 'Sua chave e encriptada (AES-256-GCM) e nunca e exposta.'}
@@ -289,17 +289,17 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
         </CardHeader>
         <CardContent className="space-y-5">
           {isGpt5Model && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+            <div className="rounded-lg border border-info/30 bg-info-muted px-3 py-2 text-sm text-info-muted-foreground">
               <strong>GPT-5</strong> usa Responses API com reasoning medium e verbosity low. Temperatura e outros ajustes legados nao sao enviados ao modelo.
             </div>
           )}
           {/* Temperature */}
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Temperatura {isGpt5Model && <span className="ml-1 text-[10px] text-slate-400">(nao enviada)</span>}
+              <label className="text-xs font-medium text-muted-foreground">
+                Temperatura {isGpt5Model && <span className="ml-1 text-[10px] text-muted-foreground">(nao enviada)</span>}
               </label>
-              <span className="text-xs font-mono text-slate-500">{isGpt5Model ? 'n/a' : temperature.toFixed(2)}</span>
+              <span className="text-xs font-mono text-muted-foreground">{isGpt5Model ? 'n/a' : temperature.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -311,7 +311,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               disabled={isGpt5Model}
               className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+            <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
               <span>Preciso (0)</span>
               <span>Criativo (2)</span>
             </div>
@@ -319,7 +319,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
 
           {/* Max Tokens */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
+            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
               Maximo de Tokens na Resposta
             </label>
             <Input
@@ -335,10 +335,10 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
           {/* Top P */}
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Top P {isGpt5Model && <span className="ml-1 text-[10px] text-slate-400">(nao enviado)</span>}
+              <label className="text-xs font-medium text-muted-foreground">
+                Top P {isGpt5Model && <span className="ml-1 text-[10px] text-muted-foreground">(nao enviado)</span>}
               </label>
-              <span className="text-xs font-mono text-slate-500">{isGpt5Model ? 'n/a' : topP.toFixed(2)}</span>
+              <span className="text-xs font-mono text-muted-foreground">{isGpt5Model ? 'n/a' : topP.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -348,17 +348,17 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               value={isGpt5Model ? 1.0 : topP}
               onChange={(e) => setTopP(parseFloat(e.target.value))}
               disabled={isGpt5Model}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
           {/* Frequency Penalty */}
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Frequency Penalty {isGpt5Model && <span className="ml-1 text-[10px] text-slate-400">(nao enviado)</span>}
+              <label className="text-xs font-medium text-muted-foreground">
+                Frequency Penalty {isGpt5Model && <span className="ml-1 text-[10px] text-muted-foreground">(nao enviado)</span>}
               </label>
-              <span className="text-xs font-mono text-slate-500">{isGpt5Model ? 'n/a' : frequencyPenalty.toFixed(2)}</span>
+              <span className="text-xs font-mono text-muted-foreground">{isGpt5Model ? 'n/a' : frequencyPenalty.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -368,17 +368,17 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               value={isGpt5Model ? 0 : frequencyPenalty}
               onChange={(e) => setFrequencyPenalty(parseFloat(e.target.value))}
               disabled={isGpt5Model}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
           {/* Presence Penalty */}
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                Presence Penalty {isGpt5Model && <span className="ml-1 text-[10px] text-slate-400">(nao enviado)</span>}
+              <label className="text-xs font-medium text-muted-foreground">
+                Presence Penalty {isGpt5Model && <span className="ml-1 text-[10px] text-muted-foreground">(nao enviado)</span>}
               </label>
-              <span className="text-xs font-mono text-slate-500">{isGpt5Model ? 'n/a' : presencePenalty.toFixed(2)}</span>
+              <span className="text-xs font-mono text-muted-foreground">{isGpt5Model ? 'n/a' : presencePenalty.toFixed(2)}</span>
             </div>
             <input
               type="range"
@@ -388,17 +388,17 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               value={isGpt5Model ? 0 : presencePenalty}
               onChange={(e) => setPresencePenalty(parseFloat(e.target.value))}
               disabled={isGpt5Model}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
           {/* Recursion Limit */}
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+              <label className="text-xs font-medium text-muted-foreground">
                 Limite de Etapas (Recursion Limit)
               </label>
-              <span className="text-xs font-mono text-slate-500">{recursionLimit}</span>
+              <span className="text-xs font-mono text-muted-foreground">{recursionLimit}</span>
             </div>
             <input
               type="range"
@@ -407,13 +407,13 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               step="5"
               value={recursionLimit}
               onChange={(e) => setRecursionLimit(parseInt(e.target.value))}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-amber-500"
             />
-            <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+            <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
               <span>Rapido (5)</span>
               <span>Complexo (50)</span>
             </div>
-            <p className="mt-1 text-[10px] text-slate-400">
+            <p className="mt-1 text-[10px] text-muted-foreground">
               Quantas etapas o agente pode executar por pergunta. Aumente para consultas mais complexas.
             </p>
           </div>
@@ -432,7 +432,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               variant="ghost"
               size="sm"
               onClick={() => setSystemPrompt(DEFAULT_SYSTEM_PROMPT)}
-              className="gap-1 text-xs text-slate-500 hover:text-slate-700"
+              className="gap-1 text-xs text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="h-3 w-3" />
               Restaurar padrao
@@ -444,10 +444,10 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             rows={12}
-            className="w-full rounded-lg border border-slate-200 bg-white p-3 font-mono text-xs leading-relaxed text-slate-700 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="w-full rounded-lg border border-input bg-card p-3 font-mono text-xs leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
             placeholder="Insira o prompt do agente..."
           />
-          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1.5 text-xs text-muted-foreground">
             Este prompt define o comportamento do agente. A data atual e o schema do banco sao adicionados automaticamente.
             {systemPrompt.trim() === DEFAULT_SYSTEM_PROMPT.trim() && (
               <span className="ml-1 text-amber-500">Usando prompt padrao.</span>
@@ -468,13 +468,13 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
           {AVAILABLE_SKILLS.map((skill) => (
             <div
               key={skill.id}
-              className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700"
+              className="flex items-center justify-between rounded-lg border px-4 py-3"
             >
               <div>
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                <p className="text-sm font-medium text-foreground">
                   {skill.name}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {skill.description}
                 </p>
               </div>
@@ -484,7 +484,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               />
             </div>
           ))}
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-muted-foreground">
             Skills adicionais (PDF, Excel, Graficos) serao adicionadas em breve.
           </p>
         </CardContent>

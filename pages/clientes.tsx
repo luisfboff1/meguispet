@@ -257,7 +257,7 @@ export default function ClientesPage() {
                   size="sm"
                   onClick={() => handleDeletarCliente(row.original)}
                   title="Desativar cliente"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -269,7 +269,7 @@ export default function ClientesPage() {
                 size="sm"
                 onClick={() => handleReativarCliente(row.original)}
                 title="Reativar cliente"
-                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                className="text-success hover:text-success hover:bg-success-muted"
               >
                 <RotateCcw className="h-4 w-4 mr-1" />
                 Reativar
@@ -286,23 +286,23 @@ export default function ClientesPage() {
         const isInactive = !row.original.ativo
         return (
           <div className="flex items-center space-x-3 min-w-[200px]">
-            <div className={`w-10 h-10 ${isInactive ? 'bg-gray-300' : 'bg-meguispet-primary/10'} rounded-full flex items-center justify-center flex-shrink-0`}>
-              <span className={`text-sm font-medium ${isInactive ? 'text-gray-600' : 'text-meguispet-primary'}`}>
+            <div className={`w-10 h-10 ${isInactive ? 'bg-muted' : 'bg-meguispet-primary/10'} rounded-full flex items-center justify-center flex-shrink-0`}>
+              <span className={`text-sm font-medium ${isInactive ? 'text-muted-foreground' : 'text-meguispet-primary'}`}>
                 {getInitials(row.original.nome)}
               </span>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className={`font-medium ${isInactive ? 'text-gray-500' : 'text-gray-900'}`}>
+                <span className={`font-medium ${isInactive ? 'text-muted-foreground' : 'text-foreground'}`}>
                   {row.original.nome}
                 </span>
                 {isInactive && (
-                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                  <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                     Inativo
                   </span>
                 )}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 Cliente desde {formatDate(row.original.created_at)}
               </div>
             </div>
@@ -325,11 +325,11 @@ export default function ClientesPage() {
       cell: ({ row }) => (
         row.original.email ? (
           <div className="flex items-center space-x-2">
-            <Mail className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{row.original.email}</span>
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{row.original.email}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         )
       ),
     },
@@ -339,11 +339,11 @@ export default function ClientesPage() {
       cell: ({ row }) => (
         row.original.telefone ? (
           <div className="flex items-center space-x-2">
-            <Phone className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{row.original.telefone}</span>
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{row.original.telefone}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         )
       ),
     },
@@ -353,11 +353,11 @@ export default function ClientesPage() {
       cell: ({ row }) => (
         row.original.endereco ? (
           <div className="flex items-start space-x-2">
-            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-            <span className="text-sm text-gray-600 line-clamp-2">{row.original.endereco}</span>
+            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-muted-foreground line-clamp-2">{row.original.endereco}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         )
       ),
     },

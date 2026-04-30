@@ -93,7 +93,7 @@ export default function TabelaMvaList({
                 onChange={(e) => setUf(e.target.value.toUpperCase())}
                 placeholder="Ex: SP"
                 maxLength={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -105,7 +105,7 @@ export default function TabelaMvaList({
                 value={ncm}
                 onChange={(e) => setNcm(e.target.value)}
                 placeholder="Ex: 2309"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -115,7 +115,7 @@ export default function TabelaMvaList({
               <select
                 value={sujeitoST === undefined ? '' : sujeitoST.toString()}
                 onChange={(e) => setSujeitoST(e.target.value === '' ? undefined : e.target.value === 'true')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Todos</option>
                 <option value="true">Sim</option>
@@ -149,22 +149,22 @@ export default function TabelaMvaList({
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               Carregando...
             </div>
           ) : error ? (
-            <div className="text-center py-8 text-red-500">
+            <div className="text-center py-8 text-destructive">
               {error}
             </div>
           ) : tabelas.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               Nenhuma tabela MVA encontrada
             </div>
           ) : (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-muted">
                     <tr>
                       <th className="text-left px-4 py-3 font-medium">UF</th>
                       <th className="text-left px-4 py-3 font-medium">NCM</th>
@@ -179,10 +179,10 @@ export default function TabelaMvaList({
                     {tabelas.map((tabela) => (
                       <tr
                         key={tabela.id}
-                        className="border-t hover:bg-gray-50 transition-colors"
+                        className="border-t hover:bg-accent transition-colors"
                       >
                         <td className="px-4 py-3">
-                          <span className="font-medium text-blue-600">{tabela.uf}</span>
+                          <span className="font-medium text-info">{tabela.uf}</span>
                         </td>
                         <td className="px-4 py-3">{tabela.ncm}</td>
                         <td className="px-4 py-3 max-w-xs truncate" title={tabela.descricao || ''}>
@@ -200,9 +200,9 @@ export default function TabelaMvaList({
                         </td>
                         <td className="px-4 py-3 text-center">
                           {tabela.sujeito_st ? (
-                            <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
+                            <CheckCircle className="h-5 w-5 text-success mx-auto" />
                           ) : (
-                            <XCircle className="h-5 w-5 text-red-600 mx-auto" />
+                            <XCircle className="h-5 w-5 text-destructive mx-auto" />
                           )}
                         </td>
                         {onSelect && (
@@ -225,7 +225,7 @@ export default function TabelaMvaList({
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     Página {page} de {totalPages}
                   </div>
                   <div className="flex gap-2">

@@ -21,7 +21,7 @@ export default function VendasChart({ data, loading = false }: VendasChartProps)
 
   if (!data || data.length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center text-gray-500">
+      <div className="h-64 flex items-center justify-center text-muted-foreground">
         <p>Nenhum dado de vendas disponível</p>
       </div>
     )
@@ -71,13 +71,13 @@ export default function VendasChart({ data, loading = false }: VendasChartProps)
                     <div className="w-full flex-1 rounded-full bg-emerald-500" />
                   </div>
                 </div>
-                <div className="text-center text-xs text-gray-600">
-                  <div className="font-medium uppercase tracking-wide text-gray-700">
+                <div className="text-center text-xs text-muted-foreground">
+                  <div className="font-medium uppercase tracking-wide text-foreground">
                     {parseLocalDate(item.data).toLocaleDateString('pt-BR', {
                       weekday: 'short'
                     })}
                   </div>
-                  <div className="text-[11px] text-gray-500">
+                  <div className="text-[11px] text-muted-foreground">
                     {parseLocalDate(item.data).toLocaleDateString('pt-BR', { day: '2-digit' })}
                   </div>
                 </div>
@@ -88,7 +88,7 @@ export default function VendasChart({ data, loading = false }: VendasChartProps)
       </div>
 
       {/* Legenda */}
-      <div className="mt-5 flex justify-center gap-6 text-xs text-gray-600">
+      <div className="mt-5 flex justify-center gap-6 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full bg-meguispet-primary" />
           Vendas

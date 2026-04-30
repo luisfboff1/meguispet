@@ -152,10 +152,10 @@ export default function VendasPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pago': return 'bg-green-100 text-green-800'
-      case 'pendente': return 'bg-yellow-100 text-yellow-800'
-      case 'cancelado': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'pago': return 'bg-success-muted text-success'
+      case 'pendente': return 'bg-warning-muted text-warning'
+      case 'cancelado': return 'bg-destructive/15 text-destructive'
+      default: return 'bg-muted text-foreground'
     }
   }
 
@@ -631,8 +631,8 @@ export default function VendasPage() {
             <ShoppingCart className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
           </div>
           <div>
-            <div className="font-medium text-gray-900">{row.original.numero_venda || `#${row.original.id}`}</div>
-            <div className="text-sm text-gray-500">ID: #{row.original.id}</div>
+            <div className="font-medium text-foreground">{row.original.numero_venda || `#${row.original.id}`}</div>
+            <div className="text-sm text-muted-foreground">ID: #{row.original.id}</div>
           </div>
         </div>
       ),
@@ -642,7 +642,7 @@ export default function VendasPage() {
       header: ({ column }) => <SortableHeader column={column}>Cliente</SortableHeader>,
       accessorFn: (row) => row.cliente?.nome || 'N/A',
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {row.original.cliente?.nome || 'N/A'}
         </div>
       ),
@@ -652,7 +652,7 @@ export default function VendasPage() {
       header: ({ column }) => <SortableHeader column={column}>Vendedor</SortableHeader>,
       accessorFn: (row) => row.vendedor?.nome || 'N/A',
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {row.original.vendedor?.nome || 'N/A'}
         </div>
       ),
@@ -661,7 +661,7 @@ export default function VendasPage() {
       accessorKey: "total_produtos_liquido",
       header: ({ column }) => <SortableHeader column={column}>Total Líquido</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {formatCurrency(row.original.total_produtos_liquido || (row.original.valor_final - (row.original.total_ipi || 0) - (row.original.total_st || 0)))}
         </div>
       ),
@@ -671,7 +671,7 @@ export default function VendasPage() {
       accessorKey: "valor_final",
       header: ({ column }) => <SortableHeader column={column}>Total Final</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm font-medium text-green-600">
+        <div className="text-sm font-medium text-success">
           {formatCurrency(row.original.valor_final)}
         </div>
       ),
@@ -680,7 +680,7 @@ export default function VendasPage() {
       accessorKey: "total_ipi",
       header: ({ column }) => <SortableHeader column={column}>IPI</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-foreground">
           {row.original.total_ipi ? formatCurrency(row.original.total_ipi) : '-'}
         </div>
       ),
@@ -690,7 +690,7 @@ export default function VendasPage() {
       accessorKey: "total_icms",
       header: ({ column }) => <SortableHeader column={column}>ICMS</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-blue-600" title="Informativo - não incluído no total">
+        <div className="text-sm text-info" title="Informativo - não incluído no total">
           {row.original.total_icms ? formatCurrency(row.original.total_icms) : '-'}
         </div>
       ),
@@ -700,7 +700,7 @@ export default function VendasPage() {
       accessorKey: "total_st",
       header: ({ column }) => <SortableHeader column={column}>ST</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-foreground">
           {row.original.total_st ? formatCurrency(row.original.total_st) : '-'}
         </div>
       ),
@@ -711,7 +711,7 @@ export default function VendasPage() {
       header: ({ column }) => <SortableHeader column={column}>Pagamento</SortableHeader>,
       accessorFn: (row) => getFormaPagamento(row),
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {getFormaPagamento(row.original) || 'N/A'}
         </div>
       ),
@@ -730,7 +730,7 @@ export default function VendasPage() {
       accessorKey: "created_at",
       header: ({ column }) => <SortableHeader column={column}>Data</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {formatDate(row.original.created_at)}
         </div>
       ),
@@ -760,14 +760,14 @@ export default function VendasPage() {
               size="sm"
               onClick={() => handleToggleAtivo(row.original)}
               title={row.original.ativo ? "Desativar" : "Ativar"}
-              className={row.original.ativo ? "text-gray-600" : "text-green-600"}
+              className={row.original.ativo ? "text-muted-foreground" : "text-success"}
             >
               {row.original.ativo ? 'Desativar' : 'Ativar'}
             </Button>
             <Button 
               variant="ghost" 
               size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={() => handleExcluirCondicao(row.original)}
               disabled={deletingCondicaoId === row.original.id}
               title="Excluir condição"
@@ -787,7 +787,7 @@ export default function VendasPage() {
         cell: ({ row }) => (
           <div className="flex items-center space-x-2">
             <CreditCard className="h-4 w-4 text-meguispet-primary flex-shrink-0" />
-            <span className="font-medium text-gray-900">{row.original.nome}</span>
+            <span className="font-medium text-foreground">{row.original.nome}</span>
           </div>
         ),
       },

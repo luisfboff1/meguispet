@@ -159,12 +159,12 @@ export default function ProdutosEstoquePage() {
       header: ({ column }) => <SortableHeader column={column}>Produto</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex items-center space-x-3 min-w-[200px]">
-          <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
-            <Package className="h-4 w-4 text-gray-600" />
+          <div className="w-8 h-8 bg-muted rounded flex items-center justify-center flex-shrink-0">
+            <Package className="h-4 w-4 text-muted-foreground" />
           </div>
           <div>
-            <div className="font-medium text-gray-900">{row.original.nome}</div>
-            <div className="text-sm text-gray-500">{row.original.categoria || 'N/A'}</div>
+            <div className="font-medium text-foreground">{row.original.nome}</div>
+            <div className="text-sm text-muted-foreground">{row.original.categoria || 'N/A'}</div>
           </div>
         </div>
       ),
@@ -173,7 +173,7 @@ export default function ProdutosEstoquePage() {
       accessorKey: "preco_venda",
       header: ({ column }) => <SortableHeader column={column}>Preço Venda</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-green-600 font-medium">
+        <div className="text-success font-medium">
           {formatCurrency(row.original.preco_venda)}
         </div>
       ),
@@ -182,7 +182,7 @@ export default function ProdutosEstoquePage() {
       accessorKey: "preco_custo",
       header: ({ column }) => <SortableHeader column={column}>Preço Custo</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-blue-600 font-medium">
+        <div className="text-info font-medium">
           {formatCurrency(row.original.preco_custo)}
         </div>
       ),
@@ -197,7 +197,7 @@ export default function ProdutosEstoquePage() {
           ? ((margem / row.original.preco_custo) * 100).toFixed(1)
           : '0'
         return (
-          <div className="text-purple-600 font-medium">
+          <div className="text-accent-foreground font-medium">
             {formatCurrency(margem)}
             <br />
             <span className="text-xs">({margemPercentual}%)</span>
@@ -229,7 +229,7 @@ export default function ProdutosEstoquePage() {
       accessorKey: "estoque",
       header: ({ column }) => <SortableHeader column={column}>Estoque Total</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-center font-bold text-gray-900">
+        <div className="text-center font-bold text-foreground">
           {row.original.estoque}
         </div>
       ),
@@ -261,12 +261,12 @@ export default function ProdutosEstoquePage() {
       header: ({ column }) => <SortableHeader column={column}>Produto</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex items-center space-x-3 min-w-[200px]">
-          <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
-            <Package className="h-4 w-4 text-gray-600" />
+          <div className="w-8 h-8 bg-muted rounded flex items-center justify-center flex-shrink-0">
+            <Package className="h-4 w-4 text-muted-foreground" />
           </div>
           <div>
-            <div className="font-medium text-gray-900">{row.original.nome}</div>
-            <div className="text-sm text-gray-500">ID: #{row.original.id}</div>
+            <div className="font-medium text-foreground">{row.original.nome}</div>
+            <div className="text-sm text-muted-foreground">ID: #{row.original.id}</div>
           </div>
         </div>
       ),
@@ -275,7 +275,7 @@ export default function ProdutosEstoquePage() {
       accessorKey: "categoria",
       header: ({ column }) => <SortableHeader column={column}>Categoria</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">{row.original.categoria || 'N/A'}</div>
+        <div className="text-sm text-foreground">{row.original.categoria || 'N/A'}</div>
       ),
     },
     {
@@ -296,7 +296,7 @@ export default function ProdutosEstoquePage() {
       id: "local",
       header: ({ column }) => <SortableHeader column={column}>Local</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-gray-900">
+        <div className="text-sm text-foreground">
           {describeProdutoEstoques(row.original)}
         </div>
       ),
@@ -305,7 +305,7 @@ export default function ProdutosEstoquePage() {
       accessorKey: "preco_venda",
       header: ({ column }) => <SortableHeader column={column}>Preço Venda</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-green-600 font-medium">
+        <div className="text-sm text-success font-medium">
           {formatCurrency(row.original.preco_venda)}
         </div>
       ),
@@ -314,7 +314,7 @@ export default function ProdutosEstoquePage() {
       accessorKey: "preco_custo",
       header: ({ column }) => <SortableHeader column={column}>Preço Custo</SortableHeader>,
       cell: ({ row }) => (
-        <div className="text-sm text-blue-600 font-medium">
+        <div className="text-sm text-info font-medium">
           {formatCurrency(row.original.preco_custo)}
         </div>
       ),
@@ -326,7 +326,7 @@ export default function ProdutosEstoquePage() {
       cell: ({ row }) => {
         const totalValueVenda = row.original.preco_venda * row.original.estoque
         return (
-          <div className="text-sm font-medium text-green-600">
+          <div className="text-sm font-medium text-success">
             {formatCurrency(totalValueVenda)}
           </div>
         )
@@ -339,7 +339,7 @@ export default function ProdutosEstoquePage() {
       cell: ({ row }) => {
         const totalValueCusto = row.original.preco_custo * row.original.estoque
         return (
-          <div className="text-sm font-medium text-blue-600">
+          <div className="text-sm font-medium text-info">
             {formatCurrency(totalValueCusto)}
           </div>
         )
@@ -357,7 +357,7 @@ export default function ProdutosEstoquePage() {
           ? ((row.original.preco_venda - row.original.preco_custo) / row.original.preco_custo) * 100 
           : 0
         return (
-          <div className="text-sm font-medium text-purple-600">
+          <div className="text-sm font-medium text-accent-foreground">
             {formatCurrency(margemLucro)}
             <br />
             <span className="text-xs">({margemPercentual.toFixed(1)}%)</span>

@@ -16,6 +16,17 @@ import { ptBR } from 'date-fns/locale'
 import html2canvas from 'html2canvas'
 import { formatNumber } from '@/lib/utils'
 
+// Chart color tokens
+const chartColors = {
+  chart1: 'hsl(var(--chart-1))',
+  chart2: 'hsl(var(--chart-2))',
+  chart3: 'hsl(var(--chart-3))',
+  chart4: 'hsl(var(--chart-4))',
+  chart5: 'hsl(var(--chart-5))',
+}
+
+const COLORS = [chartColors.chart1, chartColors.chart2, chartColors.chart3, chartColors.chart4, chartColors.chart5, '#ec4899', '#14b8a6', '#f97316']
+
 export interface FinanceiroReportViewerProps {
   data: FinanceiroReportData
   configuracao: ReportConfiguration
@@ -179,7 +190,7 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Receita Total (sem impostos)</CardDescription>
-            <CardTitle className="text-3xl text-green-600">
+            <CardTitle className="text-3xl text-success">
               {formatCurrency(resumo.receitaTotal)}
             </CardTitle>
           </CardHeader>
@@ -193,7 +204,7 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Despesa Total</CardDescription>
-            <CardTitle className="text-3xl text-red-600">
+            <CardTitle className="text-3xl text-destructive">
               {formatCurrency(resumo.despesaTotal)}
             </CardTitle>
           </CardHeader>
@@ -207,7 +218,7 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Lucro Líquido (sem impostos)</CardDescription>
-            <CardTitle className={`text-3xl ${resumo.lucroLiquido >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+            <CardTitle className={`text-3xl ${resumo.lucroLiquido >= 0 ? 'text-info' : 'text-destructive'}`}>
               {formatCurrency(resumo.lucroLiquido)}
             </CardTitle>
           </CardHeader>
@@ -235,7 +246,7 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
             </div>
             <div className="flex justify-between items-center pl-4 text-sm">
               <span className="text-muted-foreground">(-) Deduções (despesas)</span>
-              <span className="font-mono text-red-600">R$ {formatNumber(dre.deducoes)}</span>
+              <span className="font-mono text-destructive">R$ {formatNumber(dre.deducoes)}</span>
             </div>
             <div className="flex justify-between items-center border-b pb-2 font-semibold">
               <span>(=) Receita Líquida</span>
@@ -243,15 +254,15 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
             </div>
             <div className="flex justify-between items-center pl-4 text-sm">
               <span className="text-muted-foreground">(-) Custo dos Produtos</span>
-              <span className="font-mono text-red-600">R$ {formatNumber(dre.custoProdutos)}</span>
+              <span className="font-mono text-destructive">R$ {formatNumber(dre.custoProdutos)}</span>
             </div>
             <div className="flex justify-between items-center border-b pb-2 font-semibold">
               <span>(=) Lucro Bruto</span>
-              <span className="font-mono text-blue-600">R$ {formatNumber(dre.lucroBruto)}</span>
+              <span className="font-mono text-info">R$ {formatNumber(dre.lucroBruto)}</span>
             </div>
             <div className="flex justify-between items-center border-t-2 border-black pt-2 font-bold text-lg">
               <span>(=) Lucro Líquido</span>
-              <span className={`font-mono ${dre.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`font-mono ${dre.lucroLiquido >= 0 ? 'text-success' : 'text-destructive'}`}>
                 R$ {formatNumber(dre.lucroLiquido)}
               </span>
             </div>
@@ -287,14 +298,14 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
                         <td className="p-2">{formatPeriodDate(receita.data)}</td>
                         <td className="p-2">{receita.descricao}</td>
                         <td className="p-2 text-xs text-muted-foreground">{receita.categoria}</td>
-                        <td className="p-2 text-right font-mono text-green-600">R$ {formatNumber(receita.valor)}</td>
+                        <td className="p-2 text-right font-mono text-success">R$ {formatNumber(receita.valor)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="border-t-2 font-semibold">
                     <tr>
                       <td colSpan={3} className="p-2 text-right">Total:</td>
-                      <td className="p-2 text-right font-mono text-green-600">
+                      <td className="p-2 text-right font-mono text-success">
                         R$ {formatNumber(receitasDetalhadas.reduce((sum, r) => sum + r.valor, 0))}
                       </td>
                     </tr>
@@ -331,14 +342,14 @@ export const FinanceiroReportViewer: React.FC<FinanceiroReportViewerProps> = ({
                         <td className="p-2">{formatPeriodDate(despesa.data)}</td>
                         <td className="p-2">{despesa.descricao}</td>
                         <td className="p-2 text-xs text-muted-foreground">{despesa.categoria}</td>
-                        <td className="p-2 text-right font-mono text-red-600">R$ {formatNumber(despesa.valor)}</td>
+                        <td className="p-2 text-right font-mono text-destructive">R$ {formatNumber(despesa.valor)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="border-t-2 font-semibold">
                     <tr>
                       <td colSpan={3} className="p-2 text-right">Total:</td>
-                      <td className="p-2 text-right font-mono text-red-600">
+                      <td className="p-2 text-right font-mono text-destructive">
                         R$ {formatNumber(despesasDetalhadas.reduce((sum, d) => sum + d.valor, 0))}
                       </td>
                     </tr>

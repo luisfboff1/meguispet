@@ -51,12 +51,12 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
         className={cn(
           'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
           isUser
-            ? 'bg-blue-100 dark:bg-blue-900/30'
+            ? 'bg-info-muted'
             : 'bg-amber-100 dark:bg-amber-900/30'
         )}
       >
         {isUser ? (
-          <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <User className="h-4 w-4 text-info" />
         ) : (
           <Bot className="h-4 w-4 text-amber-600 dark:text-amber-400" />
         )}
@@ -72,7 +72,7 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
         {/* Header */}
         <div
           className={cn(
-            'flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400',
+            'flex items-center gap-2 text-xs text-muted-foreground',
             isUser && 'flex-row-reverse'
           )}
         >
@@ -92,8 +92,8 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
           className={cn(
             'rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
             isUser
-              ? 'rounded-tr-md bg-blue-600 text-white'
-              : 'rounded-tl-md bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700'
+              ? 'rounded-tr-md bg-info text-primary-foreground'
+              : 'rounded-tl-md bg-card shadow-sm ring-1 ring-border'
           )}
         >
           {/* SQL Query Panel (assistant only) */}
@@ -134,7 +134,7 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
         {isAssistant && !isStreaming && (
           <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
             {message.output_tokens > 0 && (
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-muted-foreground">
                 {message.output_tokens} tokens
               </span>
             )}
@@ -145,62 +145,62 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
                 <button
                   onMouseEnter={() => setShowInfoTooltip(true)}
                   onMouseLeave={() => setShowInfoTooltip(false)}
-                  className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+                  className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                   title="Informações de performance"
                 >
                   <Info className="h-3 w-3" />
                 </button>
 
                 {showInfoTooltip && (
-                  <div className="absolute bottom-full left-1/2 mb-2 -translate-x-1/2 z-50 w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                  <div className="absolute bottom-full left-1/2 mb-2 -translate-x-1/2 z-50 w-64 rounded-lg border bg-card px-3 py-2 shadow-lg">
                     <div className="space-y-1.5 text-xs">
                       {/* Tokens */}
-                      <div className="flex items-center justify-between border-b border-slate-200 pb-1.5 dark:border-slate-700">
-                        <span className="font-medium text-slate-700 dark:text-slate-300">Tokens</span>
+                      <div className="flex items-center justify-between border-b pb-1.5">
+                        <span className="font-medium text-foreground">Tokens</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500 dark:text-slate-400">Input:</span>
-                        <span className="font-mono text-slate-700 dark:text-slate-300">{message.input_tokens.toLocaleString()}</span>
+                        <span className="text-muted-foreground">Input:</span>
+                        <span className="font-mono text-foreground">{message.input_tokens.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500 dark:text-slate-400">Output:</span>
-                        <span className="font-mono text-slate-700 dark:text-slate-300">{message.output_tokens.toLocaleString()}</span>
+                        <span className="text-muted-foreground">Output:</span>
+                        <span className="font-mono text-foreground">{message.output_tokens.toLocaleString()}</span>
                       </div>
 
                       {/* Timing breakdown */}
                       {message.timing_breakdown && (
                         <>
-                          <div className="flex items-center justify-between border-b border-t border-slate-200 py-1.5 dark:border-slate-700">
-                            <span className="font-medium text-slate-700 dark:text-slate-300">Tempo</span>
-                            <span className="font-mono text-slate-700 dark:text-slate-300">{formatTime(message.timing_breakdown.total_time_ms)}</span>
+                          <div className="flex items-center justify-between border-b border-t py-1.5">
+                            <span className="font-medium text-foreground">Tempo</span>
+                            <span className="font-mono text-foreground">{formatTime(message.timing_breakdown.total_time_ms)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-500 dark:text-slate-400">LLM pensando:</span>
+                            <span className="text-muted-foreground">LLM pensando:</span>
                             <span className="font-mono text-amber-600 dark:text-amber-400">
                               {formatTime(message.timing_breakdown.llm_thinking_ms)}
-                              <span className="ml-1 text-[10px] text-slate-400">
+                              <span className="ml-1 text-[10px] text-muted-foreground">
                                 ({((message.timing_breakdown.llm_thinking_ms / message.timing_breakdown.total_time_ms) * 100).toFixed(0)}%)
                               </span>
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-500 dark:text-slate-400">Consultando BD:</span>
-                            <span className="font-mono text-blue-600 dark:text-blue-400">
+                            <span className="text-muted-foreground">Consultando BD:</span>
+                            <span className="font-mono text-info">
                               {formatTime(message.timing_breakdown.tool_execution_ms)}
-                              <span className="ml-1 text-[10px] text-slate-400">
+                              <span className="ml-1 text-[10px] text-muted-foreground">
                                 ({((message.timing_breakdown.tool_execution_ms / message.timing_breakdown.total_time_ms) * 100).toFixed(0)}%)
                               </span>
                             </span>
                           </div>
                           <div className="flex justify-between text-[10px]">
-                            <span className="text-slate-500 dark:text-slate-400">Queries executadas:</span>
-                            <span className="font-mono text-slate-600 dark:text-slate-400">{message.timing_breakdown.tools_count}</span>
+                            <span className="text-muted-foreground">Queries executadas:</span>
+                            <span className="font-mono text-muted-foreground">{message.timing_breakdown.tools_count}</span>
                           </div>
                         </>
                       )}
                     </div>
                     {/* Arrow */}
-                    <div className="absolute left-1/2 top-full -translate-x-1/2 -mt-px h-2 w-2 rotate-45 border-b border-r border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800" />
+                    <div className="absolute left-1/2 top-full -translate-x-1/2 -mt-px h-2 w-2 rotate-45 border-b border-r bg-card" />
                   </div>
                 )}
               </div>
@@ -208,11 +208,11 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
 
             <button
               onClick={handleCopy}
-              className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
               title="Copiar resposta"
             >
               {copied ? (
-                <Check className="h-3 w-3 text-emerald-500" />
+                <Check className="h-3 w-3 text-success" />
               ) : (
                 <Copy className="h-3 w-3" />
               )}
@@ -262,16 +262,16 @@ function MarkdownTable({ children, ...props }: React.HTMLAttributes<HTMLTableEle
   }, [extractTableData])
 
   return (
-    <div className="group/table relative my-3 overflow-x-auto rounded-lg border border-slate-300 dark:border-slate-600">
+    <div className="group/table relative my-3 overflow-x-auto rounded-lg border">
       {/* Action buttons - top right */}
       <div className="absolute right-1 top-1 z-10 flex items-center gap-0.5 opacity-0 transition-opacity group-hover/table:opacity-100">
         <button
           onClick={handleCopy}
-          className="rounded p-1 text-slate-400 hover:bg-white/80 hover:text-slate-600 dark:hover:bg-slate-800/80 dark:hover:text-slate-300"
+          className="rounded p-1 text-muted-foreground hover:bg-card/80 hover:text-foreground"
           title="Copiar tabela"
         >
           {copied ? (
-            <Check className="h-3.5 w-3.5 text-emerald-500" />
+            <Check className="h-3.5 w-3.5 text-success" />
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}
@@ -279,7 +279,7 @@ function MarkdownTable({ children, ...props }: React.HTMLAttributes<HTMLTableEle
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded p-1 text-slate-400 hover:bg-white/80 hover:text-slate-600 dark:hover:bg-slate-800/80 dark:hover:text-slate-300"
+            className="rounded p-1 text-muted-foreground hover:bg-card/80 hover:text-foreground"
             title="Mais opcoes"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
@@ -287,17 +287,17 @@ function MarkdownTable({ children, ...props }: React.HTMLAttributes<HTMLTableEle
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full z-30 mt-1 w-40 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+              <div className="absolute right-0 top-full z-30 mt-1 w-40 rounded-lg border bg-card py-1 shadow-lg">
                 <button
                   onClick={handleCopy}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
                 >
                   <Copy className="h-3 w-3" />
                   Copiar tabela
                 </button>
                 <button
                   onClick={handleExportExcel}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
                 >
                   <Download className="h-3 w-3" />
                   Exportar Excel
@@ -408,7 +408,7 @@ const markdownComponents = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-medium text-blue-600 underline decoration-blue-300 underline-offset-2 transition-colors hover:text-blue-700 hover:decoration-blue-600 dark:text-blue-400 dark:decoration-blue-700 dark:hover:text-blue-300"
+      className="font-medium text-info underline decoration-info/30 underline-offset-2 transition-colors hover:decoration-info"
       {...props}
     >
       {children}
@@ -416,13 +416,13 @@ const markdownComponents = {
   ),
   table: MarkdownTable,
   thead: ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => (
-    <thead className="bg-slate-100 dark:bg-slate-700" {...props}>
+    <thead className="bg-muted" {...props}>
       {children}
     </thead>
   ),
   th: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
     <th
-      className="border-b border-r border-slate-300 px-3 py-2 text-left text-xs font-semibold text-slate-700 last:border-r-0 dark:border-slate-600 dark:text-slate-200"
+      className="border-b border-r px-3 py-2 text-left text-xs font-semibold text-foreground last:border-r-0"
       {...props}
     >
       {children}
@@ -430,7 +430,7 @@ const markdownComponents = {
   ),
   td: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
     <td
-      className="border-b border-r border-slate-200 px-3 py-2 text-xs text-slate-600 last:border-r-0 dark:border-slate-600 dark:text-slate-300"
+      className="border-b border-r px-3 py-2 text-xs text-muted-foreground last:border-r-0"
       {...props}
     >
       {children}
@@ -438,7 +438,7 @@ const markdownComponents = {
   ),
   tr: ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => (
     <tr
-      className="even:bg-slate-50 dark:even:bg-slate-800/50"
+      className="even:bg-muted/50"
       {...props}
     >
       {children}
@@ -463,7 +463,7 @@ const markdownComponents = {
 
         if (isChartLanguage) {
           return (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
               Erro ao renderizar grafico: JSON invalido ou contrato de grafico incorreto
             </div>
           )
@@ -481,7 +481,7 @@ const markdownComponents = {
         if (isChartLanguage) {
           console.error('Failed to parse chart spec:', error)
           return (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
               ❌ Erro ao renderizar gráfico: JSON inválido
             </div>
           )

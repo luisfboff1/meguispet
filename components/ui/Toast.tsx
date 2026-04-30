@@ -7,9 +7,9 @@ interface ToastProps {
 }
 
 const bgColors = {
-  success: 'bg-green-600',
-  error: 'bg-red-600',
-  info: 'bg-blue-600',
+  success: 'bg-success',
+  error: 'bg-destructive',
+  info: 'bg-info',
 };
 
 export const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose }) => {

@@ -57,9 +57,9 @@ export default function ProdutosPage() {
   }
 
   const getStockStatus = (estoque: number) => {
-    if (estoque === 0) return { color: 'text-red-600', icon: AlertTriangle, text: 'Sem estoque' }
-    if (estoque <= 5) return { color: 'text-yellow-600', icon: AlertTriangle, text: 'Estoque baixo' }
-    return { color: 'text-green-600', icon: Package, text: 'Em estoque' }
+    if (estoque === 0) return { color: 'text-destructive', icon: AlertTriangle, text: 'Sem estoque' }
+    if (estoque <= 5) return { color: 'text-warning', icon: AlertTriangle, text: 'Estoque baixo' }
+    return { color: 'text-success', icon: Package, text: 'Em estoque' }
   }
 
   type ProdutoModalPayload = {
@@ -285,9 +285,9 @@ export default function ProdutosPage() {
       {!loading && filteredProdutos.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <Package className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum produto encontrado</h3>
-            <p className="text-gray-600 text-center">
+            <Package className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum produto encontrado</h3>
+            <p className="text-muted-foreground text-center">
               {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando seu primeiro produto'}
             </p>
           </CardContent>

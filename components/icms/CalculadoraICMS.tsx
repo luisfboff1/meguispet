@@ -64,14 +64,14 @@ export default function CalculadoraICMS({
               Valor da Mercadoria
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-gray-500">R$</span>
+              <span className="text-muted-foreground">R$</span>
               <input
                 type="number"
                 value={input.valor_mercadoria}
                 onChange={(e) => updateValue('valor_mercadoria', parseFloat(e.target.value) || 0)}
                 step="0.01"
                 min="0"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -82,14 +82,14 @@ export default function CalculadoraICMS({
               Frete
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-gray-500">R$</span>
+              <span className="text-muted-foreground">R$</span>
               <input
                 type="number"
                 value={input.frete}
                 onChange={(e) => updateValue('frete', parseFloat(e.target.value) || 0)}
                 step="0.01"
                 min="0"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -100,14 +100,14 @@ export default function CalculadoraICMS({
               Outras Despesas
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-gray-500">R$</span>
+              <span className="text-muted-foreground">R$</span>
               <input
                 type="number"
                 value={input.outras_despesas}
                 onChange={(e) => updateValue('outras_despesas', parseFloat(e.target.value) || 0)}
                 step="0.01"
                 min="0"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -125,9 +125,9 @@ export default function CalculadoraICMS({
                 step="0.01"
                 min="0"
                 max="1000"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-gray-500">%</span>
+              <span className="text-muted-foreground">%</span>
             </div>
           </div>
 
@@ -144,9 +144,9 @@ export default function CalculadoraICMS({
                 step="0.01"
                 min="0"
                 max="100"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-gray-500">%</span>
+              <span className="text-muted-foreground">%</span>
             </div>
           </div>
         </CardContent>
@@ -160,10 +160,10 @@ export default function CalculadoraICMS({
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Step 1: Valor Base */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <div className="flex items-center justify-between p-3 bg-muted rounded">
               <div>
                 <p className="text-sm font-medium">1. Valor Base</p>
-                <p className="text-xs text-gray-500">Mercadoria + Frete + Despesas</p>
+                <p className="text-xs text-muted-foreground">Mercadoria + Frete + Despesas</p>
               </div>
               <p className="font-mono font-semibold">{formatCurrency(valorBase)}</p>
             </div>
@@ -174,14 +174,14 @@ export default function CalculadoraICMS({
             </div>
 
             {/* Step 2: Base Cálculo ST */}
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded">
+            <div className="flex items-center justify-between p-3 bg-info-muted rounded">
               <div>
                 <p className="text-sm font-medium">2. Base de Cálculo ST</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Valor Base × (1 + MVA de {formatPercentage(input.mva)})
                 </p>
               </div>
-              <p className="font-mono font-semibold text-blue-600">
+              <p className="font-mono font-semibold text-info">
                 {formatCurrency(result.base_calculo_st)}
               </p>
             </div>
@@ -192,10 +192,10 @@ export default function CalculadoraICMS({
             </div>
 
             {/* Step 3: ICMS Próprio */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <div className="flex items-center justify-between p-3 bg-muted rounded">
               <div>
                 <p className="text-sm font-medium">3. ICMS Próprio</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Valor Base × {formatPercentage(input.aliquota_icms)}
                 </p>
               </div>
@@ -210,10 +210,10 @@ export default function CalculadoraICMS({
             </div>
 
             {/* Step 4: ICMS-ST Total */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <div className="flex items-center justify-between p-3 bg-muted rounded">
               <div>
                 <p className="text-sm font-medium">4. ICMS-ST Total</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Base ST × {formatPercentage(input.aliquota_icms)}
                 </p>
               </div>
@@ -228,14 +228,14 @@ export default function CalculadoraICMS({
             </div>
 
             {/* Final Result: ICMS-ST a Recolher */}
-            <div className="flex items-center justify-between p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-success-muted border-2 border-success/30 rounded-lg">
               <div>
-                <p className="text-base font-semibold text-green-800">ICMS-ST a Recolher</p>
-                <p className="text-sm text-green-600">
+                <p className="text-base font-semibold text-success-muted-foreground">ICMS-ST a Recolher</p>
+                <p className="text-sm text-success">
                   ICMS-ST Total - ICMS Próprio
                 </p>
               </div>
-              <p className="text-2xl font-bold text-green-700">
+              <p className="text-2xl font-bold text-success">
                 {formatCurrency(result.icms_st_recolher)}
               </p>
             </div>
@@ -244,11 +244,11 @@ export default function CalculadoraICMS({
       )}
 
       {/* Info Card */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-info-muted border-info/30">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900 space-y-1">
+            <Info className="h-5 w-5 text-info flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-info-muted-foreground space-y-1">
               <p className="font-medium">Como funciona o cálculo?</p>
               <p className="text-xs">
                 O ICMS-ST (Substituição Tributária) é calculado antecipadamente sobre uma base

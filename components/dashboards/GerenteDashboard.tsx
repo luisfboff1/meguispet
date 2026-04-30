@@ -249,7 +249,7 @@ export function GerenteDashboard() {
           title="Receita do Mês"
           value={formatCurrency(receitaDoMes)}
           icon={DollarSign}
-          color="green"
+          color="success"
           trend={{
             value: trendReceita,
             isPositive: parseFloat(trendReceita) >= 0,
@@ -260,21 +260,21 @@ export function GerenteDashboard() {
           title="Vendas do Mês"
           value={vendasDoMes.length}
           icon={ShoppingCart}
-          color="blue"
+          color="info"
           subtitle="Total da equipe"
         />
         <MetricCard
           title="Vendedores Ativos"
           value={vendedoresAtivos}
           icon={UserCheck}
-          color="purple"
+          color="accent"
           subtitle={`de ${vendedores.length} total`}
         />
         <MetricCard
           title="Ticket Médio"
           value={formatCurrency(ticketMedio)}
           icon={Target}
-          color="orange"
+          color="warning"
           subtitle="Por venda"
         />
       </div>
@@ -319,9 +319,9 @@ export function GerenteDashboard() {
               {vendedoresPerformance.map((vendedor) => (
                 <div
                   key={vendedor.id}
-                  className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition ${
+                  className={`flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition ${
                     vendedor.ranking <= 3
-                      ? 'border-amber-300 bg-amber-50'
+                      ? 'border-warning/30 bg-warning-muted'
                       : ''
                   }`}
                 >
@@ -329,28 +329,28 @@ export function GerenteDashboard() {
                     <div
                       className={`flex items-center justify-center w-10 h-10 rounded-full font-bold ${
                         vendedor.ranking === 1
-                          ? 'bg-amber-500 text-white'
+                          ? 'bg-warning text-white'
                           : vendedor.ranking === 2
-                          ? 'bg-gray-400 text-white'
+                          ? 'bg-muted text-foreground'
                           : vendedor.ranking === 3
-                          ? 'bg-orange-600 text-white'
-                          : 'bg-gray-200 text-gray-700'
+                          ? 'bg-warning text-white'
+                          : 'bg-muted text-foreground'
                       }`}
                     >
                       {vendedor.ranking}º
                     </div>
                     <div>
                       <p className="font-medium">{vendedor.nome}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {vendedor.totalVendas} vendas
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600">
+                    <p className="font-bold text-success">
                       {formatCurrency(vendedor.totalFaturamento)}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Comissão: {formatCurrency(vendedor.comissao)}
                     </p>
                   </div>
@@ -358,7 +358,7 @@ export function GerenteDashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-muted-foreground py-8">
               Nenhuma venda registrada neste mês
             </p>
           )}
@@ -373,10 +373,10 @@ export function GerenteDashboard() {
               key={vendedor.id}
               className={
                 index === 0
-                  ? 'border-amber-500 bg-gradient-to-br from-amber-50 to-amber-100'
+                  ? 'border-warning bg-gradient-to-br from-warning-muted to-warning-muted'
                   : index === 1
-                  ? 'border-gray-400 bg-gradient-to-br from-gray-50 to-gray-100'
-                  : 'border-orange-600 bg-gradient-to-br from-orange-50 to-orange-100'
+                  ? 'border-border bg-gradient-to-br from-muted to-muted'
+                  : 'border-warning bg-gradient-to-br from-warning-muted to-warning-muted'
               }
             >
               <CardHeader>
@@ -392,13 +392,13 @@ export function GerenteDashboard() {
               <CardContent>
                 <p className="font-bold text-lg mb-2">{vendedor.nome}</p>
                 <div className="space-y-1 text-sm">
-                  <p className="text-gray-700">
+                  <p className="text-foreground">
                     <span className="font-medium">Vendas:</span> {vendedor.totalVendas}
                   </p>
-                  <p className="text-green-700 font-medium">
+                  <p className="text-success font-medium">
                     {formatCurrency(vendedor.totalFaturamento)}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Comissão: {formatCurrency(vendedor.comissao)}
                   </p>
                 </div>

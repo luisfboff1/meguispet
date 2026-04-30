@@ -332,10 +332,10 @@ export default function DashboardPage() {
           metrics.map((metric, index) => {
             const Icon = metric.icon
             const iconColors = [
-              'bg-blue-100 text-blue-600',
-              'bg-green-100 text-green-600',
-              'bg-purple-100 text-purple-600',
-              'bg-orange-100 text-orange-600',
+              'bg-info-muted text-info',
+              'bg-success-muted text-success',
+              'bg-accent text-accent-foreground',
+              'bg-warning-muted text-warning',
             ]
             const colorClass = iconColors[index % iconColors.length]
             return (
@@ -345,24 +345,24 @@ export default function DashboardPage() {
                     <div className={`flex items-center justify-center h-10 w-10 rounded-xl flex-shrink-0 ${colorClass}`}>
                       <Icon className="h-5 w-5" />
                     </div>
-                    <p className="text-sm font-medium text-gray-500 truncate">{metric.title}</p>
+                    <p className="text-sm font-medium text-muted-foreground truncate">{metric.title}</p>
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1 break-words">
+                  <div className="text-3xl font-bold text-foreground mb-1 break-words">
                     {metric.value}
                   </div>
                   <div className="flex items-center text-xs gap-1">
                     {metric.changeType === 'positive' ? (
                       <>
-                        <TrendingUp className="h-3 w-3 text-green-600 flex-shrink-0" />
-                        <span className="text-green-600 font-medium">{metric.change}</span>
+                        <TrendingUp className="h-3 w-3 text-success flex-shrink-0" />
+                        <span className="text-success font-medium">{metric.change}</span>
                       </>
                     ) : (
                       <>
-                        <TrendingDown className="h-3 w-3 text-red-600 flex-shrink-0" />
-                        <span className="text-red-600 font-medium">{metric.change}</span>
+                        <TrendingDown className="h-3 w-3 text-destructive flex-shrink-0" />
+                        <span className="text-destructive font-medium">{metric.change}</span>
                       </>
                     )}
-                    <span className="text-gray-400">vs. ontem</span>
+                    <span className="text-muted-foreground">vs. ontem</span>
                   </div>
                 </CardContent>
               </AnimatedCard>
@@ -373,9 +373,9 @@ export default function DashboardPage() {
           <div className="col-span-full">
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
-                <Package className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum dado disponível</h3>
-                <p className="text-gray-600 text-center">
+                <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Nenhum dado disponível</h3>
+                <p className="text-muted-foreground text-center">
                   Os dados do dashboard serão carregados quando houver vendas e produtos cadastrados
                 </p>
               </CardContent>

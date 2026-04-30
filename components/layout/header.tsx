@@ -261,14 +261,14 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
   }, [])
 
   return (
-    <header className="relative z-30 border-b border-white/30 bg-white/70 px-5 py-2.5 backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-950/60">
+    <header className="relative z-30 border-b border-border bg-card px-5 py-2.5 backdrop-blur-xl">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {isMobile && (
             <Button
               variant="secondary"
               size="icon"
-              className="h-9 w-9 rounded-2xl border border-white/50 bg-white/80 text-slate-600 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-slate-100"
+              className="h-9 w-9 rounded-2xl border border-border bg-card text-muted-foreground shadow-sm"
               onClick={() => (onMenuClick ? onMenuClick() : toggle())}
             >
               <Menu size={18} />
@@ -277,20 +277,20 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold text-slate-900 drop-shadow-sm dark:text-white md:text-lg">
+              <h1 className="text-base font-semibold text-foreground drop-shadow-sm md:text-lg">
                 {pageInfo.title}
               </h1>
             </div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{pageInfo.description}</p>
+            <p className="text-xs font-medium text-muted-foreground">{pageInfo.description}</p>
           </div>
         </div>
 
         <div className={cn('hidden flex-1 max-w-xl lg:block')}>
           <form onSubmit={handleSearch} className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar vendas, clientes, produtos..."
-              className="h-9 rounded-xl border border-white/60 bg-white/80 pl-10 pr-4 shadow-sm backdrop-blur-md transition focus:border-amber-400/60 focus:ring-amber-400/20 dark:border-slate-800/70 dark:bg-slate-900/70"
+              className="h-9 rounded-xl border border-input bg-card pl-10 pr-4 shadow-sm backdrop-blur-md transition focus:border-amber-400/60 focus:ring-amber-400/20"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -300,21 +300,21 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
         <div className="flex items-center gap-2">
           <div className="relative" ref={userMenuRef}>
             <button
-              className="group flex items-center gap-3 rounded-2xl border border-transparent bg-white/70 px-2 py-1 pl-1.5 pr-3 text-left transition hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/90 dark:bg-slate-900/70 dark:hover:border-slate-800/80 dark:hover:bg-slate-900/90"
+              className="group flex items-center gap-3 rounded-2xl border border-transparent bg-card px-2 py-1 pl-1.5 pr-3 text-left transition hover:-translate-y-0.5 hover:border-border hover:bg-accent"
               onClick={handleUserMenu}
             >
               <span className="relative flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/40">
                 <User size={16} />
               </span>
               <span className="hidden min-w-0 flex-1 text-left md:block">
-                <span className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <span className="block text-sm font-semibold text-foreground">
                   {user?.nome ?? '...'}
                 </span>
-                <span className="block text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                <span className="block text-xs font-medium uppercase tracking-widest text-muted-foreground">
                   {user?.email ?? '...'}
                 </span>
               </span>
-              <ChevronDown size={16} className="text-slate-400 transition group-hover:text-slate-600 dark:text-slate-500" />
+              <ChevronDown size={16} className="text-muted-foreground transition group-hover:text-foreground" />
             </button>
 
             <AnimatePresence>
@@ -324,15 +324,15 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute right-0 mt-3 w-60 overflow-hidden rounded-3xl border border-white/40 bg-white/95 p-3 shadow-2xl backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/90"
+                  className="absolute right-0 mt-3 w-60 overflow-hidden rounded-3xl border border-border bg-card p-3 shadow-2xl backdrop-blur-2xl"
                 >
-                  <div className="rounded-2xl bg-slate-100/60 p-3 dark:bg-slate-900/70">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{user?.nome ?? '...'}</p>
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{user?.email ?? '...'}</p>
+                  <div className="rounded-2xl bg-muted p-3">
+                    <p className="text-sm font-semibold text-foreground">{user?.nome ?? '...'}</p>
+                    <p className="text-xs font-medium text-muted-foreground">{user?.email ?? '...'}</p>
                   </div>
                   <div className="mt-2 space-y-1">
                     <button
-                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80"
+                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent"
                       onClick={() => {
                         setShowUserMenu(false)
                         router.push('/perfil')
@@ -341,7 +341,7 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
                       <User size={16} /> Perfil
                     </button>
                     <button
-                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900/80"
+                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent"
                       onClick={() => {
                         setShowUserMenu(false)
                         router.push('/configuracoes')
@@ -350,9 +350,9 @@ export function Header({ title, description, sidebarCollapsed, onMenuClick, isMo
                       <Settings size={16} /> Configurações
                     </button>
                   </div>
-                  <div className="mt-2 border-t border-white/40 dark:border-slate-800/60" />
+                  <div className="mt-2 border-t border-border" />
                   <button
-                    className="mt-2 flex w-full items-center justify-between rounded-2xl bg-rose-500/10 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-500/15 dark:text-rose-300"
+                    className="mt-2 flex w-full items-center justify-between rounded-2xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive/15"
                     onClick={() => logout()}
                   >
                     <span>Encerrar sessão</span>

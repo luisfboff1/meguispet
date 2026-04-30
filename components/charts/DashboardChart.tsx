@@ -159,8 +159,8 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
     return (
       <Card>
         <CardHeader>
-          <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mt-2 animate-pulse"></div>
+          <div className="h-6 bg-muted rounded w-1/3 animate-pulse"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mt-2 animate-pulse"></div>
         </CardHeader>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
@@ -179,9 +179,9 @@ export default function DashboardChart({ data, loading = false, selectedPeriod =
           <CardDescription>Acompanhe as métricas do seu negócio</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-80 flex items-center justify-center text-gray-500">
+          <div className="h-80 flex items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+              <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
               <p>Nenhum dado disponível</p>
             </div>
           </div>

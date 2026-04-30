@@ -198,7 +198,7 @@ export default function FornecedoresPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:text-red-700"
+            className="text-destructive hover:text-destructive"
             onClick={() => handleRemoverFornecedor(row.original)}
             disabled={formLoading}
             title="Desativar fornecedor"
@@ -219,8 +219,8 @@ export default function FornecedoresPage() {
             </span>
           </div>
           <div>
-            <div className="font-medium text-gray-900">{row.original.nome}</div>
-            <div className="text-sm text-gray-500">
+            <div className="font-medium text-foreground">{row.original.nome}</div>
+            <div className="text-sm text-muted-foreground">
               Cadastro em {formatDate(row.original.created_at)}
             </div>
           </div>
@@ -233,11 +233,11 @@ export default function FornecedoresPage() {
       cell: ({ row }) => (
         row.original.nome_fantasia ? (
           <div className="flex items-center space-x-2">
-            <Building2 className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{row.original.nome_fantasia}</span>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{row.original.nome_fantasia}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         )
       ),
     },
@@ -247,11 +247,11 @@ export default function FornecedoresPage() {
       cell: ({ row }) => (
         row.original.email ? (
           <div className="flex items-center space-x-2">
-            <Mail className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{row.original.email}</span>
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{row.original.email}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         )
       ),
     },
@@ -261,11 +261,11 @@ export default function FornecedoresPage() {
       cell: ({ row }) => (
         row.original.telefone ? (
           <div className="flex items-center space-x-2">
-            <Phone className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{row.original.telefone}</span>
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{row.original.telefone}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         )
       ),
     },
@@ -275,7 +275,7 @@ export default function FornecedoresPage() {
       cell: ({ row }) => {
         const { endereco, cidade, estado, cep } = row.original
         if (!endereco && !cidade && !estado) {
-          return <span className="text-sm text-gray-400">-</span>
+          return <span className="text-sm text-muted-foreground">-</span>
         }
         const location = [
           endereco,
@@ -284,8 +284,8 @@ export default function FornecedoresPage() {
         ].filter(Boolean).join(' • ')
         return (
           <div className="flex items-start space-x-2">
-            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-            <span className="text-sm text-gray-600 line-clamp-2">{location}</span>
+            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-muted-foreground line-clamp-2">{location}</span>
           </div>
         )
       },
@@ -322,7 +322,7 @@ export default function FornecedoresPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium truncate pr-2">Na página atual</CardTitle>
-            <Search className="h-4 w-4 text-gray-500" />
+            <Search className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold whitespace-nowrap">{fornecedores.length}</div>
@@ -333,7 +333,7 @@ export default function FornecedoresPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium truncate pr-2">Resultados atuais</CardTitle>
-            <Filter className="h-4 w-4 text-gray-500" />
+            <Filter className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold whitespace-nowrap">{filteredFornecedores.length}</div>
@@ -384,9 +384,9 @@ export default function FornecedoresPage() {
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <Building2 className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum fornecedor encontrado</h3>
-            <p className="text-gray-600 text-center">
+            <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum fornecedor encontrado</h3>
+            <p className="text-muted-foreground text-center">
               {searchTerm ? 'Ajuste a busca ou limpe o filtro para ver mais resultados.' : 'Cadastre seu primeiro fornecedor para começar.'}
             </p>
           </CardContent>
@@ -397,7 +397,7 @@ export default function FornecedoresPage() {
         <div className="flex items-center justify-between border rounded-md px-4 py-3">
           <div>
             Página {pagination.page} de {pagination.pages}
-            <span className="text-sm text-gray-500 ml-2">{pagination.total} fornecedores</span>
+            <span className="text-sm text-muted-foreground ml-2">{pagination.total} fornecedores</span>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={!canGoPrev || loading}>
