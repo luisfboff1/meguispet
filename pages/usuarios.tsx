@@ -402,8 +402,8 @@ export default function UsuariosPage() {
             </span>
           </div>
           <div>
-            <div className="font-medium text-gray-900">{row.original.nome}</div>
-            <div className="text-sm text-gray-500">
+            <div className="font-medium text-foreground">{row.original.nome}</div>
+            <div className="text-sm text-muted-foreground">
               Desde {formatDate(row.original.created_at)}
             </div>
           </div>
@@ -415,8 +415,8 @@ export default function UsuariosPage() {
       header: ({ column }) => <SortableHeader column={column}>Email</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
-          <Mail className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-600">{row.original.email}</span>
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">{row.original.email}</span>
         </div>
       ),
     },
@@ -566,7 +566,7 @@ export default function UsuariosPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
                       placeholder="Buscar por nome ou email..."
                       value={searchTerm}
@@ -604,9 +604,9 @@ export default function UsuariosPage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
-                <User className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum usuário encontrado</h3>
-                <p className="text-gray-600 text-center">
+                <User className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Nenhum usuário encontrado</h3>
+                <p className="text-muted-foreground text-center">
                   {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando usuários ao sistema'}
                 </p>
               </CardContent>

@@ -169,7 +169,7 @@ export default function ImpostoProdutoForm({
                     step="0.01"
                     min="0"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {formData.mva_manual != null && `Valor: ${formatPercentage(formData.mva_manual)}`}
                   </p>
                 </div>
@@ -192,7 +192,7 @@ export default function ImpostoProdutoForm({
                     min="0"
                     max="100"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {formData.aliquota_icms_manual != null && `Valor: ${formatPercentage(formData.aliquota_icms_manual)}`}
                   </p>
                 </div>

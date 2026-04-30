@@ -404,7 +404,7 @@ export default function FinanceiroPage() {
         <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
           row.original.ativo
             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+            : 'bg-muted text-foreground'
         }`}>
           {row.original.ativo ? 'Ativa' : 'Inativa'}
         </span>
@@ -449,8 +449,8 @@ export default function FinanceiroPage() {
       header: ({ column }) => <SortableHeader column={column}>Data</SortableHeader>,
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
-          <Calendar className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-600">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
             {formatLocalDate(row.original.data_transacao)}
           </span>
         </div>
@@ -494,7 +494,7 @@ export default function FinanceiroPage() {
       cell: ({ row }) => (
         <div className="min-w-[180px] max-w-[300px]">
           <span 
-            className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2 break-words"
+            className="text-sm text-foreground line-clamp-2 break-words"
             title={row.original.descricao}
           >
             {row.original.descricao}
@@ -682,14 +682,14 @@ export default function FinanceiroPage() {
       </div>
 
       {/* Tabs for different sections */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
+      <div className="border-b border-border">
         <nav className="-mb-px flex space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('transacoes')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'transacoes'
                 ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-input dark:text-muted-foreground'
             }`}
           >
             <DollarSign className="inline-block h-5 w-5 mr-2 -mt-1" />
@@ -700,7 +700,7 @@ export default function FinanceiroPage() {
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'categorias'
                 ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-input dark:text-muted-foreground'
             }`}
           >
             <Tag className="inline-block h-5 w-5 mr-2 -mt-1" />
@@ -711,7 +711,7 @@ export default function FinanceiroPage() {
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'recorrentes'
                 ? 'border-meguispet-primary text-meguispet-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-input dark:text-muted-foreground'
             }`}
           >
             <Repeat className="inline-block h-5 w-5 mr-2 -mt-1" />
@@ -736,7 +736,7 @@ export default function FinanceiroPage() {
             {/* Filtros */}
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar transações..."
                   value={searchTerm}
@@ -747,7 +747,7 @@ export default function FinanceiroPage() {
               <select
                 value={filterTipo}
                 onChange={(e) => setFilterTipo(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="px-3 py-2 border border-input rounded-md focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Todos os tipos</option>
                 <option value="receita">Receitas</option>
@@ -760,7 +760,7 @@ export default function FinanceiroPage() {
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-500">Carregando transações...</p>
+              <p className="text-muted-foreground">Carregando transações...</p>
             </div>
           ) : filteredTransacoes.length > 0 ? (
             <DataTable 
@@ -773,11 +773,11 @@ export default function FinanceiroPage() {
             />
           ) : (
             <div className="text-center py-8">
-              <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 Nenhuma transação encontrada
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground">
                 {searchTerm || filterTipo 
                   ? 'Nenhuma transação corresponde aos filtros aplicados'
                   : 'As transações financeiras aparecerão aqui quando forem registradas'
@@ -859,7 +859,7 @@ export default function FinanceiroPage() {
               {loading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-gray-500">Carregando categorias...</p>
+                  <p className="text-muted-foreground">Carregando categorias...</p>
                 </div>
               ) : categorias.length > 0 ? (
                 <DataTable
@@ -872,11 +872,11 @@ export default function FinanceiroPage() {
                 />
               ) : (
                 <div className="text-center py-12">
-                  <Tag className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     Nenhuma categoria cadastrada
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Crie categorias para organizar melhor suas transações financeiras
                   </p>
                   <Button
@@ -933,7 +933,7 @@ export default function FinanceiroPage() {
                   {transacoesRecorrentes.map((recorrente) => (
                     <div
                       key={recorrente.id}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -941,7 +941,7 @@ export default function FinanceiroPage() {
                             <div className={`w-3 h-3 rounded-full ${
                               recorrente.tipo === 'receita' ? 'bg-green-500' : 'bg-red-500'
                             }`} />
-                            <h3 className="font-medium text-gray-900 dark:text-white">
+                            <h3 className="font-medium text-foreground">
                               {recorrente.descricao}
                             </h3>
                             <span className={`text-sm font-bold ${
@@ -951,7 +951,7 @@ export default function FinanceiroPage() {
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(recorrente.valor)}
                             </span>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
                             <div>
                               <span className="font-medium">Frequência:</span> {recorrente.frequencia}
                             </div>
@@ -978,7 +978,7 @@ export default function FinanceiroPage() {
                               <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                                 recorrente.ativo 
                                   ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                                  : 'bg-muted text-foreground'
                               }`}>
                                 {recorrente.ativo ? 'Ativa' : 'Inativa'}
                               </span>
@@ -1013,11 +1013,11 @@ export default function FinanceiroPage() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <Repeat className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  <Repeat className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     Nenhuma transação recorrente cadastrada
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Crie transações recorrentes para automatizar pagamentos e recebimentos regulares
                   </p>
                   <Button 
@@ -1039,7 +1039,7 @@ export default function FinanceiroPage() {
       {/* Modal do Formulário de Transação */}
       {showTransacaoForm && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <TransacaoForm
               initialData={editingTransacao ? {
                 tipo: editingTransacao.tipo,
@@ -1066,7 +1066,7 @@ export default function FinanceiroPage() {
       {/* Modal do Formulário de Categoria */}
       {showCategoriaForm && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <CategoriaFinanceiraForm
               initialData={editingCategoria ? {
                 nome: editingCategoria.nome,
@@ -1092,7 +1092,7 @@ export default function FinanceiroPage() {
       {/* Modal do Formulário de Transação Recorrente */}
       {showRecorrenteForm && (
         <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-lg">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <TransacaoRecorrenteForm
               initialData={editingRecorrente ? {
                 tipo: editingRecorrente.tipo,

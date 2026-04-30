@@ -291,7 +291,7 @@ export function DataTable<TData, TValue>({
                                 className="cursor-grab active:cursor-grabbing flex-shrink-0"
                                 title="Arrastar para reordenar coluna"
                               >
-                                <GripVertical className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                                <GripVertical className="h-4 w-4 text-muted-foreground hover:text-muted-foreground" />
                               </div>
                             )}
                             <div className="flex-1 truncate">
@@ -327,7 +327,7 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50' : ''}
+                  className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (

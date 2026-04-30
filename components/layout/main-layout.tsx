@@ -209,7 +209,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw]"
             >
-              <div className="h-full bg-white/95 dark:bg-slate-900/95 shadow-2xl backdrop-blur-xl border-r border-white/20 dark:border-slate-800 rounded-r-3xl overflow-hidden">
+              <div className="h-full bg-white/95/95 shadow-2xl backdrop-blur-xl border-r border-white/20 rounded-r-3xl overflow-hidden">
                 {sidebarContent}
               </div>
             </motion.aside>
@@ -219,7 +219,7 @@ export function MainLayout({ children, title, description }: MainLayoutProps) {
             key="sidebar-desktop"
             animate={{ width: sidebarWidth }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="relative z-40 hidden h-full border-r border-slate-200/80 bg-white/90 shadow-lg backdrop-blur-lg transition-colors dark:border-slate-800/80 dark:bg-slate-900/80 lg:block"
+            className="relative z-40 hidden h-full border-r border-slate-200/80 bg-white/90 shadow-lg backdrop-blur-lg transition-colors/80/80 lg:block"
             style={{ width: sidebarWidth }}
           >
             {sidebarContent}

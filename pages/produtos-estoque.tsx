@@ -1046,7 +1046,7 @@ export default function ProdutosEstoquePage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                     <Input
                       placeholder="Buscar por nome ou categoria..."
                       value={searchTerm}
@@ -1063,7 +1063,7 @@ export default function ProdutosEstoquePage() {
                       const value = e.target.value
                       setEstoqueFilter(value ? Number(value) : 'all')
                     }}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-meguispet-primary focus:outline-none"
+                    className="w-full rounded-md border border-input px-3 py-2 text-sm focus:border-meguispet-primary focus:outline-none"
                   >
                     <option value="">Todos os estoques</option>
                     {estoques.map(estoque => (
@@ -1098,9 +1098,9 @@ export default function ProdutosEstoquePage() {
           ) : (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
-                <Package className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum produto encontrado</h3>
-                <p className="text-gray-600 text-center">
+                <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Nenhum produto encontrado</h3>
+                <p className="text-muted-foreground text-center">
                   {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando seu primeiro produto'}
                 </p>
               </CardContent>
@@ -1137,7 +1137,7 @@ export default function ProdutosEstoquePage() {
                       const value = e.target.value
                       setEstoqueFilter(value ? Number(value) : 'all')
                     }}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-meguispet-primary focus:outline-none"
+                    className="w-full rounded-md border border-input px-3 py-2 text-sm focus:border-meguispet-primary focus:outline-none"
                   >
                     <option value="">Todos os estoques</option>
                     {estoques.map(estoque => (
@@ -1261,34 +1261,34 @@ export default function ProdutosEstoquePage() {
                   <table className="min-w-full divide-y divide-border">
                     <thead className="bg-muted">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Produto
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Estoque Inicial
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Entradas
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Saídas
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Vendas
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Estoque Calculado
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Estoque Atual
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Diferença
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Ações
                         </th>
                       </tr>
@@ -1321,7 +1321,7 @@ export default function ProdutosEstoquePage() {
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-blue-600">
                             {item.estoque_calculado.toFixed(2)}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-foreground">
                             {item.estoque_atual.toFixed(2)}
                           </td>
                           <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-bold ${
@@ -1507,16 +1507,16 @@ export default function ProdutosEstoquePage() {
                     <table className="min-w-full divide-y divide-border">
                       <thead className="bg-muted">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             Produto
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             Quantidade
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             Preço Unitário
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             Subtotal
                           </th>
                         </tr>

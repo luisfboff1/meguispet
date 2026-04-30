@@ -438,25 +438,25 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Data
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Tipo
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Custo Anterior
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Custo Novo
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Variação
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Preço Venda Anterior
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Preço Venda Novo
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Observação
                     </th>
                   </tr>
@@ -476,7 +476,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             hist.tipo_alteracao === 'movimentacao' ? 'bg-blue-100 text-blue-800' :
                             hist.tipo_alteracao === 'automatico' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
+                            'bg-muted text-foreground'
                           }`}>
                             {hist.tipo_alteracao === 'movimentacao' ? 'Movimentação' :
                              hist.tipo_alteracao === 'automatico' ? 'Automático' : 'Manual'}
@@ -493,7 +493,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                             : '-'}
                         </td>
                         <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-bold ${
-                          variacao > 0 ? 'text-red-600' : variacao < 0 ? 'text-green-600' : 'text-gray-500'
+                          variacao > 0 ? 'text-red-600' : variacao < 0 ? 'text-green-600' : 'text-muted-foreground'
                         }`}>
                           {variacao !== 0 ? `${variacao > 0 ? '+' : ''}${variacao.toFixed(2)}%` : '-'}
                         </td>

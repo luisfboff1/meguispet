@@ -466,18 +466,18 @@ export default function ProdutoDetalhes() {
                        historico.tipo_alteracao === 'automatico' ? 'Automático' : 'Movimentação'}
                     </span>
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted-foreground">
                     {formatDate(historico.data_alteracao)}
                   </span>
                 </div>
                 {historico.observacao && (
-                  <p className="text-sm text-gray-600">{historico.observacao}</p>
+                  <p className="text-sm text-muted-foreground">{historico.observacao}</p>
                 )}
               </div>
             ))}
             
             {historicoPrecos.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <History className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>Nenhum histórico de preços encontrado</p>
               </div>

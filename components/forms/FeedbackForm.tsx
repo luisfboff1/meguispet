@@ -244,7 +244,7 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
             disabled={loading}
             required
           />
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500">
             💡 Dica: Você pode colar imagens diretamente no campo de descrição (Ctrl+V após copiar uma captura de tela)
           </p>
         </div>
@@ -313,10 +313,10 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
                   <div className="flex items-center gap-3">
                     <ImagePlus size={18} className="text-slate-400" />
                     <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      <p className="text-sm font-medium text-slate-900">
                         {file.name}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-slate-500">
                         {formatFileSize(file.size)}
                       </p>
                     </div>
@@ -336,7 +336,7 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+      <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
         <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
           Cancelar
         </Button>

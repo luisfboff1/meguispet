@@ -459,7 +459,7 @@ export default function ClientesPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   placeholder="Buscar por nome, email ou telefone..."
                   value={searchTerm}
@@ -469,7 +469,7 @@ export default function ClientesPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-500" />
+              <Filter className="h-4 w-4 text-muted-foreground" />
               <select
                 value={tipoFiltro}
                 onChange={(e) => setTipoFiltro(e.target.value as typeof tipoFiltro)}
@@ -487,9 +487,9 @@ export default function ClientesPage() {
                 id="showInactive"
                 checked={showInactive}
                 onChange={(e) => setShowInactive(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-meguispet-primary focus:ring-meguispet-primary"
+                className="h-4 w-4 rounded border-input text-meguispet-primary focus:ring-meguispet-primary"
               />
-              <label htmlFor="showInactive" className="text-sm text-gray-700 cursor-pointer">
+              <label htmlFor="showInactive" className="text-sm text-foreground cursor-pointer">
                 Mostrar inativos
               </label>
             </div>
@@ -518,9 +518,9 @@ export default function ClientesPage() {
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <Users className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum cliente encontrado</h3>
-            <p className="text-gray-600 text-center">
+            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum cliente encontrado</h3>
+            <p className="text-muted-foreground text-center">
               {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando seu primeiro cliente'}
             </p>
           </CardContent>

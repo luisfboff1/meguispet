@@ -197,7 +197,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
             ))}
           </SelectContent>
         </Select>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Role principal que define o conjunto base de permissões
         </p>
       </div>
@@ -212,7 +212,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
           {ALL_ROLES.filter(role => role !== primaryRole).map(role => (
             <div
               key={role}
-              className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+              className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted cursor-pointer"
               onClick={() => handleToggleAdditionalRole(role)}
             >
               <Checkbox
@@ -226,7 +226,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
             </div>
           ))}
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Ex: Um usuário pode ser Vendedor E Financeiro ao mesmo tempo
         </p>
       </div>
@@ -253,7 +253,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
             ))}
           </SelectContent>
         </Select>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Vincula o usuário a um vendedor para filtrar suas vendas e clientes
         </p>
       </div>
@@ -277,7 +277,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
 
         {/* Tab: Preview */}
         <TabsContent value="preview" className="space-y-4">
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+          <div className="bg-muted rounded-lg p-4">
             <h4 className="font-medium mb-3 flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Permissões Finais
@@ -347,7 +347,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
                     return (
                       <div
                         key={perm}
-                        className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                        className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted ${
                           isCustomized ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
                         }`}
                         onClick={() => handleToggleCustomPermission(perm)}
@@ -356,7 +356,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
                           <Checkbox checked={finalValue} />
                           <div>
                             <p className="font-medium text-sm">{PERMISSION_LABELS[perm]}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               Valor base dos roles: {baseValue ? '✓ Permitido' : '✗ Negado'}
                               {isCustomized && (
                                 <span className="text-blue-600 dark:text-blue-400 ml-2">

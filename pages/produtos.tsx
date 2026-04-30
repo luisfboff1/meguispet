@@ -200,7 +200,7 @@ export default function ProdutosPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   placeholder="Buscar por nome ou categoria..."
                   value={searchTerm}
@@ -251,12 +251,12 @@ export default function ProdutosPage() {
                 
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Preço:</span>
+                    <span className="text-sm text-muted-foreground">Preço:</span>
                     <span className="font-semibold text-lg">{formatCurrency(produto.preco_venda)}</span>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Estoque:</span>
+                    <span className="text-sm text-muted-foreground">Estoque:</span>
                     <div className="flex items-center space-x-2">
                       <StockIcon className={`h-4 w-4 ${stockStatus.color}`} />
                       <span className={`text-sm font-medium ${stockStatus.color}`}>

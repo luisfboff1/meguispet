@@ -1274,7 +1274,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                   )}
                 </div>
               ) : (
-                <div className="p-4 bg-gray-50 rounded-md text-center text-gray-500 text-sm">
+                <div className="p-4 bg-muted rounded-md text-center text-muted-foreground text-sm">
                   Adicione itens para visualizar o resumo
                 </div>
               )}
@@ -1372,7 +1372,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                       observacoes: updateTaxObservations(prev.observacoes, semIpi, prev.sem_st)
                     }))
                   }}
-                  className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  className="w-4 h-4 rounded border-input text-orange-600 focus:ring-orange-500"
                 />
                 <Label htmlFor="sem-ipi" className="cursor-pointer font-medium text-orange-700">
                   Sem IPI
@@ -1394,7 +1394,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
                       observacoes: updateTaxObservations(prev.observacoes, prev.sem_ipi, semSt)
                     }))
                   }}
-                  className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  className="w-4 h-4 rounded border-input text-purple-600 focus:ring-purple-500"
                 />
                 <Label htmlFor="sem-st" className="cursor-pointer font-medium text-purple-700">
                   Sem ST

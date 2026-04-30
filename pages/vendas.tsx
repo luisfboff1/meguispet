@@ -821,7 +821,7 @@ export default function VendasPage() {
           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
             row.original.ativo 
               ? 'bg-green-100 text-green-800' 
-              : 'bg-gray-100 text-gray-600'
+              : 'bg-muted text-muted-foreground'
           }`}>
             {row.original.ativo ? 'Ativo' : 'Inativo'}
           </span>
@@ -1052,20 +1052,20 @@ export default function VendasPage() {
                           <td className="px-3 py-2 text-sm text-foreground">
                             {item.produto?.nome || `Produto #${item.produto_id}`}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 text-right">{item.quantidade}</td>
-                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                          <td className="px-3 py-2 text-sm text-muted-foreground text-right">{item.quantidade}</td>
+                          <td className="px-3 py-2 text-sm text-muted-foreground text-right">
                             {item.mva_aplicado ? `${(item.mva_aplicado * 100).toFixed(2)}%` : '-'}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                          <td className="px-3 py-2 text-sm text-muted-foreground text-right">
                             {item.aliquota_icms ? `${(item.aliquota_icms * 100).toFixed(2)}%` : '-'}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                          <td className="px-3 py-2 text-sm text-muted-foreground text-right">
                             {formatCurrency(item.base_calculo_st || 0)}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                          <td className="px-3 py-2 text-sm text-muted-foreground text-right">
                             {formatCurrency(item.icms_proprio || 0)}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-600 text-right">
+                          <td className="px-3 py-2 text-sm text-muted-foreground text-right">
                             {formatCurrency(item.icms_st_total || 0)}
                           </td>
                           <td className="px-3 py-2 text-sm font-semibold text-green-700 text-right bg-green-50">

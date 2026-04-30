@@ -256,7 +256,7 @@ function VendaDetailDialog({
                 </table>
               </div>
             ) : (
-              <div className="text-sm text-gray-500 p-3 bg-gray-50 dark:bg-gray-800 rounded">
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded">
                 Nenhum item encontrado
               </div>
             )}
@@ -462,7 +462,7 @@ function NfeDetailDialog({
                 </table>
               </div>
             ) : (
-              <div className="text-sm text-gray-500 p-3 bg-gray-50 dark:bg-gray-800 rounded">
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded">
                 Nenhum item encontrado
               </div>
             )}
@@ -712,7 +712,7 @@ export default function BlingPage() {
       header: ({ column }) => <SortableHeader column={column}>Cliente</SortableHeader>,
       cell: ({ row }) => (
         <div className="min-w-[140px]">
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
+          <div className="text-sm font-medium text-foreground truncate max-w-[200px]">
             {row.original.contato_nome || '-'}
           </div>
         </div>
@@ -785,7 +785,7 @@ export default function BlingPage() {
       header: ({ column }) => <SortableHeader column={column}>Cliente</SortableHeader>,
       cell: ({ row }) => (
         <div className="min-w-[140px]">
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
+          <div className="text-sm font-medium text-foreground truncate max-w-[200px]">
             {row.original.contato_nome || '-'}
           </div>
         </div>
@@ -806,7 +806,7 @@ export default function BlingPage() {
       cell: ({ row }) => {
         const sit = NFE_SITUACAO_MAP[row.original.situacao]
         return (
-          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${sit?.color || 'bg-gray-100 text-gray-700'}`}>
+          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${sit?.color || 'bg-muted text-foreground'}`}>
             {sit?.label || row.original.situacao_nome || `ID ${row.original.situacao}`}
           </span>
         )
@@ -938,7 +938,7 @@ export default function BlingPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className="text-sm text-gray-500">Valor Total</div>
+                <div className="text-sm text-muted-foreground">Valor Total</div>
                 <div className="text-2xl font-bold text-success">
                   {formatCurrency(vendasAgg?.total_value || 0)}
                 </div>
@@ -951,7 +951,7 @@ export default function BlingPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className="text-sm text-gray-500">Última Sync</div>
+                <div className="text-sm text-muted-foreground">Última Sync</div>
                 <div className="text-sm font-medium">
                   {status?.last_sync_vendas
                     ? formatLocalDate(status.last_sync_vendas, { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -1053,7 +1053,7 @@ export default function BlingPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className="text-sm text-gray-500">Valor Total</div>
+                <div className="text-sm text-muted-foreground">Valor Total</div>
                 <div className="text-2xl font-bold text-success">
                   {formatCurrency(nfeAgg?.total_value || 0)}
                 </div>
@@ -1066,7 +1066,7 @@ export default function BlingPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <div className="text-sm text-gray-500">Última Sync</div>
+                <div className="text-sm text-muted-foreground">Última Sync</div>
                 <div className="text-sm font-medium">
                   {status?.last_sync_nfe
                     ? formatLocalDate(status.last_sync_nfe, { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -1110,7 +1110,7 @@ export default function BlingPage() {
           </form>
 
           {/* Hint */}
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-muted-foreground">
             Clique em uma linha para ver todos os detalhes da NFe
           </div>
 
@@ -1130,7 +1130,7 @@ export default function BlingPage() {
 
           {/* Server-side Pagination */}
           {nfeTotal > 50 && (
-            <div className="flex items-center justify-between px-2 py-3 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center justify-between px-2 py-3 text-sm text-muted-foreground">
               <span>
                 Mostrando {((nfePage - 1) * 50) + 1} a {Math.min(nfePage * 50, nfeTotal)} de {nfeTotal} resultado(s)
               </span>
@@ -1328,17 +1328,17 @@ export default function BlingPage() {
               <div className="p-4 rounded-lg border space-y-4">
                 <div>
                   <div className="font-medium">Importação de Histórico</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     Importar dados de um período específico
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Tipo</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Tipo</label>
                     <select
                       value={importTipo}
                       onChange={(e) => setImportTipo(e.target.value as 'vendas' | 'nfe' | 'all')}
-                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
+                      className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
                     >
                       <option value="all">Tudo</option>
                       <option value="vendas">Vendas</option>
@@ -1346,7 +1346,7 @@ export default function BlingPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Data Inicial</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Data Inicial</label>
                     <Input
                       type="date"
                       value={importDataInicial}
@@ -1354,7 +1354,7 @@ export default function BlingPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Data Final</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Data Final</label>
                     <Input
                       type="date"
                       value={importDataFinal}
@@ -1412,7 +1412,7 @@ export default function BlingPage() {
               <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <div className="font-medium text-red-600">Desconectar Bling</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     Remove os tokens de acesso. Os dados já sincronizados serão mantidos.
                   </div>
                 </div>

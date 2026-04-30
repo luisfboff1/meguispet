@@ -170,7 +170,7 @@ export default function CalculadoraICMS({
 
             {/* Arrow */}
             <div className="flex justify-center">
-              <ArrowRight className="h-5 w-5 text-gray-400" />
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </div>
 
             {/* Step 2: Base Cálculo ST */}
@@ -188,7 +188,7 @@ export default function CalculadoraICMS({
 
             {/* Arrow */}
             <div className="flex justify-center">
-              <ArrowRight className="h-5 w-5 text-gray-400" />
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </div>
 
             {/* Step 3: ICMS Próprio */}
@@ -206,7 +206,7 @@ export default function CalculadoraICMS({
 
             {/* Arrow */}
             <div className="flex justify-center">
-              <ArrowRight className="h-5 w-5 text-gray-400" />
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </div>
 
             {/* Step 4: ICMS-ST Total */}
@@ -224,7 +224,7 @@ export default function CalculadoraICMS({
 
             {/* Arrow */}
             <div className="flex justify-center">
-              <ArrowRight className="h-5 w-5 text-gray-400" />
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </div>
 
             {/* Final Result: ICMS-ST a Recolher */}

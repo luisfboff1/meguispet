@@ -214,7 +214,7 @@ export default function VendedorForm({ vendedor, onSubmit, onCancel, loading }: 
                 onChange={(e) => handleChange('comissao', parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Percentual de comissão sobre vendas
               </p>
             </div>
@@ -226,7 +226,7 @@ export default function VendedorForm({ vendedor, onSubmit, onCancel, loading }: 
               <LinkIcon className="h-4 w-4 text-meguispet-primary" />
               <Label className="text-base font-semibold">Vincular a Usuário (Opcional)</Label>
             </div>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-muted-foreground mb-3">
               Vincule este vendedor a um usuário do sistema para dar acesso ao painel de vendas personalizado.
             </p>
             <Select
@@ -281,7 +281,7 @@ export default function VendedorForm({ vendedor, onSubmit, onCancel, loading }: 
               type="checkbox"
               checked={formData.ativo}
               onChange={(e) => handleChange('ativo', e.target.checked)}
-              className="w-4 h-4 text-meguispet-primary border-gray-300 rounded focus:ring-meguispet-primary"
+              className="w-4 h-4 text-meguispet-primary border-input rounded focus:ring-meguispet-primary"
             />
             <Label htmlFor="ativo" className="cursor-pointer">
               Vendedor ativo

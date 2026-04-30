@@ -218,8 +218,8 @@ export default function VendaImpostosCard({
 
       <CardContent>
         {!impostoEnabled ? (
-          <div className="text-center py-6 text-gray-500">
-            <Calculator className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+          <div className="text-center py-6 text-muted-foreground">
+            <Calculator className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
             <p className="font-medium">Cálculo de impostos desativado</p>
             <p className="text-sm mt-1">
               Ative o switch acima para incluir ICMS-ST nesta venda

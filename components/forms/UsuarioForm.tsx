@@ -172,7 +172,7 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
             />
             {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
             {mode === 'edit' && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Deixe em branco para manter a senha atual
               </p>
             )}
@@ -191,13 +191,13 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
                   <SelectItem key={role} value={role}>
                     <div className="flex flex-col">
                       <span className="font-medium">{ROLE_LABELS[role]}</span>
-                      <span className="text-xs text-gray-500">{ROLE_DESCRIPTIONS[role]}</span>
+                      <span className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</span>
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Info className="h-3 w-3" />
               Cada função possui permissões pré-definidas. Para permissões avançadas, use a página de gerenciamento de usuários.
             </p>

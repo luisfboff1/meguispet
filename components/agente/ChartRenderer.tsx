@@ -155,11 +155,11 @@ export function ChartRenderer({ spec }: ChartRendererProps) {
             <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
             <XAxis
               dataKey={spec.xAxis}
-              className="text-xs text-slate-600 dark:text-slate-400"
+              className="text-xs text-slate-600"
               tick={{ fill: 'currentColor' }}
             />
             <YAxis
-              className="text-xs text-slate-600 dark:text-slate-400"
+              className="text-xs text-slate-600"
               tick={{ fill: 'currentColor' }}
             />
             <Tooltip
@@ -202,7 +202,7 @@ export function ChartRenderer({ spec }: ChartRendererProps) {
               tick={{ fill: 'currentColor' }}
             />
             <YAxis
-              className="text-xs text-slate-600 dark:text-slate-400"
+              className="text-xs text-slate-600"
               tick={{ fill: 'currentColor' }}
             />
             <Tooltip
@@ -260,7 +260,7 @@ export function ChartRenderer({ spec }: ChartRendererProps) {
               tick={{ fill: 'currentColor' }}
             />
             <YAxis
-              className="text-xs text-slate-600 dark:text-slate-400"
+              className="text-xs text-slate-600"
               tick={{ fill: 'currentColor' }}
             />
             <Tooltip

@@ -34,7 +34,7 @@ export default function AgentePage() {
     <div className="absolute inset-0 flex flex-col overflow-hidden">
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b border-slate-200 bg-white px-6 dark:border-slate-700 dark:bg-slate-900">
+        <div className="border-b border-slate-200 bg-white px-6">
           <TabsList className="h-10 w-full justify-start rounded-none border-0 bg-transparent p-0 sm:w-auto">
             <TabsTrigger
               value="chat"

@@ -230,7 +230,7 @@ export function TransacaoForm({
                   ))}
                 </select>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {loadingVendas ? 'Carregando vendas...' : 'Selecione uma venda recente (últimos 90 dias) para vincular automaticamente valor e data'}
               </p>
             </div>
@@ -272,7 +272,7 @@ export function TransacaoForm({
                     handleChange('categoria', cat.nome)
                   }
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
                 disabled={loadingCategorias}
               >
@@ -288,7 +288,7 @@ export function TransacaoForm({
               <p className="text-sm text-destructive">{errors.categoria}</p>
             )}
             {loadingCategorias && (
-              <p className="text-xs text-gray-500">Carregando categorias...</p>
+              <p className="text-xs text-muted-foreground">Carregando categorias...</p>
             )}
           </div>
 
@@ -321,7 +321,7 @@ export function TransacaoForm({
                 placeholder="Informações adicionais (opcional)"
                 value={formData.observacoes}
                 onChange={(e) => handleChange('observacoes', e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 rows={3}
               />
             </div>

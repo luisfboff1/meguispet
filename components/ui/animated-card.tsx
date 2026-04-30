@@ -43,7 +43,7 @@ export const AnimatedCard = React.forwardRef<HTMLDivElement, AnimatedCardProps>(
           hoverElevation={false}
           ref={ref}
           className={cn(
-            'relative overflow-hidden border border-white/40 bg-white/90 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-950/80',
+            'relative overflow-hidden border border-white/40 bg-white/90 shadow-sm transition-colors/60/80',
             hoverElevation &&
               'ring-0 ring-transparent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-meguispet-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950',
             className
