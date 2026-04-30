@@ -6,7 +6,7 @@ interface MetricCardProps {
   title: string
   value: string | number
   icon: LucideIcon
-  color?: 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'amber'
+  color?: 'info' | 'success' | 'warning' | 'destructive' | 'accent' | 'primary' | 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'amber'
   trend?: {
     value: string
     isPositive: boolean
@@ -15,12 +15,18 @@ interface MetricCardProps {
 }
 
 const colorClasses = {
-  blue: 'bg-blue-500 text-white',
-  green: 'bg-green-500 text-white',
-  orange: 'bg-orange-500 text-white',
-  purple: 'bg-purple-500 text-white',
-  red: 'bg-red-500 text-white',
-  amber: 'bg-amber-500 text-white',
+  info: 'bg-info text-info-foreground',
+  success: 'bg-success text-success-foreground',
+  warning: 'bg-warning text-warning-foreground',
+  destructive: 'bg-destructive text-destructive-foreground',
+  accent: 'bg-accent text-accent-foreground',
+  primary: 'bg-primary text-primary-foreground',
+  blue: 'bg-info text-info-foreground',
+  green: 'bg-success text-success-foreground',
+  orange: 'bg-warning text-warning-foreground',
+  purple: 'bg-accent text-accent-foreground',
+  red: 'bg-destructive text-destructive-foreground',
+  amber: 'bg-warning text-warning-foreground',
 }
 
 /**
