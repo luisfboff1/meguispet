@@ -1266,7 +1266,10 @@ export const AGENT_MODELS: Record<
   { id: string; name: string; contextWindow: number }[]
 > = {
   openai: [
-    { id: "gpt-5-nano", name: "GPT-5 Nano ⚡", contextWindow: 400000 },
+    { id: "gpt-5-mini", name: "GPT-5 Mini", contextWindow: 400000 },
+    { id: "gpt-5.4-mini", name: "GPT-5.4 Mini", contextWindow: 400000 },
+    { id: "gpt-5.4-nano", name: "GPT-5.4 Nano", contextWindow: 400000 },
+    { id: "gpt-5-nano", name: "GPT-5 Nano", contextWindow: 400000 },
     { id: "gpt-4o", name: "GPT-4o", contextWindow: 128000 },
     { id: "gpt-4o-mini", name: "GPT-4o Mini", contextWindow: 128000 },
     { id: "gpt-4.5-preview", name: "GPT-4.5 Preview", contextWindow: 128000 },

@@ -225,7 +225,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
               },
             ])
             // If it's a SQL query tool, track the SQL immediately
-            if (sqlText && (event.tool === 'sql_db_query' || event.tool === 'query-sql')) {
+            if (sqlText && (event.tool === 'sql_db_query' || event.tool === 'query-sql' || event.tool === 'query_sql')) {
               setStreamingSqlQueries((prev) => [
                 ...(prev || []),
                 {

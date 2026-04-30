@@ -1,28 +1,15 @@
 import type { NextApiResponse } from "next";
 import { DataSource } from "typeorm";
-// @ts-ignore - moduleResolution: node can't resolve subpath exports, but bundler resolves correctly
-import { SqlDatabase } from "@langchain/classic/sql_db";
-// @ts-ignore - moduleResolution: node can't resolve subpath exports, but bundler resolves correctly
-import {
-  InfoSqlTool,
-  ListTablesSqlTool,
-  QuerySqlTool,
-} from "@langchain/classic/tools/sql";
-// @ts-ignore - moduleResolution: node can't resolve subpath exports, but bundler resolves correctly
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import {
-  AIMessage,
-  HumanMessage,
-  SystemMessage,
-} from "@langchain/core/messages";
 import {
   type AuthenticatedRequest,
   withSupabaseAuth,
 } from "@/lib/supabase-middleware";
 import { decryptApiKey } from "@/lib/agent-crypto";
-import { createLLM } from "@/lib/agent-provider-factory";
 import { buildSystemPrompt } from "@/lib/agent-default-prompt";
-import { AGENT_ACCESSIBLE_TABLES } from "@/lib/agent-schema";
+import {
+  AGENT_ACCESSIBLE_TABLES,
+  TABLE_DESCRIPTIONS,
+} from "@/lib/agent-schema";
 import type { AgentProvider } from "@/types";
 import { getSupabaseServiceRole } from "@/lib/supabase-auth";
 
@@ -38,22 +25,15 @@ function checkRateLimit(userId: number): boolean {
     return true;
   }
 
-  if (userLimit.count >= 30) {
-    return false;
-  }
-
+  if (userLimit.count >= 30) return false;
   userLimit.count++;
   return true;
 }
 
-// Cache DataSource and SqlDatabase to reuse connections
 let cachedDataSource: DataSource | null = null;
-let cachedSqlDb: SqlDatabase | null = null;
 
 async function getDataSource(): Promise<DataSource> {
-  if (cachedDataSource?.isInitialized) {
-    return cachedDataSource;
-  }
+  if (cachedDataSource?.isInitialized) return cachedDataSource;
 
   const dbUrl = process.env.SUPABASE_DB_URL;
   if (!dbUrl) {
@@ -74,7 +54,6 @@ async function getDataSource(): Promise<DataSource> {
       url: dbUrl,
       ssl: { rejectUnauthorized: false },
     });
-
     await cachedDataSource.initialize();
     return cachedDataSource;
   } catch (err) {
@@ -99,7 +78,6 @@ async function getDataSource(): Promise<DataSource> {
   }
 }
 
-/** Map raw error messages to user-friendly PT-BR messages */
 function mapErrorMessage(rawMsg: string): string {
   if (rawMsg.includes("SUPABASE_DB_URL")) return rawMsg;
   if (rawMsg.includes("AGENT_ENCRYPTION_KEY")) {
@@ -107,33 +85,38 @@ function mapErrorMessage(rawMsg: string): string {
   }
   if (
     rawMsg.includes("Incorrect API key") ||
-    rawMsg.includes("invalid x-api-key") || rawMsg.includes("invalid_api_key")
+    rawMsg.includes("invalid x-api-key") ||
+    rawMsg.includes("invalid_api_key")
   ) {
     return "API key invalida ou revogada. Gere uma nova chave e atualize na aba Configuracao.";
   }
   if (
-    rawMsg.includes("insufficient_quota") || rawMsg.includes("rate_limit") ||
+    rawMsg.includes("insufficient_quota") ||
+    rawMsg.includes("rate_limit") ||
     rawMsg.includes("429")
   ) {
     return "Limite de uso da API excedido. Verifique seu plano ou aguarde alguns minutos.";
   }
   if (
-    rawMsg.includes("model_not_found") || rawMsg.includes("does not exist") ||
+    rawMsg.includes("model_not_found") ||
+    rawMsg.includes("does not exist") ||
     rawMsg.includes("404")
   ) {
     return "Modelo selecionado nao disponivel. Troque o modelo na aba Configuracao.";
   }
   if (
-    rawMsg.includes("ECONNREFUSED") || rawMsg.includes("ETIMEDOUT") ||
+    rawMsg.includes("ECONNREFUSED") ||
+    rawMsg.includes("ETIMEDOUT") ||
     rawMsg.includes("fetch failed")
   ) {
     return "Falha de conexao com o servico de IA. Tente novamente em alguns segundos.";
   }
   if (
-    rawMsg.includes("ECONNRESET") || rawMsg.includes("terminated") ||
+    rawMsg.includes("ECONNRESET") ||
+    rawMsg.includes("terminated") ||
     rawMsg.includes("socket hang up")
   ) {
-    return "A conexao com o servico de IA foi interrompida. A consulta pode ter sido muito longa. Tente novamente ou simplifique a pergunta.";
+    return "A conexao com o servico de IA foi interrompida. Tente novamente ou simplifique a pergunta.";
   }
   if (rawMsg.includes("timeout") || rawMsg.includes("Timeout")) {
     return "A consulta demorou demais e foi cancelada. Tente simplificar sua pergunta.";
@@ -141,38 +124,614 @@ function mapErrorMessage(rawMsg: string): string {
   if (rawMsg.includes("401")) {
     return "Erro de autenticacao com a API. Verifique sua API key na aba Configuracao.";
   }
-  if (
-    rawMsg.includes("GRAPH_RECURSION_LIMIT") ||
-    rawMsg.includes("Recursion limit")
-  ) {
-    return "A consulta foi muito complexa e excedeu o limite de etapas. Tente simplificar sua pergunta ou ser mais especifico.";
-  }
   return rawMsg;
 }
 
-/** Send SSE event and flush */
 function sendSSE(res: NextApiResponse, data: Record<string, unknown>) {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
-  // Force flush if available (Node.js streams)
   if (typeof (res as unknown as { flush?: () => void }).flush === "function") {
     (res as unknown as { flush: () => void }).flush();
   }
 }
 
-/** Send SSE error + done and end response */
 function sendSSEError(res: NextApiResponse, message: string) {
   sendSSE(res, { type: "error", message });
   res.write("data: [DONE]\n\n");
   res.end();
 }
 
-// Disable body parsing for streaming
 export const config = {
   api: {
     bodyParser: true,
     responseLimit: false,
   },
 };
+
+type InputItem =
+  | { role: "user" | "assistant" | "system"; content: string }
+  | { type: "function_call_output"; call_id: string; output: string };
+
+interface FunctionCall {
+  id: string;
+  call_id: string;
+  name: string;
+  arguments: string;
+}
+
+interface ToolCallRecord {
+  tool_name: string;
+  args: Record<string, unknown>;
+  result: unknown;
+  start_time?: number;
+  execution_time_ms?: number;
+}
+
+interface SqlQueryRecord {
+  sql: string;
+  explanation: string;
+  rows_returned: number;
+  execution_time_ms: number;
+}
+
+interface StreamRunResult {
+  finalText: string;
+  reasoningText: string;
+  responseId: string | null;
+  pendingFunctionCalls: FunctionCall[];
+  usage: { input_tokens: number; output_tokens: number } | null;
+}
+
+interface OpenAIStreamEvent {
+  type?: string;
+  delta?: string;
+  item_id?: string;
+  output_index?: number;
+  arguments?: string;
+  item?: {
+    id?: string;
+    type?: string;
+    name?: string;
+    call_id?: string;
+    arguments?: string;
+  };
+  response?: {
+    id?: string;
+    usage?: {
+      input_tokens?: number;
+      output_tokens?: number;
+      prompt_tokens?: number;
+      completion_tokens?: number;
+    };
+    error?: { message?: string };
+  };
+  error?: { message?: string };
+}
+
+const QUERY_SQL_TOOL = {
+  type: "function",
+  name: "query_sql",
+  description:
+    "Executa uma consulta SQL SELECT somente leitura no PostgreSQL do MeguisPet. Use para analises ad-hoc quando as respostas exigirem dados reais.",
+  parameters: {
+    type: "object",
+    properties: {
+      query: {
+        type: "string",
+        description:
+          "Consulta SQL PostgreSQL. Apenas SELECT/WITH. Use LIMIT 500 ou menor.",
+      },
+    },
+    required: ["query"],
+    additionalProperties: false,
+  },
+  strict: true,
+} as const;
+
+const DESCRIBE_TABLE_TOOL = {
+  type: "function",
+  name: "describe_table",
+  description:
+    "Mostra descricao, colunas e relacoes de uma tabela permitida ao agente.",
+  parameters: {
+    type: "object",
+    properties: {
+      table_name: {
+        type: "string",
+        enum: AGENT_ACCESSIBLE_TABLES,
+        description: "Nome da tabela permitida.",
+      },
+    },
+    required: ["table_name"],
+    additionalProperties: false,
+  },
+  strict: true,
+} as const;
+
+const LIST_TABLES_TOOL = {
+  type: "function",
+  name: "list_tables",
+  description: "Lista as tabelas que o agente pode consultar.",
+  parameters: {
+    type: "object",
+    properties: {},
+    additionalProperties: false,
+  },
+  strict: true,
+} as const;
+
+const TOOLS = [QUERY_SQL_TOOL, DESCRIBE_TABLE_TOOL, LIST_TABLES_TOOL];
+const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const DEFAULT_MODEL = "gpt-5-mini";
+const READ_ONLY_TIMEOUT_MS = 20_000;
+const MAX_ROWS_RETURNED = 500;
+
+const ALLOWED_TABLES = new Set<string>(AGENT_ACCESSIBLE_TABLES);
+const BANNED_TABLES = [
+  "usuarios",
+  "agent_configs",
+  "agent_conversations",
+  "agent_messages",
+  "role_permissions_config",
+  "auth.users",
+];
+
+function normalizeSql(sql: string): string {
+  const trimmed = sql.trim();
+  const withoutTrailingSemicolon = trimmed.replace(/;\s*$/, "");
+  if (withoutTrailingSemicolon.includes(";")) {
+    throw new Error("query_sql aceita uma unica instrucao SELECT por vez.");
+  }
+  return withoutTrailingSemicolon;
+}
+
+function extractCteNames(sql: string): Set<string> {
+  const ctes = new Set<string>();
+  const regex = /(?:WITH|,)\s+"?([a-zA-Z_][a-zA-Z0-9_]*)"?\s+AS\s*\(/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(sql)) !== null) {
+    ctes.add(match[1].toLowerCase());
+  }
+  return ctes;
+}
+
+function validateReadOnlySql(sql: string): string {
+  const normalized = normalizeSql(sql);
+  const compact = normalized.replace(/\s+/g, " ").trim();
+  const upper = compact.toUpperCase();
+
+  if (!upper.startsWith("SELECT") && !upper.startsWith("WITH")) {
+    throw new Error("query_sql aceita apenas SELECT/WITH.");
+  }
+
+  const banned =
+    /\b(INSERT|UPDATE|DELETE|DROP|TRUNCATE|ALTER|CREATE|GRANT|REVOKE|REPLACE|MERGE|CALL|COPY|VACUUM|ANALYZE)\b/i;
+  if (banned.test(compact)) {
+    throw new Error("query_sql e somente leitura. Escrita/DDL nao e permitido.");
+  }
+
+  const lower = compact.toLowerCase();
+  for (const table of BANNED_TABLES) {
+    if (lower.includes(table)) {
+      throw new Error(`Tabela nao permitida para o agente: ${table}`);
+    }
+  }
+
+  const cteNames = extractCteNames(compact);
+  const tableRegex = /\b(?:from|join)\s+("?[\w.]+"?)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = tableRegex.exec(compact)) !== null) {
+    const rawName = match[1].replace(/"/g, "");
+    const tableName = rawName.split(".").pop()?.toLowerCase() || rawName;
+    if (cteNames.has(tableName)) continue;
+    if (!ALLOWED_TABLES.has(tableName)) {
+      throw new Error(
+        `Tabela '${rawName}' nao esta liberada para o agente. Use list_tables para ver as tabelas permitidas.`,
+      );
+    }
+  }
+
+  return normalized;
+}
+
+async function executeReadOnlySql(sql: string): Promise<{
+  rows: unknown[];
+  rowCount: number;
+  truncated: boolean;
+}> {
+  const query = validateReadOnlySql(sql);
+  const dataSource = await getDataSource();
+
+  const rows = await dataSource.transaction(async (manager) => {
+    await manager.query("SET TRANSACTION READ ONLY");
+    await manager.query(`SET LOCAL statement_timeout = ${READ_ONLY_TIMEOUT_MS}`);
+    return manager.query(query) as Promise<unknown[]>;
+  });
+
+  const safeRows = Array.isArray(rows) ? rows : [];
+  return {
+    rows: safeRows.slice(0, MAX_ROWS_RETURNED),
+    rowCount: safeRows.length,
+    truncated: safeRows.length > MAX_ROWS_RETURNED,
+  };
+}
+
+async function describeTable(tableName: string): Promise<Record<string, unknown>> {
+  const normalized = tableName.toLowerCase();
+  if (!ALLOWED_TABLES.has(normalized)) {
+    throw new Error(`Tabela nao permitida: ${tableName}`);
+  }
+
+  const dataSource = await getDataSource();
+  const columns = await dataSource.query(
+    `
+      SELECT column_name, data_type, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = $1
+      ORDER BY ordinal_position
+    `,
+    [normalized],
+  ) as unknown[];
+
+  return {
+    table: normalized,
+    description: TABLE_DESCRIPTIONS[normalized] || "",
+    columns,
+  };
+}
+
+async function executeTool(
+  call: FunctionCall,
+  send: (data: Record<string, unknown>) => void,
+  toolCalls: ToolCallRecord[],
+  sqlQueries: SqlQueryRecord[],
+): Promise<InputItem> {
+  let args: Record<string, unknown> = {};
+  try {
+    args = JSON.parse(call.arguments || "{}") as Record<string, unknown>;
+  } catch {
+    args = {};
+  }
+
+  const startedAt = Date.now();
+  const record: ToolCallRecord = {
+    tool_name: call.name,
+    args,
+    result: null,
+    start_time: startedAt,
+  };
+  toolCalls.push(record);
+
+  if (call.name === "query_sql") {
+    const sql = String(args.query || "");
+    send({ type: "tool_call", tool: call.name, args, sql });
+
+    const queryRecord: SqlQueryRecord = {
+      sql,
+      explanation: "Consulta executada pelo agente",
+      rows_returned: 0,
+      execution_time_ms: 0,
+    };
+    sqlQueries.push(queryRecord);
+
+    try {
+      const result = await executeReadOnlySql(sql);
+      const ms = Date.now() - startedAt;
+      queryRecord.rows_returned = result.rowCount;
+      queryRecord.execution_time_ms = ms;
+      record.result = result;
+      record.execution_time_ms = ms;
+      send({
+        type: "tool_result",
+        tool: call.name,
+        result,
+        sql,
+        rows_returned: result.rowCount,
+        execution_time_ms: ms,
+      });
+      return {
+        type: "function_call_output",
+        call_id: call.call_id,
+        output: JSON.stringify(result),
+      };
+    } catch (err) {
+      const ms = Date.now() - startedAt;
+      const output = { error: err instanceof Error ? err.message : String(err) };
+      queryRecord.execution_time_ms = ms;
+      record.result = output;
+      record.execution_time_ms = ms;
+      send({
+        type: "tool_result",
+        tool: call.name,
+        result: output,
+        sql,
+        execution_time_ms: ms,
+      });
+      return {
+        type: "function_call_output",
+        call_id: call.call_id,
+        output: JSON.stringify(output),
+      };
+    }
+  }
+
+  send({ type: "tool_call", tool: call.name, args });
+
+  try {
+    const result = call.name === "describe_table"
+      ? await describeTable(String(args.table_name || ""))
+      : {
+        tables: AGENT_ACCESSIBLE_TABLES.map((table) => ({
+          name: table,
+          description: TABLE_DESCRIPTIONS[table] || "",
+        })),
+      };
+    const ms = Date.now() - startedAt;
+    record.result = result;
+    record.execution_time_ms = ms;
+    send({
+      type: "tool_result",
+      tool: call.name,
+      result,
+      execution_time_ms: ms,
+    });
+    return {
+      type: "function_call_output",
+      call_id: call.call_id,
+      output: JSON.stringify(result),
+    };
+  } catch (err) {
+    const ms = Date.now() - startedAt;
+    const output = { error: err instanceof Error ? err.message : String(err) };
+    record.result = output;
+    record.execution_time_ms = ms;
+    send({
+      type: "tool_result",
+      tool: call.name,
+      result: output,
+      execution_time_ms: ms,
+    });
+    return {
+      type: "function_call_output",
+      call_id: call.call_id,
+      output: JSON.stringify(output),
+    };
+  }
+}
+
+async function* parseOpenAIStream(
+  body: ReadableStream<Uint8Array>,
+): AsyncGenerator<OpenAIStreamEvent> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const events = buffer.split("\n\n");
+    buffer = events.pop() || "";
+
+    for (const rawEvent of events) {
+      const dataLines = rawEvent
+        .split("\n")
+        .filter((line) => line.startsWith("data: "))
+        .map((line) => line.slice(6));
+      for (const data of dataLines) {
+        if (!data || data === "[DONE]") continue;
+        try {
+          yield JSON.parse(data) as OpenAIStreamEvent;
+        } catch {
+          // Ignore non-JSON stream fragments.
+        }
+      }
+    }
+  }
+}
+
+async function createOpenAIStream(
+  apiKey: string,
+  payload: Record<string, unknown>,
+): Promise<ReadableStream<Uint8Array>> {
+  const response = await fetch(OPENAI_RESPONSES_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...payload, stream: true }),
+  });
+
+  if (!response.ok || !response.body) {
+    let detail = await response.text();
+    try {
+      const parsed = JSON.parse(detail) as { error?: { message?: string } };
+      detail = parsed.error?.message || detail;
+    } catch {
+      // Keep raw detail.
+    }
+    throw new Error(detail || `OpenAI API error ${response.status}`);
+  }
+
+  return response.body;
+}
+
+async function runResponsesStream(
+  apiKey: string,
+  payload: Record<string, unknown>,
+  send: (data: Record<string, unknown>) => void,
+  state: { answerStartSent: boolean },
+): Promise<StreamRunResult> {
+  const stream = await createOpenAIStream(apiKey, payload);
+  const result: StreamRunResult = {
+    finalText: "",
+    reasoningText: "",
+    responseId: null,
+    pendingFunctionCalls: [],
+    usage: null,
+  };
+
+  const argBuffer = new Map<string, string>();
+
+  for await (const event of parseOpenAIStream(stream)) {
+    const type = event.type;
+    if (!type) continue;
+
+    if (type === "response.created" || type === "response.in_progress") {
+      if (event.response?.id) result.responseId = event.response.id;
+      continue;
+    }
+
+    if (type === "response.output_text.delta") {
+      const delta = event.delta || "";
+      if (delta) {
+        if (!state.answerStartSent) {
+          send({ type: "answer_start" });
+          state.answerStartSent = true;
+        }
+        result.finalText += delta;
+        send({ type: "token", content: delta });
+      }
+      continue;
+    }
+
+    if (type === "response.reasoning_summary_text.delta") {
+      const delta = event.delta || "";
+      if (delta) {
+        result.reasoningText += delta;
+        send({ type: "reasoning_token", content: delta });
+      }
+      continue;
+    }
+
+    if (type === "response.function_call_arguments.delta") {
+      const itemId = event.item?.id || event.item_id ||
+        (event.output_index !== undefined ? String(event.output_index) : "");
+      if (itemId && event.delta) {
+        argBuffer.set(itemId, (argBuffer.get(itemId) || "") + event.delta);
+      }
+      continue;
+    }
+
+    if (type === "response.function_call_arguments.done") {
+      const itemId = event.item?.id || event.item_id ||
+        (event.output_index !== undefined ? String(event.output_index) : "");
+      if (itemId && event.arguments) {
+        argBuffer.set(itemId, event.arguments);
+      }
+      continue;
+    }
+
+    if (type === "response.output_item.added") {
+      const item = event.item;
+      if (item?.type === "function_call") {
+        send({ type: "thinking", content: `Preparando ${item.name}...` });
+      }
+      continue;
+    }
+
+    if (type === "response.output_item.done") {
+      const item = event.item;
+      if (item?.type === "function_call" && item.name) {
+        result.pendingFunctionCalls.push({
+          id: item.id || item.call_id || item.name,
+          call_id: item.call_id || item.id || item.name,
+          name: item.name,
+          arguments: item.arguments || argBuffer.get(item.id || "") ||
+            argBuffer.get(String(result.pendingFunctionCalls.length)) || "{}",
+        });
+      }
+      continue;
+    }
+
+    if (type === "response.completed") {
+      if (event.response?.id) result.responseId = event.response.id;
+      const usage = event.response?.usage;
+      if (usage) {
+        result.usage = {
+          input_tokens: usage.input_tokens || usage.prompt_tokens || 0,
+          output_tokens: usage.output_tokens || usage.completion_tokens || 0,
+        };
+      }
+      continue;
+    }
+
+    if (type === "response.failed" || type === "error") {
+      const msg =
+        event.response?.error?.message ||
+        event.error?.message ||
+        "Erro no modelo";
+      throw new Error(msg);
+    }
+  }
+
+  return result;
+}
+
+async function runAgentLoop(
+  apiKey: string,
+  model: string,
+  initialPayload: Record<string, unknown>,
+  send: (data: Record<string, unknown>) => void,
+): Promise<StreamRunResult & {
+  toolCalls: ToolCallRecord[];
+  sqlQueries: SqlQueryRecord[];
+}> {
+  const state = { answerStartSent: false };
+  const toolCalls: ToolCallRecord[] = [];
+  const sqlQueries: SqlQueryRecord[] = [];
+  const aggregate: StreamRunResult = {
+    finalText: "",
+    reasoningText: "",
+    responseId: null,
+    pendingFunctionCalls: [],
+    usage: { input_tokens: 0, output_tokens: 0 },
+  };
+
+  let payload = initialPayload;
+
+  for (let hop = 0; hop < 6; hop++) {
+    const result = await runResponsesStream(apiKey, payload, send, state);
+    aggregate.finalText += result.finalText;
+    aggregate.reasoningText += result.reasoningText;
+    aggregate.responseId = result.responseId || aggregate.responseId;
+    aggregate.usage = {
+      input_tokens:
+        (aggregate.usage?.input_tokens || 0) + (result.usage?.input_tokens || 0),
+      output_tokens:
+        (aggregate.usage?.output_tokens || 0) +
+        (result.usage?.output_tokens || 0),
+    };
+
+    if (result.pendingFunctionCalls.length === 0) {
+      aggregate.pendingFunctionCalls = [];
+      return { ...aggregate, toolCalls, sqlQueries };
+    }
+
+    const outputs: InputItem[] = [];
+    for (const call of result.pendingFunctionCalls) {
+      outputs.push(await executeTool(call, send, toolCalls, sqlQueries));
+    }
+
+    payload = {
+      model,
+      previous_response_id: result.responseId,
+      input: outputs,
+      tools: TOOLS,
+      reasoning: { effort: "medium" },
+      text: { verbosity: "low" },
+    };
+  }
+
+  throw new Error(
+    "A consulta exigiu muitas etapas. Tente simplificar a pergunta ou reduzir o periodo.",
+  );
+}
+
+const FORMAT_REMINDER =
+  "Lembrete de formato: responda em Markdown GFM; use tabelas GFM para dados tabulares; para graficos use apenas bloco ```chart``` com JSON valido; nunca use graficos ASCII.";
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   if (req.method !== "POST") {
@@ -186,7 +745,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
   const supabase = req.supabaseClient;
   const userId = req.user.id;
 
-  // Rate limiting
   if (!checkRateLimit(userId)) {
     return res.status(429).json({
       success: false,
@@ -210,14 +768,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     });
   }
 
-  // Track whether SSE has been initialized
   let sseStarted = false;
 
   try {
-    // 1. Verify conversation belongs to user
     const { data: conversation, error: convError } = await supabase
       .from("agent_conversations")
-      .select("id")
+      .select("id, total_input_tokens, total_output_tokens")
       .eq("id", conversationId)
       .eq("usuario_id", userId)
       .eq("is_active", true)
@@ -230,14 +786,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       });
     }
 
-    // 2. Get user's agent config
     let { data: agentConfig, error: configError } = await supabase
       .from("agent_configs")
       .select("*")
       .eq("usuario_id", userId)
       .single();
 
-    // Se usuário não tem config própria ou não tem API key, usa config global
     if (configError || !agentConfig || !agentConfig.api_key_encrypted) {
       const serviceRole = getSupabaseServiceRole();
       const { data: globalConfig } = await serviceRole
@@ -256,91 +810,33 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         });
       }
 
-      // Mescla: preferências do usuário (se houver) + api_key da config global
-      const mergedAgentConfig = agentConfig
+      agentConfig = agentConfig
         ? {
           ...globalConfig,
           ...agentConfig,
           api_key_encrypted: globalConfig.api_key_encrypted,
         }
         : globalConfig;
-      agentConfig = mergedAgentConfig;
     }
 
-    // 3. Decrypt API key
-    const apiKey = decryptApiKey(agentConfig.api_key_encrypted);
+    if ((agentConfig.provider as AgentProvider) !== "openai") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "O agente agora usa a OpenAI Responses API. Selecione o provedor OpenAI na configuracao.",
+      });
+    }
 
-    // DEBUG: verify decrypted key (remove after testing)
+    const apiKey = decryptApiKey(agentConfig.api_key_encrypted);
+    const model = agentConfig.model || DEFAULT_MODEL;
+
     const keyPreview = apiKey.length > 8
       ? `${apiKey.substring(0, 7)}...${apiKey.substring(apiKey.length - 4)}`
       : "***";
     console.log(
-      `[API Agente Chat] Provider: ${agentConfig.provider}, Model: ${agentConfig.model}, Key preview: ${keyPreview}`,
+      `[API Agente Chat] Responses API Model: ${model}, Key preview: ${keyPreview}`,
     );
 
-    // 4. Create LLM instance
-    const llm = createLLM({
-      provider: agentConfig.provider as AgentProvider,
-      model: agentConfig.model,
-      apiKey,
-      temperature: parseFloat(agentConfig.temperature) || 0.3,
-      maxTokens: agentConfig.max_tokens || 4096,
-      topP: parseFloat(agentConfig.top_p) || 1.0,
-      frequencyPenalty: parseFloat(agentConfig.frequency_penalty) || 0,
-      presencePenalty: parseFloat(agentConfig.presence_penalty) || 0,
-      streaming: true,
-    });
-
-    // 5. Create SQL Database connection (cached)
-    const dataSource = await getDataSource();
-    if (!cachedSqlDb) {
-      cachedSqlDb = await SqlDatabase.fromDataSourceParams({
-        appDataSource: dataSource,
-        includesTables: [...AGENT_ACCESSIBLE_TABLES],
-      });
-    }
-    const db = cachedSqlDb;
-
-    // 6. Create SQL Agent tools (without query-checker to avoid extra LLM calls)
-    const tools = [
-      new QuerySqlTool(db),
-      new InfoSqlTool(db),
-      new ListTablesSqlTool(db),
-    ];
-
-    const systemPrompt = buildSystemPrompt(agentConfig.system_prompt);
-
-    const agent = createReactAgent({
-      llm,
-      tools,
-      messageModifier: systemPrompt,
-    });
-
-    // 7. Get conversation history BEFORE saving the new message
-    //    Fetch the MOST RECENT messages (DESC), then reverse to chronological order
-    //    Limited to 20 messages (10 pairs) to provide more context for agent decisions
-    const { data: historyDesc } = await supabase
-      .from("agent_messages")
-      .select("role, content")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: false })
-      .limit(10); // Reduzido de 20 para 10 para economizar tokens (economiza ~2.000-4.000 tokens/req)
-
-    // Reverse to chronological order (oldest first) for the LLM
-    const historyRaw = historyDesc ? [...historyDesc].reverse() : [];
-
-    // Deduplicate consecutive messages with identical content from same role
-    // This prevents the LLM from pattern-matching repeated responses
-    const history: typeof historyRaw = [];
-    for (const msg of historyRaw) {
-      const prev = history[history.length - 1];
-      if (prev && prev.role === msg.role && prev.content === msg.content) {
-        continue; // skip duplicate
-      }
-      history.push(msg);
-    }
-
-    // 8. Save user message to DB (check for errors)
     const { error: insertError } = await supabase.from("agent_messages").insert(
       {
         conversation_id: conversationId,
@@ -356,301 +852,102 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       );
     }
 
-    // 9. Set up SSE streaming
+    const { data: historyDesc } = await supabase
+      .from("agent_messages")
+      .select("role, content")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    const historyRaw = historyDesc ? [...historyDesc].reverse() : [];
+    const history: typeof historyRaw = [];
+    for (const msg of historyRaw) {
+      const prev = history[history.length - 1];
+      if (prev && prev.role === msg.role && prev.content === msg.content) {
+        continue;
+      }
+      history.push(msg);
+    }
+
+    const input: InputItem[] = history
+      .filter((msg) => msg.role === "user" || msg.role === "assistant")
+      .map((msg) => ({
+        role: msg.role === "assistant" ? "assistant" : "user",
+        content: msg.content,
+      }));
+
+    const userMessageCount = input.filter((item) =>
+      "role" in item && item.role === "user"
+    ).length;
+    if (userMessageCount >= 4) {
+      input.push({ role: "system", content: FORMAT_REMINDER });
+    }
+
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache, no-transform");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Accel-Buffering", "no");
     sseStarted = true;
 
-    // Send initial thinking event
     sendSSE(res, { type: "thinking", content: "Analisando sua pergunta..." });
 
-    // 10. Stream agent response
     const startTime = Date.now();
-    let fullResponse = "";
-    const sqlQueries: {
-      sql: string;
-      explanation: string;
-      rows_returned: number;
-      execution_time_ms: number;
-    }[] = [];
-    const toolCalls: {
-      tool_name: string;
-      args: Record<string, unknown>;
-      result: unknown;
-      start_time?: number;
-      execution_time_ms?: number;
-    }[] = [];
-    let totalInputTokens = 0;
-    let totalOutputTokens = 0;
+    const initialPayload: Record<string, unknown> = {
+      model,
+      instructions: buildSystemPrompt(agentConfig.system_prompt),
+      input,
+      tools: TOOLS,
+      reasoning: { effort: "medium" },
+      text: { verbosity: "low" },
+      max_output_tokens: agentConfig.max_tokens || 4096,
+    };
 
-    // Build messages array with proper LangChain message types
-    // Use deduplicated history from DB + explicitly append current user message
-    const messages: (HumanMessage | AIMessage)[] = [];
-    for (const msg of history) {
-      if (msg.role === "user") {
-        messages.push(new HumanMessage(msg.content));
-      } else if (msg.role === "assistant") {
-        messages.push(new AIMessage(msg.content));
-      }
-    }
-    // Always explicitly append the current user message (even if DB insert failed)
-    messages.push(new HumanMessage(message.trim()));
-
-    const recursionLimit = agentConfig.recursion_limit || 25;
-
-    // ===================== STREAMING WITH streamEvents =====================
-    // Using streamEvents v2 for token-by-token streaming of LLM reasoning
-    // This gives us real-time visibility into what the agent is thinking
-    const pendingToolArgs = new Map<string, Record<string, unknown>>();
-    let currentStepContent = "";
-    let stepNumber = 0;
-    let toolsExecuted = false; // Track if tools ran - next LLM step is the answer
-
-    const eventStream = agent.streamEvents(
-      { messages },
-      { version: "v2" as const, recursionLimit },
+    const result = await runAgentLoop(apiKey, model, initialPayload, (data) =>
+      sendSSE(res, data)
     );
 
-    for await (const event of eventStream) {
-      switch (event.event) {
-        // LLM starts a new thinking step
-        case "on_chat_model_start": {
-          stepNumber++;
-          currentStepContent = "";
-          break;
-        }
-
-        // LLM produces a token (real-time streaming)
-        case "on_chat_model_stream": {
-          const chunk = event.data?.chunk;
-          if (!chunk) break;
-
-          // Text content (final answer step)
-          const token = typeof chunk.content === "string" ? chunk.content : "";
-
-          if (token) {
-            currentStepContent += token;
-            if (toolsExecuted) {
-              // After tools ran, tokens are the ANSWER - send directly to chat message
-              sendSSE(res, { type: "token", content: token });
-            } else {
-              // First step - reasoning/thinking
-              sendSSE(res, {
-                type: "reasoning_token",
-                content: token,
-                step: stepNumber,
-              });
-            }
-          }
-
-          // Tool call chunks (intermediate steps - show SQL being typed in real-time)
-          // When OpenAI decides to call a tool, content is empty but tool_call_chunks has the args
-          const tcChunks = chunk.tool_call_chunks;
-          if (tcChunks && Array.isArray(tcChunks)) {
-            for (const tcc of tcChunks) {
-              if (tcc.name) {
-                // Tool call started - show which tool is being prepared
-                sendSSE(res, {
-                  type: "thinking",
-                  content: `Elaborando consulta SQL...`,
-                });
-              }
-              if (tcc.args) {
-                // Stream the tool arguments (SQL query text) as reasoning
-                sendSSE(res, {
-                  type: "reasoning_token",
-                  content: tcc.args,
-                  step: stepNumber,
-                });
-              }
-            }
-          }
-          break;
-        }
-
-        // LLM finishes a step - either calls tools or produces final answer
-        case "on_chat_model_end": {
-          const output = event.data?.output;
-          if (!output) break;
-
-          // Extract token usage
-          const usageMeta = output.usage_metadata ||
-            output.response_metadata?.usage;
-          if (usageMeta) {
-            totalInputTokens += usageMeta.input_tokens ||
-              usageMeta.prompt_tokens || 0;
-            totalOutputTokens += usageMeta.output_tokens ||
-              usageMeta.completion_tokens || 0;
-          }
-
-          const endToolCalls = output.tool_calls;
-
-          if (endToolCalls && endToolCalls.length > 0) {
-            // Intermediate step - LLM decided to call tools
-            toolsExecuted = false; // Reset - will be set again on tool_end
-            sendSSE(res, {
-              type: "reasoning_complete",
-              step: stepNumber,
-              has_tools: true,
-            });
-
-            for (const tc of endToolCalls) {
-              const sqlText = tc.args?.input || tc.args?.query || "";
-              const toolCallStartTime = Date.now();
-
-              if (tc.id) pendingToolArgs.set(tc.id, tc.args || {});
-
-              toolCalls.push({
-                tool_name: tc.name,
-                args: tc.args || {},
-                result: null,
-                start_time: toolCallStartTime,
-              });
-
-              // Track SQL queries
-              if (tc.name === "sql_db_query" || tc.name === "query-sql") {
-                const sqlString = typeof sqlText === "string"
-                  ? sqlText
-                  : String(sqlText);
-
-                sqlQueries.push({
-                  sql: sqlString,
-                  explanation: "Consulta executada pelo agente",
-                  rows_returned: 0,
-                  execution_time_ms: 0,
-                });
-              }
-
-              sendSSE(res, {
-                type: "tool_call",
-                tool: tc.name,
-                args: tc.args,
-                sql: sqlText || undefined,
-              });
-            }
-          } else {
-            // Final step - no tool calls = this is the answer
-            // Use output.content (official) for DB storage
-            const finalContent = typeof output.content === "string"
-              ? output.content
-              : currentStepContent;
-            if (finalContent.trim().length > 0) {
-              fullResponse = finalContent;
-            }
-            // Tell frontend to move reasoning tokens to the answer area
-            sendSSE(res, { type: "answer_start", step: stepNumber });
-          }
-
-          currentStepContent = "";
-          break;
-        }
-
-        // Tool finishes executing (SQL query result, table info, etc.)
-        case "on_tool_end": {
-          toolsExecuted = true; // Next LLM step will produce the answer
-          const toolName = event.name || "unknown";
-          const toolOutput = event.data?.output;
-          const toolResult = typeof toolOutput === "string"
-            ? toolOutput
-            : typeof toolOutput?.content === "string"
-            ? toolOutput.content
-            : JSON.stringify(toolOutput?.content || toolOutput);
-          const now = Date.now();
-          const execTime = now - startTime;
-
-          // Update the last matching tool call with the result
-          for (let i = toolCalls.length - 1; i >= 0; i--) {
-            if (
-              toolCalls[i].tool_name === toolName &&
-              toolCalls[i].result === null
-            ) {
-              toolCalls[i].result = toolResult;
-              const individualTime = now - (toolCalls[i].start_time || now);
-              toolCalls[i].execution_time_ms = individualTime;
-
-              break;
-            }
-          }
-
-          // Update SQL query with execution time and row count
-          if (toolName === "sql_db_query" || toolName === "query-sql") {
-            for (let i = sqlQueries.length - 1; i >= 0; i--) {
-              if (sqlQueries[i].execution_time_ms === 0) {
-                sqlQueries[i].execution_time_ms = execTime;
-                const resultStr = typeof toolResult === "string"
-                  ? toolResult
-                  : "";
-                const lines = resultStr.split("\n").filter((l: string) =>
-                  l.trim()
-                );
-                sqlQueries[i].rows_returned = Math.max(0, lines.length - 1);
-                break;
-              }
-            }
-          }
-
-          sendSSE(res, {
-            type: "tool_result",
-            tool: toolName,
-            result: (typeof toolResult === "string"
-              ? toolResult
-              : JSON.stringify(toolResult)).substring(0, 1000),
-            execution_time_ms: execTime,
-          });
-          break;
-        }
-      }
-    }
-    // ===================== FIM STREAMING =====================
-
     const thinkingTime = Date.now() - startTime;
-
-    // Calculate timing breakdown
-    const totalToolTime = toolCalls.reduce(
+    const totalToolTime = result.toolCalls.reduce(
       (sum, tc) => sum + (tc.execution_time_ms || 0),
       0,
     );
-    const llmThinkingTime = thinkingTime - totalToolTime;
     const timingBreakdown = {
       total_time_ms: thinkingTime,
-      llm_thinking_ms: llmThinkingTime,
+      llm_thinking_ms: Math.max(0, thinkingTime - totalToolTime),
       tool_execution_ms: totalToolTime,
-      tools_count: toolCalls.length,
+      tools_count: result.toolCalls.length,
     };
 
-    // 10. Send usage info (including timing breakdown for client-side display)
+    const totalInputTokens = result.usage?.input_tokens || 0;
+    const totalOutputTokens = result.usage?.output_tokens || 0;
+
     sendSSE(res, {
       type: "usage",
       input_tokens: totalInputTokens,
       output_tokens: totalOutputTokens,
-      model: agentConfig.model,
+      model,
       thinking_time_ms: thinkingTime,
       timing_breakdown: timingBreakdown,
     });
 
-    // 11. Signal done
     res.write("data: [DONE]\n\n");
     res.end();
 
-    // 12. Save assistant message to DB (after streaming completes)
-    if (fullResponse) {
+    if (result.finalText) {
       await supabase.from("agent_messages").insert({
         conversation_id: conversationId,
         role: "assistant",
-        content: fullResponse,
-        tool_calls: toolCalls.length > 0 ? toolCalls : null,
-        sql_queries: sqlQueries.length > 0 ? sqlQueries : null,
+        content: result.finalText,
+        tool_calls: result.toolCalls.length > 0 ? result.toolCalls : null,
+        sql_queries: result.sqlQueries.length > 0 ? result.sqlQueries : null,
         input_tokens: totalInputTokens,
         output_tokens: totalOutputTokens,
-        model_used: agentConfig.model,
+        model_used: model,
         thinking_time_ms: thinkingTime,
         timing_breakdown: timingBreakdown,
       });
     }
 
-    // 13. Update conversation metadata
     await supabase
       .from("agent_conversations")
       .update({
@@ -676,14 +973,12 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     const userMessage = mapErrorMessage(rawMsg);
 
     if (sseStarted) {
-      // SSE already started - send error via SSE stream
       try {
         sendSSEError(res, userMessage);
       } catch {
-        // Response may already be closed
+        // Response may already be closed.
       }
     } else {
-      // SSE not started - return normal JSON error
       return res.status(500).json({
         success: false,
         message: userMessage,

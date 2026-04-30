@@ -119,6 +119,13 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         });
       }
 
+      if (provider !== "openai") {
+        return res.status(400).json({
+          success: false,
+          message: "O agente agora usa apenas OpenAI Responses API.",
+        });
+      }
+
       // Build update data
       const updateData: Record<string, unknown> = {
         usuario_id: userId,
