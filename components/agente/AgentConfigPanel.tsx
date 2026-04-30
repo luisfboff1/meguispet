@@ -309,7 +309,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               value={isGpt5Model ? 1.0 : temperature}
               onChange={(e) => setTemperature(parseFloat(e.target.value))}
               disabled={isGpt5Model}
-              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-amber-500 dark:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
             />
             <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
               <span>Preciso (0)</span>
@@ -502,7 +502,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               variant="ghost"
               size="sm"
               onClick={handleAddMcpServer}
-              className="gap-1 text-xs text-slate-500 hover:text-slate-700"
+              className="gap-1 text-xs text-muted-foreground hover:text-foreground"
             >
               <Plus className="h-3 w-3" />
               Adicionar
@@ -511,7 +511,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
         </CardHeader>
         <CardContent>
           {mcpServers.length === 0 ? (
-            <p className="text-center text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-center text-xs text-muted-foreground">
               Nenhum servidor MCP configurado. Servidores MCP permitem estender as capacidades do agente.
             </p>
           ) : (
@@ -519,7 +519,7 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
               {mcpServers.map((srv, idx) => (
                 <div
                   key={idx}
-                  className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+                  className="space-y-2 rounded-lg border p-3"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -527,13 +527,13 @@ export function AgentConfigPanel({ config, onConfigChange }: AgentConfigPanelPro
                         checked={srv.enabled}
                         onCheckedChange={(v) => handleUpdateMcpServer(idx, 'enabled', v)}
                       />
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {srv.enabled ? 'Ativo' : 'Inativo'}
                       </span>
                     </div>
                     <button
                       onClick={() => handleRemoveMcpServer(idx)}
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

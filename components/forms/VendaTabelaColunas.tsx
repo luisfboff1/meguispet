@@ -77,7 +77,7 @@ export default function VendaTabelaColunas({ visibleColumns, onChange }: VendaTa
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700">Colunas Visíveis</h3>
+        <h3 className="text-sm font-semibold text-foreground">Colunas Visíveis</h3>
         <div className="flex gap-2">
           <Button
             type="button"
@@ -114,7 +114,7 @@ export default function VendaTabelaColunas({ visibleColumns, onChange }: VendaTa
             <Label
               htmlFor={`col-${coluna.key}`}
               className={`text-xs cursor-pointer ${
-                coluna.obrigatoria ? 'text-gray-400 cursor-not-allowed' : ''
+                coluna.obrigatoria ? 'text-muted-foreground cursor-not-allowed' : ''
               }`}
             >
               {coluna.label}
@@ -124,7 +124,7 @@ export default function VendaTabelaColunas({ visibleColumns, onChange }: VendaTa
         ))}
       </div>
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-muted-foreground">
         * Colunas marcadas com asterisco são obrigatórias e não podem ser ocultadas
       </p>
     </div>

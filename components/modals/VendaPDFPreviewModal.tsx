@@ -220,19 +220,19 @@ export default function VendaPDFPreviewModal({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl my-8 animate-fade-in">
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-6xl my-8 animate-fade-in">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FileText className="h-6 w-6 text-meguispet-primary" />
-              <h2 className="text-2xl font-semibold text-gray-900">
+              <h2 className="text-2xl font-semibold text-foreground">
                 Pré-visualização do Pedido #{venda.numero_venda || venda.id}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
@@ -245,7 +245,7 @@ export default function VendaPDFPreviewModal({
             {/* Preview do PDF - Coluna Esquerda/Principal */}
             <div className="lg:col-span-2 space-y-4">
               <Card>
-                <CardHeader className="bg-gray-50">
+                <CardHeader className="bg-muted">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs text-muted-foreground">MEGUISPET Produtos Pets LTDA</p>
@@ -331,17 +331,17 @@ export default function VendaPDFPreviewModal({
                         /* Tabela com novos campos de impostos */
                         <ScrollableContainer>
                           <table className="w-full text-xs">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-muted">
                               <tr>
                                 <th className="w-6 px-2 py-2"></th>
                                 <th className="text-left px-2 py-2 font-medium">Produto</th>
                                 <th className="text-right px-2 py-2 font-medium">Qtd</th>
                                 <th className="text-right px-2 py-2 font-medium">Preço</th>
                                 <th className="text-right px-2 py-2 font-medium">Subtotal</th>
-                                {valorDesconto > 0 && <th className="text-right px-2 py-2 font-medium text-red-600">Desc.</th>}
+                                <th className="text-right px-2 py-2 font-medium text-destructive">Desc.</th>
                                 <th className="text-right px-2 py-2 font-medium">Líquido</th>
                                 {totalIPI > 0 && <th className="text-right px-2 py-2 font-medium">IPI</th>}
-                                {totalICMS > 0 && <th className="text-right px-2 py-2 font-medium text-blue-600">ICMS*</th>}
+                                {totalICMS > 0 && <th className="text-right px-2 py-2 font-medium text-info">ICMS*</th>}
                                 {totalST > 0 && <th className="text-right px-2 py-2 font-medium">ST</th>}
                                 <th className="text-right px-2 py-2 font-medium">Total</th>
                               </tr>
@@ -354,19 +354,19 @@ export default function VendaPDFPreviewModal({
                                   onDragStart={() => handleDragStart(index)}
                                   onDragOver={(e) => handleDragOver(e, index)}
                                   onDragEnd={handleDragEnd}
-                                  className={`border-t transition-all cursor-move hover:bg-gray-50 ${
-                                    draggedIndex === index ? 'opacity-50 bg-blue-50' : ''
+                                  className={`border-t transition-all cursor-move hover:bg-muted ${
+                                    draggedIndex === index ? 'opacity-50 bg-info-muted' : ''
                                   }`}
                                 >
                                   <td className="px-2 py-2">
-                                    <GripVertical className="h-3 w-3 text-gray-400" />
+                                    <GripVertical className="h-3 w-3 text-muted-foreground" />
                                   </td>
                                   <td className="px-2 py-2">{item.produto?.nome || 'Produto sem nome'}</td>
                                   <td className="text-right px-2 py-2">{item.quantidade}</td>
                                   <td className="text-right px-2 py-2">{formatCurrency(item.preco_unitario)}</td>
                                   <td className="text-right px-2 py-2">{formatCurrency(item.subtotal_bruto || item.subtotal)}</td>
                                   {valorDesconto > 0 && (
-                                    <td className="text-right px-2 py-2 text-red-600">
+                                    <td className="text-right px-2 py-2 text-destructive">
                                       {item.desconto_proporcional ? `-${formatCurrency(item.desconto_proporcional)}` : '-'}
                                     </td>
                                   )}
@@ -377,7 +377,7 @@ export default function VendaPDFPreviewModal({
                                     <td className="text-right px-2 py-2">{item.ipi_valor ? formatCurrency(item.ipi_valor) : '-'}</td>
                                   )}
                                   {totalICMS > 0 && (
-                                    <td className="text-right px-2 py-2 text-blue-600">
+                                    <td className="text-right px-2 py-2 text-info">
                                       {item.icms_valor ? formatCurrency(item.icms_valor) : '-'}
                                     </td>
                                   )}
@@ -390,26 +390,26 @@ export default function VendaPDFPreviewModal({
                                 </tr>
                               ))}
                               {/* Linha de Totais */}
-                              <tr className="bg-gray-200 font-bold text-lg border-t-2 border-gray-400">
+                              <tr className="bg-muted font-bold text-lg border-t-2">
                                 <td className="px-2 py-3"></td>
                                 <td className="px-2 py-3">TOTAIS</td>
                                 <td className="text-right px-2 py-3"></td>
                                 <td className="text-right px-2 py-3"></td>
                                 <td className="text-right px-2 py-3">{formatCurrency(totalProdutos)}</td>
                                 {valorDesconto > 0 && (
-                                  <td className="text-right px-2 py-3 text-red-700">-{formatCurrency(valorDesconto)}</td>
+                                  <td className="text-right px-2 py-3 text-destructive">-{formatCurrency(valorDesconto)}</td>
                                 )}
                                 <td className="text-right px-2 py-3">{formatCurrency(totalProdutosLiquido)}</td>
                                 {totalIPI > 0 && (
                                   <td className="text-right px-2 py-3">{formatCurrency(totalIPI)}</td>
                                 )}
                                 {totalICMS > 0 && (
-                                  <td className="text-right px-2 py-3 text-blue-700">{formatCurrency(totalICMS)}</td>
+                                  <td className="text-right px-2 py-3 text-info">{formatCurrency(totalICMS)}</td>
                                 )}
                                 {totalST > 0 && (
                                   <td className="text-right px-2 py-3">{formatCurrency(totalST)}</td>
                                 )}
-                                <td className="text-right px-2 py-3 text-green-700">{formatCurrency(totalFinal)}</td>
+                                <td className="text-right px-2 py-3 text-success">{formatCurrency(totalFinal)}</td>
                               </tr>
                             </tbody>
                           </table>
@@ -418,11 +418,11 @@ export default function VendaPDFPreviewModal({
                         /* Tabela original simplificada */
                         <ScrollableContainer>
                           <table className="w-full text-sm">
-                          <thead className="bg-gray-50">
+                          <thead className="bg-muted">
                             <tr>
                               <th className="w-8 px-2 py-2"></th>
                               <th
-                                className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-accent transition-colors"
                                 onClick={() => handleSort('codigo')}
                               >
                                 <div className="flex items-center gap-1">
@@ -431,7 +431,7 @@ export default function VendaPDFPreviewModal({
                                 </div>
                               </th>
                               <th
-                                className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                className="text-left px-3 py-2 font-medium cursor-pointer hover:bg-accent transition-colors"
                                 onClick={() => handleSort('descricao')}
                               >
                                 <div className="flex items-center gap-1">
@@ -440,7 +440,7 @@ export default function VendaPDFPreviewModal({
                                 </div>
                               </th>
                               <th
-                                className="text-center px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                className="text-center px-3 py-2 font-medium cursor-pointer hover:bg-accent transition-colors"
                                 onClick={() => handleSort('quantidade')}
                               >
                                 <div className="flex items-center justify-center gap-1">
@@ -449,7 +449,7 @@ export default function VendaPDFPreviewModal({
                                 </div>
                               </th>
                               <th
-                                className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-accent transition-colors"
                                 onClick={() => handleSort('preco')}
                               >
                                 <div className="flex items-center justify-end gap-1">
@@ -458,7 +458,7 @@ export default function VendaPDFPreviewModal({
                                 </div>
                               </th>
                               <th
-                                className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-gray-100 transition-colors"
+                                className="text-right px-3 py-2 font-medium cursor-pointer hover:bg-accent transition-colors"
                                 onClick={() => handleSort('total')}
                               >
                                 <div className="flex items-center justify-end gap-1">
@@ -476,12 +476,12 @@ export default function VendaPDFPreviewModal({
                                 onDragStart={() => handleDragStart(index)}
                                 onDragOver={(e) => handleDragOver(e, index)}
                                 onDragEnd={handleDragEnd}
-                                className={`border-t transition-all cursor-move hover:bg-gray-50 ${
-                                  draggedIndex === index ? 'opacity-50 bg-blue-50' : ''
+                                className={`border-t transition-all cursor-move hover:bg-muted ${
+                                  draggedIndex === index ? 'opacity-50 bg-info-muted' : ''
                                 }`}
                               >
                                 <td className="px-2 py-2">
-                                  <GripVertical className="h-4 w-4 text-gray-400" />
+                                  <GripVertical className="h-4 w-4 text-muted-foreground" />
                                 </td>
                                 <td className="px-3 py-2">{item.produto?.id || '-'}</td>
                                 <td className="px-3 py-2">{item.produto?.nome || 'Produto sem nome'}</td>
@@ -509,7 +509,7 @@ export default function VendaPDFPreviewModal({
                               <span className="font-medium">{formatCurrency(totalProdutos)}</span>
                             </div>
                             {valorDesconto > 0 && (
-                              <div className="flex justify-between text-red-600">
+                              <div className="flex justify-between text-destructive">
                                 <span>Desconto:</span>
                                 <span className="font-medium">- {formatCurrency(valorDesconto)}</span>
                               </div>
@@ -519,9 +519,9 @@ export default function VendaPDFPreviewModal({
                               <span className="font-medium">{formatCurrency(totalProdutosLiquido)}</span>
                             </div>
                             
-                            <div className="flex justify-between text-lg font-bold border-t pt-2 bg-green-50 px-2 py-1 rounded">
+                            <div className="flex justify-between text-lg font-bold border-t pt-2 bg-success-muted px-2 py-1 rounded">
                               <span>TOTAL GERAL:</span>
-                              <span className="text-green-700">{formatCurrency(totalFinal)}</span>
+                              <span className="text-success">{formatCurrency(totalFinal)}</span>
                             </div>
                           </>
                         ) : (
@@ -534,7 +534,7 @@ export default function VendaPDFPreviewModal({
                             {valorDesconto > 0 && (
                               <div className="flex justify-between">
                                 <span>Desconto:</span>
-                                <span className="font-medium text-red-600">- {formatCurrency(valorDesconto)}</span>
+                                <span className="font-medium text-destructive">- {formatCurrency(valorDesconto)}</span>
                               </div>
                             )}
                             {options.incluirImpostos && hasImposto && (
@@ -559,10 +559,10 @@ export default function VendaPDFPreviewModal({
                   {options.incluirObservacoes && (venda.observacoes || options.observacoesAdicionais) && (
                     <div className="border-t pt-4">
                       <h4 className="text-sm font-semibold mb-2">OBSERVAÇÕES</h4>
-                      <div className="text-sm text-gray-700 space-y-1">
+                      <div className="text-sm text-foreground space-y-1">
                         {venda.observacoes && <p>{venda.observacoes}</p>}
                         {options.observacoesAdicionais && (
-                          <p className="text-blue-600 italic">{options.observacoesAdicionais}</p>
+                          <p className="text-info italic">{options.observacoesAdicionais}</p>
                         )}
                       </div>
                     </div>
@@ -572,7 +572,7 @@ export default function VendaPDFPreviewModal({
                   {hasNovosImpostos && (totalIPI > 0 || totalST > 0 || hasICMSST) && (
                     <div className="border-t pt-4">
                       <h4 className="text-sm font-semibold mb-3">INFORMAÇÕES FISCAIS</h4>
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                      <div className="bg-muted border rounded-lg p-3 space-y-2">
                         {/* IPI */}
                         {totalIPI > 0 && (
                           <div className="flex justify-between text-sm">
@@ -591,8 +591,8 @@ export default function VendaPDFPreviewModal({
                         
                         {/* Total de Impostos */}
                         <div className="flex justify-between text-base font-bold border-t pt-2 mt-2">
-                          <span className="text-orange-700">TOTAL DE IMPOSTOS:</span>
-                          <span className="text-orange-700">{formatCurrency(totalIPI + totalST)}</span>
+                          <span className="text-warning">TOTAL DE IMPOSTOS:</span>
+                          <span className="text-warning">{formatCurrency(totalIPI + totalST)}</span>
                         </div>
                       </div>
                       

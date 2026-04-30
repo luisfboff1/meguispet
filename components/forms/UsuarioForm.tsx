@@ -107,10 +107,10 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-foreground">
           {mode === 'edit' ? 'Editar Usuário' : 'Novo Usuário'}
         </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {mode === 'edit' 
             ? 'Atualize as informações do usuário e suas permissões de acesso'
             : 'Crie um novo usuário e defina suas permissões de acesso'
@@ -127,7 +127,7 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nome">
-              Nome Completo <span className="text-red-500">*</span>
+              Nome Completo <span className="text-destructive">*</span>
             </Label>
             <Input
               id="nome"
@@ -138,12 +138,12 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
               className={errors.nome ? 'border-red-500' : ''}
               disabled={loading}
             />
-            {errors.nome && <p className="text-sm text-red-500">{errors.nome}</p>}
+            {errors.nome && <p className="text-sm text-destructive">{errors.nome}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">
-              Email <span className="text-red-500">*</span>
+              Email <span className="text-destructive">*</span>
             </Label>
             <Input
               id="email"
@@ -154,12 +154,12 @@ export default function UsuarioForm({ onSubmit, onCancel, loading = false, initi
               className={errors.email ? 'border-red-500' : ''}
               disabled={loading}
             />
-            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">
-              Senha {mode === 'create' && <span className="text-red-500">*</span>}
+              Senha {mode === 'create' && <span className="text-destructive">*</span>}
             </Label>
             <Input
               id="password"

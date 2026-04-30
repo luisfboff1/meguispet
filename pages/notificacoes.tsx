@@ -61,10 +61,10 @@ export default function NotificacoesPage() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'warning': return 'bg-yellow-50 border-yellow-200'
-      case 'success': return 'bg-green-50 border-green-200'
-      case 'info': return 'bg-blue-50 border-blue-200'
-      default: return 'bg-gray-50 border-gray-200'
+      case 'warning': return 'bg-warning/10 border-warning/30'
+      case 'success': return 'bg-success/10 border-success/30'
+      case 'info': return 'bg-info/10 border-info/30'
+      default: return 'bg-muted border-border'
     }
   }
 
@@ -145,17 +145,17 @@ export default function NotificacoesPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-medium text-foreground">
                           {notification.title}
                         </h3>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          <div className="w-2 h-2 bg-destructive rounded-full"></div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-muted-foreground mt-2">
                         {notification.time}
                       </p>
                     </div>
@@ -175,7 +175,7 @@ export default function NotificacoesPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => deleteNotification(notification.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -188,13 +188,13 @@ export default function NotificacoesPage() {
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <Bell className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Bell className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               {filter === 'all' ? 'Nenhuma notificação' : 
                filter === 'unread' ? 'Nenhuma notificação não lida' : 
                'Nenhuma notificação lida'}
             </h3>
-            <p className="text-gray-600 text-center">
+            <p className="text-muted-foreground text-center">
               {filter === 'all' ? 'Você não tem notificações no momento' :
                filter === 'unread' ? 'Todas as suas notificações foram lidas' :
                'Você ainda não leu nenhuma notificação'}

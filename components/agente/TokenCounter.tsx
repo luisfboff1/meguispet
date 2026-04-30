@@ -24,7 +24,7 @@ export function TokenCounter({
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+        'flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-xs text-foreground',
         className
       )}
       title={`Total da conversa: ${inputTokens.toLocaleString()} input + ${outputTokens.toLocaleString()} output`}
@@ -33,7 +33,7 @@ export function TokenCounter({
       <span className="font-medium">
         {formatTokenCount(totalTokens)} tokens
       </span>
-      <span className="text-[10px] text-slate-400">
+      <span className="text-[10px] text-muted-foreground">
         ({formatTokenCount(inputTokens)} in / {formatTokenCount(outputTokens)} out)
       </span>
     </div>

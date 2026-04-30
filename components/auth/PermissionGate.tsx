@@ -84,7 +84,7 @@ export function PermissionGate({
     // Se é inline, mostrar mensagem pequena
     if (inline) {
       return (
-        <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
           <Lock className="h-4 w-4" />
           <span>Sem permissão</span>
         </div>
@@ -93,21 +93,21 @@ export function PermissionGate({
 
     // Senão, mostrar tela cheia de acesso negado
     return (
-      <div className="flex items-center justify-center min-h-[400px] bg-gray-50 dark:bg-gray-900">
-        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md">
-          <div className="mb-4 inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full">
-            <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+      <div className="flex items-center justify-center min-h-[400px] bg-muted">
+        <div className="text-center p-8 bg-card rounded-lg shadow-lg max-w-md">
+          <div className="mb-4 inline-flex items-center justify-center w-16 h-16 bg-destructive/20 rounded-full">
+            <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
 
-          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-bold mb-2 text-foreground">
             Acesso Negado
           </h2>
 
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-muted-foreground mb-4">
             Você não tem permissão para acessar esta funcionalidade.
           </p>
 
-          <p className="text-sm text-gray-500 dark:text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Entre em contato com o administrador se precisar de acesso.
           </p>
         </div>

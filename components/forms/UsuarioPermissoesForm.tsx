@@ -170,7 +170,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
             <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
               Sistema de Permissões Multi-Role
             </p>
-            <p className="text-blue-700 dark:text-blue-300">
+            <p className="text-info">
               Você pode atribuir múltiplos roles a um usuário (ex: vendedor + financeiro).
               As permissões serão mescladas (se qualquer role permite, a permissão é concedida).
               Você também pode customizar permissões individuais que sobrescrevem os roles.
@@ -285,7 +285,7 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
             <div className="space-y-3">
               {Object.entries(PERMISSION_GROUPS).map(([groupKey, group]) => (
                 <div key={groupKey}>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <p className="text-sm font-medium text-foreground mb-2">
                     {group.icon} {group.label}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -298,8 +298,8 @@ export function UsuarioPermissoesForm({ usuario, vendedores = [], onSubmit, onCa
                           key={perm}
                           className={`flex items-center gap-2 text-sm px-2 py-1 rounded ${
                             isGranted
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                              ? 'bg-success-muted text-success'
+                              : 'bg-destructive/10 text-destructive'
                           }`}
                         >
                           <span>{isGranted ? '✓' : '✗'}</span>

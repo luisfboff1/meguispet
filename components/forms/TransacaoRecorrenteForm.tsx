@@ -154,7 +154,7 @@ export function TransacaoRecorrenteForm({
           <div className="space-y-2">
             <Label htmlFor="categoria_id">Categoria</Label>
             <div className="relative">
-              <Tag className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+              <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
               <select
                 id="categoria_id"
                 value={formData.categoria_id || ''}
@@ -176,7 +176,7 @@ export function TransacaoRecorrenteForm({
           <div className="space-y-2">
             <Label htmlFor="valor">Valor *</Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="valor"
                 type="number"
@@ -190,7 +190,7 @@ export function TransacaoRecorrenteForm({
               />
             </div>
             {errors.valor && (
-              <p className="text-sm text-red-600">{errors.valor}</p>
+              <p className="text-sm text-destructive">{errors.valor}</p>
             )}
           </div>
 
@@ -198,7 +198,7 @@ export function TransacaoRecorrenteForm({
           <div className="space-y-2">
             <Label htmlFor="descricao">Descrição *</Label>
             <div className="relative">
-              <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="descricao"
                 placeholder="Ex: Aluguel mensal da loja"
@@ -209,7 +209,7 @@ export function TransacaoRecorrenteForm({
               />
             </div>
             {errors.descricao && (
-              <p className="text-sm text-red-600">{errors.descricao}</p>
+              <p className="text-sm text-destructive">{errors.descricao}</p>
             )}
           </div>
 
@@ -265,7 +265,7 @@ export function TransacaoRecorrenteForm({
                 />
               </div>
               {errors.data_inicio && (
-                <p className="text-sm text-red-600">{errors.data_inicio}</p>
+                <p className="text-sm text-destructive">{errors.data_inicio}</p>
               )}
             </div>
 
@@ -283,7 +283,7 @@ export function TransacaoRecorrenteForm({
               </div>
               <p className="text-xs text-gray-500">Deixe vazio para recorrência indefinida</p>
               {errors.data_fim && (
-                <p className="text-sm text-red-600">{errors.data_fim}</p>
+                <p className="text-sm text-destructive">{errors.data_fim}</p>
               )}
             </div>
           </div>
@@ -292,7 +292,7 @@ export function TransacaoRecorrenteForm({
           <div className="space-y-2">
             <Label htmlFor="observacoes">Observações</Label>
             <div className="relative">
-              <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <textarea
                 id="observacoes"
                 placeholder="Informações adicionais (opcional)"

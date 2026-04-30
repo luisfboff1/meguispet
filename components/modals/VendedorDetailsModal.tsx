@@ -86,15 +86,15 @@ export function VendedorDetailsModal({
   }
 
   const getVariationIcon = (variation: number) => {
-    if (variation > 0) return <TrendingUp className="h-4 w-4 text-green-600" />
-    if (variation < 0) return <TrendingDown className="h-4 w-4 text-red-600" />
+    if (variation > 0) return <TrendingUp className="h-4 w-4 text-success" />
+    if (variation < 0) return <TrendingDown className="h-4 w-4 text-destructive" />
     return null
   }
 
   const getVariationColor = (variation: number) => {
-    if (variation > 0) return 'text-green-600'
-    if (variation < 0) return 'text-red-600'
-    return 'text-gray-600'
+    if (variation > 0) return 'text-success'
+    if (variation < 0) return 'text-destructive'
+    return 'text-muted-foreground'
   }
 
   const handleVerVenda = (vendaId: number) => {
@@ -109,7 +109,7 @@ export function VendedorDetailsModal({
         accessorKey: 'numero_venda',
         header: ({ column }) => <SortableHeader column={column}>Nº Venda</SortableHeader>,
         cell: ({ row }) => (
-          <span className="font-medium text-gray-900 dark:text-white">
+          <span className="font-medium text-foreground">
             {row.original.numero_venda}
           </span>
         ),
@@ -118,7 +118,7 @@ export function VendedorDetailsModal({
         accessorKey: 'cliente',
         header: ({ column }) => <SortableHeader column={column}>Cliente</SortableHeader>,
         cell: ({ row }) => (
-          <span className="text-gray-700 dark:text-gray-300">
+          <span className="text-foreground">
             {row.original.cliente?.nome || 'Sem cliente'}
           </span>
         ),
@@ -128,8 +128,8 @@ export function VendedorDetailsModal({
         header: ({ column }) => <SortableHeader column={column}>Data</SortableHeader>,
         cell: ({ row }) => (
           <div className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
               {formatDate(row.original.data_venda)}
             </span>
           </div>
@@ -139,7 +139,7 @@ export function VendedorDetailsModal({
         accessorKey: 'valor_final',
         header: ({ column }) => <SortableHeader column={column}>Valor</SortableHeader>,
         cell: ({ row }) => (
-          <span className="font-bold text-green-600">
+          <span className="font-bold text-success">
             {formatCurrency(row.original.valor_final)}
           </span>
         ),
@@ -150,14 +150,14 @@ export function VendedorDetailsModal({
         cell: ({ row }) => {
           const status = row.original.status
           const statusColors: Record<string, string> = {
-            pago: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-            pendente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-            cancelado: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+            pago: 'bg-success-muted text-success-muted-foreground',
+            pendente: 'bg-warning-muted text-warning-muted-foreground',
+            cancelado: 'bg-destructive/15 text-destructive',
           }
           return (
             <span
               className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                statusColors[status] || 'bg-gray-100 text-gray-800'
+                statusColors[status] || 'bg-muted text-foreground'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -199,29 +199,29 @@ export function VendedorDetailsModal({
 
         <div className="space-y-6 mt-4">
           {/* Informações Básicas */}
-          <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
             <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
               {vendedor.email && (
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-700 dark:text-gray-300">{vendedor.email}</span>
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground">{vendedor.email}</span>
                 </div>
               )}
               {vendedor.telefone && (
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-700 dark:text-gray-300">{vendedor.telefone}</span>
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground">{vendedor.telefone}</span>
                 </div>
               )}
               {vendedor.cpf && (
                 <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-700 dark:text-gray-300">{vendedor.cpf}</span>
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground">{vendedor.cpf}</span>
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Percent className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-700 dark:text-gray-300">
+                <Percent className="h-4 w-4 text-muted-foreground" />
+                <span className="text-foreground">
                   Comissão: {vendedor.comissao}%
                 </span>
               </div>
@@ -312,10 +312,10 @@ export function VendedorDetailsModal({
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium truncate pr-2">Comissão Total</CardTitle>
-                    <Percent className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <Percent className="h-4 w-4 text-success flex-shrink-0" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600 whitespace-nowrap">
+                    <div className="text-2xl font-bold text-success whitespace-nowrap">
                       {formatCurrency(metricas.comissaoTotal)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 truncate">
@@ -328,7 +328,7 @@ export function VendedorDetailsModal({
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium truncate pr-2">Última Venda</CardTitle>
-                    <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                    <Clock className="h-4 w-4 text-info flex-shrink-0" />
                   </CardHeader>
                   <CardContent>
                     {metricas.ultimaVenda ? (
@@ -342,7 +342,7 @@ export function VendedorDetailsModal({
                         </p>
                       </>
                     ) : (
-                      <div className="text-sm text-gray-500">Nenhuma venda no período</div>
+                      <div className="text-sm text-muted-foreground">Nenhuma venda no período</div>
                     )}
                   </CardContent>
                 </Card>
@@ -413,7 +413,7 @@ export function VendedorDetailsModal({
                 {/* Filtros */}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Buscar nº venda..."
                       value={searchTerm}
@@ -461,7 +461,7 @@ export function VendedorDetailsModal({
                   {/* Paginação */}
                   {vendasData.totalPages > 1 && (
                     <div className="flex items-center justify-between mt-4">
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <div className="text-sm text-muted-foreground">
                         Mostrando {vendasData.vendas.length} de {vendasData.total} vendas
                       </div>
                       <div className="flex gap-2">
@@ -492,11 +492,11 @@ export function VendedorDetailsModal({
                 </>
               ) : (
                 <div className="text-center py-12">
-                  <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     Nenhuma venda encontrada
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-muted-foreground">
                     {searchTerm || statusFilter
                       ? 'Nenhuma venda corresponde aos filtros aplicados'
                       : 'Este vendedor ainda não realizou vendas no período selecionado'}

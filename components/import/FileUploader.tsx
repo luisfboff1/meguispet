@@ -96,9 +96,9 @@ export default function FileUploader({
             relative border-2 border-dashed rounded-lg p-8 text-center transition-all
             ${isDragging
               ? 'border-meguispet-primary bg-meguispet-primary/5'
-              : 'border-gray-300 hover:border-meguispet-primary hover:bg-gray-50'
+              : 'border-input hover:border-meguispet-primary hover:bg-muted'
             }
-            ${error ? 'border-red-300 bg-red-50' : ''}
+            ${error ? 'border-destructive bg-destructive/10' : ''}
           `}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -115,29 +115,29 @@ export default function FileUploader({
             <div className="flex justify-center">
               <div className={`
                 w-16 h-16 rounded-full flex items-center justify-center
-                ${isDragging ? 'bg-meguispet-primary text-white' : 'bg-gray-100 text-gray-400'}
+                ${isDragging ? 'bg-meguispet-primary text-white' : 'bg-muted text-muted-foreground'}
               `}>
                 <Upload className="w-8 h-8" />
               </div>
             </div>
 
             <div>
-              <p className="text-base font-medium text-gray-900">
+              <p className="text-base font-medium text-foreground">
                 {isDragging ? 'Solte o arquivo aqui' : 'Arraste o arquivo aqui'}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 ou <span className="text-meguispet-primary font-medium">clique para selecionar</span>
               </p>
             </div>
 
-            <div className="text-xs text-gray-500 space-y-1">
+            <div className="text-xs text-muted-foreground space-y-1">
               <p>Formatos aceitos: {accept}</p>
               <p>Tamanho máximo: {maxSizeMB}MB</p>
             </div>
           </div>
         </div>
       ) : (
-        <div className="border border-gray-200 rounded-lg p-4 bg-white">
+        <div className="border rounded-lg p-4 bg-card">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <div className="w-10 h-10 rounded-lg bg-meguispet-primary/10 flex items-center justify-center flex-shrink-0">
@@ -145,10 +145,10 @@ export default function FileUploader({
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {selectedFile.name}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {formatFileSize(selectedFile.size)}
                 </p>
               </div>
@@ -167,8 +167,8 @@ export default function FileUploader({
       )}
 
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="rounded-lg bg-destructive/10 border border-destructive p-3">
+          <p className="text-sm text-destructive-foreground">{error}</p>
         </div>
       )}
     </div>

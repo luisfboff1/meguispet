@@ -89,7 +89,7 @@ export function CategoriaFinanceiraForm({
           <div className="space-y-2">
             <Label htmlFor="nome">Nome da Categoria *</Label>
             <div className="relative">
-              <Type className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Type className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="nome"
                 placeholder="Ex: Marketing Digital"
@@ -100,7 +100,7 @@ export function CategoriaFinanceiraForm({
               />
             </div>
             {errors.nome && (
-              <p className="text-sm text-red-600">{errors.nome}</p>
+              <p className="text-sm text-destructive">{errors.nome}</p>
             )}
           </div>
 
@@ -143,7 +143,7 @@ export function CategoriaFinanceiraForm({
             <Label htmlFor="cor">Cor</Label>
             <div className="flex items-center space-x-3">
               <div className="relative flex-1">
-                <Palette className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Palette className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="cor"
                   type="text"
@@ -154,7 +154,7 @@ export function CategoriaFinanceiraForm({
                 />
               </div>
               <div 
-                className="w-10 h-10 rounded-md border-2 border-gray-300 dark:border-gray-600"
+                className="w-10 h-10 rounded-md border-2 border-border"
                 style={{ backgroundColor: formData.cor }}
               />
             </div>
@@ -164,7 +164,7 @@ export function CategoriaFinanceiraForm({
                   key={color.value}
                   type="button"
                   onClick={() => handleChange('cor', color.value)}
-                  className="w-8 h-8 rounded-md border-2 border-gray-300 dark:border-gray-600 hover:scale-110 transition-transform"
+                  className="w-8 h-8 rounded-md border-2 border-border hover:scale-110 transition-transform"
                   style={{ backgroundColor: color.value }}
                   title={color.label}
                 />
@@ -176,13 +176,13 @@ export function CategoriaFinanceiraForm({
           <div className="space-y-2">
             <Label htmlFor="descricao">Descrição</Label>
             <div className="relative">
-              <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <textarea
                 id="descricao"
                 placeholder="Descrição opcional da categoria"
                 value={formData.descricao}
                 onChange={(e) => handleChange('descricao', e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
                 rows={3}
               />
             </div>
@@ -195,7 +195,7 @@ export function CategoriaFinanceiraForm({
               id="ativo"
               checked={formData.ativo}
               onChange={(e) => handleChange('ativo', e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-border text-accent focus:ring-ring"
             />
             <Label htmlFor="ativo" className="cursor-pointer">
               Categoria Ativa

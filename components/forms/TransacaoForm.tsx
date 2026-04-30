@@ -190,7 +190,7 @@ export function TransacaoForm({
           <div className="space-y-2">
             <Label htmlFor="valor">Valor *</Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="valor"
                 type="number"
@@ -205,7 +205,7 @@ export function TransacaoForm({
               />
             </div>
             {errors.valor && (
-              <p className="text-sm text-red-600">{errors.valor}</p>
+              <p className="text-sm text-destructive">{errors.valor}</p>
             )}
           </div>
 
@@ -214,12 +214,12 @@ export function TransacaoForm({
             <div className="space-y-2">
               <Label htmlFor="venda_id">Vincular à Venda (opcional)</Label>
               <div className="relative">
-                <ShoppingBag className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+                <ShoppingBag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
                 <select
                   id="venda_id"
                   value={formData.venda_id || ''}
                   onChange={(e) => handleVendaSelect(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
                   disabled={loadingVendas}
                 >
                   <option value="">Nenhuma venda selecionada</option>
@@ -240,7 +240,7 @@ export function TransacaoForm({
           <div className="space-y-2">
             <Label htmlFor="descricao">Descrição *</Label>
             <div className="relative">
-              <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="descricao"
                 placeholder="Ex: Venda de ração premium"
@@ -251,7 +251,7 @@ export function TransacaoForm({
               />
             </div>
             {errors.descricao && (
-              <p className="text-sm text-red-600">{errors.descricao}</p>
+              <p className="text-sm text-destructive">{errors.descricao}</p>
             )}
           </div>
 
@@ -259,7 +259,7 @@ export function TransacaoForm({
           <div className="space-y-2">
             <Label htmlFor="categoria_id">Categoria *</Label>
             <div className="relative">
-              <Tag className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+              <Tag className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
               <select
                 id="categoria_id"
                 value={formData.categoria_id || ''}
@@ -285,7 +285,7 @@ export function TransacaoForm({
               </select>
             </div>
             {errors.categoria && (
-              <p className="text-sm text-red-600">{errors.categoria}</p>
+              <p className="text-sm text-destructive">{errors.categoria}</p>
             )}
             {loadingCategorias && (
               <p className="text-xs text-gray-500">Carregando categorias...</p>
@@ -296,7 +296,7 @@ export function TransacaoForm({
           <div className="space-y-2">
             <Label htmlFor="data_transacao">Data *</Label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="data_transacao"
                 type="date"
@@ -307,7 +307,7 @@ export function TransacaoForm({
               />
             </div>
             {errors.data_transacao && (
-              <p className="text-sm text-red-600">{errors.data_transacao}</p>
+              <p className="text-sm text-destructive">{errors.data_transacao}</p>
             )}
           </div>
 
@@ -315,7 +315,7 @@ export function TransacaoForm({
           <div className="space-y-2">
             <Label htmlFor="observacoes">Observações</Label>
             <div className="relative">
-              <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <textarea
                 id="observacoes"
                 placeholder="Informações adicionais (opcional)"

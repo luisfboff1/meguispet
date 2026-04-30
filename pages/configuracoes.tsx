@@ -205,7 +205,7 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="notificacoesEmail">Notificações por Email</Label>
-                <p className="text-sm text-gray-600">Receber notificações por email</p>
+                <p className="text-sm text-muted-foreground">Receber notificações por email</p>
               </div>
               <Switch
                 id="notificacoesEmail"
@@ -217,7 +217,7 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="notificacoesPush">Notificações Push</Label>
-                <p className="text-sm text-gray-600">Receber notificações no navegador</p>
+                <p className="text-sm text-muted-foreground">Receber notificações no navegador</p>
               </div>
               <Switch
                 id="notificacoesPush"
@@ -229,7 +229,7 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="notificacoesEstoque">Alertas de Estoque</Label>
-                <p className="text-sm text-gray-600">Notificar quando estoque estiver baixo</p>
+                <p className="text-sm text-muted-foreground">Notificar quando estoque estiver baixo</p>
               </div>
               <Switch
                 id="notificacoesEstoque"
@@ -241,7 +241,7 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="notificacoesVendas">Notificações de Vendas</Label>
-                <p className="text-sm text-gray-600">Notificar sobre novas vendas</p>
+                <p className="text-sm text-muted-foreground">Notificar sobre novas vendas</p>
               </div>
               <Switch
                 id="notificacoesVendas"
@@ -267,7 +267,7 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="autenticacao2FA">Autenticação 2FA</Label>
-                <p className="text-sm text-gray-600">Habilitar autenticação de dois fatores</p>
+                <p className="text-sm text-muted-foreground">Habilitar autenticação de dois fatores</p>
               </div>
               <Switch
                 id="autenticacao2FA"
@@ -366,7 +366,7 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="backupAutomatico">Backup Automático</Label>
-                <p className="text-sm text-gray-600">Fazer backup automático dos dados</p>
+                <p className="text-sm text-muted-foreground">Fazer backup automático dos dados</p>
               </div>
               <Switch
                 id="backupAutomatico"
@@ -378,7 +378,7 @@ export default function ConfiguracoesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="logsAuditoria">Logs de Auditoria</Label>
-                <p className="text-sm text-gray-600">Registrar atividades do sistema</p>
+                <p className="text-sm text-muted-foreground">Registrar atividades do sistema</p>
               </div>
               <Switch
                 id="logsAuditoria"
@@ -418,7 +418,7 @@ export default function ConfiguracoesPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoverFormaPagamento(forma.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

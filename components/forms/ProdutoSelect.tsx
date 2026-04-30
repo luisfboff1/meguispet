@@ -129,7 +129,7 @@ export function ProdutoSelect({
       {/* Input */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-gray-400" />
+          <Search className="h-4 w-4 text-muted-foreground" />
         </div>
 
         <input
@@ -155,8 +155,8 @@ export function ProdutoSelect({
           readOnly={!!selectedProduto}
           className={`
             w-full pl-10 pr-10 py-2 border rounded-md
-            ${error ? "border-red-500" : "border-gray-300"}
-            ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
+            ${error ? "border-destructive" : "border-input"}
+            ${disabled ? "bg-muted cursor-not-allowed" : "bg-card"}
             ${selectedProduto ? "cursor-default" : ""}
             focus:outline-none focus:ring-2 focus:ring-blue-500
           `}
@@ -167,7 +167,7 @@ export function ProdutoSelect({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-red-500"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-destructive"
           >
             <X className="h-4 w-4" />
           </button>
@@ -176,9 +176,9 @@ export function ProdutoSelect({
 
       {/* Dropdown */}
       {showDropdown && !selectedProduto && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-auto">
           {loading && (
-            <div className="p-3 text-center text-gray-500">
+            <div className="p-3 text-center text-muted-foreground">
               Carregando...
             </div>
           )}
@@ -204,11 +204,11 @@ export function ProdutoSelect({
                     onClick={() => handleSelect(produto)}
                     className="w-full text-left px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
                   >
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-foreground">
                       {produto.nome}
                     </div>
                     {produto.codigo_barras && (
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         Código: {produto.codigo_barras}
                       </div>
                     )}

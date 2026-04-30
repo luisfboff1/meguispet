@@ -731,14 +731,14 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
         </CardHeader>
         <CardContent>
           {errorMessage ? (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {errorMessage}
             </div>
           ) : null}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Número da Venda */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <Label htmlFor="numero_venda" className="text-sm font-medium text-blue-900">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4">
+            <Label htmlFor="numero_venda" className="text-sm font-medium text-foreground">
               Número da Venda / Pedido
             </Label>
             <Input
@@ -750,7 +750,7 @@ export default function VendaForm({ venda, onSubmit, onCancel, loading = false, 
               className="mt-1"
               required
             />
-            <p className="text-xs text-blue-600 mt-1">
+            <p className="text-xs text-info mt-1">
               Este número será usado para identificar a venda e emitir a NF-e
             </p>
           </div>

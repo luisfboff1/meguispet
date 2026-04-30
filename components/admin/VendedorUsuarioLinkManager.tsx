@@ -97,14 +97,14 @@ export function VendedorUsuarioLinkManager({
   return (
     <div className="space-y-6">
       {/* Header com Info */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="bg-info/10 border border-info rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <Users className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+          <Users className="h-5 w-5 text-info mt-0.5" />
           <div className="flex-1 text-sm">
-            <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+            <p className="font-medium text-info-foreground mb-1">
               Gerenciar Vinculação Vendedor ↔ Usuário
             </p>
-            <p className="text-blue-700 dark:text-blue-300">
+            <p className="text-info-foreground/90">
               Vincule vendedores existentes a usuários do sistema. Isso permite que eles façam login
               e vejam apenas suas vendas e clientes. Nem todo vendedor precisa ter um usuário.
             </p>
@@ -128,9 +128,9 @@ export function VendedorUsuarioLinkManager({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Com Usuário</p>
-              <p className="text-2xl font-bold text-green-600">{stats.linked}</p>
+              <p className="text-2xl font-bold text-success">{stats.linked}</p>
             </div>
-            <CheckCircle className="h-8 w-8 text-green-600" />
+            <CheckCircle className="h-8 w-8 text-success" />
           </div>
         </Card>
 
@@ -138,9 +138,9 @@ export function VendedorUsuarioLinkManager({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Sem Usuário</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.unlinked}</p>
+              <p className="text-2xl font-bold text-warning">{stats.unlinked}</p>
             </div>
-            <XCircle className="h-8 w-8 text-orange-600" />
+            <XCircle className="h-8 w-8 text-warning" />
           </div>
         </Card>
       </div>
@@ -213,12 +213,12 @@ export function VendedorUsuarioLinkManager({
 
                   <td className="px-4 py-3">
                     {vendedor.usuario_id ? (
-                      <Badge variant="default" className="bg-green-600">
+                      <Badge variant="default" className="bg-success">
                         <LinkIcon className="h-3 w-3 mr-1" />
                         Vinculado
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-orange-600 border-orange-600">
+                      <Badge variant="outline" className="text-warning border-warning">
                         <Unlink className="h-3 w-3 mr-1" />
                         Sem Vínculo
                       </Badge>
@@ -235,7 +235,7 @@ export function VendedorUsuarioLinkManager({
                           {vendedor.usuario.email}
                         </p>
                         {!vendedor.usuario.ativo && (
-                          <Badge variant="outline" className="text-red-600 text-xs mt-1">
+                          <Badge variant="outline" className="text-destructive text-xs mt-1">
                             Inativo
                           </Badge>
                         )}
@@ -298,7 +298,7 @@ export function VendedorUsuarioLinkManager({
 
       {/* Modal de Vinculação */}
       {selectedVendedorId && (
-        <Card className="p-6 border-2 border-blue-500">
+        <Card className="p-6 border-2 border-info">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Vincular Vendedor a Usuário</h3>
@@ -314,8 +314,8 @@ export function VendedorUsuarioLinkManager({
               </Button>
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
+            <div className="bg-info/10 rounded-lg p-3">
+              <p className="text-sm text-info-foreground">
                 <strong>Vendedor:</strong>{' '}
                 {vendedores.find(v => v.id === selectedVendedorId)?.nome}
               </p>

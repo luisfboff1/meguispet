@@ -144,11 +144,11 @@ export default function EstoqueAjusteDiretoModal({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">Ajuste Direto de Estoque</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">{produtoNome}</p>
+              <p className="text-sm text-muted-foreground mt-1">{produtoNome}</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -158,24 +158,24 @@ export default function EstoqueAjusteDiretoModal({
         <CardContent className="pt-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-info" />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Stock location breakdown */}
               {produtoEstoques.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs font-medium text-gray-500 mb-2">Estoque atual por localização:</p>
+                <div className="bg-muted rounded-lg p-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Estoque atual por localização:</p>
                   <div className="flex flex-wrap gap-2">
                     {produtoEstoques.map((pe) => (
                       <span
                         key={pe.estoque_id}
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                           pe.quantidade <= 0
-                            ? 'bg-red-100 text-red-800'
+                            ? 'bg-destructive/15 text-destructive'
                             : pe.quantidade <= 5
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
+                            ? 'bg-warning-muted text-warning-muted-foreground'
+                            : 'bg-success-muted text-success-muted-foreground'
                         }`}
                       >
                         {pe.nome}: {pe.quantidade}
@@ -187,13 +187,13 @@ export default function EstoqueAjusteDiretoModal({
 
               {/* Stock location select */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Localização do Estoque *
                 </label>
                 <select
                   value={estoqueId}
                   onChange={(e) => setEstoqueId(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full rounded-md border border-input px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                   required
                 >
                   <option value="">Selecione a localização...</option>
@@ -212,7 +212,7 @@ export default function EstoqueAjusteDiretoModal({
 
               {/* Adjustment type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Tipo de Ajuste *
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -221,8 +221,8 @@ export default function EstoqueAjusteDiretoModal({
                     onClick={() => setTipoAjuste('adicionar')}
                     className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                       tipoAjuste === 'adicionar'
-                        ? 'border-green-500 bg-green-50 text-green-700'
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                        ? 'border-success bg-success-muted text-success'
+                        : 'border-border text-foreground hover:bg-muted'
                     }`}
                   >
                     <Plus className="h-4 w-4" />
@@ -233,8 +233,8 @@ export default function EstoqueAjusteDiretoModal({
                     onClick={() => setTipoAjuste('remover')}
                     className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                       tipoAjuste === 'remover'
-                        ? 'border-red-500 bg-red-50 text-red-700'
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                        ? 'border-destructive bg-destructive/10 text-destructive'
+                        : 'border-border text-foreground hover:bg-muted'
                     }`}
                   >
                     <Minus className="h-4 w-4" />
@@ -245,8 +245,8 @@ export default function EstoqueAjusteDiretoModal({
                     onClick={() => setTipoAjuste('definir')}
                     className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                       tipoAjuste === 'definir'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                        ? 'border-info bg-info-muted text-info'
+                        : 'border-border text-foreground hover:bg-muted'
                     }`}
                   >
                     <Hash className="h-4 w-4" />
@@ -257,7 +257,7 @@ export default function EstoqueAjusteDiretoModal({
 
               {/* Quantity input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   {tipoAjuste === 'adicionar'
                     ? 'Quantidade a adicionar *'
                     : tipoAjuste === 'remover'
@@ -284,19 +284,19 @@ export default function EstoqueAjusteDiretoModal({
                 <div
                   className={`rounded-lg p-3 border ${
                     estoqueNovo < 0
-                      ? 'bg-red-50 border-red-200'
-                      : 'bg-blue-50 border-blue-200'
+                      ? 'bg-destructive/10 border-destructive/30'
+                      : 'bg-info-muted border-info/30'
                   }`}
                 >
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Estoque atual:</span>
+                    <span className="text-foreground">Estoque atual:</span>
                     <span className="font-semibold">{estoqueAtual}</span>
                   </div>
                   <div className="flex items-center justify-center my-1">
-                    <span className="text-gray-400">↓</span>
+                    <span className="text-muted-foreground">↓</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Novo estoque:</span>
+                    <span className="text-foreground">Novo estoque:</span>
                     <span
                       className={`font-bold text-lg ${
                         estoqueNovo < 0 ? 'text-red-600' : 'text-blue-600'

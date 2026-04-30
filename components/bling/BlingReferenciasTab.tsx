@@ -316,7 +316,7 @@ export function BlingReferenciasTab() {
             size="sm"
             variant="ghost"
             onClick={() => handleDelete(row.original.id)}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-destructive hover:text-destructive/80 hover:bg-destructive-muted"
           >
             <Trash2 className="h-3 w-3" />
           </Button>
@@ -470,10 +470,10 @@ export function BlingReferenciasTab() {
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                   placeholder="Descrição do produto no Bling"
-                  className={formErrors.descricao ? 'border-red-500' : ''}
+                  className={formErrors.descricao ? 'border-destructive' : ''}
                 />
                 {formErrors.descricao && (
-                  <p className="text-red-500 text-xs mt-1">{formErrors.descricao}</p>
+                  <p className="text-destructive text-xs mt-1">{formErrors.descricao}</p>
                 )}
               </div>
             </div>
@@ -489,7 +489,7 @@ export function BlingReferenciasTab() {
               </div>
 
               {formErrors.itens && (
-                <p className="text-red-500 text-sm">{formErrors.itens}</p>
+                <p className="text-destructive text-sm">{formErrors.itens}</p>
               )}
 
               {formData.itens.length === 0 ? (
@@ -509,7 +509,7 @@ export function BlingReferenciasTab() {
                           error={!!formErrors[`item_${index}_produto`]}
                         />
                         {formErrors[`item_${index}_produto`] && (
-                          <p className="text-red-500 text-xs mt-1">{formErrors[`item_${index}_produto`]}</p>
+                          <p className="text-destructive text-xs mt-1">{formErrors[`item_${index}_produto`]}</p>
                         )}
                       </div>
 
@@ -521,10 +521,10 @@ export function BlingReferenciasTab() {
                           value={item.quantidade}
                           onChange={(e) => handleUpdateItem(index, 'quantidade', parseFloat(e.target.value) || 0)}
                           placeholder="Qtd"
-                          className={formErrors[`item_${index}_quantidade`] ? 'border-red-500' : ''}
+                          className={formErrors[`item_${index}_quantidade`] ? 'border-destructive' : ''}
                         />
                         {formErrors[`item_${index}_quantidade`] && (
-                          <p className="text-red-500 text-xs mt-1">{formErrors[`item_${index}_quantidade`]}</p>
+                          <p className="text-destructive text-xs mt-1">{formErrors[`item_${index}_quantidade`]}</p>
                         )}
                       </div>
 
@@ -532,7 +532,7 @@ export function BlingReferenciasTab() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleRemoveItem(index)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-destructive hover:text-destructive/80 hover:bg-destructive-muted"
                       >
                         <X className="h-4 w-4" />
                       </Button>

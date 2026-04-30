@@ -190,7 +190,7 @@ export default function ClienteImportModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50">
       <Card className="w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <CardHeader className="border-b border-gray-200 flex-shrink-0">
+        <CardHeader className="border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -230,8 +230,8 @@ export default function ClienteImportModal({
 
               {selectedFile && (
                 <>
-                  <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-4">Configurações</h3>
+                    <div className="border-t pt-6">
+                    <h3 className="text-sm font-semibold text-foreground mb-4">Configurações</h3>
                     <ImportConfigForm
                       config={config}
                       onChange={setConfig}
@@ -239,19 +239,19 @@ export default function ClienteImportModal({
                     />
                   </div>
 
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-900 font-medium mb-2">
+                  <div className="border-t pt-6">
+                    <div className="bg-info-muted border border-info/30 rounded-lg p-4">
+                      <p className="text-sm text-foreground font-medium mb-2">
                         💡 Dica: Baixe o template de exemplo
                       </p>
-                      <p className="text-xs text-blue-700 mb-3">
+                      <p className="text-xs text-muted-foreground mb-3">
                         Use nosso template para garantir que seu arquivo está no formato correto
                       </p>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleDownloadTemplate}
-                        className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                        className="border-border"
                       >
                         <FileDown className="w-4 h-4 mr-2" />
                         Baixar Template
@@ -262,8 +262,8 @@ export default function ClienteImportModal({
               )}
 
               {error && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-                  <p className="text-sm text-red-800">{error}</p>
+                <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4">
+                  <p className="text-sm text-destructive">{error}</p>
                 </div>
               )}
             </div>
@@ -282,8 +282,8 @@ export default function ClienteImportModal({
                   Voltar
                 </Button>
 
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium text-gray-900">{previewData.resumo.total}</span> registros encontrados
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">{previewData.resumo.total}</span> registros encontrados
                 </div>
               </div>
 
@@ -294,8 +294,8 @@ export default function ClienteImportModal({
               />
 
               {error && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-                  <p className="text-sm text-red-800">{error}</p>
+                <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4">
+                  <p className="text-sm text-destructive">{error}</p>
                 </div>
               )}
             </div>
@@ -305,8 +305,8 @@ export default function ClienteImportModal({
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-12 h-12 text-meguispet-primary animate-spin mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Importando clientes...</h3>
-              <p className="text-sm text-gray-600">Por favor, aguarde. Isso pode levar alguns segundos.</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Importando clientes...</h3>
+              <p className="text-sm text-muted-foreground">Por favor, aguarde. Isso pode levar alguns segundos.</p>
             </div>
           )}
 
@@ -323,7 +323,7 @@ export default function ClienteImportModal({
 
         {/* Footer com ações */}
         {(step === 'upload' || step === 'preview') && (
-          <div className="border-t border-gray-200 p-6 flex-shrink-0">
+          <div className="border-t p-6 flex-shrink-0">
             <div className="flex items-center justify-between gap-4">
               <Button
                 variant="outline"
@@ -354,7 +354,7 @@ export default function ClienteImportModal({
                 <Button
                   onClick={handleExecuteImport}
                   disabled={loading || previewData.registros.filter(r => r.selecionado).length === 0}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-success hover:bg-success/90"
                 >
                   ✅ Importar {previewData.registros.filter(r => r.selecionado).length} clientes
                 </Button>

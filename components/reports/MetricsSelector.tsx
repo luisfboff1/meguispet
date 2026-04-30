@@ -270,7 +270,7 @@ export const MetricsSelector: React.FC<MetricsSelectorProps> = ({
                   type="checkbox"
                   checked={!!metrics[metric.key]}
                   onChange={() => handleMetricToggle(metric.key)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
+                  className="mt-0.5 h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
                 />
                 <div className="flex-1 space-y-0.5">
                   <div className="text-sm font-medium leading-none">
@@ -306,7 +306,7 @@ export const MetricsSelector: React.FC<MetricsSelectorProps> = ({
                   type="checkbox"
                   checked={!!charts[chart.key]}
                   onChange={() => handleChartToggle(chart.key)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
+                  className="mt-0.5 h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
                 />
                 <div className="flex-1 space-y-0.5">
                   <div className="text-sm font-medium leading-none">

@@ -420,10 +420,10 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                         <td className="p-2 text-sm text-right">
                           <span className={`font-medium ${
                             (produto.margemLucro || 0) > 20
-                              ? 'text-green-600'
+                              ? 'text-success'
                               : (produto.margemLucro || 0) > 10
-                                ? 'text-yellow-600'
-                                : 'text-red-600'
+                                ? 'text-warning'
+                                : 'text-destructive'
                           }`}>
                             {formatNumber(produto.margemLucro || 0, 1)}%
                           </span>
@@ -496,10 +496,10 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                           <td className="p-2 text-sm text-center">
                             <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                               venda.status === 'pago'
-                                ? 'bg-green-50 text-green-700'
+                                ? 'bg-success-muted text-success'
                                 : venda.status === 'cancelado'
-                                  ? 'bg-red-50 text-red-700'
-                                  : 'bg-yellow-50 text-yellow-700'
+                                  ? 'bg-destructive-muted text-destructive'
+                                  : 'bg-warning-muted text-warning'
                             }`}>
                               {venda.status}
                             </span>
@@ -588,10 +588,10 @@ export const VendasReportViewer: React.FC<VendasReportViewerProps> = ({
                         <span
                           className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                             venda.status === 'pago'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              ? 'bg-success-muted text-success'
                               : venda.status === 'pendente'
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                              ? 'bg-warning-muted text-warning'
+                              : 'bg-destructive-muted text-destructive'
                           }`}
                         >
                           {venda.status}

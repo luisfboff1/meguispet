@@ -279,19 +279,19 @@ export function VendedorDashboard() {
               {vendas.slice(0, 5).map((venda) => (
                 <div
                   key={venda.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
                 >
                   <div>
                     <p className="font-medium">Venda #{venda.id}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {new Date(venda.data_venda).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600">
+                    <p className="font-bold text-success">
                       {formatCurrency(venda.valor_final)}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {venda.status || 'Concluída'}
                     </p>
                   </div>
@@ -299,7 +299,7 @@ export function VendedorDashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-muted-foreground py-8">
               Nenhuma venda registrada ainda
             </p>
           )}
@@ -327,21 +327,21 @@ export function VendedorDashboard() {
               {clientes.slice(0, 5).map((cliente) => (
                 <div
                   key={cliente.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
                 >
                   <div>
                     <p className="font-medium">{cliente.nome}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {cliente.email || cliente.telefone || 'Sem contato'}
                     </p>
                   </div>
                   <div>
                     {cliente.ativo ? (
-                      <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                      <span className="inline-block px-2 py-1 bg-success-muted text-success text-xs rounded-full">
                         Ativo
                       </span>
                     ) : (
-                      <span className="inline-block px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                      <span className="inline-block px-2 py-1 bg-muted text-foreground text-xs rounded-full">
                         Inativo
                       </span>
                     )}
@@ -350,7 +350,7 @@ export function VendedorDashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-muted-foreground py-8">
               Nenhum cliente cadastrado ainda
             </p>
           )}

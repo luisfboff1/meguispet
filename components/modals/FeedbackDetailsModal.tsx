@@ -68,20 +68,20 @@ export default function FeedbackDetailsModal({
 
   const getTipoBadgeColor = (tipo: string) => {
     const colors = {
-      bug: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-      melhoria: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-      funcionalidade: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-      outro: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+      bug: 'bg-destructive/15 text-destructive',
+      melhoria: 'bg-warning-muted text-warning-muted-foreground',
+      funcionalidade: 'bg-info-muted text-info-muted-foreground',
+      outro: 'bg-muted text-foreground'
     }
     return colors[tipo as keyof typeof colors] || colors.outro
   }
 
   const getPrioridadeBadgeColor = (prioridade: string) => {
     const colors = {
-      baixa: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
-      media: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-      alta: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-      critica: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+      baixa: 'bg-muted text-foreground',
+      media: 'bg-info-muted text-info-muted-foreground',
+      alta: 'bg-warning-muted text-warning-muted-foreground',
+      critica: 'bg-destructive/15 text-destructive'
     }
     return colors[prioridade as keyof typeof colors] || colors.media
   }
@@ -91,7 +91,7 @@ export default function FeedbackDetailsModal({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-2">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-foreground">
             {ticket.titulo}
           </h2>
           <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function FeedbackDetailsModal({
             <span className={`rounded-full px-3 py-1 text-xs font-medium ${getPrioridadeBadgeColor(ticket.prioridade)}`}>
               {ticket.prioridade}
             </span>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+            <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">
               {ticket.status.replace('_', ' ')}
             </span>
           </div>
@@ -112,7 +112,7 @@ export default function FeedbackDetailsModal({
             size="sm"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="text-destructive hover:bg-destructive/10"
           >
             <Trash2 size={16} />
             <span className="ml-2">{isDeleting ? 'Excluindo...' : 'Excluir'}</span>
@@ -122,8 +122,8 @@ export default function FeedbackDetailsModal({
 
       {/* Description */}
       <div className="space-y-2">
-        <h3 className="font-semibold text-slate-900 dark:text-white">Descrição</h3>
-        <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">
+        <h3 className="font-semibold text-foreground">Descrição</h3>
+        <p className="whitespace-pre-wrap text-sm text-muted-foreground">
           {ticket.descricao}
         </p>
       </div>
@@ -131,14 +131,14 @@ export default function FeedbackDetailsModal({
       {/* Attachments */}
       {ticket.anexos && ticket.anexos.length > 0 && (
         <div className="space-y-2">
-          <h3 className="font-semibold text-slate-900 dark:text-white">
+          <h3 className="font-semibold text-foreground">
             Anexos ({ticket.anexos.length})
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {ticket.anexos.map((anexo) => (
               <div
                 key={anexo.id}
-                className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
+                className="overflow-hidden rounded-lg border border-border"
               >
                 {anexo.conteudo_base64 && anexo.tipo_arquivo.startsWith('image/') ? (
                   <div className="space-y-2">
@@ -148,22 +148,22 @@ export default function FeedbackDetailsModal({
                       alt={anexo.nome_arquivo}
                       className="h-48 w-full object-cover"
                     />
-                    <p className="px-2 pb-2 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="px-2 pb-2 text-xs text-muted-foreground">
                       {anexo.nome_arquivo}
                     </p>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                      <span className="text-sm font-semibold text-foreground">
                         📎
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {anexo.nome_arquivo}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-muted-foreground">
                         {anexo.tipo_arquivo}
                       </p>
                     </div>
@@ -178,24 +178,24 @@ export default function FeedbackDetailsModal({
       {/* Comments */}
       {ticket.comentarios && ticket.comentarios.length > 0 && (
         <div className="space-y-3">
-          <h3 className="font-semibold text-slate-900 dark:text-white">
+          <h3 className="font-semibold text-foreground">
             Comentários ({ticket.comentarios.length})
           </h3>
           <div className="space-y-3">
             {ticket.comentarios.map((comentario) => (
               <div
                 key={comentario.id}
-                className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+                className="rounded-lg border border-border bg-muted p-3"
               >
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">
+                  <span className="text-sm font-medium text-foreground">
                     {comentario.usuario?.nome || 'Usuário'}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-muted-foreground">
                     {formatDate(comentario.created_at)}
                   </span>
                 </div>
-                <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
+                <p className="whitespace-pre-wrap text-sm text-foreground">
                   {comentario.comentario}
                 </p>
               </div>
@@ -206,8 +206,8 @@ export default function FeedbackDetailsModal({
 
       {/* Add Comment */}
       {onAddComment && (
-        <div className="space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700">
-          <h3 className="font-semibold text-slate-900 dark:text-white">
+        <div className="space-y-3 border-t pt-4">
+          <h3 className="font-semibold text-foreground">
             <Edit2 size={16} className="mr-2 inline" />
             Adicionar Comentário
           </h3>
@@ -234,7 +234,7 @@ export default function FeedbackDetailsModal({
       )}
 
       {/* Metadata */}
-      <div className="border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+      <div className="border-t pt-4 text-xs text-muted-foreground">
         <p>Criado por: {ticket.usuario?.nome || 'Usuário'}</p>
         <p>Data de criação: {formatDate(ticket.created_at)}</p>
         {ticket.updated_at !== ticket.created_at && (

@@ -185,11 +185,11 @@ export default function ProdutoDetalhes() {
     if (!produto) return { text: '', color: '', bgColor: '' }
     
     if (produto.estoque === 0) {
-      return { text: 'Sem Estoque', color: 'text-red-600', bgColor: 'bg-red-100' }
+      return { text: 'Sem Estoque', color: 'text-destructive', bgColor: 'bg-destructive/10' }
     } else if (produto.estoque <= produto.estoque_minimo) {
-      return { text: 'Estoque Baixo', color: 'text-yellow-600', bgColor: 'bg-yellow-100' }
+      return { text: 'Estoque Baixo', color: 'text-warning', bgColor: 'bg-warning/10' }
     } else {
-      return { text: 'Em Estoque', color: 'text-green-600', bgColor: 'bg-green-100' }
+      return { text: 'Em Estoque', color: 'text-success', bgColor: 'bg-success/10' }
     }
   }
 
@@ -197,8 +197,8 @@ export default function ProdutoDetalhes() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando produto...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-info mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Carregando produto...</p>
         </div>
       </div>
     )
@@ -220,11 +220,11 @@ export default function ProdutoDetalhes() {
         
         <Card>
           <CardContent className="p-8 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">
               {error || 'Produto não encontrado'}
             </h2>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               O produto que você está procurando não foi encontrado ou houve um erro ao carregá-lo.
             </p>
           </CardContent>
@@ -251,8 +251,8 @@ export default function ProdutoDetalhes() {
             Voltar
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{produto.nome}</h1>
-            <p className="text-sm text-gray-500">{produto.categoria || 'Sem categoria'}</p>
+            <h1 className="text-xl font-bold text-foreground">{produto.nome}</h1>
+            <p className="text-sm text-muted-foreground">{produto.categoria || 'Sem categoria'}</p>
           </div>
         </div>
         
@@ -270,10 +270,10 @@ export default function ProdutoDetalhes() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium truncate pr-2">Preço de Venda</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600 flex-shrink-0" />
+            <DollarSign className="h-4 w-4 text-success flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600 whitespace-nowrap">
+            <div className="text-2xl font-bold text-success whitespace-nowrap">
               {formatCurrency(produto.preco_venda)}
             </div>
             <p className="text-xs text-muted-foreground truncate">Preço ao cliente</p>
@@ -283,10 +283,10 @@ export default function ProdutoDetalhes() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium truncate pr-2">Preço de Custo</CardTitle>
-            <Package className="h-4 w-4 text-blue-600 flex-shrink-0" />
+            <Package className="h-4 w-4 text-info flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600 whitespace-nowrap">
+            <div className="text-2xl font-bold text-info whitespace-nowrap">
               {formatCurrency(produto.preco_custo)}
             </div>
             <p className="text-xs text-muted-foreground truncate">Preço médio ponderado</p>
@@ -361,7 +361,7 @@ export default function ProdutoDetalhes() {
             
             <div className="flex justify-between">
               <span className="font-medium">Ativo:</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${produto.ativo ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${produto.ativo ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
                 {produto.ativo ? 'Sim' : 'Não'}
               </span>
             </div>
@@ -376,14 +376,14 @@ export default function ProdutoDetalhes() {
           <CardContent className="space-y-4">
             <div className="flex justify-between">
               <span className="font-medium">Valor Total Venda:</span>
-              <span className="font-semibold text-green-600">
+              <span className="font-semibold text-success">
                 {formatCurrency(produto.preco_venda * produto.estoque)}
               </span>
             </div>
             
             <div className="flex justify-between">
               <span className="font-medium">Valor Total Custo:</span>
-              <span className="font-semibold text-blue-600">
+              <span className="font-semibold text-info">
                 {formatCurrency(produto.preco_custo * produto.estoque)}
               </span>
             </div>

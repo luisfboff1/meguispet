@@ -402,7 +402,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
                     <div>
                       <div>{label}</div>
                       {item.ehProjecao && (
-                        <div className="text-xs text-blue-500 font-medium">Projeção</div>
+                        <div className="text-xs text-info font-medium">Projeção</div>
                       )}
                     </div>
                   )
@@ -652,7 +652,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <div className="text-xs text-muted-foreground mb-1">
                 Receitas do Período
               </div>
-              <div className="text-sm sm:text-lg font-bold text-green-600 break-words">
+              <div className="text-sm sm:text-lg font-bold text-success break-words">
                 {formatCurrency(periodTotals.receitas)}
               </div>
             </div>
@@ -660,7 +660,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <div className="text-xs text-muted-foreground mb-1">
                 Despesas do Período
               </div>
-              <div className="text-sm sm:text-lg font-bold text-red-600 break-words">
+              <div className="text-sm sm:text-lg font-bold text-destructive break-words">
                 {formatCurrency(periodTotals.despesas)}
               </div>
             </div>
@@ -668,7 +668,7 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
               <div className="text-xs text-muted-foreground mb-1">
                 Fluxo do Período
               </div>
-              <div className={`text-sm sm:text-lg font-bold break-words ${periodTotals.fluxo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <div className={`text-sm sm:text-lg font-bold break-words ${periodTotals.fluxo >= 0 ? 'text-info' : 'text-destructive'}`}>
                 {formatCurrency(periodTotals.fluxo)}
               </div>
             </div>
@@ -677,11 +677,11 @@ const CustomizableFinanceiroChart = React.memo(function CustomizableFinanceiroCh
           {/* Legenda de Projeção */}
           <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <div className="h-3 w-8 border-2 border-blue-500"></div>
+              <div className="h-3 w-8 border-2 border-info"></div>
               <span>Dados Históricos</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-3 w-8 border-2 border-blue-500 border-dashed"></div>
+              <div className="h-3 w-8 border-2 border-info border-dashed"></div>
               <span>Projeções Futuras</span>
             </div>
           </div>

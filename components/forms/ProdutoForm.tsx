@@ -279,7 +279,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                   placeholder="Ex: 1700100"
                   maxLength={7}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Código Especificador (7 dígitos)
                 </p>
               </div>
@@ -292,7 +292,7 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                   id="origem"
                   value={fiscalData.origem_mercadoria}
                   onChange={(e) => setFiscalData(prev => ({ ...prev, origem_mercadoria: Number(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value={0}>0 - Nacional</option>
                   <option value={1}>1 - Estrangeira - Importação direta</option>
@@ -497,17 +497,17 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
                         }`}>
                           {variacao !== 0 ? `${variacao > 0 ? '+' : ''}${variacao.toFixed(2)}%` : '-'}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-700">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-muted-foreground">
                           {hist.preco_venda_anterior !== null ?
                             new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(hist.preco_venda_anterior)
                             : '-'}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-semibold text-foreground">
                           {hist.preco_venda_novo !== null ?
                             new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(hist.preco_venda_novo)
                             : '-'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
                           {hist.observacao || '-'}
                         </td>
                       </tr>
@@ -518,9 +518,9 @@ export default function ProdutoForm({ produto, onSubmit, onCancel, loading = fal
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8">
-              <History className="h-12 w-12 text-gray-400 mb-2" />
-              <p className="text-gray-500">Nenhum histórico de preços disponível</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <History className="h-12 w-12 text-muted-foreground mb-2" />
+              <p className="text-muted-foreground">Nenhum histórico de preços disponível</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
                 O histórico será registrado automaticamente quando houver alterações de preço
               </p>
             </div>

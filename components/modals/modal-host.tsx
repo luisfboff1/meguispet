@@ -328,11 +328,11 @@ export function ModalHost() {
           <div className="space-y-4">
             {payload.title && (
               <div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-xl font-semibold text-foreground">
                   {payload.title}
                 </h3>
                 {payload.description && (
-                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     {payload.description}
                   </p>
                 )}
@@ -378,17 +378,17 @@ export function ModalHost() {
             animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { y: 24, opacity: 0, scale: 0.98 }}
             transition={{ duration: shouldReduceMotion ? 0.12 : 0.28, ease: MODAL_EASE }}
-            className="relative w-full max-w-2xl my-auto overflow-hidden rounded-3xl border border-white/40 bg-white/95 p-6 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.35)] backdrop-blur-2xl dark:border-slate-800/60 dark:bg-slate-950/90 max-h-[calc(100vh-2rem)]"
+            className="relative w-full max-w-2xl my-auto overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.35)] backdrop-blur-2xl max-h-[calc(100vh-2rem)]"
           >
             <button
               ref={closeButtonRef}
               onClick={close}
-              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-transparent bg-white/70 text-slate-500 transition hover:bg-white hover:text-slate-900 dark:bg-slate-900/70 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-transparent bg-muted text-muted-foreground transition hover:bg-card hover:text-foreground"
               aria-label="Fechar modal"
             >
               <X size={18} />
             </button>
-            <div className="modal-form-container max-h-[calc(100vh-8rem)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+            <div className="modal-form-container max-h-[calc(100vh-8rem)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
               {renderModalContent()}
             </div>
           </motion.div>

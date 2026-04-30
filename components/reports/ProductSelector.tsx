@@ -206,7 +206,7 @@ export const ProductSelector: React.FC<ProductSelectorProps> = ({
                       type="checkbox"
                       checked={selectedIds.includes(produto.id)}
                       onChange={() => handleProductToggle(produto.id)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
+                      className="mt-0.5 h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">

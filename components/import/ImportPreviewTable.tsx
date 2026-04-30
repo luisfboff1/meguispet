@@ -59,23 +59,23 @@ export default function ImportPreviewTable({
   const getStatusIcon = (status: ClientePreview['status']) => {
     switch (status) {
       case 'valido':
-        return <Check className="w-5 h-5 text-green-600" />
+        return <Check className="w-5 h-5 text-success" />
       case 'aviso':
-        return <AlertCircle className="w-5 h-5 text-amber-600" />
+        return <AlertCircle className="w-5 h-5 text-warning" />
       case 'erro':
-        return <XCircle className="w-5 h-5 text-red-600" />
+        return <XCircle className="w-5 h-5 text-destructive" />
       case 'duplicata':
-        return <RefreshCw className="w-5 h-5 text-blue-600" />
+        return <RefreshCw className="w-5 h-5 text-info" />
     }
   }
 
   // Badge de status
   const getStatusBadge = (status: ClientePreview['status']) => {
     const classes = {
-      valido: 'bg-green-100 text-green-800',
-      aviso: 'bg-amber-100 text-amber-800',
-      erro: 'bg-red-100 text-red-800',
-      duplicata: 'bg-blue-100 text-blue-800'
+      valido: 'bg-success/10 text-success',
+      aviso: 'bg-warning/10 text-warning',
+      erro: 'bg-destructive/10 text-destructive',
+      duplicata: 'bg-info/10 text-info'
     }
 
     const labels = {
@@ -95,32 +95,32 @@ export default function ImportPreviewTable({
   return (
     <div className="space-y-4">
       {/* Header com estatísticas e filtros */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-muted/50 rounded-lg border">
         <div className="space-y-2">
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-sm font-medium text-foreground">
               {stats.total} registros
             </span>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-muted-foreground">
               {stats.selecionados} selecionados
             </span>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap text-xs">
             <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <div className="w-2 h-2 rounded-full bg-success"></div>
               {stats.validos} válidos
             </span>
             <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+              <div className="w-2 h-2 rounded-full bg-warning"></div>
               {stats.avisos} avisos
             </span>
             <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+              <div className="w-2 h-2 rounded-full bg-destructive"></div>
               {stats.erros} erros
             </span>
             <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <div className="w-2 h-2 rounded-full bg-info"></div>
               {stats.duplicatas} duplicatas
             </span>
           </div>
@@ -134,13 +134,13 @@ export default function ImportPreviewTable({
               onChange={onToggleSelectAll}
               className="w-4 h-4 rounded border-gray-300 text-meguispet-primary focus:ring-meguispet-primary"
             />
-            <span className="text-gray-700">Selecionar todos</span>
+            <span className="text-foreground">Selecionar todos</span>
           </label>
 
           <select
             value={filtro}
             onChange={(e) => setFiltro(e.target.value as typeof filtro)}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-meguispet-primary focus:border-transparent"
+            className="px-3 py-1.5 text-sm border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-meguispet-primary focus:border-transparent"
           >
             <option value="todos">Todos</option>
             <option value="validos">Válidos ({stats.validos})</option>
@@ -152,41 +152,41 @@ export default function ImportPreviewTable({
       </div>
 
       {/* Tabela */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-hidden">
         <div className="max-h-[500px] overflow-y-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0 z-10">
+          <table className="min-w-full divide-y">
+            <thead className="bg-muted sticky top-0 z-10">
               <tr>
                 <th className="w-10 px-3 py-3 text-left"></th>
                 <th className="w-12 px-3 py-3 text-left">
-                  <span className="text-xs font-medium text-gray-500 uppercase">ST</span>
+                  <span className="text-xs font-medium text-muted-foreground uppercase">ST</span>
                 </th>
                 <th className="px-3 py-3 text-left">
-                  <span className="text-xs font-medium text-gray-500 uppercase">Nome</span>
+                  <span className="text-xs font-medium text-muted-foreground uppercase">Nome</span>
                 </th>
                 <th className="px-3 py-3 text-left">
-                  <span className="text-xs font-medium text-gray-500 uppercase">CNPJ/CPF</span>
+                  <span className="text-xs font-medium text-muted-foreground uppercase">CNPJ/CPF</span>
                 </th>
                 <th className="px-3 py-3 text-left">
-                  <span className="text-xs font-medium text-gray-500 uppercase">Cidade/UF</span>
+                  <span className="text-xs font-medium text-muted-foreground uppercase">Cidade/UF</span>
                 </th>
                 <th className="px-3 py-3 text-left">
-                  <span className="text-xs font-medium text-gray-500 uppercase">CEP</span>
+                  <span className="text-xs font-medium text-muted-foreground uppercase">CEP</span>
                 </th>
                 <th className="w-10 px-3 py-3"></th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y">
               {registrosFiltrados.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground">
                     Nenhum registro encontrado com o filtro selecionado
                   </td>
                 </tr>
               ) : (
                 registrosFiltrados.map((registro) => (
                   <React.Fragment key={registro.linha}>
-                    <tr className={`hover:bg-gray-50 ${!registro.selecionado ? 'opacity-60' : ''}`}>
+                    <tr className={`hover:bg-muted/50 ${!registro.selecionado ? 'opacity-60' : ''}`}>
                       <td className="px-3 py-3">
                         <input
                           type="checkbox"
@@ -200,30 +200,30 @@ export default function ImportPreviewTable({
                         {getStatusIcon(registro.status)}
                       </td>
                       <td className="px-3 py-3">
-                        <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
+                        <div className="text-sm font-medium text-foreground max-w-xs truncate">
                           {registro.dados.processado.nome}
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           {registro.dados.processado.documento || '-'}
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           {registro.dados.processado.cidade}, {registro.dados.processado.estado}
                         </div>
                       </td>
                       <td className="px-3 py-3">
                         {registro.validacoes.cep.encontrado ? (
                           <div className="text-sm">
-                            <div className="text-gray-900">{registro.validacoes.cep.valor}</div>
+                            <div className="text-foreground">{registro.validacoes.cep.valor}</div>
                             {registro.validacoes.cep.aproximado && (
-                              <div className="text-xs text-amber-600">Aproximado</div>
+                              <div className="text-xs text-warning">Aproximado</div>
                             )}
                           </div>
                         ) : (
-                          <div className="text-xs text-gray-400">Não encontrado</div>
+                          <div className="text-xs text-muted-foreground">Não encontrado</div>
                         )}
                       </td>
                       <td className="px-3 py-3">
@@ -244,26 +244,26 @@ export default function ImportPreviewTable({
                     {/* Linha expandida com detalhes */}
                     {expandedRows.has(registro.linha) && (
                       <tr>
-                        <td colSpan={7} className="px-3 py-4 bg-gray-50">
+                        <td colSpan={7} className="px-3 py-4 bg-muted/50">
                           <div className="space-y-3">
                             <div className="flex items-start justify-between">
                               <div>
-                                <p className="text-xs font-medium text-gray-500 mb-1">Status</p>
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Status</p>
                                 {getStatusBadge(registro.status)}
                               </div>
                               <div className="text-right">
-                                <p className="text-xs font-medium text-gray-500 mb-1">Linha</p>
-                                <p className="text-sm text-gray-900">#{registro.linha}</p>
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Linha</p>
+                                <p className="text-sm text-foreground">#{registro.linha}</p>
                               </div>
                             </div>
 
                             {registro.mensagens.length > 0 && (
                               <div>
-                                <p className="text-xs font-medium text-gray-500 mb-2">Mensagens:</p>
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Mensagens:</p>
                                 <ul className="space-y-1">
                                   {registro.mensagens.map((msg, idx) => (
-                                    <li key={idx} className="text-xs text-gray-700 flex items-start gap-2">
-                                      <span className="text-gray-400">•</span>
+                                    <li key={idx} className="text-xs text-foreground flex items-start gap-2">
+                                      <span className="text-muted-foreground">•</span>
                                       <span>{msg}</span>
                                     </li>
                                   ))}
@@ -273,15 +273,15 @@ export default function ImportPreviewTable({
 
                             {registro.validacoes.cep.endereco && (
                               <div>
-                                <p className="text-xs font-medium text-gray-500 mb-1">Endereço encontrado:</p>
-                                <p className="text-sm text-gray-700">{registro.validacoes.cep.endereco}</p>
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Endereço encontrado:</p>
+                                <p className="text-sm text-foreground">{registro.validacoes.cep.endereco}</p>
                               </div>
                             )}
 
                             {registro.duplicata && (
-                              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                <p className="text-xs font-medium text-blue-900 mb-1">Duplicata detectada</p>
-                                <p className="text-xs text-blue-700">
+                              <div className="p-3 bg-info/10 border border-info rounded-lg">
+                                <p className="text-xs font-medium text-info mb-1">Duplicata detectada</p>
+                                <p className="text-xs text-info">
                                   Cliente já existe: {registro.duplicata.nome} (ID: {registro.duplicata.clienteExistente})
                                 </p>
                               </div>

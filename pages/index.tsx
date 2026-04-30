@@ -19,12 +19,12 @@ export default function HomePage() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-muted flex items-center justify-center">
       <div className="text-center">
         <div className="w-16 h-16 bg-meguispet-primary rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
           <span className="text-white font-bold text-2xl">M</span>
         </div>
-        <p className="text-gray-600">Carregando...</p>
+        <p className="text-muted-foreground">Carregando...</p>
       </div>
     </div>
   )

@@ -292,7 +292,7 @@ export default function EstoqueOperacaoForm({
       <Card className="w-full max-w-3xl mx-auto">
         <CardContent className="flex items-center justify-center py-10 space-x-3">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="text-sm text-gray-600">Carregando dados da operação...</span>
+          <span className="text-sm text-muted-foreground">Carregando dados da operação...</span>
         </CardContent>
       </Card>
     )
@@ -310,22 +310,22 @@ export default function EstoqueOperacaoForm({
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
                 {tipo === 'entrada' ? (
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <TrendingUp className="h-5 w-5 text-success" />
                 ) : tipo === 'saida' ? (
-                  <TrendingDown className="h-5 w-5 text-red-600" />
+                  <TrendingDown className="h-5 w-5 text-destructive" />
                 ) : (
-                  <RefreshCcw className="h-5 w-5 text-amber-600" />
+                  <RefreshCcw className="h-5 w-5 text-warning" />
                 )}
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Tipo da Operação</p>
-                  <p className="text-xs text-gray-500">Escolha o fluxo que mais se adequa ao contexto</p>
+                  <p className="text-sm font-medium text-foreground">Tipo da Operação</p>
+                  <p className="text-xs text-muted-foreground">Escolha o fluxo que mais se adequa ao contexto</p>
                 </div>
               </div>
               {allowTipoSwitch && (
                 <select
                   value={tipo}
                   onChange={(event) => setTipo(event.target.value as EstoqueOperacaoTipo)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm md:w-56"
+                  className="w-full rounded-md border border-input px-3 py-2 text-sm md:w-56"
                 >
                     {tipoSelectOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -356,12 +356,12 @@ export default function EstoqueOperacaoForm({
           </section>
 
           {showStockSelection && (
-            <section className="rounded-lg border border-dashed border-gray-200 p-4">
+            <section className="rounded-lg border border-dashed border-border p-4">
               <div className="flex items-center gap-2 pb-3">
-                <Warehouse className="h-5 w-5 text-indigo-600" />
+                <Warehouse className="h-5 w-5 text-accent-foreground" />
                 <div>
                   <h3 className="text-sm font-semibold">Localização de Estoque</h3>
-                  <p className="text-xs text-gray-500">Defina os estoques de origem e destino da movimentação</p>
+                  <p className="text-xs text-muted-foreground">Defina os estoques de origem e destino da movimentação</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -401,12 +401,12 @@ export default function EstoqueOperacaoForm({
             </section>
           )}
 
-          <section className="rounded-lg border border-dashed border-gray-200 p-4">
+          <section className="rounded-lg border border-dashed border-border p-4">
             <div className="flex items-center gap-2 pb-3">
-              <Users className="h-5 w-5 text-sky-600" />
+              <Users className="h-5 w-5 text-info" />
               <div>
                 <h3 className="text-sm font-semibold">Participantes da operação</h3>
-                <p className="text-xs text-gray-500">Selecione os envolvidos conforme o tipo</p>
+                <p className="text-xs text-muted-foreground">Selecione os envolvidos conforme o tipo</p>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -414,7 +414,7 @@ export default function EstoqueOperacaoForm({
                 <div>
                   <Label htmlFor="fornecedor_id">Fornecedor</Label>
                   <div className="mt-1 flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-gray-500" />
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
                     <select
                       id="fornecedor_id"
                       value={participante.fornecedor_id ?? ''}
@@ -441,7 +441,7 @@ export default function EstoqueOperacaoForm({
                 <div>
                   <Label htmlFor="cliente_id">Cliente</Label>
                   <div className="mt-1 flex items-center gap-2">
-                    <Users className="h-4 w-4 text-gray-500" />
+                    <Users className="h-4 w-4 text-muted-foreground" />
                     <select
                       id="cliente_id"
                       value={participante.cliente_id ?? ''}
@@ -468,7 +468,7 @@ export default function EstoqueOperacaoForm({
                 <div>
                   <Label htmlFor="vendedor_id">Vendedor</Label>
                   <div className="mt-1 flex items-center gap-2">
-                    <UserCheck className="h-4 w-4 text-gray-500" />
+                    <UserCheck className="h-4 w-4 text-muted-foreground" />
                     <select
                       id="vendedor_id"
                       value={participante.vendedor_id ?? ''}
@@ -494,12 +494,12 @@ export default function EstoqueOperacaoForm({
           </section>
 
           <section className="space-y-4">
-            <div className="rounded-lg border border-dashed border-gray-200 p-4">
+            <div className="rounded-lg border border-dashed border-border p-4">
               <div className="flex items-center gap-2 pb-3">
-                <Package className="h-5 w-5 text-purple-600" />
+                <Package className="h-5 w-5 text-accent-foreground" />
                 <div>
                   <h3 className="text-sm font-semibold">Itens da operação</h3>
-                  <p className="text-xs text-gray-500">Adicione produtos e ajuste quantidades/valores conforme necessário</p>
+                  <p className="text-xs text-muted-foreground">Adicione produtos e ajuste quantidades/valores conforme necessário</p>
                 </div>
               </div>
 
@@ -557,8 +557,8 @@ export default function EstoqueOperacaoForm({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm shadow-sm">
-                <span className="font-medium text-gray-600">
+              <div className="flex items-center justify-between rounded-md bg-card px-3 py-2 text-sm shadow-sm">
+                <span className="font-medium text-muted-foreground">
                   Total sugerido:{' '}
                   {formatCurrency(
                     Math.max(0, produtoAtual.quantidade) * Math.max(0, produtoAtual.preco_unitario)
@@ -574,22 +574,22 @@ export default function EstoqueOperacaoForm({
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200">
+            <div className="rounded-lg border border-border">
               <ScrollableContainer>
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border text-sm">
+                  <thead className="bg-muted">
                     <tr>
-                      <th className="px-4 py-2 text-left font-medium text-gray-500">Produto</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-500">Quantidade</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-500">Preço unitário</th>
-                      <th className="px-4 py-2 text-left font-medium text-gray-500">Subtotal</th>
-                      <th className="px-4 py-2 text-right font-medium text-gray-500">Ações</th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground">Produto</th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground">Quantidade</th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground">Preço unitário</th>
+                      <th className="px-4 py-2 text-left font-medium text-muted-foreground">Subtotal</th>
+                      <th className="px-4 py-2 text-right font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-border">
                     {itens.length === 0 ? (
                       <tr>
-                        <td className="px-4 py-3 text-center text-sm text-gray-500" colSpan={5}>
+                        <td className="px-4 py-3 text-center text-sm text-muted-foreground" colSpan={5}>
                           Nenhum item adicionado ainda.
                         </td>
                       </tr>
@@ -597,10 +597,10 @@ export default function EstoqueOperacaoForm({
                       itens.map((item, index) => (
                         <tr key={`${item.produto_id}-${index}`}>
                           <td className="px-4 py-2">
-                            <div className="font-medium text-gray-700">
+                            <div className="font-medium text-foreground">
                               {item.produto_nome || produtos.find((p) => p.id === item.produto_id)?.nome || 'Produto'}
                             </div>
-                            <p className="text-xs text-gray-500">ID: {item.produto_id}</p>
+                            <p className="text-xs text-muted-foreground">ID: {item.produto_id}</p>
                           </td>
                           <td className="px-4 py-2">
                             <Input
@@ -619,14 +619,14 @@ export default function EstoqueOperacaoForm({
                               onChange={(event) => handleChangeItemPreco(index, Number(event.target.value))}
                             />
                           </td>
-                          <td className="px-4 py-2 font-medium text-gray-700">
+                          <td className="px-4 py-2 font-medium text-foreground">
                             {formatCurrency(item.valor_total)}
                           </td>
                           <td className="px-4 py-2 text-right">
                             <Button
                               type="button"
                               variant="ghost"
-                              className="text-red-600 hover:text-red-700"
+                              className="text-destructive hover:text-destructive/80"
                               onClick={() => handleRemoverItem(index)}
                             >
                               Remover
@@ -641,26 +641,26 @@ export default function EstoqueOperacaoForm({
             </div>
           </section>
 
-          <section className="rounded-lg border border-dashed border-gray-200 p-4">
+          <section className="rounded-lg border border-dashed border-border p-4">
             <div className="flex items-center gap-2 pb-3">
-              <ListChecks className="h-5 w-5 text-emerald-600" />
+              <ListChecks className="h-5 w-5 text-success" />
               <div>
                 <h3 className="text-sm font-semibold">Resumo da operação</h3>
-                <p className="text-xs text-gray-500">Visão geral dos itens adicionados</p>
+                <p className="text-xs text-muted-foreground">Visão geral dos itens adicionados</p>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="rounded-md border border-gray-200 p-3">
-                <p className="text-xs uppercase text-gray-500">Itens</p>
-                <p className="text-lg font-semibold text-gray-900">{totalItens}</p>
+              <div className="rounded-md border border-border p-3">
+                <p className="text-xs uppercase text-muted-foreground">Itens</p>
+                <p className="text-lg font-semibold text-foreground">{totalItens}</p>
               </div>
-              <div className="rounded-md border border-gray-200 p-3">
-                <p className="text-xs uppercase text-gray-500">Quantidade total</p>
-                <p className="text-lg font-semibold text-gray-900">{totalQuantidade}</p>
+              <div className="rounded-md border border-border p-3">
+                <p className="text-xs uppercase text-muted-foreground">Quantidade total</p>
+                <p className="text-lg font-semibold text-foreground">{totalQuantidade}</p>
               </div>
-              <div className="rounded-md border border-gray-200 p-3">
-                <p className="text-xs uppercase text-gray-500">Valor total</p>
-                <p className="text-lg font-semibold text-gray-900">{formatCurrency(totalValor)}</p>
+              <div className="rounded-md border border-border p-3">
+                <p className="text-xs uppercase text-muted-foreground">Valor total</p>
+                <p className="text-lg font-semibold text-foreground">{formatCurrency(totalValor)}</p>
               </div>
             </div>
           </section>
@@ -675,7 +675,7 @@ export default function EstoqueOperacaoForm({
               }
               placeholder="Anote detalhes relevantes para esta operação"
               rows={3}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-md border border-input px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </section>
 

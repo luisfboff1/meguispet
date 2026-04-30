@@ -137,36 +137,36 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
   const getTipoIcon = (tipo: string) => {
     switch (tipo.toUpperCase()) {
       case 'VENDA':
-        return <ShoppingCart className="h-4 w-4 text-blue-600" />
+        return <ShoppingCart className="h-4 w-4 text-info" />
       case 'COMPRA':
       case 'ENTRADA':
-        return <TrendingUp className="h-4 w-4 text-green-600" />
+        return <TrendingUp className="h-4 w-4 text-success" />
       case 'AJUSTE':
       case 'AJUSTE_MANUAL':
-        return <FileText className="h-4 w-4 text-yellow-600" />
+        return <FileText className="h-4 w-4 text-warning" />
       case 'ESTORNO':
       case 'DEVOLUCAO':
-        return <TrendingDown className="h-4 w-4 text-orange-600" />
+        return <TrendingDown className="h-4 w-4 text-warning" />
       default:
-        return <Package className="h-4 w-4 text-gray-600" />
+        return <Package className="h-4 w-4 text-muted-foreground" />
     }
   }
 
   const getTipoBadgeColor = (tipo: string) => {
     switch (tipo.toUpperCase()) {
       case 'VENDA':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-info-muted text-info'
       case 'COMPRA':
       case 'ENTRADA':
-        return 'bg-green-100 text-green-800'
+        return 'bg-success-muted text-success'
       case 'AJUSTE':
       case 'AJUSTE_MANUAL':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-warning-muted text-warning-muted-foreground'
       case 'ESTORNO':
       case 'DEVOLUCAO':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-warning-muted text-warning-muted-foreground'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-foreground'
     }
   }
 
@@ -289,7 +289,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                 variant="outline"
                 size="sm"
                 onClick={() => setShowAjusteModal(true)}
-                className="text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                className="text-warning border-warning/30 hover:bg-warning-muted"
               >
                 <Settings2 className="h-4 w-4 mr-1.5" />
                 Ajustar Estoque
@@ -310,7 +310,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                 onClick={() => setActiveTab('timeline')}
                 className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'timeline'
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-info text-info'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -320,7 +320,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                 onClick={() => setActiveTab('grafico')}
                 className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === 'grafico'
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-info text-info'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -335,7 +335,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                 <select
                   value={filtroLocal}
                   onChange={(e) => setFiltroLocal(e.target.value)}
-                  className="text-sm border border-border rounded-md px-2 py-1 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="text-sm border border-border rounded-md px-2 py-1 bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="todos">Todos os locais</option>
                   {locais.map((l) => (
@@ -352,7 +352,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
         <CardContent className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-info"></div>
               <span className="ml-3 text-muted-foreground">Carregando histórico...</span>
             </div>
           ) : activeTab === 'timeline' ? (
@@ -367,7 +367,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                   <div
                     key={item.id}
                     className={`flex items-start gap-4 p-4 rounded-lg border ${
-                      item.quantidade_mudanca > 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                      item.quantidade_mudanca > 0 ? 'bg-success-muted border-success/30' : 'bg-destructive/10 border-destructive/30'
                     }`}
                   >
                     {/* Icon */}
@@ -405,7 +405,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                       )}
 
                       {item.operacao_id && (
-                        <p className="text-xs text-blue-600 mt-1">
+                        <p className="text-xs text-info mt-1">
                           🔗 Operação #{item.operacao_id}
                         </p>
                       )}
@@ -435,7 +435,7 @@ export default function EstoqueHistoricoModal({ produtoId, produtoNome, onClose,
                     <CardContent className="pt-4 pb-4">
                       <div className="text-center">
                         <p className="text-xs text-muted-foreground">Estoque Atual</p>
-                        <p className="text-xl font-bold text-blue-600 mt-1">
+                        <p className="text-xl font-bold text-info mt-1">
                           {estoqueAtual.reduce((sum, e) => sum + e.quantidade, 0)}
                         </p>
                       </div>

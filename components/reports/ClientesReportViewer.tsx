@@ -79,13 +79,13 @@ export function ClientesReportViewer({
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Clientes Ativos</CardDescription>
-            <CardTitle className="text-3xl text-green-600">{data.resumo.clientesAtivos}</CardTitle>
+            <CardTitle className="text-3xl text-success">{data.resumo.clientesAtivos}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Novos Clientes</CardDescription>
-            <CardTitle className="text-3xl text-blue-600">{data.resumo.novosClientes}</CardTitle>
+            <CardTitle className="text-3xl text-info">{data.resumo.novosClientes}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -230,8 +230,8 @@ export function ClientesReportViewer({
                         <span className={cn(
                           'inline-flex rounded-full px-2 py-1 text-xs font-medium',
                           cliente.status === 'ativo'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-success-muted text-success'
+                            : 'bg-muted text-foreground'
                         )}>
                           {cliente.status}
                         </span>

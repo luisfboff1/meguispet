@@ -16,20 +16,20 @@ export function ContextWindowIndicator({
 
   const barColor =
     percentage >= 80
-      ? 'bg-red-500'
+      ? 'bg-destructive'
       : percentage >= 60
         ? 'bg-amber-500'
-        : 'bg-emerald-500'
+        : 'bg-success'
 
   return (
     <div
       className={cn(
-        'flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400',
+        'flex items-center gap-2 text-xs text-muted-foreground',
         className
       )}
     >
       <span>Contexto</span>
-      <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+      <div className="h-2 w-20 overflow-hidden rounded-full bg-muted">
         <div
           className={cn('h-full rounded-full transition-all duration-300', barColor)}
           style={{ width: `${percentage}%` }}

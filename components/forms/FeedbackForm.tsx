@@ -43,10 +43,10 @@ const tipoOptions: { value: FeedbackTipo; label: string; description: string }[]
 ]
 
 const prioridadeOptions: { value: FeedbackPrioridade; label: string; color: string }[] = [
-  { value: 'baixa', label: 'Baixa', color: 'text-slate-600' },
-  { value: 'media', label: 'Média', color: 'text-blue-600' },
-  { value: 'alta', label: 'Alta', color: 'text-orange-600' },
-  { value: 'critica', label: 'Crítica', color: 'text-red-600' }
+  { value: 'baixa', label: 'Baixa', color: 'text-muted-foreground' },
+  { value: 'media', label: 'Média', color: 'text-info' },
+  { value: 'alta', label: 'Alta', color: 'text-warning' },
+  { value: 'critica', label: 'Crítica', color: 'text-destructive' }
 ]
 
 export default function FeedbackForm({ onSubmit, onCancel, loading = false }: FeedbackFormProps) {
@@ -153,16 +153,16 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-foreground">
           Criar Feedback
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-muted-foreground">
           Reporte bugs, sugira melhorias ou novas funcionalidades
         </p>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-300">
+        <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
           <AlertCircle size={16} />
           {error}
         </div>
@@ -186,7 +186,7 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
                 <SelectItem key={option.value} value={option.value}>
                   <div>
                     <div className="font-medium">{option.label}</div>
-                    <div className="text-xs text-slate-500">{option.description}</div>
+                    <div className="text-xs text-muted-foreground">{option.description}</div>
                   </div>
                 </SelectItem>
               ))}
@@ -257,7 +257,7 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
               {pastedImages.map((base64, index) => (
                 <div
                   key={index}
-                  className="group relative overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
+                  className="group relative overflow-hidden rounded-lg border border-border"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -268,7 +268,7 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
                   <button
                     type="button"
                     onClick={() => removePastedImage(index)}
-                    className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition hover:bg-red-600 group-hover:opacity-100"
+                    className="absolute right-2 top-2 rounded-full bg-destructive p-1 text-white opacity-0 transition hover:bg-destructive/80 group-hover:opacity-100"
                   >
                     <X size={14} />
                   </button>
@@ -308,7 +308,7 @@ export default function FeedbackForm({ onSubmit, onCancel, loading = false }: Fe
               {uploadedFiles.map((file, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+                  className="flex items-center justify-between rounded-lg border border-border bg-muted p-3"
                 >
                   <div className="flex items-center gap-3">
                     <ImagePlus size={18} className="text-slate-400" />

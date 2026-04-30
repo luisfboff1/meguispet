@@ -131,9 +131,9 @@ export default function ClientesMap({
 
   if (markers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[600px] bg-gray-50 rounded-lg">
-        <MapPin className="h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-gray-600 text-center">
+      <div className="flex flex-col items-center justify-center h-[600px] bg-muted rounded-lg">
+        <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-center">
           Nenhum cliente com localização disponível
         </p>
       </div>
@@ -176,25 +176,25 @@ export default function ClientesMap({
                   <div className="space-y-1 text-sm">
                     {marker.cidade && marker.estado && (
                       <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
                         <span>{marker.cidade}, {marker.estado}</span>
                       </div>
                     )}
                     {marker.telefone && (
                       <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-gray-500" />
+                        <Phone className="h-4 w-4 text-muted-foreground" />
                         <span>{marker.telefone}</span>
                       </div>
                     )}
                     {marker.email && (
                       <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-gray-500" />
+                        <Mail className="h-4 w-4 text-muted-foreground" />
                         <span className="text-xs">{marker.email}</span>
                       </div>
                     )}
                     {marker.vendedor_nome && (
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-500" />
+                        <User className="h-4 w-4 text-muted-foreground" />
                         <span>Vendedor: {marker.vendedor_nome}</span>
                       </div>
                     )}

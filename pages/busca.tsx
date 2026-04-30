@@ -165,7 +165,7 @@ export default function BuscaPage() {
         <CardContent className="pt-6">
           <form onSubmit={handleSearch} className="flex gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
               <Input
                 placeholder="Buscar vendas, clientes, produtos..."
                 value={searchTerm}
@@ -206,10 +206,10 @@ export default function BuscaPage() {
                         <IconComponent className="h-6 w-6 text-meguispet-primary" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-medium text-foreground">
                           {result.title}
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {result.description}
                         </p>
                         <div className="flex items-center space-x-4 mt-2">
@@ -229,9 +229,9 @@ export default function BuscaPage() {
       ) : searchTerm ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <Search className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum resultado encontrado</h3>
-            <p className="text-gray-600 text-center">
+            <Search className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum resultado encontrado</h3>
+            <p className="text-muted-foreground text-center">
               Tente usar termos diferentes ou verifique a ortografia
             </p>
           </CardContent>
@@ -239,9 +239,9 @@ export default function BuscaPage() {
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <Search className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Digite algo para buscar</h3>
-            <p className="text-gray-600 text-center">
+            <Search className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Digite algo para buscar</h3>
+            <p className="text-muted-foreground text-center">
               Use a barra de busca acima para encontrar vendas, clientes ou produtos
             </p>
           </CardContent>

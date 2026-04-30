@@ -393,8 +393,8 @@ function NfeDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             NFe {nfe.numero ? `Nº ${nfe.numero}` : `ID ${nfe.bling_id}`}
-            {nfe.serie != null && <span className="text-sm text-gray-500 font-normal">Série {nfe.serie}</span>}
-            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${sit?.color || 'bg-gray-100 text-gray-700'}`}>
+            {nfe.serie != null && <span className="text-sm text-muted-foreground font-normal">Série {nfe.serie}</span>}
+            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${sit?.color || 'bg-muted text-foreground'}`}>
               {sit?.label || nfe.situacao_nome || `ID ${nfe.situacao}`}
             </span>
           </DialogTitle>
@@ -490,19 +490,19 @@ function NfeDetailDialog({
               <div className="flex flex-wrap gap-3">
                 {nfe.danfe_url && (
                   <a href={nfe.danfe_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors">
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium text-info hover:bg-info-muted transition-colors">
                     <FileText className="h-4 w-4" /> DANFE
                   </a>
                 )}
                 {nfe.xml_url && (
                   <a href={nfe.xml_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium text-green-600 hover:bg-green-50 transition-colors">
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium text-success hover:bg-success-muted transition-colors">
                     <Download className="h-4 w-4" /> XML
                   </a>
                 )}
                 {nfe.pdf_url && (
                   <a href={nfe.pdf_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium text-destructive hover:bg-destructive-muted transition-colors">
                     <ExternalLink className="h-4 w-4" /> PDF
                   </a>
                 )}
@@ -766,7 +766,7 @@ export default function BlingPage() {
       accessorKey: 'numero',
       header: ({ column }) => <SortableHeader column={column}>Número</SortableHeader>,
       cell: ({ row }) => (
-        <span className="font-medium text-gray-900 dark:text-gray-100">
+        <span className="font-medium text-foreground">
           {row.original.numero || '-'}
         </span>
       ),
@@ -775,7 +775,7 @@ export default function BlingPage() {
       accessorKey: 'data_emissao',
       header: ({ column }) => <SortableHeader column={column}>Emissão</SortableHeader>,
       cell: ({ row }) => (
-        <span className="text-sm text-gray-700 dark:text-gray-300">
+        <span className="text-sm text-muted-foreground">
           {row.original.data_emissao ? formatLocalDate(row.original.data_emissao) : '-'}
         </span>
       ),
@@ -939,11 +939,11 @@ export default function BlingPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-sm text-gray-500">Valor Total</div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-success">
                   {formatCurrency(vendasAgg?.total_value || 0)}
                 </div>
                 {vendasAgg?.first_date && vendasAgg?.last_date && (
-                  <div className="text-xs text-gray-400 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {formatLocalDate(vendasAgg.first_date, { day: '2-digit', month: '2-digit', year: '2-digit' })} até {formatLocalDate(vendasAgg.last_date, { day: '2-digit', month: '2-digit', year: '2-digit' })}
                   </div>
                 )}
@@ -1054,11 +1054,11 @@ export default function BlingPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="text-sm text-gray-500">Valor Total</div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-success">
                   {formatCurrency(nfeAgg?.total_value || 0)}
                 </div>
                 {nfeAgg?.first_date && nfeAgg?.last_date && (
-                  <div className="text-xs text-gray-400 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {formatLocalDate(nfeAgg.first_date, { day: '2-digit', month: '2-digit', year: '2-digit' })} até {formatLocalDate(nfeAgg.last_date, { day: '2-digit', month: '2-digit', year: '2-digit' })}
                   </div>
                 )}
@@ -1204,7 +1204,7 @@ export default function BlingPage() {
                     )}
                     <div>
                       <div className="text-sm font-medium">Token</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {status.token_valid ? 'Válido' : status.needs_reauth ? 'Re-autorização necessária' : 'Expirado ou inválido'}
                         {status.token_expires_at && (
                           <span className="block">
@@ -1215,7 +1215,7 @@ export default function BlingPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
                     {status.api_reachable ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
                     ) : (
@@ -1223,7 +1223,7 @@ export default function BlingPage() {
                     )}
                     <div>
                       <div className="text-sm font-medium">API Bling</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {status.api_reachable ? 'Acessível' : status.api_error || 'Inacessível'}
                       </div>
                     </div>
@@ -1231,11 +1231,11 @@ export default function BlingPage() {
                 </div>
 
                 {status.needs_reauth && (
-                  <div className="mt-4 flex flex-col sm:flex-row items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
-                    <XCircle className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+                  <div className="mt-4 flex flex-col sm:flex-row items-start gap-3 rounded-lg border border-destructive/30 bg-destructive-muted p-4">
+                    <XCircle className="h-5 w-5 shrink-0 text-destructive mt-0.5" />
                     <div className="flex-1">
-                      <div className="font-medium text-red-700 dark:text-red-400">Re-autorização necessária</div>
-                      <div className="mt-1 text-sm text-red-600 dark:text-red-500">
+                      <div className="font-medium text-destructive">Re-autorização necessária</div>
+                      <div className="mt-1 text-sm text-destructive/80">
                         O token de atualização do Bling expirou (renovação necessária a cada 30 dias). Clique em &quot;Re-autorizar&quot; para reconectar a integração.
                       </div>
                     </div>
@@ -1250,9 +1250,9 @@ export default function BlingPage() {
                     </Button>
                   </div>
                 )}
-                </>
+                </>  
               ) : (
-                <div className="text-gray-500">Não foi possível obter o status</div>
+                <div className="text-muted-foreground">Não foi possível obter o status</div>
               )}
             </CardContent>
           </Card>
@@ -1271,9 +1271,9 @@ export default function BlingPage() {
                   <ShoppingCart className="h-8 w-8 text-amber-500" />
                   <div>
                     <div className="text-2xl font-bold">{status?.total_vendas_sync || 0}</div>
-                    <div className="text-sm text-gray-500">Vendas sincronizadas</div>
+                    <div className="text-sm text-muted-foreground">Vendas sincronizadas</div>
                     {status?.last_sync_vendas && (
-                      <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                      <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                         <Clock className="h-3 w-3" />
                         Última: {formatLocalDate(status.last_sync_vendas, { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
                       </div>
@@ -1284,9 +1284,9 @@ export default function BlingPage() {
                   <FileText className="h-8 w-8 text-blue-500" />
                   <div>
                     <div className="text-2xl font-bold">{status?.total_nfe_sync || 0}</div>
-                    <div className="text-sm text-gray-500">NFe sincronizadas</div>
+                    <div className="text-sm text-muted-foreground">NFe sincronizadas</div>
                     {status?.last_sync_nfe && (
-                      <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                      <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                         <Clock className="h-3 w-3" />
                         Última: {formatLocalDate(status.last_sync_nfe, { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
                       </div>

@@ -27,7 +27,7 @@ const ClientesMap = dynamic(
   { 
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center h-[600px] bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-center h-[600px] bg-muted rounded-lg">
         <Loader2 className="h-8 w-8 animate-spin text-meguispet-primary" />
       </div>
     )
@@ -131,25 +131,25 @@ export default function MapaClientesPage() {
         return {
           label: 'Endereço Exato',
           icon: Target,
-          color: 'bg-green-100 text-green-800 border-green-300'
+          color: 'bg-success/10 text-success border-success/30'
         }
       case 'street':
         return {
           label: 'Rua',
           icon: Navigation,
-          color: 'bg-blue-100 text-blue-800 border-blue-300'
+          color: 'bg-info/10 text-info border-info/30'
         }
       case 'city':
         return {
           label: 'Cidade',
           icon: Building2,
-          color: 'bg-yellow-100 text-yellow-800 border-yellow-300'
+          color: 'bg-warning/10 text-warning border-warning/30'
         }
       default:
         return {
           label: 'Aproximado',
           icon: MapPin,
-          color: 'bg-gray-100 text-gray-800 border-gray-300'
+          color: 'bg-muted text-muted-foreground border-border'
         }
     }
   }
@@ -229,7 +229,7 @@ export default function MapaClientesPage() {
             <CardHeader className="flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-destructive" />
                   Erros de Geocodificação
                 </CardTitle>
                 <Button
@@ -247,14 +247,14 @@ export default function MapaClientesPage() {
             <CardContent className="overflow-y-auto">
               <div className="space-y-3">
                 {geocodeErrors.map((err) => (
-                  <div key={err.id} className="border rounded-lg p-3 bg-red-50 border-red-200">
+                  <div key={err.id} className="border rounded-lg p-3 bg-destructive/10 border-destructive/30">
                     <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-gray-900">
-                          {err.nome} <span className="text-gray-500">(ID: {err.id})</span>
+                        <p className="font-medium text-sm text-foreground">
+                          {err.nome} <span className="text-muted-foreground">(ID: {err.id})</span>
                         </p>
-                        <p className="text-sm text-red-600 mt-1">{err.error}</p>
+                        <p className="text-sm text-destructive mt-1">{err.error}</p>
                       </div>
                     </div>
                   </div>
@@ -272,7 +272,7 @@ export default function MapaClientesPage() {
             <Button
               variant="outline"
               onClick={() => setShowErrorDialog(true)}
-              className="border-red-300 text-red-700 hover:bg-red-50"
+              className="border-destructive/30 text-destructive hover:bg-destructive/10"
             >
               <AlertCircle className="mr-2 h-4 w-4" />
               Ver Detalhes dos Erros ({geocodeErrors.length})
@@ -317,7 +317,7 @@ export default function MapaClientesPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Geocodificados</CardTitle>
-              <MapPin className="h-4 w-4 text-green-600" />
+              <MapPin className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.clientes_geocodificados}</div>
@@ -330,7 +330,7 @@ export default function MapaClientesPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <AlertCircle className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.clientes_pendentes}</div>
@@ -340,7 +340,7 @@ export default function MapaClientesPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">No Mapa</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <TrendingUp className="h-4 w-4 text-info" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{markers.length}</div>
@@ -374,7 +374,7 @@ export default function MapaClientesPage() {
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center h-[600px] bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-center h-[600px] bg-muted rounded-lg">
                 <div className="text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-meguispet-primary mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">Carregando dados do mapa...</p>
@@ -418,13 +418,13 @@ export default function MapaClientesPage() {
                         <button
                           key={cliente.id}
                           onClick={() => handleClienteSelect(cliente)}
-                          className={`w-full p-3 text-left hover:bg-gray-50 transition-colors ${
-                            isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                          className={`w-full p-3 text-left hover:bg-muted/50 transition-colors ${
+                            isSelected ? 'bg-info/10 border-l-4 border-info' : ''
                           }`}
                         >
                           <div className="flex items-start gap-2">
                             <ChevronRight className={`h-5 w-5 mt-0.5 flex-shrink-0 transition-transform ${
-                              isSelected ? 'rotate-90 text-blue-600' : 'text-gray-400'
+                              isSelected ? 'rotate-90 text-info' : 'text-muted-foreground'
                             }`} />
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm truncate">{cliente.nome}</p>
@@ -457,7 +457,7 @@ export default function MapaClientesPage() {
                               {cliente.vendedor_nome && (
                                 <p>👤 {cliente.vendedor_nome}</p>
                               )}
-                              <p className="text-gray-400">
+                              <p className="text-muted-foreground">
                                 📍 {cliente.latitude.toFixed(6)}, {cliente.longitude.toFixed(6)}
                               </p>
                             </div>

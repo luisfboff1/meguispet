@@ -177,10 +177,10 @@ export default function RelatoriosPage() {
 
   const getStatusColor = (status: ReportHistoryRow['status']) => {
     switch (status) {
-      case 'disponivel': return 'text-green-600'
-      case 'processando': return 'text-yellow-600'
-      case 'erro': return 'text-red-600'
-      default: return 'text-gray-600'
+      case 'disponivel': return 'text-success'
+      case 'processando': return 'text-warning'
+      case 'erro': return 'text-destructive'
+      default: return 'text-muted-foreground'
     }
   }
 
@@ -200,8 +200,8 @@ export default function RelatoriosPage() {
         header: ({ column }) => <SortableHeader column={column}>Relatório</SortableHeader>,
         cell: ({ row }) => (
           <div className="min-w-[250px]">
-            <div className="font-medium text-gray-900">{row.original.nome}</div>
-            <div className="text-sm text-gray-500 capitalize">{row.original.tipo}</div>
+            <div className="font-medium text-foreground">{row.original.nome}</div>
+            <div className="text-sm text-muted-foreground capitalize">{row.original.tipo}</div>
           </div>
         ),
       },
@@ -210,8 +210,8 @@ export default function RelatoriosPage() {
         header: ({ column }) => <SortableHeader column={column}>Período</SortableHeader>,
         cell: ({ row }) => (
           <div className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{row.original.periodo}</span>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{row.original.periodo}</span>
           </div>
         ),
       },
@@ -219,7 +219,7 @@ export default function RelatoriosPage() {
         accessorKey: 'dataGeracao',
         header: ({ column }) => <SortableHeader column={column}>Data de Geração</SortableHeader>,
         cell: ({ row }) => (
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             {formatLocalDate(row.original.dataGeracao)}
           </span>
         ),
@@ -297,7 +297,7 @@ export default function RelatoriosPage() {
         </CardHeader>
         <CardContent>
           {loadingReports ? (
-            <div className="text-center py-8 text-gray-600">
+            <div className="text-center py-8 text-muted-foreground">
               Carregando histórico...
             </div>
           ) : recentReports.length > 0 ? (
@@ -311,9 +311,9 @@ export default function RelatoriosPage() {
             />
           ) : (
             <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum relatório gerado</h3>
-              <p className="text-gray-600">Ao gerar um relatório web, ele ficará disponível aqui no histórico.</p>
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Nenhum relatório gerado</h3>
+              <p className="text-muted-foreground">Ao gerar um relatório web, ele ficará disponível aqui no histórico.</p>
             </div>
           )}
         </CardContent>

@@ -277,7 +277,7 @@ export default function VendedoresPage() {
             size="sm"
             onClick={() => handleExcluirVendedor(row.original)}
             title="Excluir vendedor"
-            className="text-red-600 hover:text-red-700"
+            className="text-destructive hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -295,8 +295,8 @@ export default function VendedoresPage() {
             </span>
           </div>
           <div>
-            <div className="font-medium text-gray-900">{row.original.nome}</div>
-            <div className="text-sm text-gray-500">
+            <div className="font-medium text-foreground">{row.original.nome}</div>
+            <div className="text-sm text-muted-foreground">
               Desde {formatDate(row.original.created_at)}
             </div>
           </div>
@@ -309,11 +309,11 @@ export default function VendedoresPage() {
       cell: ({ row }) => (
         row.original.email ? (
           <div className="flex items-center space-x-2">
-            <Mail className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{row.original.email}</span>
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{row.original.email}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         )
       ),
     },
@@ -323,11 +323,11 @@ export default function VendedoresPage() {
       cell: ({ row }) => (
         row.original.telefone ? (
           <div className="flex items-center space-x-2">
-            <Phone className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">{row.original.telefone}</span>
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{row.original.telefone}</span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-muted-foreground">-</span>
         )
       ),
     },
@@ -335,7 +335,7 @@ export default function VendedoresPage() {
       accessorKey: "comissao",
       header: ({ column }) => <SortableHeader column={column}>Comissão</SortableHeader>,
       cell: ({ row }) => (
-        <span className="text-sm font-medium text-gray-900">
+        <span className="text-sm font-medium text-foreground">
           {row.original.comissao}%
         </span>
       ),
@@ -356,7 +356,7 @@ export default function VendedoresPage() {
       header: ({ column }) => <SortableHeader column={column}>Faturamento</SortableHeader>,
       cell: ({ row }) => (
         <div className="text-center">
-          <div className="text-lg font-semibold text-green-600">
+          <div className="text-lg font-semibold text-success">
             {formatCurrency(row.original.total_faturamento || 0)}
           </div>
         </div>
@@ -473,7 +473,7 @@ export default function VendedoresPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   placeholder="Buscar por nome ou email..."
                   value={searchTerm}
@@ -511,9 +511,9 @@ export default function VendedoresPage() {
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <User className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum vendedor encontrado</h3>
-            <p className="text-gray-600 text-center">
+            <User className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum vendedor encontrado</h3>
+            <p className="text-muted-foreground text-center">
               {searchTerm ? 'Tente ajustar os filtros de busca' : 'Comece adicionando seu primeiro vendedor'}
             </p>
           </CardContent>

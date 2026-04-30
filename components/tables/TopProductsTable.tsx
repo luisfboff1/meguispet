@@ -25,12 +25,12 @@ export const topProductsColumns: ColumnDef<DashboardTopProduct>[] = [
         <div
           className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
             row.index === 0
-              ? 'bg-yellow-100 text-yellow-700'
+              ? 'bg-warning-muted text-warning'
               : row.index === 1
-              ? 'bg-gray-100 text-gray-700'
+              ? 'bg-muted text-foreground'
               : row.index === 2
               ? 'bg-orange-100 text-orange-700'
-              : 'bg-blue-50 text-blue-700'
+              : 'bg-info-muted text-info'
           }`}
         >
           {row.index + 1}
@@ -46,7 +46,7 @@ export const topProductsColumns: ColumnDef<DashboardTopProduct>[] = [
       <div className="flex items-center gap-2">
         <Package className="h-4 w-4 text-meguispet-primary" />
         <div>
-          <div className="font-medium text-gray-900">{row.original.nome}</div>
+          <div className="font-medium text-foreground">{row.original.nome}</div>
         </div>
       </div>
     ),
@@ -56,8 +56,8 @@ export const topProductsColumns: ColumnDef<DashboardTopProduct>[] = [
     header: ({ column }) => <SortableHeader column={column}>Vendas</SortableHeader>,
     cell: ({ row }) => (
       <div className="text-center">
-        <div className="font-medium text-gray-900">{formatNumber(row.original.vendas)}</div>
-        <div className="text-xs text-gray-500">unidades</div>
+        <div className="font-medium text-foreground">{formatNumber(row.original.vendas)}</div>
+        <div className="text-xs text-muted-foreground">unidades</div>
       </div>
     ),
   },
@@ -80,7 +80,7 @@ export const topProductsColumns: ColumnDef<DashboardTopProduct>[] = [
       const ticketMedio = row.original.vendas > 0 ? row.original.receita / row.original.vendas : 0
       return (
         <div className="text-right">
-          <div className="font-medium text-gray-700">{formatCurrency(ticketMedio)}</div>
+          <div className="font-medium text-foreground">{formatCurrency(ticketMedio)}</div>
         </div>
       )
     },
@@ -97,14 +97,14 @@ export default function TopProductsTable({ data, loading = false }: TopProductsT
     return (
       <Card>
         <CardHeader>
-          <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mt-2 animate-pulse"></div>
+          <div className="h-6 bg-muted rounded w-1/3 animate-pulse"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mt-2 animate-pulse"></div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, index) => (
               <div key={index} className="animate-pulse">
-                <div className="h-12 bg-gray-200 rounded"></div>
+                <div className="h-12 bg-muted rounded"></div>
               </div>
             ))}
           </div>
@@ -122,9 +122,9 @@ export default function TopProductsTable({ data, loading = false }: TopProductsT
         </CardHeader>
         <CardContent>
           <div className="text-center py-12">
-            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">Nenhum produto vendido ainda</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">Nenhum produto vendido ainda</p>
+            <p className="text-sm text-muted-foreground mt-1">
               Os dados aparecerão aqui assim que houver vendas
             </p>
           </div>

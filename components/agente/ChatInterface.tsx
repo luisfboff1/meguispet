@@ -406,10 +406,10 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
           <Bot className="h-8 w-8 text-amber-600 dark:text-amber-400" />
         </div>
-        <h2 className="mb-2 text-xl font-semibold text-slate-800 dark:text-slate-100">
+        <h2 className="mb-2 text-xl font-semibold text-foreground">
           Bem-vindo a Megui!
         </h2>
-        <p className="mb-4 max-w-md text-sm text-slate-500 dark:text-slate-400">
+        <p className="mb-4 max-w-md text-sm text-muted-foreground">
           Sou sua assistente de IA para consultas de dados do MeguisPet.
           Posso responder perguntas sobre vendas, clientes, produtos, estoque e financeiro.
         </p>
@@ -427,8 +427,8 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
           Ir para Configuracao
         </Button>
         <div className="mt-8 text-left">
-          <p className="mb-2 text-xs font-medium text-slate-500">Exemplos de perguntas:</p>
-          <ul className="space-y-1 text-xs text-slate-400">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Exemplos de perguntas:</p>
+          <ul className="space-y-1 text-xs text-muted-foreground">
             <li>&bull; &quot;Qual foi minha maior venda esse mes?&quot;</li>
             <li>&bull; &quot;Quais produtos estao com estoque baixo?&quot;</li>
             <li>&bull; &quot;Qual vendedor mais vendeu essa semana?&quot;</li>
@@ -442,10 +442,10 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex items-center justify-between border-b bg-card px-4 py-2">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-amber-500" />
-          <span className="font-semibold text-slate-800 dark:text-slate-100">
+          <span className="font-semibold text-foreground">
             Megui
           </span>
         </div>
@@ -469,7 +469,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
       />
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900/50">
+      <div className="flex-1 overflow-y-auto bg-muted/30">
         {loadingMessages ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
@@ -477,7 +477,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
         ) : messages.length === 0 && !isStreaming ? (
           <div className="flex h-full flex-col items-center justify-center p-8 text-center">
             <Sparkles className="mb-3 h-8 w-8 text-amber-400" />
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Comece fazendo uma pergunta sobre seus dados
             </p>
           </div>

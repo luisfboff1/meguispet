@@ -85,8 +85,8 @@ export default function ImpostoProdutoForm({
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-900">
+                <Info className="h-5 w-5 text-info flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-foreground">
                   <p className="font-medium mb-1">Configure as informações fiscais do produto</p>
                   <p className="text-xs">
                     O NCM é usado para buscar automaticamente a tabela MVA correta de acordo com
@@ -109,7 +109,7 @@ export default function ImpostoProdutoForm({
                 placeholder="Ex: 2309"
                 maxLength={8}
               />
-              <p className="text-xs text-gray-500">8 dígitos - usado para buscar MVA na venda</p>
+              <p className="text-xs text-muted-foreground">8 dígitos - usado para buscar MVA na venda</p>
             </div>
 
             <div className="space-y-2">
@@ -121,7 +121,7 @@ export default function ImpostoProdutoForm({
                 placeholder="Ex: 1700100"
                 maxLength={7}
               />
-              <p className="text-xs text-gray-500">7 dígitos</p>
+              <p className="text-xs text-muted-foreground">7 dígitos</p>
             </div>
           </div>
 
@@ -132,7 +132,7 @@ export default function ImpostoProdutoForm({
               id="origem"
               value={formData.origem_mercadoria}
               onChange={(e) => setFormData(prev => ({ ...prev, origem_mercadoria: Number(e.target.value) }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value={0}>0 - Nacional</option>
               <option value={1}>1 - Estrangeira - Importação direta</option>

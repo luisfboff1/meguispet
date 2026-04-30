@@ -116,22 +116,22 @@ export default function ProdutoEstoqueDistribution({ initialValue, onChange }: P
       <div className="flex items-center justify-between">
         <div>
           <Label>Distribuição por Estoque</Label>
-          <p className="text-xs text-gray-500">Total alocado: {totalDistribuido}</p>
+          <p className="text-xs text-muted-foreground">Total alocado: {totalDistribuido}</p>
         </div>
       </div>
       {loading && estoquesDisponiveis.length === 0 ? (
-        <div className="flex items-center text-sm text-gray-500">
+        <div className="flex items-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregando estoques...
         </div>
       ) : erro ? (
-        <p className="text-sm text-red-600">{erro}</p>
+        <p className="text-sm text-destructive">{erro}</p>
       ) : (
         <div className="space-y-2">
           {estoquesDisponiveis.map((estoque) => (
             <div key={estoque.id} className="grid grid-cols-1 gap-2 md:grid-cols-2 md:items-center">
               <div>
                 <p className="text-sm font-medium">{estoque.nome}</p>
-                {estoque.descricao ? <p className="text-xs text-gray-500">{estoque.descricao}</p> : null}
+                {estoque.descricao ? <p className="text-xs text-muted-foreground">{estoque.descricao}</p> : null}
               </div>
               <Input
                 type="number"
@@ -154,11 +154,11 @@ export default function ProdutoEstoqueDistribution({ initialValue, onChange }: P
             </div>
           ))}
           {estoquesDisponiveis.length === 0 ? (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Nenhum estoque cadastrado. Cadastre estoques antes de distribuir os itens.
             </p>
           ) : (
-            <p className="text-xs text-gray-500">O total é recalculado automaticamente ao atualizar as quantidades.</p>
+            <p className="text-xs text-muted-foreground">O total é recalculado automaticamente ao atualizar as quantidades.</p>
           )}
         </div>
       )}

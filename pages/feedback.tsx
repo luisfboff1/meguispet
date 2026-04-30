@@ -240,8 +240,8 @@ export default function FeedbackPage() {
 
       {/* Info Banner for non-admin users */}
       {!isAdmin && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-          <p className="text-sm text-blue-800 dark:text-blue-300">
+        <div className="rounded-lg border border-info/30 bg-info/10 p-4">
+          <p className="text-sm text-info">
             ℹ️ Você pode criar novos feedbacks, mas apenas administradores podem mover os
             tickets entre as colunas do quadro.
           </p>

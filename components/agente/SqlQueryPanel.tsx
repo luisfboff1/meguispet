@@ -25,10 +25,10 @@ export function SqlQueryPanel({
   const queriedTables = extractTables(sqlQueries, toolCalls)
 
   return (
-    <div className="my-2 rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
+    <div className="my-2 rounded-lg border bg-muted/50">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:text-foreground"
       >
         <Database className="h-3.5 w-3.5" />
         <span className="font-medium">
@@ -46,18 +46,18 @@ export function SqlQueryPanel({
       </button>
 
       {expanded && (
-        <div className="space-y-2 border-t border-slate-200 px-3 py-2 dark:border-slate-700">
+        <div className="space-y-2 border-t px-3 py-2">
           {sqlQueries?.map((query, i) => (
             <div key={i} className="space-y-1">
               {query.explanation && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {query.explanation}
                 </p>
               )}
               <pre className="overflow-x-auto rounded bg-slate-900 p-2 text-xs text-green-400">
                 <code>{query.sql}</code>
               </pre>
-              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 {query.execution_time_ms > 0 && (
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
@@ -78,11 +78,11 @@ export function SqlQueryPanel({
             ?.filter((tc) => !sqlQueries || sqlQueries.length === 0)
             .map((tc, i) => (
               <div key={i} className="space-y-1">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                <p className="text-xs font-medium text-foreground">
                   {tc.tool_name}
                 </p>
                 {tc.result != null && (
-                  <pre className="max-h-32 overflow-auto rounded bg-slate-900 p-2 text-xs text-slate-300">
+                  <pre className="max-h-32 overflow-auto rounded bg-slate-900 p-2 text-xs text-muted-foreground">
                     <code>
                       {typeof tc.result === 'string'
                         ? (tc.result as string).substring(0, 500)

@@ -103,7 +103,7 @@ export function ProdutosReportViewer({
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Produtos Ativos</CardDescription>
-            <CardTitle className="text-3xl text-green-600">
+            <CardTitle className="text-3xl text-success">
               {data.resumo.produtosAtivos}
             </CardTitle>
           </CardHeader>
@@ -112,7 +112,7 @@ export function ProdutosReportViewer({
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Baixo Estoque</CardDescription>
-            <CardTitle className="text-3xl text-red-600">
+            <CardTitle className="text-3xl text-destructive">
               {data.resumo.produtosBaixoEstoque}
             </CardTitle>
           </CardHeader>
@@ -133,7 +133,7 @@ export function ProdutosReportViewer({
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Margem Média</CardDescription>
-            <CardTitle className="text-3xl text-blue-600">
+            <CardTitle className="text-3xl text-info">
               {data.resumo.margemMedia.toFixed(1)}%
             </CardTitle>
           </CardHeader>
@@ -254,10 +254,10 @@ export function ProdutosReportViewer({
                             className={cn(
                               'font-medium',
                               produto.margem > 20
-                                ? 'text-green-600'
+                                ? 'text-success'
                                 : produto.margem > 10
-                                  ? 'text-yellow-600'
-                                  : 'text-red-600'
+                                  ? 'text-warning'
+                                  : 'text-destructive'
                             )}
                           >
                             {produto.margem.toFixed(1)}%
@@ -306,7 +306,7 @@ export function ProdutosReportViewer({
                             <span
                               className={cn(
                                 'font-medium',
-                                diferenca < 0 ? 'text-red-600' : 'text-yellow-600'
+                                diferenca < 0 ? 'text-destructive' : 'text-warning'
                               )}
                             >
                               {diferenca}

@@ -209,12 +209,12 @@ export default function RolePermissionsConfig() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+      <Card className="bg-info/10 border-info">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <Info className="h-5 w-5 text-info mt-0.5 flex-shrink-0" />
             <div className="flex-1 text-sm">
-              <p className="text-blue-900 dark:text-blue-100">
+              <p className="text-info-foreground">
                 Configure as permissões padrão de cada tipo de usuário (role). Estas configurações serão aplicadas
                 automaticamente a todos os usuários com esta função, a menos que tenham permissões customizadas.
               </p>

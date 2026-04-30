@@ -265,11 +265,11 @@ export function AdminDashboard() {
             <Card key={index} className="animate-pulse">
               <CardContent className="pt-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 bg-gray-200 rounded-xl"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  <div className="h-10 w-10 bg-muted rounded-xl"></div>
+                  <div className="h-4 bg-muted rounded w-2/3"></div>
                 </div>
-                <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-8 bg-muted rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/3"></div>
               </CardContent>
             </Card>
           ))
@@ -277,10 +277,10 @@ export function AdminDashboard() {
           metrics.map((metric, index) => {
             const Icon = metric.icon
             const iconColors = [
-              'bg-blue-100 text-blue-600',
-              'bg-green-100 text-green-600',
+              'bg-info-muted text-info',
+              'bg-success-muted text-success',
               'bg-purple-100 text-purple-600',
-              'bg-orange-100 text-orange-600',
+              'bg-warning-muted text-warning',
             ]
             const colorClass = iconColors[index % iconColors.length]
             return (
@@ -290,18 +290,18 @@ export function AdminDashboard() {
                     <div className={`flex items-center justify-center h-10 w-10 rounded-xl flex-shrink-0 ${colorClass}`}>
                       <Icon className="h-5 w-5" />
                     </div>
-                    <p className="text-sm font-medium text-gray-500 truncate">{metric.title}</p>
+                    <p className="text-sm font-medium text-muted-foreground truncate">{metric.title}</p>
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1 break-words">
+                  <div className="text-3xl font-bold text-foreground mb-1 break-words">
                     {metric.value}
                   </div>
                   <div className="flex items-center text-xs gap-1">
                     {metric.changeType === 'positive' ? (
-                      <span className="text-green-600 font-medium">{metric.change}</span>
+                      <span className="text-success font-medium">{metric.change}</span>
                     ) : (
-                      <span className="text-red-600 font-medium">{metric.change}</span>
+                      <span className="text-destructive font-medium">{metric.change}</span>
                     )}
-                    <span className="text-gray-400">vs. ontem</span>
+                    <span className="text-muted-foreground">vs. ontem</span>
                   </div>
                 </CardContent>
               </AnimatedCard>

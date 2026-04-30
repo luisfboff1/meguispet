@@ -23,7 +23,7 @@ export function ChatThinking({ status = 'Analisando sua pergunta...', reasoning 
         <Bot className="h-4 w-4 text-amber-600 dark:text-amber-400" />
       </div>
       <div className="flex flex-col gap-1 min-w-0 flex-1">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <span className="text-xs font-medium text-muted-foreground">
           Megui
         </span>
         <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export function ChatThinking({ status = 'Analisando sua pergunta...', reasoning 
             ))}
           </div>
           {status && (
-            <span className="text-sm text-slate-500 dark:text-slate-400">
+            <span className="text-sm text-muted-foreground">
               {status}
             </span>
           )}
@@ -51,9 +51,9 @@ export function ChatThinking({ status = 'Analisando sua pergunta...', reasoning 
         {reasoning && (
           <div
             ref={reasoningRef}
-            className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white/50 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+            className="mt-2 max-h-40 overflow-y-auto rounded-lg border bg-card/50 p-3"
           >
-            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+            <p className="text-xs leading-relaxed text-foreground whitespace-pre-wrap">
               {reasoning}
               <motion.span
                 className="inline-block ml-0.5 w-1.5 h-3.5 bg-amber-500"

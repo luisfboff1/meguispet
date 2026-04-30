@@ -118,22 +118,22 @@ export default function EstoquePage() {
 
   const getStockStatus = (estoque: number) => {
     if (estoque === 0) return { 
-      color: 'text-red-600', 
-      bgColor: 'bg-red-100', 
+      color: 'text-destructive', 
+      bgColor: 'bg-destructive/10', 
       icon: AlertCircle, 
       text: 'Sem estoque',
       status: 'out'
     }
     if (estoque <= 5) return { 
-      color: 'text-yellow-600', 
-      bgColor: 'bg-yellow-100', 
+      color: 'text-warning', 
+      bgColor: 'bg-warning/10', 
       icon: AlertTriangle, 
       text: 'Estoque baixo',
       status: 'low'
     }
     return { 
-      color: 'text-green-600', 
-      bgColor: 'bg-green-100', 
+      color: 'text-success', 
+      bgColor: 'bg-success/10', 
       icon: Package, 
       text: 'Em estoque',
       status: 'ok'
@@ -195,10 +195,10 @@ export default function EstoquePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium truncate pr-2">Estoque Baixo</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{lowStockCount}</div>
+            <div className="text-2xl font-bold text-warning">{lowStockCount}</div>
             <p className="text-xs text-muted-foreground truncate">Produtos</p>
           </CardContent>
         </Card>
@@ -206,10 +206,10 @@ export default function EstoquePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium truncate pr-2">Sem Estoque</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+            <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{outOfStockCount}</div>
+            <div className="text-2xl font-bold text-destructive">{outOfStockCount}</div>
             <p className="text-xs text-muted-foreground truncate">Produtos</p>
           </CardContent>
         </Card>
@@ -217,10 +217,10 @@ export default function EstoquePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium truncate pr-2">Em Estoque</CardTitle>
-            <Package className="h-4 w-4 text-green-600 flex-shrink-0" />
+            <Package className="h-4 w-4 text-success flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{inStockCount}</div>
+            <div className="text-2xl font-bold text-success">{inStockCount}</div>
             <p className="text-xs text-muted-foreground truncate">Produtos</p>
           </CardContent>
         </Card>
@@ -235,7 +235,7 @@ export default function EstoquePage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   placeholder="Buscar por nome ou categoria..."
                   value={searchTerm}
@@ -256,7 +256,7 @@ export default function EstoquePage() {
                 variant={filterStatus === 'low' ? 'default' : 'outline'}
                 onClick={() => setFilterStatus('low')}
                 size="sm"
-                className="text-yellow-600"
+                className="text-warning"
               >
                 Baixo
               </Button>
@@ -264,7 +264,7 @@ export default function EstoquePage() {
                 variant={filterStatus === 'out' ? 'default' : 'outline'}
                 onClick={() => setFilterStatus('out')}
                 size="sm"
-                className="text-red-600"
+                className="text-destructive"
               >
                 Sem estoque
               </Button>
@@ -291,13 +291,13 @@ export default function EstoquePage() {
               <table className="w-full min-w-[600px]">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Produto</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap hidden md:table-cell">Categoria</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Estoque</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap hidden lg:table-cell">Preço</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap hidden lg:table-cell">Valor Total</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900 whitespace-nowrap">Ações</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground whitespace-nowrap">Produto</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground whitespace-nowrap hidden md:table-cell">Categoria</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground whitespace-nowrap">Estoque</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground whitespace-nowrap hidden lg:table-cell">Preço</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground whitespace-nowrap hidden lg:table-cell">Valor Total</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground whitespace-nowrap">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-foreground whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -307,19 +307,19 @@ export default function EstoquePage() {
                     const totalValue = produto.preco_venda * produto.estoque
                     
                     return (
-                      <tr key={produto.id} className="border-b hover:bg-gray-50">
+                      <tr key={produto.id} className="border-b hover:bg-muted/50">
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3 min-w-[180px]">
-                            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
-                              <Package className="h-4 w-4 text-gray-600" />
+                            <div className="w-8 h-8 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                              <Package className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <div className="overflow-hidden">
-                              <div className="font-medium text-gray-900 truncate">{produto.nome}</div>
-                              <div className="text-sm text-gray-500">ID: #{produto.id}</div>
+                              <div className="font-medium text-foreground truncate">{produto.nome}</div>
+                              <div className="text-sm text-muted-foreground">ID: #{produto.id}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-900 hidden md:table-cell">
+                        <td className="py-3 px-4 text-sm text-foreground hidden md:table-cell">
                           <span className="truncate block max-w-[150px]">{produto.categoria || 'N/A'}</span>
                         </td>
                         <td className="py-3 px-4">
@@ -328,10 +328,10 @@ export default function EstoquePage() {
                             <StockIcon className={`h-4 w-4 ${stockStatus.color} flex-shrink-0`} />
                           </div>
                         </td>
-                            <td className="py-3 px-4 text-sm text-gray-900 hidden lg:table-cell whitespace-nowrap">
+                            <td className="py-3 px-4 text-sm text-foreground hidden lg:table-cell whitespace-nowrap">
                               {formatCurrency(produto.preco_venda)}
                             </td>
-                            <td className="py-3 px-4 text-sm font-medium text-gray-900 hidden lg:table-cell whitespace-nowrap">
+                            <td className="py-3 px-4 text-sm font-medium text-foreground hidden lg:table-cell whitespace-nowrap">
                               {formatCurrency(produto.preco_venda * produto.estoque)}
                             </td>
                         <td className="py-3 px-4">
@@ -362,9 +362,9 @@ export default function EstoquePage() {
       {!loading && filteredProdutos.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <Package className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum produto encontrado</h3>
-            <p className="text-gray-600 text-center">
+            <Package className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Nenhum produto encontrado</h3>
+            <p className="text-muted-foreground text-center">
               {searchTerm ? 'Tente ajustar os filtros de busca' : 'Nenhum produto cadastrado ainda'}
             </p>
           </CardContent>

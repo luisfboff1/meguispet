@@ -55,14 +55,14 @@ export function MetricCard({
             <p className="text-sm font-medium text-muted-foreground mb-1">
               {title}
             </p>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h3 className="text-2xl font-bold text-foreground">
               {value}
             </h3>
             {trend && (
               <p
                 className={cn(
                   'text-xs mt-1',
-                  trend.isPositive ? 'text-green-600' : 'text-red-600'
+                  trend.isPositive ? 'text-success' : 'text-destructive'
                 )}
               >
                 {trend.value}
