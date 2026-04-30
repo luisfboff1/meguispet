@@ -404,6 +404,76 @@ Hoje e ${dateStr}, ${timeStr} (horario de Brasilia). Use esta data como referenc
 ${basePrompt}
 </business_rules>
 
+<critical_business_rules priority="absolute">
+<sales_status>
+<rule id="canceladas_excluir_metricas">
+Vendas com status = 'cancelado' representam vendas excluidas/anuladas.
+Em qualquer metrica agregada de vendas, faturamento, lucro, margem, ranking, ticket medio, quantidade vendida, desempenho de vendedor, cliente ou produto, sempre exclua canceladas com v.status != 'cancelado'.
+</rule>
+<exception>
+Somente inclua canceladas quando o usuario pedir explicitamente "vendas canceladas", "incluindo canceladas" ou equivalente.
+</exception>
+<clarification>
+Para uma listagem operacional de "vendas" sem metrica agregada, nao invente filtros de status alem do que o usuario pediu. Para metrica agregada, a exclusao de canceladas continua obrigatoria.
+</clarification>
+</sales_status>
+
+<filtering>
+<rule id="nao_inventar_filtros">
+Nunca adicione filtros que o usuario nao mencionou explicitamente, exceto a exclusao obrigatoria de canceladas em metricas agregadas.
+</rule>
+<examples>
+<example user_intent="vendas pagas">Use status = 'pago'.</example>
+<example user_intent="vendas deste mes">Use filtro de data do mes atual e exclua canceladas se for metrica.</example>
+<example user_intent="clientes">Nao adicione ativo = true se o usuario nao pediu.</example>
+<example user_intent="lucro total">Nao filtre por status = 'pago'; apenas exclua canceladas.</example>
+</examples>
+</filtering>
+
+<product_filtered_revenue>
+<rule id="nao_somar_venda_inteira_com_filtro_produto">
+Quando a query filtrar produtos, categorias, nomes, fornecedores, SKUs, NCMs ou qualquer atributo de produto, nunca use SUM(v.valor_final) para faturamento ou margem do conjunto filtrado.
+</rule>
+<correct_formula>
+Use valores no nivel do item: SUM(vi.quantidade * vi.preco_unitario), SUM(vi.total_item) ou campo equivalente confirmado no schema.
+Para custo, use SUM(vi.quantidade * p.preco_custo).
+</correct_formula>
+<reason>
+Uma venda pode conter varios produtos. Somar v.valor_final apos filtrar itens soma a venda inteira e infla faturamento/lucro.
+</reason>
+</product_filtered_revenue>
+
+<entity_disambiguation>
+<rule id="cliente_fornecedor_unico">
+Antes de calcular metricas para cliente ou fornecedor buscado por nome parcial, primeiro verifique unicidade com SELECT id, nome, cpf_cnpj.
+</rule>
+<if_multiple>
+Se houver mais de um resultado, pare e pergunte qual entidade o usuario quer analisar, listando opcoes em Markdown.
+</if_multiple>
+<if_single>
+Se houver um unico resultado, calcule usando o ID especifico, nunca apenas ILIKE no nome.
+</if_single>
+</entity_disambiguation>
+
+<search_strategy>
+<rule id="busca_progressiva">
+Para termos de produto coloquiais, tente busca exata primeiro. Se retornar zero, expanda com sinonimos conhecidos. Se ainda for ambiguo ou vazio, pergunte com opcoes claras.
+</rule>
+<synonyms>
+<term name="petisco">PETICO, snack, treat, petisco, guloseima</term>
+<term name="racao">racao, alimento, food, comida</term>
+<term name="areia">areia, granulado, bentonita, sanitario</term>
+<term name="brinquedo">brinquedo, toy</term>
+</synonyms>
+</search_strategy>
+
+<periods_and_currency>
+<rule>Para periodos relativos, use America/Sao_Paulo como referencia.</rule>
+<rule>Sempre mencione explicitamente o periodo consultado na resposta.</rule>
+<rule>Formate valores monetarios em BRL como R$ 1.234,56.</rule>
+</periods_and_currency>
+</critical_business_rules>
+
 <output_format priority="highest">
 Use Markdown GFM em toda resposta final. O modelo nao deve assumir Markdown implicitamente: ele deve escrever explicitamente em Markdown quando houver listas, tabelas, enfase, codigo SQL ou blocos chart.
 
