@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Bot, Sparkles, AlertCircle } from 'lucide-react'
+import { Bot, Sparkles, AlertCircle, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
@@ -441,23 +441,7 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b bg-card px-4 py-2">
-        <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-amber-500" />
-          <span className="font-semibold text-foreground">
-            Megui
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <TokenCounter
-            inputTokens={totalInputTokens}
-            outputTokens={totalOutputTokens}
-          />
-        </div>
-      </div>
-
-      {/* Conversation tabs */}
+      {/* Conversation tabs (with token counter + config button) */}
       <ConversationTabs
         conversations={conversations}
         activeId={activeConversationId}
@@ -466,6 +450,23 @@ export function ChatInterface({ config, onGoToConfig }: ChatInterfaceProps) {
         onDelete={handleDeleteConversation}
         onRename={handleRenameConversation}
         onPin={handlePinConversation}
+        rightSlot={(
+          <>
+            <TokenCounter
+              inputTokens={totalInputTokens}
+              outputTokens={totalOutputTokens}
+            />
+            <Button
+              onClick={onGoToConfig}
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              title="Configuração do agente"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       />
 
       {/* Messages area */}

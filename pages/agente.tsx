@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Bot, MessageSquare, Settings } from 'lucide-react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { ArrowLeft } from 'lucide-react'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
 import { ChatInterface } from '@/components/agente/ChatInterface'
 import { AgentConfigPanel } from '@/components/agente/AgentConfigPanel'
 import { agenteService } from '@/services/agenteService'
@@ -32,27 +33,7 @@ export default function AgentePage() {
   return (
     <PermissionGate permission="agente" redirect="/dashboard">
     <div className="absolute inset-0 flex flex-col overflow-hidden">
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b border-slate-200 bg-white px-6">
-          <TabsList className="h-10 w-full justify-start rounded-none border-0 bg-transparent p-0 sm:w-auto">
-            <TabsTrigger
-              value="chat"
-              className="gap-2 rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-amber-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Chat</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="config"
-              className="gap-2 rounded-none border-b-2 border-transparent px-4 py-2 data-[state=active]:border-amber-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Configuracao</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
         {/* Chat tab */}
         <TabsContent value="chat" className="mt-0 min-h-0 flex-1 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
           {loadingConfig ? (
@@ -68,11 +49,27 @@ export default function AgentePage() {
         </TabsContent>
 
         {/* Config tab */}
-        <TabsContent value="config" className="mt-0 min-h-0 flex-1 overflow-y-auto">
-          <AgentConfigPanel
-            config={config}
-            onConfigChange={handleConfigChange}
-          />
+        <TabsContent value="config" className="mt-0 min-h-0 flex-1 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden">
+          <div className="flex items-center justify-between border-b bg-card px-4 py-2">
+            <Button
+              onClick={() => setActiveTab('chat')}
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Voltar ao chat
+            </Button>
+            <span className="text-xs font-medium text-muted-foreground">
+              Configuração do agente
+            </span>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <AgentConfigPanel
+              config={config}
+              onConfigChange={handleConfigChange}
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

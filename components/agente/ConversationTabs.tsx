@@ -20,6 +20,7 @@ interface ConversationTabsProps {
   onDelete: (id: string) => void
   onRename: (id: string, titulo: string) => void
   onPin: (id: string) => void
+  rightSlot?: React.ReactNode
 }
 
 export function ConversationTabs({
@@ -30,6 +31,7 @@ export function ConversationTabs({
   onDelete,
   onRename,
   onPin,
+  rightSlot,
 }: ConversationTabsProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
@@ -84,7 +86,8 @@ export function ConversationTabs({
   }
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto border-b bg-muted/30 px-2 py-1.5">
+    <div className="flex items-center gap-1 border-b bg-muted/30 px-2 py-1.5">
+      <div className="flex flex-1 items-center gap-1 overflow-x-auto">
       {conversations.map((conv) => (
         <div key={conv.id} className="group relative flex shrink-0 items-center">
           {editingId === conv.id ? (
@@ -191,6 +194,13 @@ export function ConversationTabs({
         <Plus className="h-3.5 w-3.5" />
         Nova conversa
       </Button>
+      </div>
+
+      {rightSlot && (
+        <div className="flex shrink-0 items-center gap-2 border-l border-border pl-2">
+          {rightSlot}
+        </div>
+      )}
     </div>
   )
 }
