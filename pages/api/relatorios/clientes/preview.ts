@@ -54,6 +54,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     let vendas: Array<{
       id: number
       cliente_id: number | null
+      vendedor_id: number | null
       data_venda: string
       valor_final: number
       total_produtos_liquido: number | null
@@ -65,7 +66,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     if (clientesIds.length > 0) {
       let vendasQuery = supabase
         .from('vendas')
-        .select('id, cliente_id, data_venda, valor_final, total_produtos_liquido, total_ipi, total_st, status')
+        .select('id, cliente_id, vendedor_id, data_venda, valor_final, total_produtos_liquido, total_ipi, total_st, status')
         .in('cliente_id', clientesIds)
         .gte('data_venda', startDate)
         .lt('data_venda', endDateAdjusted)
@@ -75,13 +76,34 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
         vendasQuery = vendasQuery.in('cliente_id', config.filtros.clienteIds)
       }
 
+      if (config.filtros.vendedorIds && config.filtros.vendedorIds.length > 0) {
+        vendasQuery = vendasQuery.in('vendedor_id', config.filtros.vendedorIds)
+      }
+
       const { data: vendasData, error: vendasError } = await vendasQuery
 
       if (vendasError) throw vendasError
       vendas = vendasData || []
     }
 
-    const clientesMap = new Map((clientes || []).map((cliente) => [cliente.id, cliente]))
+    // Quando filtra por vendedor, "clientes do vendedor" = apenas clientes que
+    // compraram desse(s) vendedor(es) no periodo. Restringe a base de clientes a
+    // esse conjunto para que todas as metricas (total, ativos, novos, ranking)
+    // reflitam o filtro em vez de contar a carteira inteira.
+    const filtrarPorVendedor =
+      Array.isArray(config.filtros.vendedorIds) && config.filtros.vendedorIds.length > 0
+    const clientesComVendaDoVendedor = filtrarPorVendedor
+      ? new Set(
+          vendas
+            .map((venda) => venda.cliente_id)
+            .filter((id): id is number => id != null),
+        )
+      : null
+    const clientesBase = clientesComVendaDoVendedor
+      ? (clientes || []).filter((cliente) => clientesComVendaDoVendedor.has(cliente.id))
+      : (clientes || [])
+
+    const clientesMap = new Map(clientesBase.map((cliente) => [cliente.id, cliente]))
     const salesByClient = new Map<number, {
       totalCompras: number
       quantidadeCompras: number
@@ -106,7 +128,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       })
     })
 
-    const filteredClientes = (clientes || []).filter((cliente) => {
+    const filteredClientes = clientesBase.filter((cliente) => {
       if (!config.filtros.tipoCliente || config.filtros.tipoCliente === 'todos') return true
       const documento = cliente.documento?.replace(/\D/g, '') || ''
       const inferredType = documento.length > 11 ? 'pj' : 'pf'

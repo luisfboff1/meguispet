@@ -555,6 +555,16 @@ Para PDF/Excel/CSV, gere com action="save" e informe exportUrl quando a tool ret
 Sempre escreva links em Markdown, por exemplo: [abrir relatorio](/relatorios/historico/123) e [baixar PDF](/api/relatorios/saved/123/export?format=pdf).
 Nao recrie manualmente calculos de relatorio completo se generate_report puder reaproveitar os endpoints oficiais.
 Sempre limite consultas a no maximo 500 linhas.
+
+<report_filter_support>
+Cada tipo de relatorio so aplica os filtros abaixo. Nao envie outros filtros e nunca afirme que filtrou por um criterio que o relatorio nao suporta.
+- vendas: periodo, status, vendedorIds, clienteIds, ufDestino, origem.
+- produtos: periodo, produtoStatus, categorias.
+- clientes: periodo, clienteStatus, estado, cidade, clienteIds, tipoCliente, vendedorIds.
+- financeiro: periodo, ocultarComprasMercadorias.
+Para "clientes do vendedor X": busque o id do vendedor e passe vendedorIds no relatorio de clientes.
+Se generate_report retornar erro dizendo que um filtro nao e suportado, NAO repita a chamada igual. Avise o usuario de forma clara que aquele filtro nao existe nesse relatorio e ofereca uma alternativa (outro relatorio ou uma consulta com query_sql). Nunca apresente um relatorio como filtrado se o filtro nao foi realmente aplicado.
+</report_filter_support>
 </tool_usage>
 
 <business_context>

@@ -447,6 +447,75 @@ const DEFAULT_MODEL = "gpt-5-mini";
 const READ_ONLY_TIMEOUT_MS = 20_000;
 const MAX_ROWS_RETURNED = 500;
 
+// gpt-5.x: 128k output / 400k context. Damos folga (reasoning + resposta longa)
+// sem chegar perto do teto, para evitar truncar respostas e relatorios.
+const MIN_OUTPUT_TOKENS = 32_768;
+const AGENT_REASONING_EFFORT = "high";
+const AGENT_VERBOSITY = "low";
+
+// Mapa de capacidade: quais filtros cada relatorio REALMENTE aplica hoje no
+// backend (pages/api/relatorios/<tipo>/preview.ts). Filtros fora desta lista
+// sao ignorados silenciosamente pelo endpoint -> gerariam um relatorio "certo
+// na aparencia, errado nos dados". A validacao abaixo transforma esse silencio
+// em erro explicito, forcando o agente a avisar o usuario.
+// IMPORTANTE: ao adicionar suporte a um filtro novo no preview, atualize aqui.
+const REPORT_SUPPORTED_FILTERS: Record<ReportType, Set<string>> = {
+  vendas: new Set([
+    "periodo",
+    "status",
+    "vendedorIds",
+    "clienteIds",
+    "ufDestino",
+    "origem",
+  ]),
+  produtos: new Set(["periodo", "produtoStatus", "categorias"]),
+  clientes: new Set([
+    "periodo",
+    "clienteStatus",
+    "estado",
+    "cidade",
+    "clienteIds",
+    "tipoCliente",
+    "vendedorIds",
+  ]),
+  financeiro: new Set(["periodo", "ocultarComprasMercadorias"]),
+};
+
+// Um filtro so "conta" se realmente restringe algo. Arrays vazios, strings
+// vazias e o valor "todos" sao tratados como ausencia de filtro.
+function isActiveFilter(value: unknown): boolean {
+  if (value == null) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    return v !== "" && v !== "todos" && v !== "todas";
+  }
+  if (typeof value === "boolean") return true;
+  if (typeof value === "object") return Object.keys(value).length > 0;
+  return true;
+}
+
+function validateSupportedFilters(
+  reportType: ReportType,
+  filtros: Record<string, unknown>,
+): void {
+  const supported = REPORT_SUPPORTED_FILTERS[reportType];
+  const unsupported = Object.entries(filtros)
+    .filter(([key]) => key !== "periodo")
+    .filter(([key, value]) => isActiveFilter(value) && !supported.has(key))
+    .map(([key]) => key);
+
+  if (unsupported.length > 0) {
+    throw new Error(
+      `O relatorio de '${reportType}' ainda nao aplica o(s) filtro(s): ` +
+        `${unsupported.join(", ")}. Nao afirme que filtrou por esses criterios. ` +
+        `Avise o usuario que esse filtro nao esta disponivel neste relatorio e ` +
+        `sugira uma alternativa (por exemplo, usar o relatorio de vendas, que ` +
+        `suporta filtro por vendedor) ou uma consulta SQL direta com query_sql.`,
+    );
+  }
+}
+
 const ALLOWED_TABLES = new Set<string>(AGENT_ACCESSIBLE_TABLES);
 const BANNED_TABLES = [
   "usuarios",
@@ -648,6 +717,11 @@ function normalizeReportConfiguration(
   if (periodo.startDate > periodo.endDate) {
     throw new Error("Data inicial do relatorio nao pode ser maior que a final.");
   }
+
+  validateSupportedFilters(
+    args.report_type,
+    (configObj.filtros ?? {}) as Record<string, unknown>,
+  );
 
   const reportId = Number(args.report_id);
 
@@ -1148,8 +1222,9 @@ async function runAgentLoop(
       previous_response_id: result.responseId,
       input: outputs,
       tools: TOOLS,
-      reasoning: { effort: "medium" },
-      text: { verbosity: "low" },
+      reasoning: { effort: AGENT_REASONING_EFFORT },
+      text: { verbosity: AGENT_VERBOSITY },
+      max_output_tokens: MIN_OUTPUT_TOKENS,
     };
   }
 
@@ -1308,7 +1383,7 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       .select("role, content")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
-      .limit(12);
+      .limit(40);
 
     const historyRaw = historyDesc ? [...historyDesc].reverse() : [];
     const history: typeof historyRaw = [];
@@ -1341,14 +1416,23 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     sendSSE(res, { type: "thinking", content: "Analisando sua pergunta..." });
 
     const startTime = Date.now();
+    // gpt-5.x suporta 128k tokens de saida e 400k de contexto. Nao limitamos
+    // artificialmente: 4096 era baixo demais para modelos de reasoning (os
+    // reasoning tokens contam contra max_output_tokens e truncavam a resposta).
+    // Usamos um teto generoso como piso e respeitamos config maior, se houver.
+    const maxOutputTokens = Math.max(
+      Number(agentConfig.max_tokens) || 0,
+      MIN_OUTPUT_TOKENS,
+    );
+
     const initialPayload: Record<string, unknown> = {
       model,
       instructions: buildSystemPrompt(agentConfig.system_prompt),
       input,
       tools: TOOLS,
-      reasoning: { effort: "medium" },
-      text: { verbosity: "low" },
-      max_output_tokens: agentConfig.max_tokens || 4096,
+      reasoning: { effort: AGENT_REASONING_EFFORT },
+      text: { verbosity: AGENT_VERBOSITY },
+      max_output_tokens: maxOutputTokens,
     };
 
     const result = await runAgentLoop(apiKey, model, initialPayload, req, (data) =>
