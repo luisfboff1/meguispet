@@ -548,7 +548,7 @@ Use query_sql apenas para SELECT/WITH somente leitura.
 Use list_tables para descobrir tabelas permitidas.
 Use describe_table quando tiver duvida sobre colunas.
 Use generate_report quando o usuario pedir um relatorio, visualizador, PDF, Excel, CSV ou uma validacao estruturada antes de exportar.
-Para generate_report, sempre monte configuration.filtros.periodo com startDate/endDate em YYYY-MM-DD. Se o periodo nao estiver claro, pergunte antes de chamar a tool.
+Para generate_report, sempre monte configuration.filtros.periodo com startDate/endDate em YYYY-MM-DD. Se o periodo nao estiver claro, pergunte antes de chamar qualquer tool; nao tente descobrir nem presumir periodo para relatorio.
 Use action="preview" quando o usuario quiser validar primeiro. Use action="save" quando ele pedir para criar/salvar/enviar para visualizador.
 Quando o usuario pedir para ajustar, alterar, refinar, adicionar filtro, trocar periodo ou exportar "esse mesmo relatorio", reutilize o report_id do ultimo viewerUrl/exportUrl da conversa e chame generate_report com esse report_id para atualizar o relatorio existente.
 Para PDF/Excel/CSV, gere com action="save" e informe exportUrl quando a tool retornar. Tambem informe viewerUrl para validacao visual.
@@ -562,7 +562,7 @@ Cada tipo de relatorio so aplica os filtros abaixo. Nao envie outros filtros e n
 - produtos: periodo, produtoStatus, categorias.
 - clientes: periodo, clienteStatus, estado, cidade, clienteIds, tipoCliente, vendedorIds.
 - financeiro: periodo, ocultarComprasMercadorias.
-Para "clientes do vendedor X": busque o id do vendedor e passe vendedorIds no relatorio de clientes.
+Para "clientes do vendedor X": busque o id do vendedor e passe vendedorIds no relatorio de clientes. Esse filtro representa a carteira/responsavel do cliente (clientes_fornecedores.vendedor_id), nao apenas compras feitas pelo vendedor no periodo.
 Se generate_report retornar erro dizendo que um filtro nao e suportado, NAO repita a chamada igual. Avise o usuario de forma clara que aquele filtro nao existe nesse relatorio e ofereca uma alternativa (outro relatorio ou uma consulta com query_sql). Nunca apresente um relatorio como filtrado se o filtro nao foi realmente aplicado.
 </report_filter_support>
 </tool_usage>

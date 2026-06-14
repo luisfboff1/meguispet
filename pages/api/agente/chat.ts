@@ -447,9 +447,6 @@ const DEFAULT_MODEL = "gpt-5-mini";
 const READ_ONLY_TIMEOUT_MS = 20_000;
 const MAX_ROWS_RETURNED = 500;
 
-// gpt-5.x: 128k output / 400k context. Damos folga (reasoning + resposta longa)
-// sem chegar perto do teto, para evitar truncar respostas e relatorios.
-const MIN_OUTPUT_TOKENS = 32_768;
 const AGENT_REASONING_EFFORT = "high";
 const AGENT_VERBOSITY = "low";
 
@@ -1194,7 +1191,7 @@ async function runAgentLoop(
 
   let payload = initialPayload;
 
-  for (let hop = 0; hop < 6; hop++) {
+  while (true) {
     const result = await runResponsesStream(apiKey, payload, send, state);
     aggregate.finalText += result.finalText;
     aggregate.reasoningText += result.reasoningText;
@@ -1224,13 +1221,8 @@ async function runAgentLoop(
       tools: TOOLS,
       reasoning: { effort: AGENT_REASONING_EFFORT },
       text: { verbosity: AGENT_VERBOSITY },
-      max_output_tokens: MIN_OUTPUT_TOKENS,
     };
   }
-
-  throw new Error(
-    "A consulta exigiu muitas etapas. Tente simplificar a pergunta ou reduzir o periodo.",
-  );
 }
 
 const FORMAT_REMINDER =
@@ -1416,15 +1408,6 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     sendSSE(res, { type: "thinking", content: "Analisando sua pergunta..." });
 
     const startTime = Date.now();
-    // gpt-5.x suporta 128k tokens de saida e 400k de contexto. Nao limitamos
-    // artificialmente: 4096 era baixo demais para modelos de reasoning (os
-    // reasoning tokens contam contra max_output_tokens e truncavam a resposta).
-    // Usamos um teto generoso como piso e respeitamos config maior, se houver.
-    const maxOutputTokens = Math.max(
-      Number(agentConfig.max_tokens) || 0,
-      MIN_OUTPUT_TOKENS,
-    );
-
     const initialPayload: Record<string, unknown> = {
       model,
       instructions: buildSystemPrompt(agentConfig.system_prompt),
@@ -1432,11 +1415,14 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       tools: TOOLS,
       reasoning: { effort: AGENT_REASONING_EFFORT },
       text: { verbosity: AGENT_VERBOSITY },
-      max_output_tokens: maxOutputTokens,
     };
 
-    const result = await runAgentLoop(apiKey, model, initialPayload, req, (data) =>
-      sendSSE(res, data)
+    const result = await runAgentLoop(
+      apiKey,
+      model,
+      initialPayload,
+      req,
+      (data) => sendSSE(res, data),
     );
 
     const thinkingTime = Date.now() - startTime;
