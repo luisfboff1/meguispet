@@ -27,7 +27,9 @@
     "db:migrate": "doppler run -- node database/migrate.mjs",
     "db:baseline": "doppler run -- node database/migrate.mjs --baseline",
     "db:backup": "doppler run -- database\\backup-supabase.bat",
-    "db:backup:local": "database\\backup-supabase.bat"
+    "db:backup:local": "database\\backup-supabase.bat",
+    "db:restore": "doppler run -- database\\restore-supabase.bat",
+    "db:restore:local": "database\\restore-supabase.bat"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "1.3.3",

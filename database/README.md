@@ -56,6 +56,26 @@ comece o arquivo com `-- migrate:no-transaction` na primeira linha.
 | `pnpm db:baseline` | Marca o journal como aplicado **sem executar** (adoção inicial). |
 | `pnpm db:backup` | `pg_dump` do Supabase via Doppler → `database/backups/<label>/`. |
 | `pnpm db:backup:local` | Backup usando env já carregada no terminal (sem Doppler). |
+| `pnpm db:restore -- <label> [full\|structure\|data]` | Restaura um backup via `psql` (transação única, confirmação antes). |
+| `pnpm db:restore` | Sem label: lista os backups disponíveis. |
+
+## Restore — como usar
+
+```powershell
+pnpm db:restore                              # lista os backups
+pnpm db:restore -- 2026_06_14_115206 full    # restaura estrutura + dados
+```
+
+Tipos: `full` (estrutura + dados, ideal para banco **vazio**), `structure` (só DDL),
+`data` (só dados, estrutura já precisa existir). O script roda em **transação
+única** (`--single-transaction` + `ON_ERROR_STOP`): se algo falhar, nada é aplicado.
+
+⚠️ Restaurar **por cima** de um banco com dados causa conflito (`already exists`,
+chave duplicada). Restaure em banco vazio, ou trunque as tabelas alvo antes de um
+restore `data`. Para recuperação em produção, prefira o **PITR/snapshot do
+Supabase** (Dashboard → Database → Backups) — o dump local é a cópia offline.
+
+Para restaurar o schema `auth`: `$env:RESTORE_PREFIX="auth"; pnpm db:restore -- <label> full`.
 
 ## Backup — o que é gerado
 
