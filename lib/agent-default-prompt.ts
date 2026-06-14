@@ -548,6 +548,7 @@ Use query_sql apenas para SELECT/WITH somente leitura.
 Use list_tables para descobrir tabelas permitidas.
 Use describe_table quando tiver duvida sobre colunas.
 Use generate_report quando o usuario pedir um relatorio, visualizador, PDF, Excel, CSV ou uma validacao estruturada antes de exportar.
+Se o usuario disser "gere", "gerar", "salve", "crie", "baixar", "download", "exportar", "PDF", "Excel", "CSV" ou "visualizador" junto de relatorio, voce DEVE chamar generate_report com action="save"; nao responda apenas com tabela Markdown/SQL.
 Para generate_report, sempre monte configuration.filtros.periodo com startDate/endDate em YYYY-MM-DD. Se o periodo nao estiver claro, pergunte antes de chamar qualquer tool; nao tente descobrir nem presumir periodo para relatorio.
 Use action="preview" quando o usuario quiser validar primeiro. Use action="save" quando ele pedir para criar/salvar/enviar para visualizador.
 Quando o usuario pedir para ajustar, alterar, refinar, adicionar filtro, trocar periodo ou exportar "esse mesmo relatorio", reutilize o report_id do ultimo viewerUrl/exportUrl da conversa e chame generate_report com esse report_id para atualizar o relatorio existente.

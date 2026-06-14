@@ -1246,9 +1246,49 @@ const CHART_REQUEST_REMINDER =
     "Nao repita todos os dados em tabela depois do grafico.",
   ].join("\n");
 
+const REPORT_SAVE_REMINDER =
+  [
+    "O usuario pediu para GERAR/SALVAR/BAIXAR um relatorio.",
+    "Obrigatorio: chame a tool generate_report com action='save'.",
+    "Nao entregue apenas SQL, tabela Markdown ou resumo no chat como se fosse relatorio gerado.",
+    "Se precisar descobrir ids (vendedor/cliente/produto), use query_sql somente para isso e depois chame generate_report.",
+    "A resposta final deve trazer o link Markdown viewerUrl retornado pela tool e, quando houver PDF/Excel/CSV, tambem exportUrl.",
+  ].join("\n");
+
 function isChartRequest(text: string): boolean {
   return /\b(gr[aá]fico|chart|visual|evolu[cç][aã]o|distribui[cç][aã]o|compar(a|ar|e|ativo)|top\s*\d*|ranking|por dia|por m[eê]s|por semana|por vendedor|por produto)\b/i
     .test(text);
+}
+
+function isReportRequest(text: string): boolean {
+  return /\b(relat[oó]rio|relatorios|report|pdf|excel|csv|planilha|exportar|baixar)\b/i
+    .test(text);
+}
+
+function isReportSaveRequest(text: string): boolean {
+  return /\b(gere|gera|gerar|salve|salva|salvar|crie|cria|criar|baixar|download|exportar|pdf|excel|csv|arquivo|visualizador)\b/i
+      .test(text) && isReportRequest(text);
+}
+
+function hasExplicitReportPeriod(text: string): boolean {
+  const normalized = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (/\b(sem limitar ao periodo|sem periodo|historico|todos os periodos|desde sempre|geral)\b/i.test(normalized)) {
+    return true;
+  }
+
+  return (
+    /\b(hoje|ontem|anteontem|amanha|semana|mes|ano|trimestre|bimestre|semestre)\b/i.test(normalized) ||
+    /\b(este|esta|esse|essa|ultimo|ultimos|ultima|ultimas|passado|passada|atual|corrente|anterior)\b/i.test(normalized) ||
+    /\b(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/i.test(normalized) ||
+    /\b\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?\b/.test(normalized) ||
+    /\b\d{4}-\d{2}-\d{2}\b/.test(normalized) ||
+    /\b\d+\s*(dia|dias|semana|semanas|mes|meses|ano|anos)\b/i.test(normalized)
+  );
+}
+
+function shouldAskReportPeriod(text: string): boolean {
+  return isReportRequest(text) && !hasExplicitReportPeriod(text);
 }
 
 const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
@@ -1370,6 +1410,55 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
       );
     }
 
+    if (shouldAskReportPeriod(message.trim())) {
+      const periodQuestion =
+        "Qual período você quer usar para esse relatório? Pode ser, por exemplo, **este mês**, **mês passado**, **últimos 30 dias** ou um intervalo com data inicial e final.";
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+      sseStarted = true;
+
+      sendSSE(res, { type: "answer_start" });
+      sendSSE(res, { type: "token", content: periodQuestion });
+      sendSSE(res, {
+        type: "usage",
+        input_tokens: 0,
+        output_tokens: 0,
+        model,
+        thinking_time_ms: 0,
+        timing_breakdown: {
+          total_time_ms: 0,
+          llm_thinking_ms: 0,
+          tool_execution_ms: 0,
+          tools_count: 0,
+        },
+      });
+      res.write("data: [DONE]\n\n");
+      res.end();
+
+      await supabase.from("agent_messages").insert({
+        conversation_id: conversationId,
+        role: "assistant",
+        content: periodQuestion,
+        tool_calls: null,
+        sql_queries: null,
+        input_tokens: 0,
+        output_tokens: 0,
+        model_used: model,
+        thinking_time_ms: 0,
+        timing_breakdown: {
+          total_time_ms: 0,
+          llm_thinking_ms: 0,
+          tool_execution_ms: 0,
+          tools_count: 0,
+        },
+      });
+
+      return;
+    }
+
     const { data: historyDesc } = await supabase
       .from("agent_messages")
       .select("role, content")
@@ -1397,6 +1486,9 @@ const handler = async (req: AuthenticatedRequest, res: NextApiResponse) => {
     input.push({ role: "system", content: FORMAT_REMINDER });
     if (isChartRequest(message.trim())) {
       input.push({ role: "system", content: CHART_REQUEST_REMINDER });
+    }
+    if (isReportSaveRequest(message.trim())) {
+      input.push({ role: "system", content: REPORT_SAVE_REMINDER });
     }
 
     res.setHeader("Content-Type", "text/event-stream");
