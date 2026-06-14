@@ -53,6 +53,13 @@ pnpm lint:fix         # Auto-fix linting issues
 # Cleaning
 pnpm clean            # Clean .next and cache directories
 pnpm clean:build      # Clean .next build artifacts only
+
+# Database migrations (Supabase, journaled — see database/README.md and AGENTS.md)
+pnpm db:status              # Migration status (journal vs applied)
+pnpm db:journal             # Update database/migrations/_journal.json from .sql files
+pnpm db:migrate             # Apply pending migrations (one transaction per file)
+pnpm db:baseline            # Initial adoption: mark journal as applied without running
+pnpm db:backup -- <label>   # pg_dump backup to database/backups/<label>/
 ```
 
 **Note**: This project uses [Doppler](https://www.doppler.com/) for environment variable management. See `DOPPLER_SETUP.md` for complete setup instructions.

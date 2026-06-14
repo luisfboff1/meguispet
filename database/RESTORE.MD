@@ -44,7 +44,7 @@ DB_HOST=aws-1-sa-east-1.pooler.supabase.com
 DB_PORT=6543
 DB_NAME=postgres
 DB_USER=postgres.jsitmcqabchjidoezycj
-PGPASSWORD=yMI6QwcNfQpIKYje
+PGPASSWORD=<DEFINA_VIA_AMBIENTE>
 ```
 
 ### 3. Backup Válido
@@ -142,7 +142,7 @@ set DB_HOST=aws-1-sa-east-1.pooler.supabase.com
 set DB_PORT=6543
 set DB_NAME=postgres
 set DB_USER=postgres.jsitmcqabchjidoezycj
-set PGPASSWORD=yMI6QwcNfQpIKYje
+set PGPASSWORD=<DEFINA_VIA_AMBIENTE>
 
 @REM Definir timestamp do backup
 set TIMESTAMP=2025_01_29_143022

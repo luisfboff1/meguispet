@@ -21,7 +21,13 @@
     "clean:build": "rimraf .next",
     "doppler:check": "node scripts/check-doppler.js",
     "doppler:secrets": "doppler secrets",
-    "doppler:setup": "doppler setup"
+    "doppler:setup": "doppler setup",
+    "db:journal": "node database/journal.mjs",
+    "db:status": "doppler run -- node database/migrate-status.mjs",
+    "db:migrate": "doppler run -- node database/migrate.mjs",
+    "db:baseline": "doppler run -- node database/migrate.mjs --baseline",
+    "db:backup": "doppler run -- database\\backup-supabase.bat",
+    "db:backup:local": "database\\backup-supabase.bat"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "1.3.3",

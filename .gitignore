@@ -139,6 +139,7 @@ public/test-pdf.html
 
 # Backups do banco de dados (não versionar)
 database/backup/
+database/backups/
 .clinerules/byterover-rules.md
 .kilocode/rules/byterover-rules.md
 .roo/rules/byterover-rules.md

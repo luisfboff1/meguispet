@@ -1,0 +1,297 @@
+{
+  "version": "1",
+  "dialect": "postgresql",
+  "driver": "supabase-pg",
+  "entries": [
+    {
+      "idx": 0,
+      "tag": "001_stock_improvements",
+      "when": 1777580868106.4407
+    },
+    {
+      "idx": 1,
+      "tag": "002_icms_st_schema",
+      "when": 1777580868107.271
+    },
+    {
+      "idx": 2,
+      "tag": "003_icms_st_seed_data",
+      "when": 1777580868107.271
+    },
+    {
+      "idx": 3,
+      "tag": "004_feedback_system",
+      "when": 1777580868108.375
+    },
+    {
+      "idx": 4,
+      "tag": "004_fix_impostos_uf",
+      "when": 1777580868108.375
+    },
+    {
+      "idx": 5,
+      "tag": "005_financial_categories_recurring",
+      "when": 1777580868108.375
+    },
+    {
+      "idx": 6,
+      "tag": "006_add_impostos_fields",
+      "when": 1777580868109.3745
+    },
+    {
+      "idx": 7,
+      "tag": "007_migrate_impostos_data",
+      "when": 1777580868109.3745
+    },
+    {
+      "idx": 8,
+      "tag": "008_reports_system",
+      "when": 1777580868109.3745
+    },
+    {
+      "idx": 9,
+      "tag": "009_add_vendas_origem_uf_columns",
+      "when": 1777580868111.3765
+    },
+    {
+      "idx": 10,
+      "tag": "010_venda_parcelas_system",
+      "when": 1777580868111.3765
+    },
+    {
+      "idx": 11,
+      "tag": "011_auto_confirm_vendas",
+      "when": 1777580868111.3765
+    },
+    {
+      "idx": 12,
+      "tag": "011_condicoes_pagamento",
+      "when": 1777580868112.8865
+    },
+    {
+      "idx": 13,
+      "tag": "012_add_icms_proprio_field",
+      "when": 1777580868113.8928
+    },
+    {
+      "idx": 14,
+      "tag": "012_UPDATE_PRODUTOS",
+      "when": 1777580868113.8928
+    },
+    {
+      "idx": 15,
+      "tag": "013_add_st_detailed_fields",
+      "when": 1777580868113.8928
+    },
+    {
+      "idx": 16,
+      "tag": "014_enable_rls_security",
+      "when": 1777580868113.8928
+    },
+    {
+      "idx": 17,
+      "tag": "015_add_stock_tables_rls",
+      "when": 1777580868114.892
+    },
+    {
+      "idx": 18,
+      "tag": "016_add_inscricao_estadual_to_clientes",
+      "when": 1777580868114.892
+    },
+    {
+      "idx": 19,
+      "tag": "016_add_relatorios_salvos_rls",
+      "when": 1777580868114.892
+    },
+    {
+      "idx": 20,
+      "tag": "016_allow_negative_stock",
+      "when": 1777580868114.892
+    },
+    {
+      "idx": 21,
+      "tag": "017_add_sem_impostos_field",
+      "when": 1777580868115.8984
+    },
+    {
+      "idx": 22,
+      "tag": "017_add_unique_documento",
+      "when": 1777580868115.8984
+    },
+    {
+      "idx": 23,
+      "tag": "018_add_geolocation_to_clientes",
+      "when": 1777580868116.8945
+    },
+    {
+      "idx": 24,
+      "tag": "019_fix_vendedores_rls_policies",
+      "when": 1777580868117.8943
+    },
+    {
+      "idx": 25,
+      "tag": "020_enable_rls_security_hardening",
+      "when": 1777580868118.8987
+    },
+    {
+      "idx": 26,
+      "tag": "020_fix_role_permissions_rls",
+      "when": 1777580868119.8965
+    },
+    {
+      "idx": 27,
+      "tag": "021_add_dynamic_permissions_to_vendas_rls",
+      "when": 1777580868120.8977
+    },
+    {
+      "idx": 28,
+      "tag": "021_check_dependencies",
+      "when": 1777580868120.8977
+    },
+    {
+      "idx": 29,
+      "tag": "021_force_remove_security_definer_SAFE",
+      "when": 1777580868122.4082
+    },
+    {
+      "idx": 30,
+      "tag": "021_force_remove_security_definer",
+      "when": 1777580868120.8977
+    },
+    {
+      "idx": 31,
+      "tag": "022_HOTFIX_usuarios_rls_circular_dependency",
+      "when": 1777580868123.416
+    },
+    {
+      "idx": 32,
+      "tag": "022_prevent_duplicate_stock_history",
+      "when": 1777580868123.416
+    },
+    {
+      "idx": 33,
+      "tag": "023_auto_stock_history_triggers",
+      "when": 1777580868124.416
+    },
+    {
+      "idx": 34,
+      "tag": "024_bling_integration",
+      "when": 1777580868124.416
+    },
+    {
+      "idx": 35,
+      "tag": "025_bling_extras",
+      "when": 1777580868125.4207
+    },
+    {
+      "idx": 36,
+      "tag": "025_bling_mapeamento_schema",
+      "when": 1777580868126.4219
+    },
+    {
+      "idx": 37,
+      "tag": "025_fix_bling_mapeamento_rls",
+      "when": 1777580868126.4219
+    },
+    {
+      "idx": 38,
+      "tag": "026_agent_megui_system",
+      "when": 1777580868126.4219
+    },
+    {
+      "idx": 39,
+      "tag": "026_bling_mapeamento_produtos",
+      "when": 1777580868127.4585
+    },
+    {
+      "idx": 40,
+      "tag": "026_popular_mapeamento_referencias",
+      "when": 1777580868127.4585
+    },
+    {
+      "idx": 41,
+      "tag": "027_agent_recursion_limit",
+      "when": 1777580868128.4583
+    },
+    {
+      "idx": 42,
+      "tag": "027_mapear_produtos_adicionais",
+      "when": 1777580868128.963
+    },
+    {
+      "idx": 43,
+      "tag": "028_restrict_vendedor_permissions",
+      "when": 1777580868128.963
+    },
+    {
+      "idx": 44,
+      "tag": "028_set_gpt5_nano_default",
+      "when": 1777580868129.5059
+    },
+    {
+      "idx": 45,
+      "tag": "029_agent_timing_breakdown",
+      "when": 1777580868129.5059
+    },
+    {
+      "idx": 46,
+      "tag": "029_sync_vendedor_usuario_link",
+      "when": 1777580868130.5154
+    },
+    {
+      "idx": 47,
+      "tag": "030_agent_openai_responses_defaults",
+      "when": 1777581690397.5564
+    },
+    {
+      "idx": 48,
+      "tag": "2026_01_16_add_sem_ipi_sem_st_columns",
+      "when": 1777580868131.513
+    },
+    {
+      "idx": 49,
+      "tag": "20250129_add_user_roles",
+      "when": 1777580868130.5154
+    },
+    {
+      "idx": 50,
+      "tag": "20250129_add_vendedor_usuario_id",
+      "when": 1777580868130.5154
+    },
+    {
+      "idx": 51,
+      "tag": "20251130_create_role_permissions_config",
+      "when": 1777580868130.5154
+    },
+    {
+      "idx": 52,
+      "tag": "fix_admin_permissions",
+      "when": 1777580868132.5146
+    },
+    {
+      "idx": 53,
+      "tag": "migration_supabase_auth",
+      "when": 1777580868132.5146
+    },
+    {
+      "idx": 54,
+      "tag": "performance_indexes",
+      "when": 1777580868133.574
+    },
+    {
+      "idx": 55,
+      "tag": "seed_mock_data",
+      "when": 1777580868133.574
+    },
+    {
+      "idx": 56,
+      "tag": "supabase_schema",
+      "when": 1777580868133.574
+    },
+    {
+      "idx": 57,
+      "tag": "test_015",
+      "when": 1777580868134.5703
+    }
+  ]
+}

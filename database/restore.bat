@@ -16,7 +16,12 @@ set DB_HOST=aws-1-sa-east-1.pooler.supabase.com
 set DB_PORT=6543
 set DB_NAME=postgres
 set DB_USER=postgres.jsitmcqabchjidoezycj
-set PGPASSWORD=yMI6QwcNfQpIKYje
+REM Senha via ambiente — NUNCA hardcode. Defina antes de rodar (ou use Doppler):
+REM   PowerShell:  $env:PGPASSWORD = '<senha>'
+if "%PGPASSWORD%"=="" (
+    echo [ERRO] Defina a variavel de ambiente PGPASSWORD antes de rodar este script.
+    exit /b 1
+)
 
 REM Diretório base de backup
 set BASE_BACKUP_DIR=backup

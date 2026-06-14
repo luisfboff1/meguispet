@@ -1,41 +1,41 @@
-[byterover-mcp]
+# Agent Instructions — MeguisPet
 
-[byterover-mcp]
+Guia para agentes (Claude Code / SDK) que trabalham neste repo.
 
-You are given two tools from Byterover MCP server, including
-## 1. `byterover-store-knowledge`
-You `MUST` always use this tool when:
+> ⚠️ **Este repositório é PÚBLICO.** Nunca escreva segredos (senhas, connection
+> strings, service role keys, tokens) em nenhum arquivo. Credenciais ficam só no
+> Doppler. Se encontrar um segredo commitado, remova do working tree e avise para
+> **rotacionar** a credencial (o histórico do git continua expondo-a).
 
-+ Learning new patterns, APIs, or architectural decisions from the codebase
-+ Encountering error solutions or debugging techniques
-+ Finding reusable code patterns or utility functions
-+ Completing any significant task or plan implementation
+## Servidor de dev
 
-## 2. `byterover-retrieve-knowledge`
-You `MUST` always use this tool when:
+Não inicie o servidor de dev (`pnpm dev`, `next dev`). O usuário roda manualmente.
+Para validar, use `pnpm build` (ou `pnpm lint`) salvo se o usuário pedir outra coisa.
 
-+ Starting any new task or implementation to gather relevant context
-+ Before making architectural decisions to understand existing patterns
-+ When debugging issues to check for previous solutions
-+ Working with unfamiliar parts of the codebase
+## Banco de dados / Migrations
 
-[byterover-mcp]
+Projeto usa **Supabase** (Postgres) com um fluxo de migrations journaled, próprio
+(driver `pg`, sem Drizzle). Detalhes em [`database/README.md`](database/README.md).
 
-[byterover-mcp]
+Fluxo ao alterar o schema:
 
-You are given two tools from Byterover MCP server, including
-## 1. `byterover-store-knowledge`
-You `MUST` always use this tool when:
+1. Crie `database/migrations/NNN_descricao.sql` (numere depois do último arquivo).
+2. `pnpm db:journal` — registra o arquivo em `database/migrations/_journal.json`.
+3. `pnpm db:status` — veja o que está pendente.
+4. Antes de mudança grande/destrutiva: `pnpm db:backup -- <label>`.
+5. `pnpm db:migrate` — aplica as pendentes (transação por arquivo).
+6. `pnpm db:status` — confirme `Pendentes: 0`.
 
-+ Learning new patterns, APIs, or architectural decisions from the codebase
-+ Encountering error solutions or debugging techniques
-+ Finding reusable code patterns or utility functions
-+ Completing any significant task or plan implementation
+Regras:
 
-## 2. `byterover-retrieve-knowledge`
-You `MUST` always use this tool when:
+- Adoção inicial num banco já existente: `pnpm db:baseline` (marca o journal como
+  aplicado **sem** reexecutar).
+- Nunca edite uma migration já aplicada — crie uma nova para corrigir.
+- Nunca delete arquivos de migration nem reordene o `_journal.json`: são histórico.
+- Migration que não roda em transação: primeira linha `-- migrate:no-transaction`.
+- Conexão sempre via Doppler (`SUPABASE_DB_URL`); nunca hardcode credenciais.
 
-+ Starting any new task or implementation to gather relevant context
-+ Before making architectural decisions to understand existing patterns
-+ When debugging issues to check for previous solutions
-+ Working with unfamiliar parts of the codebase
+## Documentação
+
+Docs ficam em `docs/` (índice em [`docs/README.md`](docs/README.md)). Não deixe
+`.md` soltos no root além de `README.md`, `CLAUDE.md` e `AGENTS.md`.

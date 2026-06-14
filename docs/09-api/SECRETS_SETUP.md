@@ -42,7 +42,7 @@ DB_PASSWORD=[SUA_SENHA_MYSQL]
 SMTP_HOST=smtp.hostinger.com
 SMTP_PORT=587
 SMTP_USER=noreply@meguispet.com
-SMTP_PASS=Meguis@2025
+SMTP_PASS=[SUA_SENHA_SMTP]
 SMTP_FROM_NAME=Megui's Pet Admin
 SMTP_FROM_EMAIL=noreply@meguispet.com
 ```
