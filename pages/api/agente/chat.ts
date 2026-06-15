@@ -189,6 +189,7 @@ interface ReportToolResult {
   downloadHint?: string;
   preview?: unknown;
   message?: string;
+  warning?: string;
 }
 
 interface StreamRunResult {
@@ -487,30 +488,34 @@ function isActiveFilter(value: unknown): boolean {
     const v = value.trim().toLowerCase();
     return v !== "" && v !== "todos" && v !== "todas";
   }
-  if (typeof value === "boolean") return true;
+  // Um boolean so e "filtro ativo" quando true. false e um toggle desligado
+  // (ex.: ocultarComprasMercadorias:false = "nao oculta nada"), que o modelo
+  // manda como default por exigencia do schema strict da OpenAI — nao deve
+  // contar como filtro.
+  if (typeof value === "boolean") return value;
   if (typeof value === "object") return Object.keys(value).length > 0;
   return true;
 }
 
-function validateSupportedFilters(
+// Remove filtros que o relatorio nao aplica e devolve a lista removida. NAO
+// lanca erro: bloquear o relatorio inteiro por causa de um filtro extra fazia o
+// agente desistir da tool e cair em SQL/CSV. Em vez disso geramos o relatorio
+// com os filtros validos e avisamos quais foram ignorados, para o agente
+// repassar ao usuario sem afirmar que filtrou por eles.
+function stripUnsupportedFilters(
   reportType: ReportType,
   filtros: Record<string, unknown>,
-): void {
+): string[] {
   const supported = REPORT_SUPPORTED_FILTERS[reportType];
-  const unsupported = Object.entries(filtros)
-    .filter(([key]) => key !== "periodo")
-    .filter(([key, value]) => isActiveFilter(value) && !supported.has(key))
-    .map(([key]) => key);
-
-  if (unsupported.length > 0) {
-    throw new Error(
-      `O relatorio de '${reportType}' ainda nao aplica o(s) filtro(s): ` +
-        `${unsupported.join(", ")}. Nao afirme que filtrou por esses criterios. ` +
-        `Avise o usuario que esse filtro nao esta disponivel neste relatorio e ` +
-        `sugira uma alternativa (por exemplo, usar o relatorio de vendas, que ` +
-        `suporta filtro por vendedor) ou uma consulta SQL direta com query_sql.`,
-    );
+  const dropped: string[] = [];
+  for (const [key, value] of Object.entries(filtros)) {
+    if (key === "periodo") continue;
+    if (isActiveFilter(value) && !supported.has(key)) {
+      dropped.push(key);
+      delete filtros[key];
+    }
   }
+  return dropped;
 }
 
 const ALLOWED_TABLES = new Set<string>(AGENT_ACCESSIBLE_TABLES);
@@ -686,6 +691,7 @@ function normalizeReportConfiguration(
   name?: string;
   reportId?: number;
   configuration: ReportConfiguration;
+  droppedFilters: string[];
 } {
   if (!isReportType(args.report_type)) {
     throw new Error("Tipo de relatorio invalido.");
@@ -715,7 +721,7 @@ function normalizeReportConfiguration(
     throw new Error("Data inicial do relatorio nao pode ser maior que a final.");
   }
 
-  validateSupportedFilters(
+  const droppedFilters = stripUnsupportedFilters(
     args.report_type,
     (configObj.filtros ?? {}) as Record<string, unknown>,
   );
@@ -737,6 +743,7 @@ function normalizeReportConfiguration(
       metricas: configObj.metricas || {},
       graficos: configObj.graficos || {},
     } as ReportConfiguration,
+    droppedFilters,
   };
 }
 
@@ -744,7 +751,7 @@ async function generateReportForAgent(
   args: Record<string, unknown>,
   req: AuthenticatedRequest,
 ): Promise<ReportToolResult> {
-  const { reportType, action, format, name, reportId, configuration } =
+  const { reportType, action, format, name, reportId, configuration, droppedFilters } =
     normalizeReportConfiguration(args);
 
   const protocol = headerValue(req.headers["x-forwarded-proto"]) || "http";
@@ -836,6 +843,11 @@ async function generateReportForAgent(
       : undefined,
     preview: compactForToolOutput(preview),
     message: String(parsed.message || "Relatorio gerado com sucesso"),
+    warning: droppedFilters.length > 0
+      ? `Filtros nao suportados por este relatorio foram ignorados: ` +
+        `${droppedFilters.join(", ")}. O relatorio foi gerado SEM eles. ` +
+        `Avise o usuario e nao afirme que filtrou por esses criterios.`
+      : undefined,
   };
 }
 
