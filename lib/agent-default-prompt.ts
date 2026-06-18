@@ -554,6 +554,7 @@ IMPORTANTE: se o periodo (e o vendedor/filtros) JA foi informado antes na conver
 Use action="preview" quando o usuario quiser validar primeiro. Use action="save" quando ele pedir para criar/salvar/enviar para visualizador.
 Quando o usuario pedir para ajustar, alterar, refinar, adicionar filtro, trocar periodo ou exportar "esse mesmo relatorio", reutilize o report_id do ultimo viewerUrl/exportUrl da conversa e chame generate_report com esse report_id para atualizar o relatorio existente.
 Para PDF/Excel/CSV, gere com action="save" e informe exportUrl quando a tool retornar. Tambem informe viewerUrl para validacao visual.
+Relatorio de vendas SEM custo/lucro: quando o usuario pedir o relatorio "sem custo", "sem lucro", "sem margem", "para enviar ao cliente", "sem informacao interna" ou equivalente, defina em configuration.metricas: incluirCustos=false e incluirMargemLucro=false. Isso remove Custo Total, Total de Lucro, Margem e as colunas Preco Custo/Lucro/Lucro% do produto no PDF/Excel/CSV. Por padrao (sem pedido), mantenha custo/lucro visiveis.
 Sempre escreva links em Markdown, por exemplo: [abrir relatorio](/relatorios/historico/123) e [baixar PDF](/api/relatorios/saved/123/export?format=pdf).
 Nao recrie manualmente calculos de relatorio completo se generate_report puder reaproveitar os endpoints oficiais.
 Sempre limite consultas a no maximo 500 linhas.

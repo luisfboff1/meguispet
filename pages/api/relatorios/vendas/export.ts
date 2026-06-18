@@ -92,6 +92,15 @@ function formatPeriodDate(dateStr: string): string {
   }
 }
 
+// Quando o usuario quer um relatorio "para o cliente" (sem expor informacao
+// interna), o agente envia metricas.incluirCustos=false e/ou
+// incluirMargemLucro=false. Nesse caso escondemos Custo Total, Lucro, Margem e
+// as colunas Preco Custo / Lucro / Lucro % da tabela de produtos.
+function ocultarCustoLucro(config: ReportConfiguration): boolean {
+  const m = config.metricas || {}
+  return m.incluirCustos === false || m.incluirMargemLucro === false
+}
+
 // Helper functions para tabelas de fallback
 function addTemporalDataTable(doc: jsPDF, data: VendasReportData, startY: number) {
   autoTable(doc, {
@@ -143,17 +152,21 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
 
   doc.setFontSize(10)
   const resumoY = 45
-  doc.text(`Total de Vendas: ${formatNumber(data.resumo.totalVendas, 0)}`, 14, resumoY)
-  doc.text(`Faturamento Total (sem impostos): R$ ${formatNumber(data.resumo.faturamentoTotal)}`, 14, resumoY + 7)
-  doc.text(`Ticket Médio (sem impostos): R$ ${formatNumber(data.resumo.ticketMedio)}`, 14, resumoY + 14)
-  doc.text(`Total Impostos (pagos pelo cliente): R$ ${formatNumber(data.resumo.totalImpostos)}`, 14, resumoY + 21)
-  doc.text(`Custo Total: R$ ${formatNumber(data.resumo.custoTotal)}`, 14, resumoY + 28)
-  doc.text(`Total de Lucro: R$ ${formatNumber(totalLucro)}`, 14, resumoY + 35)
-  doc.text(`Margem de Lucro (sem impostos): ${formatNumber(data.resumo.margemLucro)}%`, 14, resumoY + 42)
+  const esconderCustoLucro = ocultarCustoLucro(config)
+  let resumoLinhaY = resumoY
+  doc.text(`Total de Vendas: ${formatNumber(data.resumo.totalVendas, 0)}`, 14, resumoLinhaY)
+  doc.text(`Faturamento Total (sem impostos): R$ ${formatNumber(data.resumo.faturamentoTotal)}`, 14, resumoLinhaY += 7)
+  doc.text(`Ticket Médio (sem impostos): R$ ${formatNumber(data.resumo.ticketMedio)}`, 14, resumoLinhaY += 7)
+  doc.text(`Total Impostos (pagos pelo cliente): R$ ${formatNumber(data.resumo.totalImpostos)}`, 14, resumoLinhaY += 7)
+  if (!esconderCustoLucro) {
+    doc.text(`Custo Total: R$ ${formatNumber(data.resumo.custoTotal)}`, 14, resumoLinhaY += 7)
+    doc.text(`Total de Lucro: R$ ${formatNumber(totalLucro)}`, 14, resumoLinhaY += 7)
+    doc.text(`Margem de Lucro (sem impostos): ${formatNumber(data.resumo.margemLucro)}%`, 14, resumoLinhaY += 7)
+  }
 
   // Tabela de vendas detalhadas
   autoTable(doc, {
-    startY: resumoY + 52,
+    startY: resumoLinhaY + 10,
     head: [['Data', 'Cliente', 'Vendedor', 'Qtd Prod', 'Subtotal', 'Líquido', 'IPI', 'ICMS', 'ST', 'Total', 'Status']],
     body: data.vendasDetalhadas.map(v => [
       formatLocalDate(v.data),
@@ -188,21 +201,32 @@ function exportPDF(data: VendasReportData, config: ExportRequestBody, res: NextA
 
     autoTable(doc, {
       startY: finalY + 20,
-      head: [['Produto', 'Qtd', 'Preço Custo', 'Preço Venda', 'Faturamento', 'Lucro', 'Lucro %']],
+      head: [esconderCustoLucro
+        ? ['Produto', 'Qtd', 'Preço Venda', 'Faturamento']
+        : ['Produto', 'Qtd', 'Preço Custo', 'Preço Venda', 'Faturamento', 'Lucro', 'Lucro %']],
       body: data.vendasPorProduto.map(p => {
         const custoTotal = p.quantidade * (p.precoCusto || 0)
         const lucro = p.faturamento - custoTotal
-        return [
-          p.produtoNome,
-          formatNumber(p.quantidade, 0),
-          `R$ ${formatNumber(p.precoCusto || 0)}`,
-          `R$ ${formatNumber(p.precoVenda || 0)}`,
-          `R$ ${formatNumber(p.faturamento)}`,
-          `R$ ${formatNumber(lucro)}`,
-          `${formatNumber(p.margemLucro || 0, 1)}%`,
-        ]
+        return esconderCustoLucro
+          ? [
+            p.produtoNome,
+            formatNumber(p.quantidade, 0),
+            `R$ ${formatNumber(p.precoVenda || 0)}`,
+            `R$ ${formatNumber(p.faturamento)}`,
+          ]
+          : [
+            p.produtoNome,
+            formatNumber(p.quantidade, 0),
+            `R$ ${formatNumber(p.precoCusto || 0)}`,
+            `R$ ${formatNumber(p.precoVenda || 0)}`,
+            `R$ ${formatNumber(p.faturamento)}`,
+            `R$ ${formatNumber(lucro)}`,
+            `${formatNumber(p.margemLucro || 0, 1)}%`,
+          ]
       }),
-      foot: [['TOTAL', formatNumber(totalQtd, 0), '-', '-', `R$ ${formatNumber(totalFaturamento)}`, `R$ ${formatNumber(totalLucro)}`, '-']],
+      foot: [esconderCustoLucro
+        ? ['TOTAL', formatNumber(totalQtd, 0), '-', `R$ ${formatNumber(totalFaturamento)}`]
+        : ['TOTAL', formatNumber(totalQtd, 0), '-', '-', `R$ ${formatNumber(totalFaturamento)}`, `R$ ${formatNumber(totalLucro)}`, '-']],
       styles: { fontSize: 7 },
       headStyles: { fillColor: [39, 174, 96] },
       footStyles: { fillColor: [39, 174, 96], fontStyle: 'bold' },
@@ -344,6 +368,7 @@ function exportExcel(data: VendasReportData, config: ExportRequestBody, res: Nex
 
   // Calcular total de lucro
   const totalLucro = data.resumo.faturamentoTotal - data.resumo.custoTotal
+  const esconderCustoLucroExcel = ocultarCustoLucro(config)
 
   // Aba 1: Resumo
   const resumoData = [
@@ -356,9 +381,11 @@ function exportExcel(data: VendasReportData, config: ExportRequestBody, res: Nex
     ['Faturamento Total (sem impostos)', `R$ ${formatNumber(data.resumo.faturamentoTotal)}`],
     ['Ticket Médio (sem impostos)', `R$ ${formatNumber(data.resumo.ticketMedio)}`],
     ['Total Impostos (pagos pelo cliente)', `R$ ${formatNumber(data.resumo.totalImpostos)}`],
-    ['Custo Total', `R$ ${formatNumber(data.resumo.custoTotal)}`],
-    ['Total de Lucro', `R$ ${formatNumber(totalLucro)}`],
-    ['Margem de Lucro (sem impostos)', `${formatNumber(data.resumo.margemLucro)}%`],
+    ...(esconderCustoLucroExcel ? [] : [
+      ['Custo Total', `R$ ${formatNumber(data.resumo.custoTotal)}`],
+      ['Total de Lucro', `R$ ${formatNumber(totalLucro)}`],
+      ['Margem de Lucro (sem impostos)', `${formatNumber(data.resumo.margemLucro)}%`],
+    ]),
   ]
   const resumoSheet = XLSX.utils.aoa_to_sheet(resumoData)
   XLSX.utils.book_append_sheet(workbook, resumoSheet, 'Resumo')
@@ -394,21 +421,32 @@ function exportExcel(data: VendasReportData, config: ExportRequestBody, res: Nex
     }, 0)
 
     const produtosData = [
-      ['Produto', 'Quantidade', 'Preço Custo', 'Preço Venda', 'Faturamento', 'Lucro', 'Margem Lucro %'],
+      esconderCustoLucroExcel
+        ? ['Produto', 'Quantidade', 'Preço Venda', 'Faturamento']
+        : ['Produto', 'Quantidade', 'Preço Custo', 'Preço Venda', 'Faturamento', 'Lucro', 'Margem Lucro %'],
       ...data.vendasPorProduto.map(p => {
         const custoTotal = p.quantidade * (p.precoCusto || 0)
         const lucro = p.faturamento - custoTotal
-        return [
-          p.produtoNome,
-          formatNumber(p.quantidade, 0),
-          formatNumber(p.precoCusto || 0),
-          formatNumber(p.precoVenda || 0),
-          formatNumber(p.faturamento),
-          formatNumber(lucro),
-          formatNumber(p.margemLucro || 0, 1),
-        ]
+        return esconderCustoLucroExcel
+          ? [
+            p.produtoNome,
+            formatNumber(p.quantidade, 0),
+            formatNumber(p.precoVenda || 0),
+            formatNumber(p.faturamento),
+          ]
+          : [
+            p.produtoNome,
+            formatNumber(p.quantidade, 0),
+            formatNumber(p.precoCusto || 0),
+            formatNumber(p.precoVenda || 0),
+            formatNumber(p.faturamento),
+            formatNumber(lucro),
+            formatNumber(p.margemLucro || 0, 1),
+          ]
       }),
-      ['TOTAL', formatNumber(totalQtdExcel, 0), '-', '-', formatNumber(totalFaturamentoExcel), formatNumber(totalLucroExcel), '-']
+      esconderCustoLucroExcel
+        ? ['TOTAL', formatNumber(totalQtdExcel, 0), '-', formatNumber(totalFaturamentoExcel)]
+        : ['TOTAL', formatNumber(totalQtdExcel, 0), '-', '-', formatNumber(totalFaturamentoExcel), formatNumber(totalLucroExcel), '-']
     ]
     const produtosSheet = XLSX.utils.aoa_to_sheet(produtosData)
     XLSX.utils.book_append_sheet(workbook, produtosSheet, 'Produtos')
@@ -490,6 +528,7 @@ function exportCSV(data: VendasReportData, config: ExportRequestBody, res: NextA
 
   // Calcular total de lucro
   const totalLucro = data.resumo.faturamentoTotal - data.resumo.custoTotal
+  const esconderCustoLucroCsv = ocultarCustoLucro(config)
 
   // Cabeçalho
   csvLines.push('Relatório de Vendas')
@@ -503,9 +542,11 @@ function exportCSV(data: VendasReportData, config: ExportRequestBody, res: NextA
   csvLines.push(`Faturamento Total,R$ ${formatNumber(data.resumo.faturamentoTotal)}`)
   csvLines.push(`Ticket Médio,R$ ${formatNumber(data.resumo.ticketMedio)}`)
   csvLines.push(`Total Impostos,R$ ${formatNumber(data.resumo.totalImpostos)}`)
-  csvLines.push(`Custo Total,R$ ${formatNumber(data.resumo.custoTotal)}`)
-  csvLines.push(`Total de Lucro,R$ ${formatNumber(totalLucro)}`)
-  csvLines.push(`Margem de Lucro,${formatNumber(data.resumo.margemLucro)}%`)
+  if (!esconderCustoLucroCsv) {
+    csvLines.push(`Custo Total,R$ ${formatNumber(data.resumo.custoTotal)}`)
+    csvLines.push(`Total de Lucro,R$ ${formatNumber(totalLucro)}`)
+    csvLines.push(`Margem de Lucro,${formatNumber(data.resumo.margemLucro)}%`)
+  }
   csvLines.push('')
 
   // Vendas
@@ -528,13 +569,21 @@ function exportCSV(data: VendasReportData, config: ExportRequestBody, res: NextA
     }, 0)
 
     csvLines.push('Produtos Mais Vendidos')
-    csvLines.push('Produto,Quantidade,Preço Custo,Preço Venda,Faturamento,Lucro,Margem Lucro %')
-    data.vendasPorProduto.forEach(p => {
-      const custoTotal = p.quantidade * (p.precoCusto || 0)
-      const lucro = p.faturamento - custoTotal
-      csvLines.push(`${p.produtoNome},${formatNumber(p.quantidade, 0)},${formatNumber(p.precoCusto || 0)},${formatNumber(p.precoVenda || 0)},${formatNumber(p.faturamento)},${formatNumber(lucro)},${formatNumber(p.margemLucro || 0, 1)}`)
-    })
-    csvLines.push(`TOTAL,${formatNumber(totalQtdCsv, 0)},-,-,${formatNumber(totalFaturamentoCsv)},${formatNumber(totalLucroCsv)},-`)
+    if (esconderCustoLucroCsv) {
+      csvLines.push('Produto,Quantidade,Preço Venda,Faturamento')
+      data.vendasPorProduto.forEach(p => {
+        csvLines.push(`${p.produtoNome},${formatNumber(p.quantidade, 0)},${formatNumber(p.precoVenda || 0)},${formatNumber(p.faturamento)}`)
+      })
+      csvLines.push(`TOTAL,${formatNumber(totalQtdCsv, 0)},-,${formatNumber(totalFaturamentoCsv)}`)
+    } else {
+      csvLines.push('Produto,Quantidade,Preço Custo,Preço Venda,Faturamento,Lucro,Margem Lucro %')
+      data.vendasPorProduto.forEach(p => {
+        const custoTotal = p.quantidade * (p.precoCusto || 0)
+        const lucro = p.faturamento - custoTotal
+        csvLines.push(`${p.produtoNome},${formatNumber(p.quantidade, 0)},${formatNumber(p.precoCusto || 0)},${formatNumber(p.precoVenda || 0)},${formatNumber(p.faturamento)},${formatNumber(lucro)},${formatNumber(p.margemLucro || 0, 1)}`)
+      })
+      csvLines.push(`TOTAL,${formatNumber(totalQtdCsv, 0)},-,-,${formatNumber(totalFaturamentoCsv)},${formatNumber(totalLucroCsv)},-`)
+    }
     csvLines.push('')
   }
 
