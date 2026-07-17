@@ -105,26 +105,49 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    // 3. If role is vendedor, auto-create vendedor record and link bidirectionally
+    // 3. If role is vendedor, link to an existing unlinked vendedor record
+    // (same email, no usuario_id yet) or auto-create one — never both, to
+    // avoid duplicate vendedor rows for the same person confusing pickers
+    // elsewhere in the app (e.g. the client-creation "Vendedor" dropdown).
     if (tipoUsuario === 'vendedor' && profileData) {
       try {
-        const { data: vendedorData, error: vendedorError } = await supabaseAdmin
+        const { data: existingVendedor } = await supabaseAdmin
           .from('vendedores')
-          .insert({
-            nome,
-            email,
-            comissao: 0,
-            ativo: true,
-            usuario_id: profileData.id,
-          })
           .select('id')
-          .single();
+          .eq('email', email)
+          .is('usuario_id', null)
+          .maybeSingle();
 
-        if (!vendedorError && vendedorData) {
+        let vendedorId: number | null = existingVendedor?.id ?? null;
+
+        if (!vendedorId) {
+          const { data: vendedorData, error: vendedorError } = await supabaseAdmin
+            .from('vendedores')
+            .insert({
+              nome,
+              email,
+              comissao: 0,
+              ativo: true,
+              usuario_id: profileData.id,
+            })
+            .select('id')
+            .single();
+
+          if (!vendedorError && vendedorData) {
+            vendedorId = vendedorData.id;
+          }
+        } else {
+          await supabaseAdmin
+            .from('vendedores')
+            .update({ usuario_id: profileData.id })
+            .eq('id', vendedorId);
+        }
+
+        if (vendedorId) {
           // Link usuario → vendedor
           await supabaseAdmin
             .from('usuarios')
-            .update({ vendedor_id: vendedorData.id })
+            .update({ vendedor_id: vendedorId })
             .eq('id', profileData.id);
         }
       } catch {
