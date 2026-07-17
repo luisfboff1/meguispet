@@ -100,13 +100,15 @@ export default function UsuariosPage() {
       }
     } catch (error) {
 
-      // Extract error message safely
+      // Extract error message safely (check axios response body first —
+      // AxiosError is also an instanceof Error, whose generic .message
+      // like "Request failed with status code 422" hides the real API message)
       let errorMessage = 'Erro ao criar usuário'
-      if (error instanceof Error) {
-        errorMessage = error.message
-      } else if (error && typeof error === 'object' && 'response' in error) {
+      if (error && typeof error === 'object' && 'response' in error) {
         const response = (error as { response?: { data?: { message?: string } } }).response
         errorMessage = response?.data?.message || errorMessage
+      } else if (error instanceof Error) {
+        errorMessage = error.message
       }
 
       toast({
@@ -253,11 +255,11 @@ export default function UsuariosPage() {
         } catch (error) {
 
           let errorMessage = 'Erro ao atualizar usuário'
-          if (error instanceof Error) {
-            errorMessage = error.message
-          } else if (error && typeof error === 'object' && 'response' in error) {
+          if (error && typeof error === 'object' && 'response' in error) {
             const response = (error as { response?: { data?: { message?: string } } }).response
             errorMessage = response?.data?.message || errorMessage
+          } else if (error instanceof Error) {
+            errorMessage = error.message
           }
 
           toast({

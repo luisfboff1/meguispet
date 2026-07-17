@@ -106,10 +106,10 @@ export default function VendedoresUsuariosPage() {
         })
       }
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : (error && typeof error === 'object' && 'response' in error)
-          ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao vincular vendedor')
+      const errorMessage = (error && typeof error === 'object' && 'response' in error)
+        ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao vincular vendedor')
+        : error instanceof Error
+          ? error.message
           : 'Erro ao vincular vendedor'
 
       toast({
@@ -138,10 +138,10 @@ export default function VendedoresUsuariosPage() {
         })
       }
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : (error && typeof error === 'object' && 'response' in error)
-          ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao desvincular vendedor')
+      const errorMessage = (error && typeof error === 'object' && 'response' in error)
+        ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao desvincular vendedor')
+        : error instanceof Error
+          ? error.message
           : 'Erro ao desvincular vendedor'
 
       toast({
@@ -187,10 +187,10 @@ export default function VendedoresUsuariosPage() {
         })
       }
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : (error && typeof error === 'object' && 'response' in error)
-          ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao criar usuário')
+      const errorMessage = (error && typeof error === 'object' && 'response' in error)
+        ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao criar usuário')
+        : error instanceof Error
+          ? error.message
           : 'Erro ao criar usuário'
 
       toast({
