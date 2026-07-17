@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { limparDocumento } from '@/lib/cnpj-validator';
 
 // CPF/CNPJ validation regex
 const CPF_REGEX = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
@@ -49,9 +50,13 @@ export const clienteSchema = z.object({
   documento: z.string()
     .refine((doc) => {
       if (!doc || doc === '') return true; // Optional
-      const cleanDoc = doc.replace(/\D/g, '');
+      const cleanDoc = limparDocumento(doc);
       return cleanDoc.length === 11 || cleanDoc.length === 14;
     }, 'CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos')
+    // Normaliza para apenas dígitos antes de salvar, senão o mesmo CPF/CNPJ
+    // formatado de jeitos diferentes ("31239918000111" vs "31.239.918/0001-11")
+    // escapa da constraint UNIQUE(documento) e vira duplicata.
+    .transform((doc) => (doc ? limparDocumento(doc) : doc))
     .optional(),
 
   endereco: z.string()

@@ -297,6 +297,11 @@
       "idx": 58,
       "tag": "031_enable_rls_schema_migrations",
       "when": 1784309349919.9873
+    },
+    {
+      "idx": 59,
+      "tag": "032_normalize_documento_unique",
+      "when": 1784312779425.6895
     }
   ]
 }
