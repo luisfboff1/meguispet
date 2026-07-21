@@ -48,7 +48,13 @@ export default function VendedoresPage() {
   const loadVendedores = async () => {
     try {
       setLoading(true)
-      const response = await vendedoresService.getAll(currentPage, 10)
+      // Sem controle de paginação na tela (nenhum botão "próxima página" existe),
+      // então usamos um limite alto e carregamos a lista inteira de uma vez —
+      // mesmo padrão já usado em VendaForm/PessoaForm para este mesmo endpoint.
+      // Do contrário, vendedores além dos 10 primeiros (ordem alfabética) ficam
+      // inacessíveis e a busca por nome (filtrada só sobre a página carregada)
+      // reporta "não encontrado" para quem existe, só não coube na página 1.
+      const response = await vendedoresService.getAll(currentPage, 1000)
       if (response.success && response.data) {
         // Handle paginated response structure
         if (typeof response.data === 'object' && 'items' in response.data) {
